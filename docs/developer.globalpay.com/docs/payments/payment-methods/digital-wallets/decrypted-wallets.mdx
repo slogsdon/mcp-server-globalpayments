@@ -1,0 +1,174 @@
+---
+title: 'Decrypted Digital Wallets'
+search_results: 'Digital Wallets Decrypted'
+subtitle: 'Set up payload decryption to preview card data'
+tag: 'rest'
+created: '03/07/2025'
+---
+Decrypted digital wallets allow you to view the card data before submitting the transaction. This option gives full control of your payment journey. For example, you can block specific cards or make informed decisions for subsequent payment actions. 
+
+First, let’s explain a few terms related to this feature.
+
+* **Funding Primary Account Number (FPAN)** – The identifiable cardholder’s card number on the front of a physical credit or debit card. 
+* **Device Primary Account Number (DPAN)** – A device-specific token from the wallet provider to identify the underlying card that is associated with a cardholder’s FPAN.
+
+We also support the ability to make payments using Apple Pay / Google Pay tokens that you have decrypted. To use this feature, use the `TOKENIZED_CARD` source type and specify the wallet type as `apple-pay` or `pay-with-google`. You can then provide the DPAN, expiry, and authentication information to make a payment.
+
+To decrypt the payload, each mobile wallet provider requires you to follow its process. For example, Apple Pay requires you to generate your public/private key pair and your Certificate Signing Request (CSR) to upload to the Apple Pay developer website. You can find the details on their respective developer websites:
+
+* [Apple Pay - Payment Token Format Reference](https://developer.apple.com/documentation/passkit/apple_pay/payment_token_format_reference)
+* [Google Pay - Payment Data Cryptography for Merchants](https://developers.google.com/pay/api/web/guides/resources/payment-data-cryptography)
+
+## Step 1: Decrypt and map the request
+Once you've successfully decrypted the payload, you'll have the raw message content. Use this table to map the mobile wallet provider's fields to the Global Payments request. Add the data from the payload into the request without any manipulation.
+
+|     |     |     |
+| --- | --- | --- |  
+| Wallet Provider Field | Our Field | Notes |
+| applicationPrimaryAccountNumber | `<number>` |     |
+| currencyCode |  `<currency>` | 3 digit ISO 4217 code, i.e., “GBP” |
+| applicationExpirationDate | `<expdate>` | Format MMYY, i.e., “0525” |
+| transactionAmount | `<amount>` |     |
+| cardholderName | `<chname>` |     |
+| onlinePaymentCryptogram | `<cavv>` |     |
+| eciIndicator | `<eci>` |     |
+
+## Step 2: Process request 
+Change the `item type` field to the appropriate wallet provider: `apple-pay` or `pay-with-google`. If the response does not include the cryptogram and Electronic Commerce Indicator (ECI), these can be removed and sent without the values. However, the two values are typically expected for the best acceptance rates.
+
+### DPAN - Including ECI and cryptogram
+In this scenario, the customer’s DPAN is used, along with the ECI and cryptogram.
+
+#### Sample request
+<Code id="json" title="JSON" language="json" active>
+```
+{
+  "account_name": "Transaction_Processing",
+  "type": "SALE",
+  "channel": "CNP",
+  "capture_mode": "AUTO",
+  "amount": "1999",
+  "currency": "USD",
+  "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+  "country": "US",
+  "payment_method": {
+    "name": "James Mason",
+    "entry_mode": "ECOM",
+    "digital_wallet": {
+      "token": "5167300431085507",
+      "token_format": "CARD_TOKEN",
+      "expiry_month": "12",
+      "expiry_year": "20",
+      "cryptogram": "234234234",
+      "provider": "APPLEPAY OR PAY_BY_GOOGLE",
+      "eci": "5"
+    }
+  }
+}
+```
+</Code>
+
+### PAN - Google Pay Web - ECI and cryptogram
+In the scenario where a FPAN is provided for Google Pay, you should specify the `token_format` as `CARD_NUMBER` rather than `CARD_TOKEN`. The use case for this is when “Google Pay on the Web” is used and the customer doesn’t have Google Pay on their mobile device to provide a DPAN rather than FPAN. Note that in the case of `CARD_NUMBER` transactions, we process these transactions as regular card transactions for which 3D Secure applies as well.
+
+#### Sample request
+<Code id="json" title="JSON" language="json" active>
+```
+{
+  "account_name": "Transaction_Processing",
+  "type": "SALE",
+  "channel": "CNP",
+  "capture_mode": "AUTO",
+  "amount": "1999",
+  "currency": "USD",
+  "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+  "country": "US",
+  "payment_method": {
+    "name": "James Mason",
+    "entry_mode": "ECOM",
+    "digital_wallet": {
+      "token": "5167300431085507",
+      "token_format": "CARD_NUMBER",
+      "expiry_month": "12",
+      "expiry_year": "20",
+      "cryptogram": "234234234",
+      "provider": "PAY_BY_GOOGLE",
+      "eci": "5"
+    }
+  }
+}
+```
+</Code>
+
+#### Sample response
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_noXZxzpagCCMyJT08Sz2tGkPji8WXN",
+    "time_created": "2021-03-20T13:44:14.327Z",
+    "type": "SALE",
+    "status": "CAPTURED",                      
+    "channel": "CP",
+    "capture_mode": "AUTO",
+    "amount": "20045",
+    "currency": "CAD",
+    "merchant_id": "MER_8096479c606f4deb93dfab49e7bfea28",
+    "merchant_name": "SANDBOX_MERCHANT",
+    "account_id": "TRA_0b1fcc7cceea48dea38d044bae4295c2",
+    "account_name": "Termiinal_55",
+    "reference": "03559571",
+    "payment_method": {
+        "result": "00",                                 
+        "message": "APPROVAL",                  
+        "entry_mode": "MANUAL",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX4242",
+            "authcode": "351404",
+            "brand_reference": "772201652998701",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "0",
+            "avs_postal_code_result": "0",
+            "avs_action": ""
+        }
+    },
+    "batch_id": "BAT_353445",
+    "action": {
+        "id": "ACT_noXZxzpagCCMyJT08Sz2tGkPji8WXN",
+        "type": "AUTHORIZE",
+        "time_created": "2021-03-20T13:44:14.327Z",
+        "result_code": "SUCCESS",               
+        "app_id": "APP_MN500Q8lk5jp0rEmB5LGvTo27gdQgZln",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+
+## Repeat MIT Payments
+With a decrypted setup, you can process repeat Merchant-Initiated Transactions (MITs) for both Google Pay and Apple Pay. Repeat MITs include the following payment types:
+
+* Recurring
+* Installment
+* Unscheduled
+
+To process a recurring payment, the first payment must originate from a successful customer-initiated transaction. You can then store the returned brand_reference value for all subsequent MIT transactions. 
+
+You’ll need to comply with the stored credential mandate of card brands like Visa or Mastercard. For more information, see our [Recurring Payments - Credential on File](/docs/payments/recurring/credentials-on-file) guide.
+
+Apple Pay supports specific merchant tokens for repeat payments. For more information, see their [Apple Merchant Token Guide](https://developer.apple.com/apple-pay/merchant-tokens/).
+
+The following table shows the corresponding API field for each wallet provider field. 
+
+| Wallet Provider Field | Our API Field | Notes |
+| --- | --- | --- |
+| applicationPrimaryAccountNumber | token |     |
+| currencyCode | currency | 3 digit ISO 4217 code, i.e., “GBP” |
+| applicationExpirationDate | expiry\_month & expiry\_year |     |
+| transactionAmount | amount |     |
+| cardholderName | N/A |     |
+| Model | model | **recurring** - Payment with no fixed duration that continues until the customer cancels.  <br/>**installment** - Payment of an agreed amount on the same day each month until the fixed duration ends.   <br/>**oneoff** - Unscheduled payment with no fixed duration. |
+| Initiator | initiator | Set to **merchant** for MIT transactions. |
+| Sequence | sequence | Set to **subsequent** for MIT transactions. |
+| Brand Reference | brand\_reference | Also referred to as _Scheme Reference Data (SRD)_. Unique identifier provided by a card brand like Visa or Mastercard that links to the payment history between the customer and merchant.<br/><br/>Also referred to as _Transaction ID_ or _Trace ID_, depending on the card brand. This will appear in the response message of an **initial** transaction. |

@@ -1,0 +1,63 @@
+---
+title: "Unified Payments API - February 2, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "02-02-2023"
+---
+
+<ReleaseNoteSection title="Create a Sale or Refund">
+    <ReleaseNoteDetail type="added">
+        * New enum "DEFERRED" for "authorization_mode" in the Create a Sale or Refund request
+        * New field "deferred_time_created" in the Create a Sale or Refund request
+
+        * New provider "OPEN_BANKING" for "payment_method.apm.provider"
+        * New array field "countries" for "payment_method.apm"
+        * New "remittance_reference" object for "payment_method.bank_transfer":
+            * remittance_reference.type
+            * remittance_reference.value
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Get a Transaction">
+    <ReleaseNoteDetail type="added">
+        * Open Banking related fields return as part of Get a Transaction response
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="List Transactions">
+    <ReleaseNoteDetail type="added">
+        * Open Banking related fields return as part of List Transactions response
+        * New search parameters for List Transactions:
+            * platform
+            * platform_mid
+            * platform_name
+            * gpecom_client_id
+            * portico_site_id
+            * portico_device_id
+            * transit_device_id
+            * transit_developer_id
+            * sound_payments_username
+            * Sound_payments_pos_id
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Enhanced error handling message for configuration issues with Transaction requests
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Authentications">
+    <ReleaseNoteDetail type="added">
+        * Sanitation for fields in the Authentication resource. Invalid values will be removed from the following fields for Authentication resource:
+            * order.shipping_address.postal_code
+            * order.shipping_address.line2
+            * order.shipping_address.line1
+            * payer.billing_address.line1
+            * payer.billing_address.city
+            * order.shipping_address.city
+            * payment_method.name
+            * payment_method.first_name
+            * payment_method.last_name
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

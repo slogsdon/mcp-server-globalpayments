@@ -1,0 +1,1197 @@
+---
+title: "Fraud Filter - Guide"
+subtitle: "Learn how to run filters from customized rules to screen transactions"
+tag: "xml"
+created: "02/03/2025"
+---
+<Infobox>
+Fraud Filter is not available for multi-capture transactions.
+</Infobox>
+
+For more information on Fraud Filter, see our [Overview](/ecommerce/risk-management/fraud/overview).
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+This guide focuses on how to use Fraud Filter for direct API integration. First, you'll learn how to submit additional fraud data in the request, and then set the Fraud Filter Mode for both the overall transaction level and for an individual fraud rule. You'll then learn how to hold a transaction after it's been authorized and how to release it.
+
+<div><Infobox>
+The Fraud Filter feature must be enabled in Ecommerce Portal (under the Fraud Management section) before being used via the API.
+</Infobox></div>
+
+## Step 1: Data submission and Fraud Filter
+The customer's billing address can be used for Address Verification Service checks and to compare it with the shipping address they provide.
+
+You can also add a product ID, variable reference, and a unique identifier for the customer, along with their IP address. This submitted data can then be used when you set rules in the Fraud Management section of Ecommerce Portal.
+
+In this example, we set the Fraud Filter Mode to Passive at the transaction level and set one rule to Off. We'll also show how to obtain the overall Fraud Filter Result and the result for each individual rule that was executed.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0519</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <!-- Begin Fraud Management Elements -->
+  <fraudfilter mode="PASSIVE"/>
+       <rules>
+           <rule id="e5964ac0-ace0-477a-98ef-f467772d6a76" mode="OFF"/>
+       </rules>
+  </fraudfilter>
+  <tssinfo>
+    <custnum>E8953893489</custnum>
+    <prodid>SID9838383</prodid>
+    <varref>Car Part HV</varref>
+    <custipaddress>123.123.123.123</custipaddress>
+    <address type="billing">
+      <code>321|456</code>
+      <country>GB</country>
+    </address>
+    <address type="shipping">
+      <code>852|369</code>
+      <country>IE</country>
+    </address>
+  </tssinfo>
+  <!-- End Fraud Management Elements -->
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+// supply the customer's billing country and post code for avs checks
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Flat 123");
+billingAddress.setPostalCode("E77 4QJ");
+billingAddress.setCountry("GB");
+
+// supply the customer's shipping country and post code
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("House 456");
+shippingAddress.setPostalCode("50001");
+shippingAddress.setCountry("US");
+
+FraudRuleCollection rules = new FraudRuleCollection();
+rules.addRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.Off);
+
+try {
+    // process the authorization with fraud data
+    Transaction response = card.charge(new BigDecimal("19.99"))
+            .withCurrency("EUR")
+            .withAddress(billingAddress, AddressType.Billing)
+            .withAddress(shippingAddress, AddressType.Shipping)
+            .withProductId("SID9838383") // prodid
+            .withClientTransactionId("Car Part HV") // varref
+            .withCustomerId("E8953893489") // custnum
+            .withCustomerIpAddress("123.123.123.123")
+            .withFraudFilter(FraudFilterMode.Passive, rules)
+            .execute();
+			
+    String result = response.getResponseCode(); // 00 == Success
+    String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+	
+    // get the details to save to the DB for future requests
+    String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+    String authCode = response.getAuthorizationCode(); // 12345
+    String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+    String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+	// get the details about fraud filter
+    FraudFilterMode fraudResponseMode = response.getFraudResponse().getMode(); // Passive
+    String fraudResponseResult = response.getFraudResponse().getResult(); // PASS
+
+} catch (ApiException exce) {
+    // TODO: add your error handling here
+    // String message = exce.getMessage(); 107 - Fails Fraud Checks
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var config = new GpEcomConfig
+{
+	MerchantId = "MerchantId",
+	AccountId = "internet",
+	SharedSecret = "secret",
+	ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+};
+ServicesContainer.ConfigureService(config);
+
+// create the card object
+var card = new CreditCardData
+{
+	Number = "4263970000005262",
+	ExpMonth = 12,
+	ExpYear = 2025,
+	Cvn = "131",
+	CvnPresenceIndicator = CvnPresenceIndicator.Present,
+	CardHolderName = "James Mason"
+};
+
+// supply the customer's billing country and post code for avs checks
+var billingAddress = new Address
+{
+	PostalCode = "50001|Flat 123",
+	Country = "US"
+};
+
+// supply the customer's shipping country and post code
+var shippingAddress = new Address 
+{ 
+	PostalCode = "654|123",
+	Country = "GB"
+};
+
+var rules = new FraudRuleCollection();
+rules.AddRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.OFF);
+
+try
+{
+	// create the delayed settle authorization
+   var response = card.Charge(19.99m)
+	  .WithCurrency("EUR")
+	  .WithAddress(billingAddress, AddressType.Billing)
+	  .WithAddress(shippingAddress, AddressType.Shipping)
+	  .WithProductId("SID9838383") // prodid
+	  .WithClientTransactionId("Car Part HV") // varref
+	  .WithCustomerId("E8953893489") // custnum
+	  .WithCustomerIpAddress("123.123.123.123")
+	  // Configure the Fraud Filter - can be set to PASSIVE or OFF
+	  .WithFraudFilter(FraudFilterMode.PASSIVE, rules)
+	  .Execute();
+
+	if (response != null)
+	{
+		var result = response.ResponseCode; // 00 == Success
+		var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+		var fraudFilterResponse = response.FraudResponse;
+		// get the Fraud Filter mode, can be ACTIVE or PASSIVE (no response when set to OFF)
+		var fraudResponseMode = fraudFilterResponse.mode;
+		// overall Fraud Filter Result can be PASS, HOLD or BLOCK
+		var fraudResponseOverallResult = fraudFilterResponse.Result;
+
+		// each rule action can be PASS,NOT_EXECUTED, HOLD or BLOCK
+		var fraudFilterRules = fraudFilterResponse.Rules;
+		foreach (var rule in fraudFilterRules) {
+		   var id = rule.Id;
+		   var name = rule.Name;
+		   var action = rule.Action;
+		}
+	}
+}
+catch (ApiException e) {
+	// TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Address;
+use GlobalPayments\Api\PaymentMethods\CreditCardData;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\Entities\Enums\AddressType;
+use GlobalPayments\Api\Entities\Enums\FraudFilterMode;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cvnPresenceIndicator = CvnPresenceIndicator::PRESENT;
+$card->cardHolderName = "James Mason";
+
+// supply the customer's billing country and post code for avs checks
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+// supply the customer's shipping country and post code
+$shippingAddress = new Address();
+$shippingAddress->postalCode = "654|123";
+$shippingAddress->country = "GB";
+
+$rules = new FraudRuleCollection();
+$rules->addRule('e5964ac0-ace0-477a-98ef-f467772d6a76', FraudFilterMode::OFF);
+		
+try {
+   // create the delayed settle authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->withAddress($shippingAddress, AddressType::SHIPPING)
+      ->withProductId("SID9838383") // prodid
+      ->withClientTransactionId("Car Part HV") // varref
+      ->withCustomerId("E8953893489") // custnum
+      ->withCustomerIpAddress("123.123.123.123")
+      // Configure the Fraud Filter - can be set to PASSIVE or OFF
+      ->withFraudFilter(FraudFilterMode::PASSIVE, $rules)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+   
+   $fraudFilterResponse = $response->fraudFilterResponse;
+   // get the Fraud Filter mode, can be ACTIVE or PASSIVE (no response when set to OFF)
+   $fraudResponseMode = $fraudFilterResponse->fraudResponseMode;
+   // overall Fraud Filter Result can be PASS, HOLD or BLOCK
+   $fraudResponseOverallResult = $fraudFilterResponse->fraudResponseResult;
+   
+   /* each rule action can be PASS,NOT_EXECUTED, HOLD or BLOCK
+   $fraudFilterRules = $fraudFilterResponse->fraudResponseRules;
+   foreach ($fraudFilterRules as $rule) {
+      echo $rule["id"] . "\n";
+      echo $rule["name"] . "\n";
+      echo $rule["action"] . "\n";
+   }
+   */
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Hold the transaction
+If you suspect a transaction is fraudulent and requires further investigation, you can send a Hold request. If the transaction was already placed in the queue to be included in the next settlement file or batch, this will remove it from the queue until the transaction is released.
+
+You can choose to record a reason code for future reference. You must also supply the Order ID and the Payments Reference of the original transaction.
+
+#### Sample request
+
+<div><Infobox>
+Funds may be lost if transactions are not settled in time. Consult with Global Payments (or your Acquirer) for information on settling limits.
+</Infobox></div>
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="hold" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FRAUD</reasoncode>
+  <sha1hash>86daf98b4ce6f5d463572c3a0692eceaace35740</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a hold request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the hold transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.hold()
+      .withReasonCode(ReasonCode.Fraud)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Held Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a hold request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the hold transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.Hold()
+      .WithReasonCode(ReasonCode.FRAUD)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Held Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Enums\ReasonCode;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a hold request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the hold transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   $response = $transaction->hold()
+```
+</Code>
+</CodeGroup>
+
+## Step 3: Release the transaction
+If you decide that a transaction is not fraudulent or you have held one in error, you can send a Release request. This will return the transaction to its original status (awaiting settlement or in the queue for the next batch).
+
+#### Sample request
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="release" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FALSEPOSITIVE</reasoncode>
+  <sha1hash>36b168a9fa577df04684b5a20baad17483b8e11c</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a release request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the release transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction response = transaction.release()
+      .withReasonCode(ReasonCode.FalsePositive)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Released Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a release request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the release transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction = transaction.Release()
+      .WithReasonCode(ReasonCode.FALSEPOSITIVE)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Released Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Enums\ReasonCode;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a release request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the release transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   $response = $transaction->release()
+      ->withReasonCode(ReasonCode::FALSE_POSITIVE)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+}
+```
+</Code>
+</CodeGroup>
+
+## Enhance your solution
+Explore more functionality to enrich your application.
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/ecommerce/api/fraud-management" title="Fraud Management - API Reference" icon="window">
+        See the full HPP specification for payment methods.
+    </Card>
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Digital Wallets" icon="wallet">
+       Explore ways to let customers use their favorite stored cards.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>
+   </Tab>
+   <Tab id="hpp" title="HPP">
+
+This guide focuses on how to use Fraud Filter for the Hosted Payment Page (HPP). First, you'll learn how to submit additional fraud data in the request, and then set the Fraud Filter Mode for both the overall transaction level and for an individual fraud rule. You'll then learn how to hold a transaction after it's been authorized and how to release it.
+
+<div><Infobox>
+The Fraud Filter feature must be enabled in Ecommerce Portal (under the Fraud Management section) before being used via the HPP.
+</Infobox></div>
+
+## Step 1: Data submission and Fraud Filter
+The customer's billing address can be used for Address Verification Service checks and can also be compared against the shipping address they provide. We can also add a product ID, variable reference and a unique identifier for the customer along with their IP address. You can use all of this submitted data when setting rules in the Fraud Management section of Ecommerce Portal.
+
+Here, we set the Fraud Filter Mode to Passive at the transaction level and set one rule to Off. Setting an individual fraud rule to Off allows us to disable this rule for this particular transaction, while still running all other rules. We'll also show how to obtain the overall Fraud Filter result and the result for each individual rule that was executed.
+
+#### HPP request
+
+<CodeGroup>
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- Begin Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="HPP_FRAUDFILTER_MODE" value="PASSIVE">
+  <input type="hidden" name="HPP_FRAUDFILTER_MODE_e5964ac0-ace0-477a-98ef-f467772d6a76" value="OFF">
+  <input type="hidden" name="CUST_NUM" value="6e027928-c477-4689-a45f-4e138a1f208a">
+  <input type="hidden" name="VAR_REF" value="Acme Corporation">
+  <input type="hidden" name="PROD_ID" value="SKU1000054">
+  <input type="hidden" name="BILLING_CODE" value="59|123">
+  <input type="hidden" name="BILLING_CO" value="GB">
+  <input type="hidden" name="SHIPPING_CODE" value="50001|Apartment 852">
+  <input type="hidden" name="SHIPPING_CO" value="US">
+  <!-- End Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client, request and HPP settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+FraudRuleCollection rules = new FraudRuleCollection();
+rules.addRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.Off); 
+
+HostedPaymentConfig hostedPaymentConfig = new HostedPaymentConfig();
+hostedPaymentConfig.setVersion(HppVersion.Version2);
+hostedPaymentConfig.setFraudFilterMode(FraudFilterMode.Passive);
+hostedPaymentConfig.setFraudFilterRules(rules);
+
+config.setHostedPaymentConfig(hostedPaymentConfig);
+
+HostedService service = new HostedService(config);
+
+// data to be passed to the HPP along with transaction level settings
+HostedPaymentData hostedPaymentData = new HostedPaymentData();
+hostedPaymentData.setCustomerNumber("E8953893489");
+hostedPaymentData.setProductId("SID9838383");
+
+Address billingAddress = new Address();
+billingAddress.setCountry("US");
+billingAddress.setPostalCode("50001|Flat 123");
+
+Address shippingAddress = new Address();
+shippingAddress.setCountry("GB");
+shippingAddress.setPostalCode("654|123");
+
+String variableReference = "Car Part HV";
+
+try {
+   String hppJson = service.charge(new BigDecimal("19.99"))
+      .withCurrency("EUR")
+      .withHostedPaymentData(hostedPaymentData)
+      .withAddress(billingAddress, AddressType.Billing)
+      .withAddress(shippingAddress, AddressType.Shipping)
+      .withClientTransactionId(variableReference)
+      .serialize();
+   // TODO: pass the HPP JSON to the client-side
+} catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+FraudRuleCollection fraudRuleCollection = new FraudRuleCollection();
+fraudRuleCollection.AddRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.OFF);
+
+var service = new HostedService(new GpEcomConfig
+{
+	MerchantId = "MerchantId",
+	AccountId = "internet",
+	SharedSecret = "secret",
+	ServiceUrl = "https://pay.sandbox.realexpayments.com/pay",
+	HostedPaymentConfig = new HostedPaymentConfig
+	{
+		Version = HppVersion.VERSION_2,
+		FraudFilterMode = FraudFilterMode.PASSIVE,
+		FraudFilterRules = fraudRuleCollection
+	}
+});
+
+// data to be passed to the HPP along with transaction level settings
+var hostedPaymentData = new HostedPaymentData 
+{
+	CustomerNumber = "E8953893489",
+	ProductId = "SID9838383"
+};
+
+// billing address
+var billingAddress = new Address 
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\HostedPaymentConfig;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Entities\Address;
+use GlobalPayments\Api\Entities\HostedPaymentData;
+use GlobalPayments\Api\Entities\Enums\AddressType;
+use GlobalPayments\Api\Entities\Enums\FraudFilterMode;
+use GlobalPayments\Api\Entities\Enums\HppVersion;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+$config->hostedPaymentConfig = new HostedPaymentConfig();
+$config->hostedPaymentConfig->version = HppVersion::VERSION_2;
+$config->hostedPaymentConfig->FraudFilterMode = FraudFilterMode::PASSIVE;
+$rules = new FraudRuleCollection();
+$rules->addRule('e5964ac0-ace0-477a-98ef-f467772d6a76', FraudFilterMode::OFF);
+$config->hostedPaymentConfig->fraudFilterRules = $rules;
+$service = new HostedService($config);
+
+// data to be passed to the HPP along with transaction level settings
+$hostedPaymentData = new HostedPaymentData();
+$hostedPaymentData->customerNumber = "E8953893489";
+$hostedPaymentData->productId = "SID9838383";
+
+// billing address
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+// shipping address
+$shippingAddress = new Address();
+$shippingAddress->postalCode = "654|123";
+$shippingAddress->country = "GB";
+
+$variableReference = "Car Part HV";
+
+try {
+   $hppJson = $service->charge(19.99)
+      ->withCurrency("EUR")
+      ->withHostedPaymentData($hostedPaymentData)
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->withAddress($shippingAddress, AddressType::SHIPPING)
+      ->withClientTransactionId($variableReference)
+      ->serialize();
+   // TODO: pass the HPP JSON to the client-side
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+#### HPP response
+Transactions that return with a result of Block were prevented from proceeding to authorization. If the result is set to Hold, the transaction will not proceed to settlement until it is released. This can be done from Ecommerce Portal or through an API request. A Pass transaction will behave as normal, depending on the settlement type you're using.
+
+The outcome of passing the transaction through the Fraud Filter will be included in the transaction response. You can check the overall Fraud Filter result and each individual rule outcome by using its unique identifier from Ecommerce Portal.
+
+<div><Infobox>
+The Timestamp returned in the response will be identical to the one sent in the request JSON. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. <br />
+
+You should also check the other transaction variables such as the Amount against what was stored in your application when the request JSON was sent.
+</Infobox></div>
+
+<CodeGroup>
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[HPP_FRAUDFILTER_MODE=PASSIVE,
+ HPP_FRAUDFILTER_RESULT=BLOCK,
+ HPP_FRAUDFILTER_RULE_478a55db-5430-4c2a-afca-7dde181eb9f4=BLOCK,
+ HPP_FRAUDFILTER_RULE_NAME=Customer IP List
+ HPP_FRAUDFILTER_RULE_MODE_e5964ac0-ace0-477a-98ef-f467772d6a76=OFF,
+]
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+HostedService service = new HostedService(config);
+
+/* TODO: grab the response JSON from the client-side.
+   sample response JSON (values will be Base64 encoded):
+   String responseJson = "{ \"MERCHANT_ID\": \"MerchantId\", \"ACCOUNT\": \"internet\", \"ORDER_ID\": \"GTI5Yxb0SumL_TkDMCAxQA\", \"AMOUNT\": \"1999\", "
+ + "\"TIMESTAMP\": \"20170725154824\", \"SHA1HASH\": \"843680654f377bfa845387fdbace35acc9d95778\", \"RESULT\": \"00\", \"AUTHCODE\": \"12345\", "
+ + "\"CARD_PAYMENT_BUTTON\": \"Place Order\", \"AVSADDRESSRESULT\": \"M\", \"AVSPOSTCODERESULT\": \"M\", \"BATCHID\": \"445196\", \"MESSAGE\": \"[ test system ] Authorised\", "
+ + "\"PASREF\": \"15011597872195765\", \"CVNRESULT\": \"M\", \"HPP_FRAUDFILTER_RESULT\": \"HOLD\", \"HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe\": "
+ + "\"HOLD\", \"HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305\": \"PASS\" }";
+ */
+
+try {
+   Transaction response = service.parseResponse(responseJson, true);
+   String responseCode = response.getResponseCode(); // 00
+   HashMap<String, String> responseValues = response.getResponseValues(); // get values accessible by key
+   String fraudFilterResult = responseValues.get("HPP_FRAUDFILTER_RESULT"); // HOLD
+   String cardRuleResult = responseValues.get("HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe"); // HOLD
+   String ipRuleResult = responseValues.get("HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305"); // PASS
+   // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client settings
+var service = new HostedService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://pay.sandbox.realexpayments.com/pay",
+});
+
+// TODO: grab the response JSON from the client-side for example:
+// var responseJson = Request.Form["hppResponse"];
+
+try
+{
+   Transaction response = service.ParseResponse(responseJson, true);
+   var responseCode = response.ResponseCode; // 00
+   var responseValues = response.ResponseValues; // get values accessible by key
+
+   var fraudFilterResult = responseValues["HPP_FRAUDFILTER_RESULT"]; // HOLD
+   var cardRuleResult = responseValues["HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe"]; // HOLD
+   var ipRuleResult = responseValues["HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305"]; // PASS
+
+   // TODO: update your application and display transaction outcome to the customer
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+// configure client settings
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+$service = new HostedService($config);
+
+/*
+ * TODO: grab the response JSON from the client-side.
+ * sample response JSON (values will be Base64 encoded):
+ * $responseJson ='{"MERCHANT_ID":"MerchantId","ACCOUNT":"internet","ORDER_ID":"GTI5Yxb0SumL_TkDMCAxQA","AMOUNT":"1999",' .
+ * '"TIMESTAMP":"20170725154824","SHA1HASH":"843680654f377bfa845387fdbace35acc9d95778","RESULT":"00","AUTHCODE":"12345",' .
+ * '"CARD_PAYMENT_BUTTON":"Place Order","AVSADDRESSRESULT":"M","AVSPOSTCODERESULT":"M","BATCHID":"445196",' .
+ * '"MESSAGE":"[ test system ] Authorised","PASREF":"15011597872195765","CVNRESULT":"M","HPP_FRAUDFILTER_RESULT":"PASS",' .
+ * '"HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe":"HOLD","HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305":"PASS"}";
+ */
+
+try {
+   $parsedResponse = $service->parseResponse($responseJson, true);
+   $responseCode = $parsedResponse->responseCode; // 00
+   $responseValues = $parsedResponse->responseValues; // get values accessible by key
+
+   $fraudFilterResult = $responseValues["HPP_FRAUDFILTER_RESULT"]; // HOLD
+   $cardRuleResult = $responseValues["HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe"]; // HOLD
+   $ipRuleResult = $responseValues["HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305"]; // PASS
+   // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Hold the transaction
+If you suspect a transaction is fraudulent and requires further investigation, you can send a Hold request. If the transaction was already placed in the queue to be included in the next settlement file or batch, this will remove it from the queue until such a time as the transaction is released (see below).
+
+You can choose to record a reason code for future reference. You must also supply the Order ID and the Payments Reference of the original transaction.
+
+#### Sample request
+<div><Infobox>
+Funds may be lost if transactions are not settled in time. Consult with your Global Payments (or your Acquirer) for information on settling limits.
+</Infobox></div>
+
+<CodeGroup>
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="hold" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FRAUD</reasoncode>
+  <sha1hash>86daf98b4ce6f5d463572c3a0692eceaace35740</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a hold request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the hold transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.hold()
+      .withReasonCode(ReasonCode.Fraud)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Held Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a hold request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the hold transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.Hold()
+      .WithReasonCode(ReasonCode.FRAUD)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Held Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Enums\ReasonCode;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a hold request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the hold transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   $response = $transaction->hold()
+      ->withReasonCode(ReasonCode::FRAUD)
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 3: Release the transaction
+If you decide that a transaction is not fraudulent or you have held one in error, you can send a Release request. This will return the transaction to its original status (awaiting settlement or in the queue for the next batch).
+
+#### Sample request
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="release" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FALSEPOSITIVE</reasoncode>
+  <sha1hash>36b168a9fa577df04684b5a20baad17483b8e11c</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a release request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the release transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction response = transaction.release()
+      .withReasonCode(ReasonCode.FalsePositive)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Released Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a release request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the release transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction = transaction.Release()
+      .WithReasonCode(ReasonCode.FALSEPOSITIVE)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Released Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Enums\ReasonCode;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a release request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the release transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   $response = $transaction->release()
+      ->withReasonCode(ReasonCode::FALSE_POSITIVE)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+}
+```
+</Code>
+</CodeGroup>
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/ecommerce/hpp-reference/fraud-management" title="Fraud Management - HPP Reference" icon="window">
+        See the full HPP specification for payment methods.
+    </Card>
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Digital Wallets" icon="wallet">
+       Explore ways to let customers use their favorite stored cards.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>
+
+   </Tab>
+   
+</Tabs>
+

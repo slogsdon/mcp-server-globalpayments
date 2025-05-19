@@ -1,0 +1,85 @@
+---
+title: "Unified Payments API - October 19, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "10-19-2023"
+---
+
+<ReleaseNoteSection title="Payment Methods">
+    <ReleaseNoteDetail type="added">
+        * New enums added to "usage_mode" field in the Create Payment Method request
+            * USE_NETWORK_TOKEN
+            * USE_CARD_NUMBER
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New response fields added to the Create Payment Method response
+            * network_token
+            * masked_network_token_last4
+            * network_token_expiry_month
+            * network_token_expiry_year
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New response fields for Detokenize a Payment Method response
+            * network_token
+            * network_token_expiry_month
+            * network_token_expiry_year
+            * network_token_requestor_id
+            * scheme_token_requestor_id
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New response fields for Get a Payment Method response
+            * network_token
+            * network_token_expiry_month
+            * network_token_expiry_year
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New response fields for List Payment Methods response
+            * masked_network_token_last4
+            * network_token_expiry_month
+            * network_token_expiry_year
+
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * New response field added to Get a Transaction & List Transactions response
+            * masked_network_token_last4
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New field added to the Create a Sale request
+            * payment_method.usage_mode this field accepts the following enums:
+                * USE_NETWORK_TOKEN
+                * USE_CARD_NUMBER
+
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New fields added to the Create a Sale response
+            * payment_method.card.network_token
+            * payment_method.card.network_token_expiry_mont
+            * payment_method.card.network_token_expiry_year
+
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Verifications">
+    <ReleaseNoteDetail type="added">
+        * New fields added to the Verify request
+            * payment_method.usage_mode this field accepts the following enums:
+                * USE_NETWORK_TOKEN
+                * USE_CARD_NUMBER
+            * payment_method.storage_mode this field accepts the following enums:
+                * ALWAYS
+                * ON_SUCCESS
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="added">
+        * New fields added to the Verify response
+            * payment_method.card.masked_network_token_last4
+            * payment_method.card.network_token_expiry_month
+            * payment_method.card.network_token_expiry_year
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

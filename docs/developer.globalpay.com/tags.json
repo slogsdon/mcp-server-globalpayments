@@ -1,0 +1,20 @@
+[
+    {
+        "key": "rest-api",
+        "name": "REST API",
+        "color": "#009E61",
+        "changelog_product_type": true
+    },
+    {
+        "key": "dev-portal",
+        "name": "Dev Portal",
+        "color": "#474B57",
+        "changelog_product_type": true
+    },
+    {
+        "key": "postman",
+        "name": "Postman",
+        "color": "#c00010",
+        "changelog_product_type": true
+    }
+]

@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Adobe Commerce (formerly Magento)",
+        "url": "/docs/integration-options/plugins/adobe",
+        "logo": "/sites/default/files/2022-04/Adobe-Commerce-white.png"
+    },
+    {
+        "name": "OpenCart 3",
+        "url": "/docs/integration-options/plugins/opencart",
+        "logo": "/sites/default/files/migrated_images/assets/images/cartplatform/opencart2.png"
+    },
+    {
+        "name": "PrestaShop",
+        "url": "/docs/integration-options/plugins/prestashop",
+        "logo": "/sites/default/files/migrated_images/assets/images/cartplatform/prestashopv2.png"
+    },
+    {
+        "name": "WooCommerce",
+        "url": "/docs/integration-options/plugins/woocommerce",
+        "logo": "/sites/default/files/2023-07/WooCommerce-Logo-stacked.png"
+    }
+]

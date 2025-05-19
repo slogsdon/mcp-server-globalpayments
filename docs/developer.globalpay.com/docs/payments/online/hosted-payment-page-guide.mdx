@@ -1,0 +1,331 @@
+---
+title: 'Hosted Payment Page - Guide'
+search_results: 'Global Payments - Hosted Payment Page - Guide'
+subtitle: 'Learn how to integrate our secure checkout page.'
+tag: 'rest'
+created: '06/08/2024'
+---
+<Infobox>
+  The Hosted Payment Page (HPP) is currently not available in the Asia Pacific region. For more information, check with your account manager.
+</Infobox>
+
+This guide focuses on adding the HPP to your application or website. After creating an access token, we set up the request to create a unique payment link. Using the HPP URL returned in the response, we then redirect the customer to facilitate authentication and authorization. After receiving the response and checking the transaction outcome, we then handle the redirect to your application’s appropriate successful or failed page.
+
+For an overview of the HPP, see our [Overview](/docs/payments/online/hosted-payment-page-overview) page.
+
+To learn how to enable more value-added services to the HPP, see the [Enhance your integration](#enhance-your-integration) section.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Create the HPP URL
+First, we create a unique payment link using the Create Link request. This request also retrieves some necessary information to facilitate the redirect and authentication of the customer. 
+
+Our sample request performs a standard card payment with 3D Secure and uses only mandatory and recommended fields (for the full list of HPP Link fields, see the [table](#hpp-link-field-definitions)). It also includes information on API methods and request data.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+curl 'https://apis.sandbox.globalpay.com/ucp/links' \
+  --header 'Connection: keep-alive' \
+  --header 'Accept: application/json' \
+  --header 'Content-Type: application/json' \
+  --header 'x-gp-version: 2021-03-22' \
+  --header 'Authorization:  Bearer bBj5Bv4RoOz4xTJ7V5XtjLBHLN1h' \
+  --data-raw '{
+     "account_name": "transaction_processing",
+     "type": "HOSTED_PAYMENT_PAGE",
+     "name": "Bill Payment",
+     "description": "February and March Invoice",
+     "reference": "82c2dbd5-549d-4967-aeea-51b3f320046a",
+     "payer": {
+        "name": "James Mason",
+        "language": "en",
+        "email": "jamesmason@example.com",
+        "mobile_phone": {
+           "country_code": "44",
+           "subscriber_number": "1801555888"
+        },
+        "billing_address": {
+           "line_1": "Flat 456",
+           "line_2": "House 456",
+           "line_3": "Unit 4",
+           "city": "Halifax",
+           "postal_code": "44",
+           "country": "GB"
+        }
+     },
+     "order": {
+        "amount": "1000",
+        "currency": "EUR",
+        "reference": "order-645",
+        "transaction_configuration": {
+           "channel": "CNP",
+           "country": "GB",
+           "capture_mode": "AUTO",
+           "allowed_payment_methods": [
+              "CARD"
+           ]
+        },
+        "payment_method_configuration": {
+           "authentications": {
+              "preference": "CHALLENGE_PREFERRED"
+           }
+        }
+     },
+     "notifications": {
+        "return_url": "https://www.example.com/return_url",
+        "status_url": "https://www.example.com/status_url"
+     }
+  }'
+  ```
+</Code>
+</CodeGroup>
+
+### Sample response
+<CodeGroup>
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+   "id":"LNK_JGWfx9L9Oc3RS2N5WobbocjMDuSqvm",
+   "account_name":"transaction_processing",
+   "url":"https://apis.sandbox.globalpay.com/ucp/hpp/redirect/42060877-8bf9-4ae3-a3ae-99a6da10cf41",
+   "status":"ACTIVE",
+   "type":"HOSTED_PAYMENT_PAGE",
+   "usage_mode":"SINGLE",
+   "usage_limit":"1",
+   "name":"Mobile Bill Payment",
+   "description":"February and March Invoice",
+   "expiration_date":"2024-06-11T14:09:23.577Z",
+   "order":{
+      "amount":"1000",
+      "currency":"EUR",
+      "reference":"order-645",
+      "transaction_configuration":{
+         "country":"GB",
+         "channel":"CNP"
+      }
+   },
+   "action":{
+      "id":"ACT_JGWfx9L9Oc3RS2N5WobbocjMDuSqvm",
+      "type":"LINK_CREATE",
+      "time_created":"2024-06-10T14:09:23.577Z",
+      "result_code":"SUCCESS",
+      "app_id":"i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+      "app_name":"demo_app"
+   }
+}
+  ```
+</Code>
+</CodeGroup>
+
+
+## Step 2: Redirect the customer
+Once the link is created, the customer must be redirected using the URL returned in the Create Pay by Link response to facilitate authentication and authorization. You can use a simple JavaScript redirect or HTTP GET (302 redirect).
+
+For information on API methods and request/response data, see [Links](/api/links) in the API Explorer.
+
+In this example, you redirect the customer to the URL using JavaScript.
+
+### Sample redirect
+
+<CodeGroup>
+<Code id="HTML" language="xml" title="HTML" active contextualLinks={{apiExplorerUrl: "/api/links"}}>
+```
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Sample Redirect</title>
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <script>
+    window.location = "https://apis.sandbox.globalpay.com/ucp/hpp/redirect/42060877-8bf9-4ae3-a3ae-99a6da10cf41";
+  </script>
+</body>
+
+</html>
+```
+</Code>
+</CodeGroup>
+
+<br/>
+<br/>
+Once redirected to the URL, your customer will be presented with the HPP.
+
+![Example of the HPP on a desktop computer screen](/gh-assets/hpp_desktop.png)
+ <p style={{textAlign: "center"}}>**HPP Desktop Example**</p>
+
+## Step 3: Check transaction outcome, handle redirect
+
+Once the customer completes the transaction, a transaction response is sent to your Return URL to inform your system of the transaction result. The response contains the outcome of the transaction, whether it was a success or a decline. It also contains the Transaction ID (`TRN_ID`), which can be used to manage the transaction — such as performing a reversal or reporting on the transaction.
+
+When the transaction is complete, the HPP will render the contents of the URL supplied in the `return_url`. The URL should only contain basic HTML and JavaScript. The URL should redirect the customer to the final transaction complete page on your website or application.
+
+#### Sample response 
+<CodeGroup>
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+   "id":"TRN_xc1XbbUf7MhbFrYDGL1Tbde0aRAWoD_22cf9fb4570a",
+   "time_created":"2024-06-10T14:09:23.577Z",
+   "type":"SALE",
+   "status":"CAPTURED",
+   "channel":"CNP",
+   "capture_mode":"AUTO",
+   "amount":"1000",
+   "currency":"USD",
+   "country":"US",
+   "merchant_id":"MER_2584caaa4b5b4f77a90e7f2582ef53dd",
+   "merchant_name":"sandbox_merchant",
+   "account_id":"TRA_be85d0f6bc13405c8fefcbf455ab039e",
+   "account_name":"transaction_processing",
+   "reference":"order-645",
+   "payment_method":{
+      "id":"PMT_79144957-13eb-4e2c-a378-92f90b5e97c0",
+      "result":"00",
+      "message":"[ test system ] AUTHORISED",
+      "entry_mode":"ECOM",
+      "authentication":{
+         "three_ds":{
+            "value_result":"00"
+         }
+      }
+   },
+   "link_data":{
+      "id":"LNK_XnV6crCpM1uxAaqoYuFnfquPSg5oNN",
+      "url":"https://apis.sandbox.globalpay.com/ucp/hpp/redirect/42060877-8bf9-4ae3-a3ae-99a6da10cf41",
+      "status":"ACTIVE",
+      "type":"payment",
+      "allowed_payment_methods":[
+         "CARD"
+      ],
+      "usage_mode":"SINGLE",
+      "usage_count":"1",
+      "reference":"82c2dbd5-549d-4967-aeea-51b3f320046a",
+      "name":"Mobile Bill Payment",
+      "description":"February and March Invoice",
+      "viewed_count":"1",
+      "expiration_date":"2024-06-11T14:09:23.577Z",
+      "notifications":{
+         "return_url": "https://www.example.com/responseUrl",
+         "status_url": "https://www.example.com/statusUrl",
+      }
+   },
+   "action":{
+      "id":"ACT_u8ckxAxozTXNzzsJmWc7GgwwBa67ZJ",
+      "type":"STATUS_NOTIFICATION",
+      "time_created":"2024-06-11T14:09:23.577Z",
+      "result_code":"SUCCESS",
+      "app_id":"i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+      "app_name":"demo_app"
+   }
+}
+```
+</Code>
+</CodeGroup>
+
+#### HPP Link field definitions
+*Type* indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| account\_name | string | alphanumeric | M   | 1-50 | A meaningful label that better identifies the account. |
+| type |     | enum | M   |     | API-specific label that indicates the type resource an instance is.  <br/>For example: HOSTED\_PAYMENT\_PAGE |
+| name | string | alphanumeric | O   | 1-120 | Descriptive name of the link. |
+| description | string | alphanumeric | O   | 1-250 | Detailed description of the link. |
+| usage\_mode | string | enum | O   |     | Indicates whether the link can be used once or multiple times.  <br/>For type=HOSTED\_PAYMENT\_PAGE, this can only be SINGLE. |
+| usage\_limit | string | numeric | O   | 1-50 | Indicates the number of times that a link was already successfully paid.  <br/>For type=HOSTED\_PAYMENT\_PAGE, this can only be 1. |
+| reference | string | alphanumeric | M   | 1-50 | Merchant-defined field to reference the link. |
+| expiration\_date | string | numeric | O   | 1-50 | Indicates the date and time after which the link can no longer be used or paid.  <br/>For type=HOSTED\_PAYMENT\_PAGE, expiration date is 24 hours only. |
+| payer.status | string | enum | O   |     | Indicates whether the payer is new or existing (active).  <br/>**NEW** - Payer is newly created. Customer can store the card on the HPP, which is associated with the Payer ID.  <br/>**ACTIVE** - Payer was created previously. Any payment methods stored with this payer are displayed on the HPP. |
+| payer.id | string | alphanumeric | O   | 1-50 | Unique ID generated by us to reference a payer in our system. To learn how to create a payer, see the [Payers - Guide](/docs/payers-guide "Payers Guide"). |
+| payer.name | string | alphanumeric | O   | 1-50 | Name of the payer. |
+| payer.language | string | enum | O   | 1-50 | Language of the payer. |
+| payer.email | string | alphanumeric | O   | 1-100 | Email of the payer. |
+| payer.mobile\_  <br/>phone.country\_  <br/>code | string | ISO-3166-1 | O   |     | Country code in ISO-3166-1 (alpha-2 code) format. |
+| payer.mobile\_  <br/>phone.subscriber\_  <br/>number | string | numeric | O   | 1-50 | Mobile phone number of the payer. |
+| payer.billing\_  <br/>address.line\_1 | string | alphanumeric | M   | 1-50 | First line of the billing address. |
+| payer.billing\_  <br/>address.line\_2 | string | alphanumeric | M   | 1-50 | Second line of the billing address. |
+| payer.billing\_  <br/>address.line\_3 | string | alphanumeric | M   | 1-50 | Third line of the billing address. |
+| payer.billing\_  <br/>address.city | string | alphanumeric | M   | 1-50 | City associated with the billing address. |
+| payer.billing\_  <br/>address.postal\_  <br/>code | string | alphanumeric | M   | 1-50 | Postal code of the billing address. |
+| payer.billing\_  <br/>address.state | string | ISO 3166-2 | C   |     | State or region of the billing address. Format: ISO 3166-2 minus the country code itself.  <br/>For example: US Illinois = IL  <br/>For Great Britain counties:  <br/>Wiltshire = WI, Aberdeenshire = ABD |
+| payer.billing\_  <br/>address.country | string | ISO-3166-1 | M   |     | Country code of the billing address in ISO-3166-1 (alpha-2 code) format. |
+| payer.address\_  <br/>match\_indicator | string | boolean | O   |     | Indicates whether the shipping address matches the billing address. Allowable values:  <br/>**YES**  <br/>**NO** |
+| order.amount | string | integer | M   | 1-50 | Amount to transfer between payer and merchant for a SALE. Always represented in the lowest denomination of the related currency. |
+| order.currency | string | ISO-4217 | M   |     | Currency of the amount in ISO-4217 (alpha-3) format. |
+| order.reference | string | alphanumeric | O   | 1-50 | Merchant-defined field to reference the order. |
+| order.transaction\_  <br/>configuration.  <br/>channel | string | enum | O   |     | Describes whether the transaction was processed in a customer-present (CP) or customer-not-present (CNP) scenario. |
+| order.transaction\_  <br/>configuration.  <br/>country | string | ISO-3166-1 | O   |     | Country code in ISO-3166-1 (alpha-2 code) format.  <br/>minLength: 2  <br/>maxLength: 2 |
+| order.transaction\_  <br/>configuration.  <br/>capture\_  <br/>mode | string | enum | O   |     | Indicates whether the transaction is to be captured automatically, later, or later using more than one partial capture. Allowed values:  <br/>**AUTO** - If a transaction is authorized, funds will exchange between the payer and merchant automatically and as soon as possible.  <br/>**LATER** - If a transaction is authorized, funds will not exchange between the payer and merchant automatically and will require a subsequent separate action to capture that transaction and start the funding process. Only one successful capture is permitted.  <br/>**MULTIPLE** - If a transaction is authorized, funds will not exchange between the payer and merchant automatically. One or more subsequent separate capture actions are required to capture that transaction in parts and start the funding process for the part captured. One or many successful captures are permitted once the total amount captured is within a range of the original authorized amount. |
+| order.transaction\_  <br/>configuration.currency\_  <br/>conversion\_  <br/>mode | string | boolean | O   |     | Determines whether DCC is activated. Allowable values:    <br/>**YES**  <br/>**NO** |
+| order.transaction\_  <br/>configuration.allowed\_  <br/>payment\_  <br/>methods | string | alphanumeric | O   | 1-50 | Indicates which payment method(s) to offer the customer, or route customers to a specific one. For example:  <br/>cards\|paypal\|sofort |
+| order.payment\_  <br/>method\_  <br/>configuration.  <br/>authentication.preference | string | enum | O   |     | Indicates whether a challenge is requested for this transaction. The Issuer may override whatever preference is specified in this field. For allowed values, see [Authentications](/api/authentications#/For%203DS%202,%20submit%20data%20including%20the%20billing%20and%20shipping%20details%20of%20the%20payer,%20at%20least%20one%20phone%20number,%20the%20device%20data,%20transaction%20details,%20outcome%20from%20the%20ACS%20Method%20URL%20if%20it%20took%20place%20and%20a%20link%20to%20the%20merchant's%20About%20or%20Contact%20page./initiate3DS_request_preference) in the API Explorer. |
+| order.payment\_  <br/>method\_configuration.  <br/>apm.shipping\_  <br/>address\_enabled | string | boolean | O   |     | Determines whether the passing of PayPal shipping address details will be activated or not. Allowable values:  <br/>**YES**  <br/>**NO** |
+| order.payment\_  <br/>method\_configuration.  <br/>apm.address\_  <br/>override | string | boolean | O   |     | Determines whether the shipping address can be changed by the customer on the PayPal review page. Allowable values:  <br/>**YES**  <br/>**NO** |
+| order.payment\_  <br/>method\_configuration.  <br/>storage\_mode | string | enum | O   |     | Indicates whether to store the card as part of a transaction. Allowed values:  <br/>**ALWAYS** - Card information is always stored irrespective of whether the payment method authorization was successful.  <br/>**PROMPT** - Displays a checkbox on the HPP to confirm with the payer to store their card. |
+| order.shipping\_  <br/>address.line\_1 | string | alphanumeric | O   | 1-50 | First line of the shipping address. |
+| order.shipping\_  <br/>address.line\_2 | string | alphanumeric | O   | 1-50 | Second line of the shipping address. |
+| order.shipping\_  <br/>address.line\_3 | string | alphanumeric | O   | 1-50 | Third line of the shipping address. |
+| order.shipping\_  <br/>address.city | string | alphanumeric | O   | 1-50 | City associated with the shipping address. |
+| order.shipping\_  <br/>address.postal\_code | string | alphanumeric | O   | 1-50 | Postal code of the shipping address. |
+| order.shipping\_  <br/>address.country | string | ISO-3166-1 | O   |     | Country code in ISO-3166-1 (alpha-2 code) format. |
+| order.shipping\_  <br/>address.state | string | ISO-3166-2 | C   |     | State or region of the shipping address. Format: ISO 3166-2 minus the country code itself.  <br/>For example: US Illinois = IL  <br/>For Great Britain counties:  <br/>Wiltshire = WI, Aberdeenshire = ABD |
+| order.shipping\_  <br/>phone.country\_code | string | ISO-3166-1 | O   |     | Country code of the shipping address in ISO-3166-1 (alpha-2 code) format. |
+| order.shipping\_  <br/>phone.subscriber\_  <br/>number | string | numeric | O   | 1-50 | Phone number associated with the shipping address. |
+| notifications.return\_url | string | Standard URL Format | O   |     | Merchant URL to return the payer to once they complete payment using the payment method. Returns control of the payer's payment flow to the merchant. The URL also receives the result of the transaction. |
+| notifications.status\_url | string | Standard URL Format | O   |     | Indicates to us where the merchant wants to receive notifications of certain events that occur on our system. For HPP, this is only used when processing APM transactions. |
+
+## Integration references
+To get a deeper understanding the HPP, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview). 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Payment link integration can be completed via our JAVA, PHP, and .NET SDKs.
+    </Card>
+</CardsGroup>
+
+## Testing the HPP
+Our HPP solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for the HPP.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide#hpp" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide#hpp" title="Alternative Payment Methods" icon="piggy-bank">
+        Integrate with alternative and local payment methods.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide#hpp" title="Dynamic Currency Conversion" icon="euro-sign">
+        Let international customers pay in their home currency.
+    </Card>
+</CardsGroup>

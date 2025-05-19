@@ -1,0 +1,145 @@
+---
+title: "Exemptions to SCA"
+subtitle: "Find available exemptions and flag them properly"
+tag: "xml"
+created: "01/28/2025"
+---
+You can flag an exemption request in both the authentication and authorization messages, or you can choose to flag an exemption in only the authorization. Submitting the request in both ensures the best chance that the exemption will be applied, as the Issuer receives much more data about the transaction and the customer. For certain low-risk transactions, however, you may want to flag an exemption in just the authorization message to see if the Issuer will approve the exemption without the use of 3D Secure.
+
+<Infobox>
+When a merchant requests an exemption (whether via authentication or directly in authorization) and it's successfully applied, they'll no longer be able to avail of a liability shift if a fraud-related chargeback occurs.
+</Infobox>
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+## EOS solution
+
+Exemptions optimize frictionless payments for customers and minimize the impact of SCA. With our EOS solution enabled, we perform real-time Transaction Risk Analysis (TRA) automatically and responds with an outcome on exemption eligibility. If the response indicates eligibility, we ensure that the exemption request is flagged appropriately in the authentication message to the customer’s card Issuer. For more information, see [Exemption Optimization Service (EOS)](/ecommerce/risk-management/3ds/exemptions/eos).
+
+### Exemption requested via authentication and authorization
+
+We recommend that merchants include exemption requests in both the authentication and authorization messages (where applicable) to maximize the chances that the exemption will be applied.
+
+<div><Infobox>
+Merchants should first consult with their Acquirer before managing their own exemption messaging.
+</Infobox></div>
+
+In the authentication message, exemptions can be flagged using the Challenge Request Indicator field. For Mastercard transactions the Message Extension fields are also used. For more information on how to submit exemption requests in both messages, see the API Reference for 3D Secure 2 [Authentication](/ecommerce/api/3d-secure-two#3ds2-flows) and [Authorization](/ecommerce/api/3d-secure-two#3ds2-authorization).
+
+<div><Infobox>
+For Mastercard exemption requests, see our [Message Extension](/ecommerce/risk-management/3ds/message-extension) article.
+</Infobox></div>
+
+### Exemption Requested via Authorization only
+For certain low-risk transactions, you may want to flag an exemption in just the authorization message to see if the Issuer will approve the exemption without making the customer complete a challenge. 
+
+
+For more information on how to submit exemption requests in the authorization message, see the API Reference for 3D Secure 2 [Authorization](/ecommerce/api/3d-secure-two#3ds2-authorization).
+
+## Exemption responses
+
+### Authentication and authorization
+
+When applying for an exemption through the authentication request, the response indicates whether the Issuer accepted the exemption. If the exemption was accepted, you’ll receive the below response, depending on the card scheme.
+
+#### Visa
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Exemption Name | ECI | Authentication Value | Transaction Status | Transaction Status Reason | Whitelist Status |
+| Transaction Risk Analysis (TRA) | 07 or blank | Present | AUTHENTICATION\_SUCCESFUL or CHALLENGE\_PREFERENCE\_  <br />ACKNOWLEDGED\_INFORMATIONAL\_ONLY | N/A | N/A |
+| Trusted merchant | 05  | Present | AUTHENTICATION\_SUCCESFUL | N/A | N/A |
+
+#### Mastercard
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Exemption Name | ECI | Authentication Value | Transaction Status | Transaction Status Reason | Whitelist Status |
+| Transaction Risk Analysis (TRA) | 06  | Leading indicator is kN | For Message Version 2.2<br /><br />CHALLENGE\_PREFERENCE\_  <br />ACKNOWLEDGED\_  <br />INFORMATIONAL\_ONLY<br /><br />For Message Version 2.1<br /><br />AUTHENTICATION\_FAILED\* | For Message Version 2.2<br /><br />N/A<br /><br />For Message Version 2.1  <br />SCHEME\_STATUS\_REASON81\* | N/A |
+| Trusted merchant | 02  | Leading indicator is kA | AUTHENTICATION\_SUCCESSFUL | N/A | WHITELISTED\_BY\_  <br />CARDHOLDER |
+| Secure corporate payments | 02  | Leading indicator is kA | AUTHENTICATION\_SUCCESSFUL | N/A | N/A |
+
+\*Only applies to exemptions requested in message version 2.1.
+
+If you receive one of the above responses to your exemption request, you can proceed to authorization and add the corresponding value to the Exempt Status Value field.
+
+|     |     |
+| --- | --- | 
+| Exemption Name | Exempt Status Value |
+| Transaction Risk Analysis (TRA) | TRANSACTION\_RISK\_ANALYSIS |
+| Trusted merchant | TRUSTED\_MERCHANT |
+| Secure corporate payments | SECURE\_CORPORATE\_PAYMENT |
+
+### Authorization only
+
+When applying for an exemption in only the authorization request and the payment is authorized, the result code will be 00. If the exemption request is rejected, the result code will be 111, which is known as a “soft decline.” In this case, you can use our API to proceed with authentication and a second authorization attempt using the stored card information, most likely without the customer’s awareness of the first attempt.
+
+<div><Infobox>
+Because retrying involves one authentication and two authorization messages, you might incur additional transaction fees. For more information, contact your account manager.
+</Infobox></div>
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+
+In this guide, we list what exemptions are available through the Hosted Payment Page (HPP), provide an overview of our Exemption Optimization Service (EOS) solution, and explain what exemption requests merchants can use as well as what responses to expect when an exemption is requested.
+
+## Available exemptions
+
+The HPP works best when an exemption request is flagged in both the authentication and authorization messages. The following table describes available exemptions and indicates whether they are applicable for both request message types. 
+
+|     |     |     |     |
+| --- | --- | --- | --- |   
+| Exemption Name | Description | Ability to Request in Authentication | Ability to Request in Authorization |
+| Low value | Transactions up to 30 EUR (or converted equivalent) can be exempted from SCA, dependent on the following criteria:  <br /><br />\- Up to a maximum of five (5) consecutive transactions  <br /> <br /><br />\- Or, up to a cumulative limit of 100 EUR (or converted equivalent) | N   | Y   |
+| Transaction Risk Analysis (TRA) | The TRA exemption allows for transactions to be exempted from SCA provided a robust risk analysis is performed. Whether it can be applied also depends on fraud thresholds pertaining to your Acquirer.<br /><br />For more information on TRA and our EOS solution, please contact your account manager or support agent. | Y   | Y   |
+| Trusted merchant | Customers can add a merchant to a list of “trusted beneficiaries” held by the Issuer. Subsequent payments to trusted merchants can then be exempted from SCA. | Y   | Y   |
+
+The following table describes transaction types that may qualify as “out of scope” for SCA.
+
+|     |     |
+| --- | --- | 
+| Transaction Type | Description |
+| Recurring | Transaction with fixed amount but no fixed duration in which the merchant continues to process payments with the cardholder’s credentials until the cardholder cancels (for example, a subscription or a gym membership). |
+| Merchant initiated transaction (MIT) | Payment made with a card without the customer actively involved in the checkout process. For example, charging a previously stored card at a later date to pay for fulfilling the rest of a customer’s order.<br /><br />The initial Customer Initiated Transaction (CIT), whether it’s to simply store the card or to charge it, is in scope for SCA and establishes an agreement for future MITs.<br /><br />MITs must be flagged correctly in order to comply with scheme rules (see [Merchant-Initiated Transactions](/node/513 "Merchant-Initiated Transactions")). |
+| Mail order / telephone order (MOTO) | A type of card-not-present transaction in which payment is processed via telephone or mail. If flagged properly, MOTO transactions can qualify as out of scope. |
+
+## EOS solution
+Exemptions optimize frictionless payments for customers and minimize the impact of SCA. With our EOS solution enabled, Global Payments performs real-time Transaction Risk Analysis (TRA) automatically and responds with an outcome on exemption eligibility. If the response indicates eligibility, we ensure that the exemption request is flagged appropriately in the authentication message to the customer’s card Issuer. For more information, see [Exemption Optimization Service (EOS)](/ecommerce/risk-management/3ds/exemptions/eos).
+
+### Exemption flagged via authentication and authorization
+We recommend that merchants include exemption requests in both the authentication and authorization messages (where applicable) to maximize the chances that the exemption will be applied.
+
+<div><Infobox>
+Merchants should first consult with their Acquirer before managing their own exemption messaging.
+</Infobox></div>
+
+Using the HPP, exemptions can be flagged using the Challenge Request Indicator field. For Mastercard transactions, the Message Extension fields are also used. For more information on how to submit exemption requests with the HPP, see the HPP Reference for [3D Secure 2](/ecommerce/hpp-reference/3d-secure-two).
+
+<div><Infobox>
+For Mastercard exemption requests, see our [Message Extension](/ecommerce/risk-management/3ds/message-extension) article.
+</Infobox></div>
+
+### Exemption requested via authorization only
+
+Using the HPP, an exemption can be requested using only the authorization message. 
+
+To process this authorization-only exemption request, you must process the transaction on a sub-account that is not 3D Secure enabled and include the `HPP_EXEMPT_STATUS` field in the POST to the HPP.
+
+## Exemption responses
+
+### Authentication and authorization
+If the Issuer accepts the exemption request, the HPP will process the authorization with the appropriate exemption flag included. If the subsequent authorization is successful, the result code will be 00.
+
+If the Issuer rejects the exemption request, the 3D Secure request will be processed as normal, and the HPP will proceed to authorization based on the outcome of authentication.
+
+### Authorization only (and retry logic)
+
+If the Issuer accepts the exemption request and the payment is authorized, the result code will be 00. If the exemption request is rejected, the result code will be 111, which is known as a “soft decline.” In this case, your application or website will require retry logic to perform 3D Secure 2 authentication and a second authorization attempt. For a second authorization, the customer would need to enter their card details again.
+
+<div><Infobox>
+Because retry logic involves one authentication and two authorization messages, you might incur additional transaction fees. For more information, contact your account manager.
+</Infobox></div>
+
+   </Tab>
+    
+</Tabs>

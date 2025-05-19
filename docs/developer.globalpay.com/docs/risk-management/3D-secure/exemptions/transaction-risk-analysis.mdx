@@ -1,0 +1,766 @@
+---
+title: 'Transaction Risk Analysis'
+search_results: 'Global Payments - Exemptions - Transaction Risk Analysis'
+subtitle: 'Receive real-time customer exemption eligibilty.'
+tag: 'rest'
+created: '19/09/2024'
+---
+Our Exemption Optimization Service (EOS) can perform real-time Transaction Risk Analysis (TRA) and respond with an outcome on exemption eligibility. Once eligibility is confirmed, the exemption can be requested from the Issuer as part of both the 3D Secure 2 authentication and payment authorization, or just in the payment authorization alone.
+
+Submitting the exemption request in both the 3D Secure 2 authentication and payment authorization ensures the best chance that the exemption will be applied. This use case is what we cover in this article, but we also show the payment authorization-only flow.
+
+## Both authentication and authorization
+In this example, we process a 3D Secure 2 authentication using our 3DS Server. This triggers the following actions:
+* TRA is performed as part of the authentication process. EOS responds with one of the following outcomes:
+    * Apply Exemption
+    * Continue
+    * Force Secure
+    * Block
+* If Apply Exemption is returned, the 3DS Server will process the authentication with the Issuer and include the request for the TRA exemption.
+* Next, the Issuer analyzes the transaction and determines if the TRA exemption can be applied. The Issuer responds with one of the following outcomes:
+    * Accepts the TRA exemption request; the authentication is frictionless
+    * Declines the TRA exemption request but determines that another exemption can be applied; the authentication is frictionless
+    * Declines the TRA exemption request and determines that no other exemption can be applied; the authentication requires a challenge
+
+### Authentication message
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/authentications/AUT_79c5a132-e32b-466a-97f0-ceb9851e2374/initiate' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer 29rMFjGRYiyBsPffaerIg6fuT9Lk' \
+--header 'Content-Type: application/json' \
+--data '{
+    "three_ds": {
+        "source": "BROWSER"
+    },
+    "account_id": "TRA_27c901760029495f813afbb0dab197ef",
+    "channel": "CNP",
+    "country": "IE",
+    "method_url_completion_status": "YES",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4012001038488884",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        }
+    },
+    "order": {
+        "time_created_reference": "2019-04-26T10:19:32.552327Z",
+        "amount": "1001",
+        "currency": "EUR",
+        "reference": "3400dd37-101d-4940-be15-3c963b6109b3",
+        "address_match_indicator": "false",
+        "shipping_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        }
+    },
+    "payer": {
+        "billing_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        },
+        "mobile_phone": {
+            "country_code": "44",
+            "subscriber_number": "123456789"
+        }
+    },
+    "browser_data": {
+        "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "color_depth": "TWENTY_FOUR_BITS",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "challenge_window_size": "FULL_SCREEN",
+        "timezone": "0",
+        "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+    },
+    "merchant_contact_url": "https://www.example.com/about"
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setCountry("IEGB");
+config.setChallengeNotificationUrl("https://www.example.com/ChallengeNotificationUrl");
+config.setMethodNotificationUrl("https://www.example.com/MethodUrl");
+config.setMerchantContactUrl("https://www.example.com/AboutUrl");
+config.setEnableLogging(true);
+
+ServicesContainer.configureService(config);
+
+// Create card data
+CreditCardData card = new CreditCardData();
+card.setNumber("4012001038488884";
+card.setExpMonth(DateTime.now().getMonthOfYear());
+card.setExpYear(DateTime.now().getYear() + 1);
+card.setCardHolderName("John Smith");
+
+// Shipping address
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("Apartment 852");
+shippingAddress.setStreetAddress2("Complex 741");
+shippingAddress.setStreetAddress3("no");
+shippingAddress.setCity("Chicago");
+shippingAddress.setPostalCode("50001");
+shippingAddress.setState("IL");
+shippingAddress.setCountryCode("840");
+
+// Billing address
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Apartment 852");
+billingAddress.setStreetAddress2("Complex 741");
+billingAddress.setStreetAddress3("no");
+billingAddress.setCity("Chicago");
+billingAddress.setPostalCode("50001");
+billingAddress.setState("IL");
+billingAddress.setCountryCode("840");
+
+// Browser data
+BrowserData browserData = new BrowserData();
+browserData.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8");
+browserData.setColorDepth(ColorDepth.TwentyFourBit);
+browserData.setIpAddress("123.123.123.123");
+browserData.setJavaEnabled(true);
+browserData.setLanguage("en");
+browserData.setScreenHeight(1080);
+browserData.setScreenWidth(1920);
+browserData.setChallengeWindowSize(ChallengeWindowSize.Windowed_600x400);
+browserData.setTimezone("0");
+browserData.setUserAgent("Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
+try {
+   String orderID = UUID.randomUUID().toString();;
+
+   ThreeDSecure secureEcom = new ThreeDSecure();
+   secureEcom.setServerTransactionId("AUT_eb5dce75-99fa-4258-9ab0-69b6377ad935");
+
+   ThreeDSecure response =
+           Secure3dService
+               .initiateAuthentication(card, secureEcom)
+               .withAmount(new BigDecimal(10.01))
+               .withCurrency("EUR")
+               .withAuthenticationSource(AuthenticationSource.Browser)
+               .withMethodUrlCompletion(MethodUrlCompletion.Yes)
+               .withAddressMatchIndicator(false)
+               .withReferenceNumber(orderID)
+               .withOrderCreateDate(DateTime.now())
+               .withAddress(shippingAddress, AddressType.Shipping)
+               .withAddress(billingAddress, AddressType.Billing)
+               .withMobileNumber("44", "123456789")
+               .withBrowserData(browserData)
+               .execute();
+}
+catch (GatewayException ex)
+{
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+            config.AppId = "AppId";
+            config.AppKey = "AppKey";
+            config.Country = "IE";
+            config.ChallengeNotificationUrl = "https://www.example.com/ChallengeNotificationUrl";
+            config.MethodNotificationUrl = "https://www.example.com/MethodUrl";
+            config.MerchantContactUrl = "https://www.example.com/AboutUrl";
+            config.RequestLogger = new RequestConsoleLogger();
+            config.EnableLogging = true;            
+
+            ServicesContainer.ConfigureService(config);
+
+            // Create card data
+            CreditCardData card = new CreditCardData();
+            card.Number = "4012001038488884";
+            card.ExpMonth = DateTime.Now.Month;
+            card.ExpYear = DateTime.Now.Year + 1;
+            card.CardHolderName = "John Smith";
+
+ // Shipping address
+            Address shippingAddress = new Address();
+            shippingAddress.StreetAddress1 = "Apartment 852";
+            shippingAddress.StreetAddress2 = "Complex 741";
+            shippingAddress.StreetAddress3 = "no";
+            shippingAddress.City = "Chicago";
+            shippingAddress.PostalCode = "50001";
+            shippingAddress.State = "IL";
+            shippingAddress.CountryCode = "840";
+
+
+            // Billing address
+            Address billingAddress = new Address();
+            billingAddress.StreetAddress1 = "Apartment 852";
+            billingAddress.StreetAddress2 = "Complex 741";
+            billingAddress.StreetAddress3 = "no";
+            billingAddress.City = "Chicago";
+            billingAddress.PostalCode = "50001";
+            billingAddress.State = "IL";
+            billingAddress.CountryCode = "840";
+
+            // Browser data
+            BrowserData browserData = new BrowserData();
+            browserData.AcceptHeader = "text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8";
+            browserData.ColorDepth = ColorDepth.TWENTY_FOUR_BITS;
+            browserData.IpAddress = "123.123.123.123";
+            browserData.JavaEnabled = true;
+            browserData.Language = "en";
+            browserData.ScreenHeight = 1080;
+            browserData.ScreenWidth = 1920;
+            browserData.ChallengeWindowSize = ChallengeWindowSize.WINDOWED_600X400;
+            browserData.Timezone = "0";
+            browserData.UserAgent =
+                "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36";
+            try
+            {
+                var orderID = Guid.NewGuid().ToString();
+
+                ThreeDSecure secureEcom = new ThreeDSecure();
+                secureEcom.ServerTransactionId = "AUT_eb5dce75-99fa-4258-9ab0-69b6377ad935";
+
+                var response = Secure3dService.InitiateAuthentication(card, secureEcom)
+                                .WithAmount(10.01m)
+                                .WithCurrency("EUR")
+                                .WithAuthenticationSource(AuthenticationSource.BROWSER)
+                                .WithMethodUrlCompletion(MethodUrlCompletion.YES)
+                                .WithAddressMatchIndicator(false)
+                                .WithReferenceNumber(orderID)
+                                .WithOrderCreateDate(DateTime.Now)
+                                .WithAddress(shippingAddress, AddressType.Shipping)
+                                .WithAddress(billingAddress, AddressType.Billing)
+                                .WithMobileNumber("44", "123456789")
+                                .WithBrowserData(browserData)
+                                .Execute();
+
+            }
+            catch (GatewayException ex)
+            {
+                // TODO: Add your exception handling here
+
+            }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->country = 'IE';
+$config->channel = Channel::CardNotPresent;
+$config->challengeNotificationUrl = 'https://ensi808o85za.x.pipedream.net/';
+$config->methodNotificationUrl = 'https://ensi808o85za.x.pipedream.net/';
+$config->merchantContactUrl = 'https://enp4qhvjseljg.x.pipedream.net/';
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->number = '4012001038488884';
+$card->expMonth = '09';
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cardHolderName = "James Mason";
+
+$shippingAddress = new Address();
+$shippingAddress->streetAddress1 = "Apartment 852";
+$shippingAddress->streetAddress2 = "Complex 741";
+$shippingAddress->streetAddress3 = "House 963";
+$shippingAddress->city = "Chicago";
+$shippingAddress->postalCode = "50001";
+$shippingAddress->state = 'IL';
+$shippingAddress->countryCode = "840";
+
+$billingAddress = new Address();
+$billingAddress->streetAddress1 = "Apartment 852";
+$billingAddress->streetAddress2 = "Complex 741";
+$billingAddress->streetAddress3 = "House 963";
+$billingAddress->city = "Chicago";
+$billingAddress->state = "IL";
+$billingAddress->postalCode = "50001";
+$billingAddress->countryCode = "840";
+
+$browserData = new BrowserData();
+$browserData->acceptHeader = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8';
+$browserData->colorDepth = ColorDepth::TWENTY_FOUR_BITS;;
+$browserData->ipAddress =  '123.123.123.123';
+$browserData->javaEnabled = true;
+$browserData->javaScriptEnabled = true;
+$browserData->language = "en-US";
+$browserData->screenHeight = 1080;
+$browserData->screenWidth = 1920;
+$browserData->challengWindowSize = ChallengeWindowSize::FULL_SCREEN;
+$browserData->timeZone = "0";
+$browserData->userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36";
+
+$orderId = GenerationUtils::generateOrderId();
+
+$threeDS = new ThreeDSecure();
+$threeDS->serverTransactionId = 'AUT_eb5dce75-99fa-4258-9ab0-69b6377ad935';
+
+$response = Secure3dService::initiateAuthentication($card, $threeDS)
+    ->withAmount('10.01')
+    ->withCurrency('EUR')
+    ->withAuthenticationSource(AuthenticationSource::BROWSER)
+    ->withMethodUrlCompletion(MethodUrlCompletion::YES)
+    ->withAddressMatchIndicator(false)
+    ->withReferenceNumber($orderId)
+    ->withOrderCreateDate(date('Y-m-d H:i:s'))
+    ->withAddress($shippingAddress, AddressType::SHIPPING)
+    ->withAddress($billingAddress, AddressType::BILLING)
+    ->withMobileNumber('44', '123456789')
+    ->withBrowserData($browserData)
+    ->execute();
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "AUT_79c5a132-e32b-466a-97f0-ceb9851e2374",
+    "time_created": "2024-11-28T11:51:17.562Z",
+    "time_last_updated": "2024-11-28T11:50:55.803Z",
+    "transaction_type": "SALE",
+    "status": "CHALLENGE_REQUIRED",
+    "channel": "CNP",
+    "amount": "1999",
+    "currency": "GBP",
+    "country": "IE",
+    "source": "BROWSER",
+    "three_ds": {
+        "server_trans_ref": "79c5a132-e32b-466a-97f0-ceb9851e2374",
+        "acs_trans_ref": "13a7a360-ad7f-41ef-8f90-24187489cd8a",
+        "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+        "ds_trans_ref": "444a15b7-aa2a-4501-b157-33efad74df4e",
+        "eci": "",
+        "liability_shift": "",
+        "status": "CHALLENGE_REQUIRED",
+        "status_reason": "",
+        "authentication_source": "BROWSER",
+        "message_version": "2.2.0",
+        "authentication_value": "",
+        "cardholder_response_info": "",
+        "message_category": "PAYMENT_AUTHENTICATION",
+        "redirect_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/13a7a360-ad7f-41ef-8f90-24187489cd8a",
+        "acs_challenge_request_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/13a7a360-ad7f-41ef-8f90-24187489cd8a",
+        "challenge_status": "MANDATED",
+        "challenge_model": "OUT_OF_BAND_CHALLENGE",
+        "session_data_field_name": "threeDSSessionData",
+        "message_type": "creq",
+        "challenge_value": "ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjIuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICI3OWM1YTEzMi1lMzJiLTQ2NmEtOTdmMC1jZWI5ODUxZTIzNzQiLAogICJhY3NUcmFuc0lEIiA6ICIxM2E3YTM2MC1hZDdmLTQxZWYtOGY5MC0yNDE4NzQ4OWNkOGEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNSIKfQ"
+    },
+    "notifications": {
+        "challenge_return_url": "https://www.example.com/ChallengeNotification"
+    },
+    "action": {
+        "id": "ACT_BjXCBMGXIg9hs9fm4KIeMj71TxnqHk",
+        "type": "INITIATE",
+        "time_created": "2024-11-28T11:51:17.562Z",
+        "result_code": "SUCCESS",
+        "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+</CodeGroup>
+### TRA outcomes
+The following table describes the various outcomes and actions that can occur based on the EOS response. 
+| Outcome    | Description | 3DS Server Action |
+| -------- | ------- | ------- |
+| Apply <br/> Exemption | Transaction was approved for the TRA exemption. | Includes the appropriate exemption request flag in the authentication message to the Issuer. |
+| Continue | Transaction was not approved for an exemption but was deemed to be relatively low risk. | Proceeds with standard 3D Secure authentication. In this scenario, the Issuer can still choose to apply the exemption. |
+| Force <br/> Secure | Transaction was not approved for an exemption and was deemed to be high risk. In this scenario, the Issuer should always apply a Strong Customer Authentication (SCA) challenge to authenticate the cardholder. | Proceeds with 3D Secure authentication. <br/> Includes the Challenge Mandated flag in the message to the Issuer. |
+| Block | Transaction was identified as very high risk or known fraud. | Does not proceed with 3D Secure authentication. |
+
+### Authorization message
+Once the exemption is accepted by the Issuer, you can proceed to authorization. In our example, we include the authentication data in the message, along with the relevant exemption.
+
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer vJCIFsAMxW9PgVBKz91MoOSMvw9p' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "25576071",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "id": "AUT_1ab42d76-5f0e-4d4b-b3bc-72de7071d61d",
+            "three_ds": {
+               "exempt_status": "TRANSACTION_RISK_ANALYSIS"
+            }
+        }
+    }
+}'
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_p2fjfkU3mfWrRoQvSd6Omskep5SWxY_25576071",
+    "time_created": "2022-05-06T17:08:33.816Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "25576071",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "ND6ZF7rk03RaqrIJ",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1086726",
+    "action": {
+        "id": "ACT_p2fjfkU3mfWrRoQvSd6Omskep5SWxY",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-06T17:08:33.816Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+
+## Sandbox testing
+In the Production environment, the TRA outcome is determined by the overall analysis of the provided transaction data. However, for Sandbox testing, you can trigger an outcome by setting the transaction amount value within a specific range, as indicated in the following table.
+
+### TRA outcomes
+The following table describes the various outcomes and actions that can occur based on the EOS response. 
+| Outcome    | Amount Trigger <br/> EUR (or converted equivalent) | 3DS Server Action |
+| -------- | ------- | ------- |
+| Apply <br/> Exemption | amount \<= 250 | Populates the outbound authentication message with the appropriate exemption flag. |
+| Continue | 250 \< amount \<= 500 | Processes the 3D Secure authentication as normal. |
+| Force <br/> Secure | 500 \< amount \<= 750 | Populates the outbound authentication message indicating that a challenge is mandated. This will always force a challenge to be applied, regardless of the test card used. |
+| Block | 750 \< amount | Blocks the transaction and returns the appropriate response. |
+<br/>
+<Infobox>
+    In Sandbox, the Access Control Server simulator does not accept the exemption request and processes the authentication as standard. The Electronic Commerce Indicator and Transaction Status values will remain as described in our [Test Cards](/resources/test-cards) article.
+</Infobox>
+
+## Authorization only
+In this example, we call the EOS directly to perform TRA and request the associated exemption from the Issuer in the authorization message. This triggers the following actions:
+* The EOS responds with one of the following outcomes:
+    * Apply Exemption
+    * Continue
+    * Force 
+    * Block
+* If Apply Exemption is returned, you can proceed directly to authorization and include the exemption request in the message.
+* The Issuer analyzes the transaction and determines if the TRA exemption can be applied. The Issuer responds with one of the following outcomes:
+    * Accepts the TRA exemption request; the authorization continues as normal
+    * Declines the TRA exemption request but determines that another exemption can be applied; the authorization continues as normal
+    * Declines the TRA exemption request and determines that no other exemption can be applied; SCA is required, and a Soft Decline message is returned
+
+### Exemption request message
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/risk-assessments' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "source": "BROWSER",
+    "account_id": "RAA_577f0b7a91ba4dd8b8c0178eee5a973f",
+    "country": "IE",
+    "order": {
+        "amount": 100,
+        "currency": "EUR",
+        "reference": "8525aa58-e47b-4d04-88a2-4d589b2c78c1"
+    },
+    "payment_method": {
+        "name": "James Mason",
+        "card": {
+            "brand": "VISA",
+            "number": "4012001038488884",
+            "expiry_month": "12",
+            "expiry_year": "25"
+        }
+    },
+    "browser_data": {
+        "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "language": "en-US",
+        "ip": "123.123.123.123"
+    }
+}'
+```
+</Code>
+   
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id":"RAS_Wrr413lAtzVWmuS5W3LcIX72cQDyVn",
+   "time_created":"2022-04-11T09:22:40.850Z",
+   "status":"ACCEPTED",
+   "amount":"100",
+   "currency":"EUR",
+   "merchant_id":"MER_c4c0df11039c48a9b63701adeaa296c3",
+   "merchant_name":"Sandbox_merchant_2",
+   "account_id":"RAA_577f0b7a91ba4dd8b8c0178eee5a973f",
+   "account_name":"exemptions",
+   "reference":"8525aa58-e47b-4d04-88a2-4d589b2c78c1",
+   "result":"Apply Exemption",
+   "message":"Apply Exemption",
+   "payment_method":{
+      "card":{
+         "masked_number_last4":"XXXXXXXXXXXX8884",
+         "brand":"VISA",
+         "bin":"",
+         "bin_country":"",
+         "account_type":"",
+         "issuer":""
+      }
+   },
+   "raw_response":{
+      "platform":"EOS",
+      "data":{
+         "action_applied":"APPLY_EXEMPTION",
+         "transaction_id":"3400dd37-101d-4940-be15-3c963b6109b3",
+         "request_id":"dab03eb5-a34a-431f-89c3-a2c45fba530b",
+         "matched_rule":{
+            "id":42831,
+            "title":"Apply Exemption",
+            "action_applied":"APPLY_EXEMPTION"
+         }
+      }
+   },
+   "action":{
+      "id":"ACT_Wrr413lAtzVWmuS5W3LcIX72cQDyVn",
+      "type":"ASSESS",
+      "time_created":"2022-04-11T09:22:40.850Z",
+      "result_code":"SUCCESS",
+      "app_id":"U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name":"dev_portal_demo"
+   }
+}
+```
+</Code>   
+
+### TRA outcomes
+The following table describes the various outcomes and actions that can occur based on the EOS response. It also includes our recommended actions. 
+| Outcome    | Description | Recommended Action |
+| -------- | ------- | ------- |
+| Apply <br/> Exemption | Transaction was approved for the TRA exemption. | 	Include the appropriate exemption request flag in the authorization message. |
+| Continue | Transaction was not approved for an exemption but was deemed to be relatively low risk. | Proceed with a standard 3D Secure authentication with the 3DS Server. |
+| Force <br/> Secure | Transaction was not approved for an exemption and was deemed to be high risk. In this scenario, the Issuer should always apply a SCA challenge to authenticate the cardholder. | Proceeds with 3D Secure authentication. <br/> Include the Challenge Mandated flag in the message to the 3DS Server. <br/> For more information, see our [3D Secure](/docs/risk-management/3D-secure/overview) documentation. |
+| Block | The transaction was identified as very high risk or known fraud. | Halt the transaction and take appropriate action. |
+
+ ### Authorization message
+ In this example, EOS returned Apply Exemption, so we proceed directly to authorization and bypass 3D Secure authentication. As noted earlier, requesting the exemption in both the authentication and authorization messages is best practice; however, there may be specific use cases that call for authorization only.
+   
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer vJCIFsAMxW9PgVBKz91MoOSMvw9p' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "25576071",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "three_ds": {
+               "exempt_status": "TRANSACTION_RISK_ANALYSIS"
+            }
+        }
+    }
+}'
+```
+</Code>
+   
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_p2fjfkU3mfWrRoQvSd6Omskep5SWxY_25576071",
+    "time_created": "2022-05-06T17:08:33.816Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "25576071",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "ND6ZF7rk03RaqrIJ",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1086726",
+    "action": {
+        "id": "ACT_p2fjfkU3mfWrRoQvSd6Omskep5SWxY",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-06T17:08:33.816Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+
+## Soft decline
+### What is a soft decline?
+A soft decline is a response we get when a customers issuing bank are not willing to provide an SCA exemption to the transaction you're processing.
+
+By requesting an exemption in the authorization only, the Issuer might reject the exemption request and respond with what’s known as a *soft decline*: result code **111**. If you receive a soft decline, you can then proceed with standard 3D Secure authentication and a second authorization.
+   
+<Infobox type="danger">
+    The examples used in this guide involve one authentication message and two authorization messages. In using this logic, you might incur additional transaction fees. For more information, contact your account manager.
+</Infobox>
+   
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_aUZq8cKq57ur5RyiI9PQwQJheFxVXI_58657811",
+    "time_created": "2022-05-09T12:58:04.224Z",
+    "type": "SALE",
+    "status": "DECLINED",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "",
+    "currency": "",
+    "country": "US",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "58657811",
+    "payment_method": {
+        "result": "111",
+        "message": "[ test system ] Strong Customer Authentication Required",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX0091",
+            "authcode": "",
+            "brand_reference": "cl3De8e1TAQzttFT",
+            "brand_time_created": "",
+            "cvv_result": "NOT_MATCHED",
+            "avs_address_result": "NOT_CHECKED",
+            "avs_postal_code_result": "NOT_CHECKED",
+            "avs_action": "",
+            "provider": {
+                "result": "111",
+                "cvv_result": "N",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_aUZq8cKq57ur5RyiI9PQwQJheFxVXI",
+        "type": "PREAUTHORIZE",
+        "time_created": "2022-05-09T12:58:04.224Z",
+        "result_code": "DECLINED",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>

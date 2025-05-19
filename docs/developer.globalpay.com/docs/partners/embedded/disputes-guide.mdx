@@ -1,0 +1,180 @@
+---
+title: 'Disputes Management'
+search_results: 'Embedded Partners - Disputes Management'
+subtitle: 'Learn how to automate the reporting and management of disputes'
+tag: 'rest'
+created: '06/08/2024'
+---
+Using our Disputes API allows you to automate the reporting and management of transaction disputes. This includes the ability to challenge disputes.
+
+In this guide for partners, you’ll first learn a little about what a dispute is. We then provide steps that show you how to get a dispute, receive a dispute notification via webhook, and challenge a dispute.
+
+## What is a dispute?
+A dispute (also known as a _chargeback_) occurs when a transaction’s validity is questioned and can be raised by the cardholder or the card issuer. In either scenario, the issuer sends the dispute to the acquirer to resolve. In some cases, the merchant needs to provide evidence that the transaction is legitimate.
+
+When a merchant receives the dispute, they can challenge it by sending evidence to prove the transaction is legitimate. We review the evidence to ensure it meets the necessary requirements before sending it to the issuer. The issuer then reviews the evidence provided and makes a decision on the outcome of the dispute. 
+
+## Get a dispute
+As a partner, you have the ability to get a list of disputes raised against one of your merchants. The data only goes back 2 years, and the date range must be within 31 days. A 30-minute waiting time period is required for any report where the same date range and merchant applies.
+
+#### Sample request
+<Code id="json" title="JSON" language="json" active>
+  ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/merchants/MER_2fe98adf1b084ea98b2bea6c13822718/accounts/FMA_9767c398bdd345c0a1b7f3edbb419ac4/disputes?from_time_created=2024-03-01&to_time_created=2024-03-29' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer eM1BIwT2CAr1MpC2VlwMvhNXvmy4' \
+--header 'Content-Type: application/json' \
+  ```
+</Code>
+
+#### Sample response
+<Code id="json" title="JSON" language="json" active>
+  ```
+{
+    "total_record_count": 1,
+    "current_page_size": 1,
+    "merchant_id": "{MER_id}",
+    "merchant_name": "merchant name",
+    "account_id": "{FMA_id}",
+    "account_name": "account name",
+    "filter": {
+        "from_time_created": "2023-02-18T00:00:00.000Z",
+        "to_time_created": "2023-03-20T23:59:59.999Z"
+    },
+    "paging": {
+        "page_size": 2,
+        "page": 1
+    },
+    "disputes": [
+        {
+            "id": "{DIS_id}",
+            "status": "WITH_MERCHANT",
+            "stage": "CHARGEBACK",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "USD",
+            "reason_code": "",
+            "reason_description": "No Valid Authorization",
+            "transaction": {
+                "id": "TRN_CElICyHklysk1hth3JsEqMlQPRPrjm",
+                "time_created": "2021-02-08T15:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "USD",
+                "reference": "2801207a017M"
+            },
+            "link": {
+                "rel": "challenge",
+                "href": "https://apis.sandbox.globalpay.com/ucp/merchants/MER_f582a258fdc947e4983d4eb682de18c8/transactions/TRN_CElICyHklysk1hth3JsEqMlQPRPrjm/challenge"
+            }
+        }
+    ],
+    "action": {
+        "id": "ACT_Xo6RjwmmPwO12wA1cRUr5hqV1SnA2k",
+        "type": "DISPUTE_LIST",
+        "time_created": "2021-03-10T15:41:33.961Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+  ```
+</Code>
+
+## Receive a dispute notification (webhook)
+In the event that a dispute is initiated, a webhook notification is sent.
+
+#### Sample notification
+<Code id="json" title="JSON" language="json" active>
+  ```
+{
+    "merchant_id": "MER_2fe98adf1b084ea98b2bea6c13822718",
+    "id": "TRN_VsycrvUsGjauHNY3sPWkK6x4zbDprr",
+    "disputes": {
+        "amount": "$670.74",
+        "fee_amount_decimal": "$0.00",
+        "status": "WITH_MERCHANT",
+        "reason_description": "Cardholder Does Not Recognize - Potential Fraud"
+    },
+    "action": {
+        "id": "ACT_12HNTJbo2t3pKTitzhCHjjNs2QqfZ7",
+        "type": "DISPUTE_INITIATED_STATUS_NOTIFICATION",
+        "time_created": "2024-05-16T16:00:37.778Z",
+        "result_code": "SUCCESS",
+        "app_id": "Q5hHBBzb54MnRT4aNbOnezZO9Afzl27q",
+        "app_name": "Sample_App"
+    }
+}
+ ```
+</Code>
+
+## Challenge a dispute
+If a merchant wants to challenge a dispute, they can provide documentation proving the transaction is valid. 
+
+#### Sample request
+For complete details on API requests and responses, see [POST challenge](/api/disputes#/Challenge/challengeDispute) in the API Explorer.
+
+<Code id="json" title="JSON" language="json" active>
+  ```
+curl --location –request POST ‘https://apis.sandbox.globalpay.com/ucp/merchants/MER_2fe98adf1b084ea98b2bea6c13822718/transactions/TRN_VsycrvUsGjauHNY3sPWkK6x4zbDprr/challenge’ \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer A4hPJEYQnARjtNLnsHgOkz2e6yzU' \
+--header 'Content-Type: application/json' \
+\
+--data-raw '{
+    "documents": {
+        "b64_content": "65196581=",
+        "file_format": "DOC"
+    }
+}
+ ```
+</Code>
+
+#### Sample response
+<Code id="json" title="JSON" language="json" active>
+  ```
+{
+    "id": "TRN_VsycrvUsGjauHNY3sPWkK6x4zbDprr",
+    "dispute_status": "UNDER_REVIEW",
+    "status": "SUCCESS",
+    "document_name": "DISPUTE_CHALLENGE_718578627_3",
+    "action": {
+        "id": "ACT_qJWBdlyXNrlZN5IkIAhZbzGnd8qgvW",
+        "type": "DOCUMENT_UPLOAD",
+        "time_created": "2021-12-21T17:23:42.019Z",
+        "result_code": "SUCCESS",
+        "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+        "app_name": "demo_app"
+    }
+}
+ ```
+</Code>
+
+## Integration references
+To get a deeper understanding of our Disputes solution, we recommend that you use our provided integration references for API integrations. For the full detailed API specification, see the [API Explorer](/api/overview). 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+    <Card type="with_icon" link="/api/disputes" title="API /disputes" icon="window">
+        Take a look at our Disputes endpoint.
+    </Card>
+</CardsGroup>
+
+## Testing your integration
+Our Disputes solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

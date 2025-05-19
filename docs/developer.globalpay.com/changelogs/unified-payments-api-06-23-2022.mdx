@@ -1,0 +1,51 @@
+---
+title: "Unified Payments API - June 23, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "06-23-2022"
+---
+
+<ReleaseNoteSection title="Enhancements to Pay by Link / Link API">
+    <ReleaseNoteDetail type="added">
+        * Link Id is now returned in the Initiate response in the Authentication resource
+        * Link Id is now returned in the response to the GET transaction and GET transaction list, if the transaction was created through Pay by Link
+        * \[CHANGED\] The length of the Link URL was reduced to a maximum of 70 characters
+        * \[REMOVED\] Active field. The Active field is now incorporated into the Status field. Status of a link can now be:
+            * ACTIVE
+            * INACTIVE
+            * EXPIRED
+            * PAID
+            * CLOSED
+        * \[CHANGED\] The Usage Count field indicates the number of successful transactions processed through a Pay by Link
+        * With a single platform and transaction account, Pay by Links can now be created with multiple currencies
+        * Merchants can now see trn_id and link_id as part of the cancel_url and return_url
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Mexico Cards CARNET and Privada">
+    <ReleaseNoteDetail type="added">
+        * Enhancement to our supported card type: Mexico cards CARNET and Privada
+        * CARNET and Privada support for Mexican Nuevo Peso (MXN) currency transactions
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Support for Mexico Installment Transactions">
+    <ReleaseNoteDetail type="added">
+        * Support for Mexico Installment transactions for Card Present and Card Not Present - Mexico
+        * New installments object in the request and response for Create Transactions request:
+            * installment.program
+            * installment.term
+            * installment.term.id
+            * installment.term.time_unit
+            * installment.term.time_unit_number
+            * installment.count
+            * installment.mode
+            * installment.grace_period_count
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Digital Wallet Support for Card Not Present (Asia Pacific)">
+    <ReleaseNoteDetail type="added">
+        * Support for encrypted payment token in Create Transaction request for capture modes AUTO and LATER
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

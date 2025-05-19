@@ -1,0 +1,2402 @@
+---
+title: '3D Secure - Browser Authentication'
+search_results: 'Enhance security with stronger authentication for online payments.'
+subtitle: 'Add 3D Secure authentication to reduce fraud risk'
+tag: 'rest'
+created: '06/08/2024'
+---
+3D Secure (3DS) is the authentication protocol used by card brands, such as Visa and Mastercard, to enable merchants to gain protection from fraud in a card-not-present environment and to comply with European strong customer authentication (SCA) regulations set in <Tooltip content="Payment Services Directive 2">PSD2</Tooltip>.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Set up notification URLs](#set-up-notification-urls)
+
+### Set up notification URLs
+Before testing or implementing 3D Secure 2, you first need to set up two endpoint URLs in your application or website so that data and event notifications can be received from the issuer’s ACS. Each endpoint must be configured to accept an HTTP POST with Base64 encoded values.
+
+The issuer’s ACS uses notifications at two important points during authentication:
+
+* Method URL notification – Informs your application or website that the issuer’s ACS completed device profiling of the browser (if supported by the issuer).
+* Challenge notification – Informs your application or website that the challenge presented to the customer on the issuer’s ACS is complete. The POST also contains key authentication data, including whether the customer completed the challenge successfully or not.
+
+<Infobox>
+The following guides assume you will be using the 3DS library as part of your integration. 
+
+The globalpayments-3ds.js library does not have a CDN. The merchant can install it via npm (npm i globalpayments-3ds), then they can find the final build in node_modules/globalpayments-3ds/dist/ - this needs to be added somewhere publicly available and referenced in the scripts below.
+</Infobox>
+
+#### Sample Method URL Notification endpoint
+We consume the POST sent by the issuer’s ACS, decode it, and prepare the string to be returned to the client side and return it to the client as HTML.
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java" active>
+```
+/*
+ * this sample code is not specific to the Global Payments SDK and is intended as a simple example and
+ * should not be treated as Production-ready code. You'll need to add your own message parsing and 
+ * security in line with your application or website
+ */
+@RequestMapping("/methodUrlResponse")
+public void consumeMethodUrlResponse(String threeDSMethodData) throws UnsupportedEncodingException {
+
+   // sample ACS response for Method URL Response Notification
+   // String threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+   try {
+      byte[] decodedBytes = Base64.getDecoder().decode(threeDSMethodData);
+      String methodUrlResponseString = new String(decodedBytes);
+      Gson gson = new Gson();
+
+      // map to a custom class MethodUrlResponse
+      MethodUrlResponse response = gson.fromJson(methodUrlResponseString, MethodUrlResponse.class);
+
+      String threeDSServerTransID = response.getThreeDSServerTransID(); // // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+
+      // TODO: notify client-side that the Method URL step is complete
+      // optional to return decoded JSON string, see below
+   }
+
+   catch(Exception e) {
+      // TODO: add your exception handling here
+   }
+}
+	
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleMethodNotification(threeDSServerTransID);
+   <!-- e.g. threeDSServerTransID -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385"} -->
+</script>
+</body>
+</html>
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+/*
+ * this sample code is not specific to the Global Payments SDK and is intended as a simple example and
+ * should not be treated as Production-ready code. You'll need to add your own message parsing and 
+ * security in line with your application or website
+ */
+var threDSMethodData = Request.Form["threeDSMethodData"];
+
+// sample ACS response for Method URL Response Notification
+// threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+try
+{
+   byte[] data = Convert.FromBase64String(threeDSMethodData);
+   string methodUrlResponseString = Encoding.UTF8.GetString(data);
+
+   // map to a custom class MethodUrlResponse
+   MethodUrlResponse methodUrlResponse = JsonConvert.DeserializeObject<MethodUrlResponse>(methodUrlResponseString);
+
+   string threeDSServerTransID = methodUrlResponse.ThreeDSServerTransID; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+
+   // TODO: notify client-side that the Method URL step is complete (optional - return decoded JSON string), see below
+}
+
+catch (Exception exce)
+{
+   // TODO: add your exception handling here
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleMethodNotification(threeDSServerTransID);
+   <!-- e.g. threeDSServerTransID -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385"} -->
+</script>
+</body>
+</html>
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+/**
+* This sample code is not specific to our SDK and is intended as a simple example and
+* should not be treated as Production-ready code. You'll need to add your own message parsing and
+* security in line with your application or website
+*/
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+   exit;
+}
+
+if ($_SERVER['CONTENT_TYPE'] !== 'application/x-www-form-urlencoded') {
+   exit;
+}
+
+$threeDSMethodData = $_POST["threeDSMethodData"];
+// sample ACS response for Method URL Response Notification
+// $threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+$convertedThreeDSMethodData = json_decode(base64_decode($threeDSMethodData));
+$jsonResponse = json_encode([
+   'threeDSServerTransID' => $convertedThreeDSMethodData->threeDSServerTransID,
+]);
+
+/** If you have the backend and the frontend hosted on different domains,
+* or if they are served over different protocols,
+* you will need to specify the base url for the frontend domain as the second parameter
+* for the handleMethodNotification method (eg. http://localhost:3000).
+*/
+$response = <<<END
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleMethodNotification($jsonResponse);
+   <!-- e.g. $jsonResponse -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385"} -->
+</script>
+</body>
+</html>
+END;
+
+echo $response;
+exit;
+```
+</Code>
+</CodeGroup>
+
+#### Sample Challenge Notification endpoint
+We consume the POST sent by the issuer’s ACS, decode it, and prepare the string to be returned to the client side and return it to the client as HTML.
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java" active>
+```
+/*
+ * this sample code is not specific to our SDK and is intended as a simple example and
+ * should not be treated as Production-ready code. You'll need to add your own message parsing and 
+ * security in line with your application or website
+ */
+@RequestMapping("/challengeUrlResponse")
+public void consumeChallengeUrlResponse(@RequestParam("cres") String cres) throws UnsupportedEncodingException {
+
+   // example CRes (Challenge Result) sent by the ACS
+   /* String cres = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+     + "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+     + "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+     + "1N0YXR1cyI6IlkifQ==";
+     */
+
+   try {
+
+      byte[] decodedBytes = Base64.getDecoder().decode(cres);
+      String challengeUrlResponseString = new String(decodedBytes);
+      Gson gson = new Gson();
+
+      // map to a custom class ChallengeUrlResponse which has String variables for each response element
+      ChallengeUrlResponse challengeUrlResponse = gson.fromJson(challengeUrlResponseString, ChallengeUrlResponse.class);
+
+      String threeDSServerTransID = challengeUrlResponse.getThreeDSServerTransID(); // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+      String acsTransId = challengeUrlResponse.getAcsTransID(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+      String messageType = challengeUrlResponse.getMessageType(); // Cres
+      String messageVersion = challengeUrlResponse.getMessageVersion(); // 2.1.0
+      String transStatus = challengeUrlResponse.getTransStatus(); // Y
+
+      // TODO: simple example of how to prepare the JSON string for JavaScript Library (optional)
+      Hashtable<String, String> responseObject = new Hashtable<String, String>();
+      responseObject.put("threeDSServerTransID", threeDSServerTransID);
+      responseObject.put("transStatus", transStatus);
+
+      String responseString = gson.toJson(responseObject);
+
+      // TODO: notify client-side that the Challenge step is complete, see below
+   }
+
+   catch(Exception e) {
+      // TODO: Add your exception handling here
+   }
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleChallengeNotification(responseString);
+   <!-- e.g. responseString -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385","transStatus":"Y"} -->
+</script>
+</body>
+</html>
+
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+/*
+ * this sample code is not specific to our SDK and is intended as a simple example and
+ * should not be treated as Production-ready code. You'll need to add your own message parsing and 
+ * security in line with your application or website
+ */
+var cres = Request.Form["cres"];
+
+// Example CRes (Challenge Result) sent by the ACS
+// var cRes = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+// + "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+// + "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+// + "1N0YXR1cyI6IlkifQ==";
+
+try
+{
+   byte[] data = Convert.FromBase64String(cres);
+   string challengeUrlResponseString = Encoding.UTF8.GetString(data);
+   // map to a custom class ChallengeUrlResponse which has String variables for each response element
+   ChallengeUrlResponse challengeUrlResponse = JsonConvert.DeserializeObject<ChallengeUrlResponse>(challengeUrlResponseString);
+
+   var threeDSServerTransID = challengeUrlResponse.ThreeDSServerTransID; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   var acsTransId = challengeUrlResponse.AcsTransID; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   var messageType = challengeUrlResponse.MessageType; // Cres
+   var messageVersion = challengeUrlResponse.MessageVersion; // 2.1.0
+   var transStatus = challengeUrlResponse.TransStatus; // Y
+
+   // TODO: prepare the JSON string for JavaScript Library (optional)
+   challengeUrlResponseString = JsonConvert.SerializeObject(new
+   {
+      threeDSServerTransID = threeDSServerTransID,
+      transStatus = transStatus
+   });
+
+   // TODO: notify client-side that the Challenge URL step is complete, see below
+}
+
+catch (Exception exce)
+{
+   // TODO: add your exception handling here
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleChallengeNotification(challengeUrlResponseString);
+   <!-- e.g. challengeUrlResponseString -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385","transStatus":"Y"} -->
+</script>
+</body>
+</html>
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+/**
+* This sample code is not specific to our SDK and is intended as a simple example and
+* should not be treated as Production-ready code. You'll need to add your own message parsing and
+* security in line with your application or website
+*/
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+   exit;
+}
+
+if ($_SERVER['CONTENT_TYPE'] !== 'application/x-www-form-urlencoded') {
+   exit;
+}
+
+$cres = $_POST['cres'];
+/* $cres = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+* . "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+* . "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+* . "1N0YXR1cyI6IlkifQ==";
+*/
+
+$convertedCRes = json_decode(base64_decode($cres));
+
+$jsonResponse = json_encode([
+   'threeDSServerTransID' => $convertedCRes->threeDSServerTransID,
+   'transStatus' => $convertedCRes->transStatus ?? '',
+]);
+
+// $serverTransID = $convertedObject['threeDSServerTransID']; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+// $acsTransID = $convertedObject['acsTransID']; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+// $messageType = $convertedObject['messageType']; // Cres
+// $messageVersion = $convertedObject['messageVersion']; // 2.1.0
+// $transStatus = $convertedObject['transStatus']; // Y
+
+/** If you have the backend and the frontend hosted on different domains,
+* or if they are served over different protocols,
+* you will need to specify the base url for the frontend domain as the second parameter
+* for the handleChallengeNotification method (eg. http://localhost:3000).
+*/
+$response = <<<END
+<!DOCTYPE html>
+<html>
+<body>
+<script src="globalpayments-3ds.js"></script>
+<script>
+   GlobalPayments.ThreeDSecure.handleChallengeNotification($jsonResponse);
+   <!-- e.g. $jsonResponse -->
+   <!-- {"threeDSServerTransID":"1737b5ef-be33-4941-8742-e7a100f08385","transStatus":"Y"} -->
+</script>
+</body>
+</html>
+END;
+
+echo $response;
+exit;
+
+```
+</Code>
+</CodeGroup>
+
+## Step 1: Create single-use token
+In this step, we create a single-use token to use in place of the card details for the 3D Secure authentication steps and when creating the sale transaction. Single-use tokens can be created directly via our API.
+
+<Infobox type="danger">
+This step assumes that you are using your own PCI-compliant card form. Alternatively, we can look after the PCI security compliance for you via our [Hosted Fields](/docs/payments/online/hosted-fields-guide) or [Drop-In UI](/docs/payments/online/drop-in-ui-overview) solution, which captures the customer card details on your behalf.
+</Infobox>
+
+The first API call in this step is to request a single-permission access token that allows you to request and create your single-use token.
+
+#### Sample request - Single permission token
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/accesstoken' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "secret": "b5bbcc9f923d0afd2d91a9539612974647aba8f630cacef8f8d0e6a580a6b09453442615cfafa32e0e5b446938fc80a9db6b5b3c36d27efd50da29d01a662db2",
+    "grant_type": "client_credentials",
+    "nonce": "2024-09-25T19:00:19.003Z",
+    "interval_to_expire": "10_MINUTES",
+    "permissions": [
+             "PMT_POST_Create_Single"
+    ]
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setPermissions(new String[]{"PMT_POST_Create_Single"});
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setNumber("4222000006285344");
+card.setExpMonth(DateTime.now().getMonthOfYear());
+card.setExpYear(DateTime.now().getYear() + 1);
+card.setCvn("987");
+
+try {
+    Transaction response = card.tokenize(true, PaymentMethodUsageMode.SINGLE)
+            .execute();
+
+    // API raw response key "id"
+    String tokenId = response.getToken();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardNotPresent;
+$config->permissions = ['PMT_POST_Create_Single'];
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->number = "4222000006285344";
+$card->expMonth = date('m');
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cvn = "987";
+
+try{
+    $response = $card->tokenize(true, PaymentMethodUsageMode::SINGLE)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+
+    // TODO: add your error handling here
+}
+
+// API raw response key "id"
+$tokenId = $response->token; //PMT_e7cc73be-c133-455e-8b10-0d2784f0101c
+```
+</Code>
+</CodeGroup>
+
+#### Sample response - Single permission token
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" lineHighlight="1" active>
+```
+{
+    "token": "p3Pjk5Jyx6GDVjbIUDUAP9kM1dtu",
+    "type": "Bearer",
+    "scope": {
+        "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+        "merchant_name": "Sandbox_Merchant_4",
+        "accounts": [
+            {
+                "id": "TKA_c1de85a8a5844c56abd9ca07bbd792c8",
+                "name": "tokenization",
+                "permissions": [
+                    "PMT_POST_Create_Single"
+                ]
+            }
+        ]
+    },
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "app_name": "TEST_APP",
+    "time_created": "2024-09-25T19:00:19.648Z",
+    "seconds_to_expire": 599,
+    "interval_to_expire": "10_MINUTES",
+    "email": "your.name@email.com"
+}
+```
+</Code>
+</CodeGroup>
+
+#### Sample request - Tokenize card
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/payment-methods' \
+--header 'accept:  application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Accept-Encoding:  gzip' \
+--header 'Authorization:  Bearer p3Pjk5Jyx6GDVjbIUDUAP9kM1dtu' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+   "usage_mode": "SINGLE",
+   "reference": "2f2462be-74c4-4a63-ad5c-8da350f5f60c",
+   "name": "James Mason",
+   "card": {
+      "number": "4222000006285344",
+      "expiry_month": "12",
+      "expiry_year": "25",
+      "cvv": "987"
+   }
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("APP_ID");
+config.setAppKey("APP_KEY");
+config.setChannel(Channel.CardNotPresent.getValue());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(new DateTime().getMonthOfYear());
+card.setExpYear(new DateTime().getYear() + 1);
+card.setCvn("131");
+
+Transaction response = null;
+try {
+    response =
+            card
+                    .tokenize(true, PaymentMethodUsageMode.SINGLE)
+                    .execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+String tokenId = response.getToken(); //PMT_1c22346c-aafe-47f3-a1c5-231bdb734521
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+config.AppId = "APP_ID";
+config.AppKey = "APP_KEY";
+config.Channel = Channel.CardPresent;
+
+ServicesContainer.ConfigureService(config);
+CreditCardData card = new CreditCardData();
+card.Number = "4263970000005262";
+card.ExpMonth = DateTime.Now.Month;
+card.ExpYear = DateTime.Now.Year + 1;
+card.Cvn = "131";
+
+try {
+	var token = card.Tokenize("default", PaymentMethodUsageMode.Single); //PMT_1c22346c-aafe-47f3-a1c5-231bdb734521
+} catch (ApiException e) {
+// TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'APP_ID';
+$config->appKey = 'APP_KEY';
+$config->channel = Channel::CardPresent;
+
+ServicesContainer::configureService($config);
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = date('m');
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cvn = "131";
+
+try{
+    $response = $card->tokenize(true, PaymentMethodUsageMode::SINGLE)
+        ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+$tokenId = $response->token; //PMT_1c22346c-aafe-47f3-a1c5-231bdb734521
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" lineHighlight="1" active>
+```
+{
+   "id": "PMT_1c22346c-aafe-47f3-a1c5-231bdb734521",
+   "time_created": "2022-10-06T11:36:44.316Z",
+   "status": "ACTIVE",
+   "usage_mode": "SINGLE",
+   "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+   "merchant_name": "Sandbox_merchant_3",
+   "account_id": "TKA_b3a46f0f351f43cfad20acf5c32fea50",
+   "account_name": "tokenization",
+   "reference": "2f2462be-74c4-4a63-ad5c-8da350f5f60c",
+   "card": {
+      "masked_number_last4": "XXXXXXXXXXXX5344",
+      "brand": "VISA",
+      "expiry_month": "12",
+      "expiry_year": "25"
+   },
+   "action": {
+      "id": "ACT_hboxaxUONzfojemgWfDoAE7O0JK7qO",
+      "type": "PAYMENT_METHOD_CREATE",
+      "time_created": "2022-10-06T11:36:44.316Z",
+      "result_code": "SUCCESS",
+      "app_id": "grf9Q3tGYqglXOmYXYGAeYfFvsmnXAGe",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+## Step 2: Generate full access token
+Now that you have your single-use token stored, you need to use the _/accesstoken_ endpoint again to generate a full permission access token to proceed on your 3D Secure integration. Below are sample request and expected response to allow you move to Step 3.
+
+#### Sample request - Full access token
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/accesstoken' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "secret": "9e6ab70379a06aa41aebe3aac68100254fec77b338b579ae40ee8b45a9452d405e1b990ce942d63cd3c63ea2ff6c34bf563b57ff4e05cca32eeda2f670e5f966",
+    "grant_type": "client_credentials",
+    "nonce": "2024-09-25T19:25:35.813Z"
+}'
+```
+</Code>
+
+#### Sample response - Full access token
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "token": "yuolhwoZKLmPSFK04rEoZIEwfZyZ",
+    "type": "Bearer",
+    "scope": {
+        "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+        "merchant_name": "Sandbox_Merchant_4",
+        "accounts": [
+            {
+                "id": "TRA_27c901760029495f813afbb0dab197ef",
+                "name": "transaction_processing",
+                "permissions": [
+                    "TRN_POST_Authorize",
+                    "TRN_POST_Force",
+                    "TRN_POST_Refund",
+                    "TRN_POST_Capture",
+                    "TRN_POST_Reverse",
+                    "TRN_POST_Adjust",
+                    "TRN_POST_Initiate",
+                    "BAT_POST_Close",
+                    "TRN_POST_Refund_Standalone",
+                    "VER_POST_Verify",
+                    "TRN_POST_Reauthorize",
+                    "INS_POST_Query",
+                    "TRN_GET_Single",
+                    "TRN_POST_Confirm",
+                    "DEV_POST_Sync",
+                    "ACT_GET_Single",
+                    "ACT_GET_List",
+                    "TRN_GET_List",
+                    "TRN_POST_Capture_Multiple",
+                    "ACT_POST_Multiple",
+                    "APP_GET_Single",
+                    "AUT_POST_Initiate",
+                    "CCS_POST_DCC",
+                    "ACC_GET_Single_Platform",
+                    "ACC_GET_Single",
+                    "APP_POST_Search_PFCValidate",
+                    "ACT_POST_Auto_Action",
+                    "PFC_GET_List",
+                    "PFC_GET_Single",
+                    "TRN_POST_Incremental",
+                    "AUT_POST_Results",
+                    "BAT_GET_Single",
+                    "ACC_GET_List",
+                    "GET_Single",
+                    "AUT_POST_Check_Availability",
+                    "APP_GET_List",
+                    "TRN_POST_Split",
+                    "AUT_GET_Single",
+                    "AUT_GET_List",
+                    "TRN_POST_Hold",
+                    "TRN_POST_Release"
+                ]
+            },
+            {
+                "id": "TKA_c1de85a8a5844c56abd9ca07bbd792c8",
+                "name": "tokenization",
+                "permissions": [
+                    "PMT_POST_Create",
+                    "PMT_PATCH_Edit",
+                    "PMT_Delete",
+                    "PMT_GET_List",
+                    "PMT_GET_Single",
+                    "PMT_POST_Search",
+                    "ACT_POST_Multiple",
+                    "PMT_POST_Create_Single",
+                    "ACC_GET_Single",
+                    "GET_Single",
+                    "ACT_POST_Auto_Action",
+                    "APP_POST_Search_PFCValidate",
+                    "ACC_GET_List",
+                    "ACT_GET_List",
+                    "ACT_GET_Single",
+                    "PYR_GET_Single",
+                    "PYR_POST_Edit",
+                    "PYR_GET_List",
+                    "PYR_POST_Create"
+                ]
+            }
+        ]
+    },
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "app_name": "Test_APP",
+    "time_created": "2024-09-25T19:25:43.008Z",
+    "seconds_to_expire": 86399,
+    "email": "your.name@email.com"
+}
+```
+</Code>
+
+## Step 3: Check version and enrollment
+The authentication process begins with determining if the card is enrolled in 3D Secure 2. Authentication is not completed during this step. When [Step 5.1 frictionless](#step-51-frictionless-flow) or [Step 5.2 challenge](#step-52-challenge-flow) is completed, the relevant authentication fields are returned by the issuing bank. Please consult the [Check Availability](/api/authentications) method in our API Explorer for more details.
+
+If the card is enrolled, the exact version of 3D Secure 2 will be returned (2.x.x) along with the necessary Method URL to facilitate the gathering of device data by the issuer’s ACS (if supported by the issuer).
+
+#### Sample Check Version (client side)
+The Check Version method facilitates requests to your server-side code to check the enrolled version of 3D Secure for the customer’s card. This method also automatically handles the response from the version check. When a card is enrolled and a method URL is present, the method opens a hidden iFrame to the issuer’s ACS to facilitate device-profiling requirements.
+
+The method requires two parameters: the server-side endpoint responsible for checking the enrollment of the card and the card data. In our example, we pass the single-use token we created in Step 1. Optionally, we can also send any data from the client-side. For additional details on what can be sent from the client-side, see the [3D Secure Helper Library](/docs/sdk/3DS2#3DS-helper-library) in our SDK Reference.
+
+<Code id="Javascript" title="Javascript" language="javascript" active>
+```
+<script src="globalpayments-3dsecure.js"></script>
+<script>
+   const {
+      checkVersion,
+      initiateAuthentication,
+      ChallengeWindowSize
+   } = GlobalPayments.ThreeDSecure;
+
+   // Add submit click event handler
+   document.addEventListener("DOMContentLoaded", () => {
+      const checkVersionButton = document.getElementById("start");
+      if (!checkVersionButton) {
+         return;
+      }
+
+      checkVersionButton.addEventListener("click", start3DS);
+   });
+
+   const start3DS = async (e) => {
+      e.preventDefault();
+      try {
+         const versionCheckData = await checkVersion('/ThreeDSecure/CheckEnrollment/', {
+            card: {
+               reference: document.getElementById("payment-token").value,
+            }
+         });
+         if (versionCheckData.status === "NOT_ENROLLED" && versionCheckData.liabilityShift !== "YES") {
+            // TODO: do not proceed to authorization and ask the customer to try another card instead
+            return false;
+         }
+         if (versionCheckData.liabilityShift === "YES") {
+            // TODO: proceed with authorization
+            paymentForm.submit();
+            return true;
+         }
+   // continued in next Step 4 - Initiate Authentication 
+```
+</Code>
+   
+#### Sample Check Version (server side)
+On the server side, we need to consume the data sent by the JavaScript Library. In our example, we add the single-use token created in Step 1 to our card object. 
+
+If the Check Version returns _true_ for 3D Secure 2, we return the enrollment status to the client-side, along with the Authentication ID (`AUT_ID`) on our system. In addition, (if supported by the ACS) we pass back the Method URL and Encoded Method Data required by the JavaScript Library to facilitate the device-profiling step.
+
+If the issuer’s ACS supports the Method URL step, we need to open a hidden iFrame targeting the URL returned in the Check Enrollment response. The JavaScript Library automatically performs this step, and the device profiling should complete in seconds. Once it does, the issuer’s ACS sends a form POST and initiates a redirect inside the hidden iFrame to the endpoint we set up previously. When the JavaScript Library receives the response from the Method Notification endpoint, it closes the hidden iFrame and proceeds to the next step.
+
+Also, we must format the JSON response back to the client-side so that the JavaScript Library can understand it and proceed.
+<Infobox>
+   The JavaScript Library expects a JSON string from the Check Version method. An example is provided in the code sample.
+</Infobox>   
+   
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/authentications' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer yuolhwoZKLmPSFK04rEoZIEwfZyZ' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "reference": "ad643798-1a80-4384-bef1-262f98fae825",
+   "amount":"1999",
+   "currency": "EUR",
+   "country": "IE",
+   "source": "BROWSER",
+   "payment_method": {
+      "id":"PMT_1c22346c-aafe-47f3-a1c5-231bdb734521"
+   },
+   "notifications": {
+      "challenge_return_url": "https://www.example.com/ChallengeNotification",
+      "three_ds_method_return_url": "https://www.example.com/MethodNotification"
+   }
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// TODO: configure client & request settings
+GpApiConfig config = new GpApiConfig();
+config.setAppId("app_id");
+config.setAppKey("app_key");
+config.setEnvironment(Environment.TEST);
+config.setCountry("IE");
+config.setChannel(Channel.CardNotPresent.getValue());
+config.setMerchantContactUrl("https://www.example.com/contact-us");
+config.setMethodNotificationUrl("https://www.example.com/MethodNotification");
+config.setChallengeNotificationUrl("https://www.example.com/ChallengeNotification");
+
+ServicesContainer.configureService(config);
+
+// TODO: consume card data sent from the JS Library (requestData)
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.setToken(requestData.token);
+
+ThreeDSecure threeDSecureData = null;
+
+try {
+   threeDSecureData = Secure3dService.checkEnrollment(paymentMethod)
+      .withAmount(requestData.amount)
+      .withCurrency(requestData.currency)
+      .execute();
+} catch (ApiException e) {
+   // TODO: add your error handling here
+}
+
+// if enrolled, available response data
+//serverTransactionId = threeDSecureData.getServerTransactionId(); // AUT_90092646-e424-452e-bbf1-09d2daf8af05
+//dsStartProtocolVersion = threeDSecureData.getDirectoryServerStartVersion(); // 2.1.0
+//dsEndProtocolVersion = threeDSecureData.getDirectoryServerEndVersion(); // 2.1.0
+//acsStartProtocolVersion = threeDSecureData.getAcsStartVersion(); // 2.1.0
+//acsEndProtocolVersion = threeDSecureData.getAcsEndVersion(); // 2.1.0
+//methodUrl = threeDSecureData.getIssuerAcsUrl(); // https://www.acsurl.com/method
+//encodedMethodData = threeDSecureData.getPayerAuthenticationRequest(); // Base64 encoded string
+
+JsonObject response = new JsonObject();
+
+response.addProperty("enrolled", threeDSecureData.getEnrolledStatus());
+response.addProperty("version", threeDSecureData.getVersion().getValue());
+response.addProperty("status", threeDSecureData.getStatus());
+response.addProperty("liabilityShift", threeDSecureData.getLiabilityShift());
+response.addProperty("serverTransactionId", threeDSecureData.getServerTransactionId());
+response.addProperty("sessionDataFieldName", threeDSecureData.getSessionDataFieldName());
+
+if (!response.get("enrolled").equals("ENROLLED")) {
+   /*
+    * TODO: do not proceed to authorization and ask the customer to try another card instead
+
+    */
+
+
+}
+
+if (response.get("version").equals(Secure3dVersion.TWO.getValue())) {
+   response.addProperty("methodUrl", threeDSecureData.getIssuerAcsUrl());
+   response.addProperty("methodData", threeDSecureData.getPayerAuthenticationRequest());
+   response.addProperty("messageType", threeDSecureData.getMessageType());
+
+   /*
+    * TODO: pass the Enrolled status, Method URL and Encoded Method Data (if supported) to the client-side
+    * Sample string: {"enrolled":"ENROLLED","version":"TWO","status":"AVAILABLE","liabilityShift":null,"serverTransactionId":"AUT_88f7f878-b18d-4085-a970-46e3b117bea5","sessionDataFieldName":"threeDSSessionData","methodUrl":"https:\/\/test.portal.gpwebpay.com\/pay-sim\/sim\/acs","methodData":"ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiODhmN2Y4NzgtYjE4ZC00MDg1LWE5NzAtNDZlM2IxMTdiZWE1IiwKICAidGhyZWVEU01ldGhvZE5vdGlmaWNhdGlvblVSTCIgOiAiaHR0cDovL3NhbXBsZWNvZGUubG9jYWxob3N0LmNvbTo4MDgwL2V4YW1wbGVzMy9UaHJlZURTZWN1cmUvTWV0aG9kTm90aWZpY2F0aW9uLyIKfQ","messageType":"creq"}
+    */
+
+   // Use your desired JAVA HTTP framework the response object with 'Content-Type: application/json'
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// TODO: configure client & request settings
+GpApiConfig config = new GpApiConfig();
+config.AppId = "app_id";
+config.AppKey = "app_key";
+config.Country = "IE";
+config.Environment = Entities.Environment.TEST;
+config.Channel = Channel.CardNotPresent;
+config.ChallengeNotificationUrl = "https://www.example.com/ChallengeNotification";
+config.MethodNotificationUrl = "https://www.example.com/MethodNotification";
+config.MerchantContactUrl = "https://www.example.com/contact-us";
+
+ServicesContainer.ConfigureService(config);
+
+// TODO: consume card data sent from the JS Library (requestData)
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.Token = requestData.token;
+
+ThreeDSecure threeDSecureData = null;
+try {
+   threeDSecureData = Secure3dService.CheckEnrollment(paymentMethod)
+      .WithAmount(requestData.amount)
+      .WithCurrency(requestData.currency)
+      .Execute();
+} catch (ApiException e) {
+   // TODO: add your error handling here
+}
+
+// if enrolled, available response data
+// serverTransactionId = threeDSecureData.ServerTransactionId; // AUT_90092646-e424-452e-bbf1-09d2daf8af05
+// dsStartProtocolVersion = threeDSecureData.DirectoryServerStartVersion; // 2.1.0
+// dsEndProtocolVersion = threeDSecureData.DirectoryServerEndVersion; // 2.1.0
+// acsStartProtocolVersion = threeDSecureData.AcsStartVersion; // 2.1.0
+// acsEndProtocolVersion = threeDSecureData.AcsEndVersion; // 2.1.0
+// methodUrl = threeDSecureData.IssuerAcsUrl; // https://www.acsurl.com/method
+// encodedMethodData = threeDSecureData.PayerAuthenticationRequest; // Base64 encoded string
+
+JsonDoc response = new JsonDoc();
+
+response.Set("enrolled", threeDSecureData.Enrolled);
+response.Set("version", threeDSecureData.Version.Value);
+response.Set("status", threeDSecureData.Status);
+response.Set("liabilityShift", threeDSecureData.LiabilityShift);
+response.Set("serverTransactionId", threeDSecureData.ServerTransactionId);
+response.Set("sessionDataFieldName", threeDSecureData.SessionDataFieldName);
+
+if (!response.GetValue < string > ("enrolled").Equals("ENROLLED")) {
+   /*
+    * TODO: do not proceed to authorization and ask the customer to try another card instead
+
+    */
+
+}
+
+if (response.GetValue < string > ("version").Equals(Secure3dVersion.Two.ToString())) {
+   response.Set("methodUrl", threeDSecureData.IssuerAcsUrl);
+   response.Set("methodData", threeDSecureData.PayerAuthenticationRequest);
+   response.Set("messageType", threeDSecureData.MessageType);
+
+   /*
+    * TODO: pass the Enrolled status, Method URL and Encoded Method Data (if supported) to the client-side
+    * Sample string: {"enrolled":"ENROLLED","version":"TWO","status":"AVAILABLE","liabilityShift":null,"serverTransactionId":"AUT_88f7f878-b18d-4085-a970-46e3b117bea5","sessionDataFieldName":"threeDSSessionData","methodUrl":"https:\/\/test.portal.gpwebpay.com\/pay-sim\/sim\/acs","methodData":"ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiODhmN2Y4NzgtYjE4ZC00MDg1LWE5NzAtNDZlM2IxMTdiZWE1IiwKICAidGhyZWVEU01ldGhvZE5vdGlmaWNhdGlvblVSTCIgOiAiaHR0cDovL3NhbXBsZWNvZGUubG9jYWxob3N0LmNvbTo4MDgwL2V4YW1wbGVzMy9UaHJlZURTZWN1cmUvTWV0aG9kTm90aWZpY2F0aW9uLyIKfQ","messageType":"creq"}
+    */
+
+   // Use your desired .NET HTTP framework the response object with 'Content-Type: application/json'
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->country = 'IE';
+$config->merchantContactUrl = 'https://www.example.com/contact-us';
+$config->methodNotificationUrl = 'https://www.example.com/MethodNotification';
+$config->challengeNotificationUrl = 'https://www.example.com/ChallengeNotification';
+
+ServicesContainer::configureService($config);
+
+// TODO: consume card data sent from the 3DS JS Library ($requestData)
+$paymentMethod = new CreditCardData();
+$paymentMethod->token = $requestData->card->reference;
+
+try {
+   $threeDSecureData = Secure3dService::checkEnrollment($paymentMethod)
+      ->withAmount($requestData->order->amount)
+      ->withCurrency($requestData->order->currency)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+// if enrolled, available response data
+//$serverTransactionId = $threeDSecureData->serverTransactionId; // AUT_90092646-e424-452e-bbf1-09d2daf8af05
+//$dsStartProtocolVersion = $threeDSecureData->directoryServerStartVersion; // 2.1.0
+//$dsEndProtocolVersion = $threeDSecureData->directoryServerEndVersion; // 2.1.0
+//$acsStartProtocolVersion = $threeDSecureData->acsStartVersion; // 2.1.0
+//$acsEndProtocolVersion = $threeDSecureData->acsEndVersion; // 2.1.0
+//$methodUrl = $threeDSecureData->issuerAcsUrl; // https://www.acsurl.com/method
+//$encodedMethodData = $threeDSecureData->payerAuthenticationRequest; // Base64 encoded string
+
+$response['enrolled'] = $threeDSecureData->enrolled;
+$response['version'] = $threeDSecureData->getVersion();
+$response['status'] = $threeDSecureData->status;
+$response['liabilityShift'] = $threeDSecureData->liabilityShift;
+$response['serverTransactionId'] = $threeDSecureData->serverTransactionId;
+$response['sessionDataFieldName'] = $threeDSecureData->sessionDataFieldName;
+
+if ($response['enrolled'] !== Secure3dStatus::ENROLLED) {
+	// TODO: do not proceed to authorization and ask the customer to try another card instead
+}
+
+if (Secure3dVersion::ONE === $threeDSecureData->getVersion()) {
+	// TODO: do not proceed to authorization and ask the customer to try another card instead
+}
+
+if ($response['version'] === Secure3dVersion::TWO) {
+   $response['methodUrl'] = $threeDSecureData->issuerAcsUrl;
+   $response['methodData'] = $threeDSecureData->payerAuthenticationRequest;
+   $response['messageType'] = $threeDSecureData->messageType;
+
+   /*
+   * TODO: pass the Enrolled status, Method URL and Encoded Method Data (if supported) to the client-side
+   * Sample string: {"enrolled":"ENROLLED","version":"TWO","status":"AVAILABLE","liabilityShift":null,"serverTransactionId":"AUT_88f7f878-b18d-4085-a970-46e3b117bea5","sessionDataFieldName":"threeDSSessionData","methodUrl":"https:\/\/test.portal.gpwebpay.com\/pay-sim\/sim\/acs","methodData":"ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiODhmN2Y4NzgtYjE4ZC00MDg1LWE5NzAtNDZlM2IxMTdiZWE1IiwKICAidGhyZWVEU01ldGhvZE5vdGlmaWNhdGlvblVSTCIgOiAiaHR0cDovL3NhbXBsZWNvZGUubG9jYWxob3N0LmNvbTo4MDgwL2V4YW1wbGVzMy9UaHJlZURTZWN1cmUvTWV0aG9kTm90aWZpY2F0aW9uLyIKfQ","messageType":"creq"}
+   */
+   header('Content-Type: application/json');
+   echo json_encode($response);
+   exit;
+}
+```
+</Code>
+</CodeGroup>
+   
+#### Sample response
+<Code id="JSON" title="JSON" language="json" lineHighlight="1" active>
+```
+{
+   "id": "AUT_9601d398-6a11-4b83-9b4e-86cdfa448990",
+   "time_created": "2022-06-01T09:34:14.068Z",
+   "transaction_type": "SALE",
+   "status": "AVAILABLE",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+   "merchant_name": "Sandbox_merchant_3",
+   "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+   "account_name": "transaction_processing",
+   "reference": "ad643798-1a80-4384-bef1-262f98fae825",
+   "three_ds": {
+       "server_trans_ref": "9601d398-6a11-4b83-9b4e-86cdfa448990",
+       "message_version": "2.2.0",
+       "ds_protocol_version_start": "2.1.0",
+       "ds_protocol_version_end": "2.2.0",
+       "acs_protocol_version_start": "2.1.0",
+       "acs_protocol_version_end": "2.2.0",
+       "acs_info_indicator": [
+           "NOT_AVAILABLE"
+       ],
+       "enrolled_status": "ENROLLED",
+       "eci": "",
+       "liability_shift": "",
+       "challenge_model": "",
+       "challenge_status": "",
+       "session_data_field_name": "threeDSSessionData",
+       "message_type": "creq",
+       "challenge_value": "",
+       "redirect_url": "",
+       "acs_challenge_request_url": "",
+       "method_url": "https://test.portal.gpwebpay.com/pay-sim/sim/acs",
+       "method_data": {
+           "three_ds_server_trans_id": "9601d398-6a11-4b83-9b4e-86cdfa448990",
+           "three_ds_method_return_url": "https://example.com/methodnotification",
+           "encoded_method_data": "ewogICJ0aHJlZURTU2VydmVyVHJhbnNJRCIgOiAiOTYwMWQzOTgtNmExMS00YjgzLTliNGUtODZjZGZhNDQ4OTkwIiwKICAidGhyZWVEU01ldGhvZE5vdGlmaWNhdGlvblVSTCIgOiAiaHR0cHM6Ly9lbnNpODA4bzg1emEueC5waXBlZHJlYW0ubmV0LyIKfQ"
+       }
+   },
+   "notifications": {
+       "challenge_return_url": "https://example.com/ChallengeNotification"
+   },
+   "action": {
+       "id": "ACT_bmueQM0quYPruTCFCE0c8ihq0XHo01",
+       "type": "CHECK_AVAILABILITY",
+       "time_created": "2022-06-01T09:34:14.068Z",
+       "result_code": "SUCCESS",
+       "app_id": "grf9Q3tGYqglXOmYXYGAeYfFvsmnXAGe",
+       "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+## Step 4: Initiate authentication
+Now that we know if the card is enrolled for 3D Secure 2 and (conditionally) the Method URL process is complete, we can send the authentication request to the issuer. For this, we use the Initiate Authentication method of the JavaScript Library. In our example, we also call an Initiate Authentication endpoint on the server side.
+
+<Infobox>   
+Some devices may return a color depth that is not in the list of accepted values. In this scenario, the EMVCo recommendation is to submit the closest lower value. For example, if the color depth returned by the browser is 30, submit 24 as this is the closest lower value.
+</Infobox>
+   
+### Exemptions
+3D Secure 2 provides a framework for merchants to benefit from SCA exemptions under certain low-risk conditions. Exemptions may be applied by the issuer based on the transaction details or may be specifically requested by the merchant, with their acquirer’s permission. In the authentication message, you can request an exemption by including it in the Challenge Request Indicator field.
+   
+<Infobox>
+When a merchant requests an exemption (whether via authentication or directly in authorization) and it's successfully applied, they will no longer be able to avail of a liability shift in the event of a fraud-related chargeback. For Mastercard exemption requests, see our [Mastercard Message Extension](/docs/message-extension#mastercard) article.
+</Infobox>
+   
+### Sample Initiate Authentication request (client-side)
+The `initiateAuthentication` method facilitates requests to your server-side code to initiate 3DS authentication flows with the customer. This method also handles the response from your server-side endpoint. If a challenge is required, the method will open the issuer's ACS in an iFrame to facilitate the challenge.
+
+The method requires that you pass the server-side endpoint responsible for initiating the authentication request as well as the `challengeWindow`. By default the `challengeWindow` is set to display in a Lightbox and 600x400 pixel size, but you can customize this. The method also automatically passes the `browserData`. You should also pass whether the Method URL (device profiling) step occurred.
+
+In our example, we pass the single-use token again. Alternatively, you could also temporarily store it on the server side in the previous step. We also pass the Version Check data so we can obtain the unique ID for the 3D Secure authentication.
+
+Optionally, we can also send any relevant data from the client side, such as the customer (payer) billing and shipping details as well as any required order information. In our example, all data is obtained on the server side, such as from the database or available variables. For more information on all of the `initiateAuthentication` method parameters, see the [3D Secure Helper Library](/docs/sdk/3DS2#3DS-helper-library) in our SDK Reference.
+
+The method also expects a JSON string response from the Initiate Authentication server-side endpoint. An example is provided in the code sample below.
+
+<Code id="Javascript" title="Javascript" language="javascript" active>
+```
+// continued from previous step 3 - Check version and enrollment
+const authenticationData = await initiateAuthentication('/ThreeDSecure/InitiateAuthentication/', {
+   card: {
+      reference: document.getElementById('payment-token').value,
+   },
+   methodUrlComplete: true,
+   versionCheckData: versionCheckData,
+   challengeWindow: {
+      windowSize: ChallengeWindowSize.Windowed600x400,
+      displayMode: 'lightbox',
+   }
+   /*
+   Optionally set order detail parameters
+   order: {
+      amount: "1000",
+      currency: "eur",
+   },
+   Optionally set payer details
+   payer: {
+      email: "john.smith@example.com",
+   },
+   */
+});
+// continued in next step
+```
+</Code>
+   
+### Sample Initiate Authentication request (server side)
+The authentication request also requires browser data, which the JavaScript Library collects automatically and passes in the request to the server side. We must also obtain the browser IP address and Accept Header using server-side methods. Finally, we add all mandatory and recommended data to the request, including the Server Transaction ID (`AUT_ID`) returned in the Check Version response, and execute the Initiate Authentication method.
+
+In our example, we're adding only mandatory and recommended fields to the request. For the full list of optional fields, see [Authentications](/api/authentications) the API Explorer.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https: //apis.sandbox.globalpay.com/ucp/authentications/AUT_7d64214e-2e58-4496-91fe-f3ffa7e65a25/initiate' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer yuolhwoZKLmPSFK04rEoZIEwfZyZ' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+   "three_ds": {
+      "source": "BROWSER",
+      "preference": "NO_PREFERENCE"
+   },
+   "message_category": "PAYMENT",
+   "account_name": "transaction_processing",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "payment_method": {
+      "id": "PMT_794692a5-1e90-4fad-99a7-ed73c8c445cf"
+   },
+   "order": {
+      "time_created_reference": "2019-04-26T10:19:32.552327Z",
+      "amount": "1000",
+      "currency": "EUR",
+      "reference": "3400dd37-101d-4940-be15-3c963b6109b3",
+      "address_match_indicator": "false",
+      "shipping_address": {
+         "line1": "Apartment 852",
+         "line2": "Complex 741",
+         "line3": "House 963",
+         "city": "Chicago",
+         "postal_code": "50001",
+         "state": "IL",
+         "country": "840"
+      }
+   },
+   "payer": {
+      "email": "james.mason@example.com",
+      "mobile_phone": {
+         "country_code": "44",
+         "subscriber_number": "123456789"
+      },
+      "billing_address": {
+         "line1": "Flat 456",
+         "line2": "House 456",
+         "line3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "W5 9HR",
+         "country": "826"
+      }
+   },
+   "browser_data": {
+      "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+      "color_depth": "TWENTY_FOUR_BITS",
+      "ip": "123.123.123.123",
+      "java_enabled": "true",
+      "javascript_enabled": "true",
+      "language": "en-US",
+      "screen_height": "1080",
+      "screen_width": "1920",
+      "challenge_window_size": "FULL_SCREEN",
+      "timezone": "0",
+      "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+   },
+   "merchant_contact_url": "https://example.com/about"
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// TODO: configure client & request settings
+GpApiConfig config = new GpApiConfig();
+config.setAppId("app_id");
+config.setAppKey("app_key");
+config.setEnvironment(Environment.TEST);
+config.setCountry("IE");
+config.setChannel(Channel.CardNotPresent.getValue());
+config.setMerchantContactUrl("https://www.example.com/contact-us");
+config.setMethodNotificationUrl("https://www.example.com/MethodNotification");
+config.setChallengeNotificationUrl("https://www.example.com/ChallengeNotification");
+
+ServicesContainer.configureService(config);
+
+// TODO: consume card data sent from the JS Library (requestData)
+
+// TODO: Add the customer's billing address
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Apartment 852");
+billingAddress.setStreetAddress2("Complex 741");
+billingAddress.setStreetAddress3("Unit 4");
+billingAddress.setCity("Chicago");
+billingAddress.setState("IL");
+billingAddress.setPostalCode("50001");
+billingAddress.setCountryCode("840");
+
+// TODO: Add the customer's shipping address
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("Flat 456");
+shippingAddress.setStreetAddress2("House 789");
+shippingAddress.setStreetAddress3("Basement Flat");
+shippingAddress.setCity("Halifax");
+shippingAddress.setPostalCode("W5 9HR");
+shippingAddress.setCountryCode("826");
+
+// TODO: Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData();
+browserData.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8");
+browserData.setColorDepth(ColorDepth.valueOf(requestData.get("browserData/colorDepth").getAsString()));
+browserData.setIpAddress("123.123.123.123");
+browserData.setJavaEnabled(requestData.get("browserData/javaEnabled").getAsBoolean());
+browserData.setLanguage(requestData.get("browserData/language").getAsString());
+browserData.setScreenHeight(requestData.get("browserData/screenHeight").getAsInt());
+browserData.setScreenWidth(requestData.get("browserData/screenWidth").getAsInt());
+browserData.setChallengeWindowSize(ChallengeWindowSize.valueOf(requestData.get("challengeWindow/windowSize").getAsString()));
+browserData.setTimezone(requestData.get("browserData/timezoneOffset").getAsString());
+browserData.setUserAgent(requestData.get("browserData/userAgent").getAsString());
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.setToken(requestData.get("card/reference").getAsString());
+
+try {
+   ThreeDSecure threeDSecureData = new ThreeDSecure();
+   threeDSecureData.setServerTransactionId(requestData.get("versionCheckData/serverTransactionId").getAsString());
+   MethodUrlCompletion methodUrlCompletion = MethodUrlCompletion.Yes;
+
+   threeDSecureData = Secure3dService.initiateAuthentication(paymentMethod, threeDSecureData)
+      .withAmount(requestData.get("order/amount").getAsBigDecimal())
+      .withCurrency(requestData.get("order/currency").getAsString())
+      .withOrderCreateDate(DateTime.now())
+      .withAddress(billingAddress, AddressType.Billing)
+      .withAddress(shippingAddress, AddressType.Shipping)
+      .withAddressMatchIndicator(false)
+      .withCustomerEmail(requestData.get("payer/email").getAsString())
+    .withAuthenticationSource(AuthenticationSource.valueOf(requestData.get("authenticationSource").getAsString()))
+      .withAuthenticationRequestType(AuthenticationRequestType.valueOf(requestData.get("authenticationRequestType").getAsString()))
+      .withMessageCategory(MessageCategory.valueOf(requestData.get("messageCategory").getAsString()))
+      .withChallengeRequestIndicator(ChallengeRequestIndicator.valueOf(requestData.get("challengeRequestIndicator").getAsString()))
+      .withBrowserData(browserData)
+      .withMethodUrlCompletion(methodUrlCompletion)
+      .execute();
+
+} catch (ApiException e) {
+   // TODO: add your error handling here
+}
+
+// Frictionless flow
+if (!threeDSecureData.getStatus().equals("CHALLENGE_REQUIRED")) {
+   response.setLiabilityShift(threeDSecureData.getLiabilityShift()); // YES
+   response.setResult(threeDSecureData.getStatus()); // SUCCESS_AUTHENTICATED
+   response.setAuthenticationValue(threeDSecureData.getAuthenticationValue()); // AJkBCSNYJwAAAAPol4CUdAAAAAA=
+   response.setServerTransactionId(threeDSecureData.getServerTransactionId()); // AUT_00668cda-df2a-4826-a3d6-b78d7234ca01
+   response.setMessageVersion(threeDSecureData.getMessageVersion()); // 2.1.0
+   response.setEci(threeDSecureData.getEci()); // 05
+}
+/*
+* TODO: pass the relevant outcome to the client-side
+* Sample string for frictionless flow:
+* {"liabilityShift":"YES","result":"SUCCESS_AUTHENTICATED","authenticationValue":"AJkBBidJlAAAAAPol4CUdAAAAAA=","serverTransactionId":"AUT_a345aa7c-40b5-4800-b32a-950aa6cb7f59","messageVersion":"2.1.0","eci":"05"}
+*
+* Sample string for authentication failed:
+* {"liabilityShift":"NO","result":"NOT_AUTHENTICATED","authenticationValue":null,"serverTransactionId":"AUT_e289ac18-d819-4130-ac24-891edbcd5be5","messageVersion":"2.1.0","eci":"07"}
+*/
+else { // challenge flow
+   response.setLiabilityShift(threeDSecureData.getLiabilityShift()); // null
+   response.setStatus(threeDSecureData.getStatus()); // CHALLENGE_REQUIRED
+   response.setChallengeMandated(threeDSecureData.getChallengeMandated()); // true
+   response.setEncodedChallengeRequest(threeDSecureData.getPayerAuthenticationRequest()); // Very long base64 encoded string
+   response.setMessageType(threeDSecureData.getMessageType()); // creq
+}
+
+/*
+* TODO: pass the relevant outcome to the client-side
+*
+* Sample string for challenge flow:
+* {"liabilityShift":null,"status":"CHALLENGE_REQUIRED","challengeMandated":true,"challenge":{"requestUrl":"https:\/\/acs2p.test.gpe.cz\/tds\/challenge\/brw\/288acb20-b40a-41ec-8bc7-ed721434c48a","encodedChallengeRequest":"ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjEuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICIzYmI3NjcwZi1hOGVmLTRkOTAtYWVlMS03ZWRiYmFiOWVkNzAiLAogICJhY3NUcmFuc0lEIiA6ICIyODhhY2IyMC1iNDBhLTQxZWMtOGJjNy1lZDcyMTQzNGM0OGEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNCIKfQ","messageType":"creq"}}
+*
+*/
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// TODO: configure client & request settings
+GpApiConfig config = new GpApiConfig();
+config.AppId = "app_id";
+config.AppKey = "app_key";
+config.Environment = Entities.Environment.TEST;
+config.Country = "IE";
+config.Channel = Channel.CardNotPresent;
+config.MerchantContactUrl = "https://www.example.com/contact-us";
+config.MethodNotificationUrl = "https://www.example.com/MethodNotification";
+config.ChallengeNotificationUrl = "https://www.example.com/ChallengeNotification";
+
+ServicesContainer.ConfigureService(config);
+
+// TODO: consume card data sent from the JS Library (requestData)
+
+// TODO: Add the customer's billing address
+Address billingAddress = new Address();
+billingAddress.StreetAddress1 = "Apartment 852";
+billingAddress.StreetAddress2 = "Complex 741";
+billingAddress.StreetAddress3 = "Unit 4";
+billingAddress.City = "Chicago";
+billingAddress.State = "IL";
+billingAddress.PostalCode = "50001";
+billingAddress.CountryCode = "840";
+
+// TODO: Add the customer's shipping address
+Address shippingAddress = new Address();
+shippingAddress.StreetAddress1 = "Flat 456";
+shippingAddress.StreetAddress2 = "House 789";
+shippingAddress.StreetAddress3 = "Basement Flat";
+shippingAddress.City = "Halifax";
+shippingAddress.PostalCode = "W5 9HR";
+shippingAddress.CountryCode = "826";
+
+// TODO: Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData();
+browserData.AcceptHeader = "text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8";
+browserData.ColorDepth = (ColorDepth)Enum.Parse(typeof(ColorDepth), requestData.GetValue<string>("browserData/colorDepth"));
+browserData.IpAddress = "123.123.123.123";
+browserData.JavaEnabled = requestData.GetValue<bool>("browserData/javaEnabled");
+browserData.Language = requestData.GetValue<string>("browserData/language");
+browserData.ScreenHeight = requestData.GetValue<int>("browserData/screenHeight");
+browserData.ScreenWidth = requestData.GetValue<int>("browserData/screenWidth");
+browserData.ChallengeWindowSize = (ChallengeWindowSize)Enum.Parse(typeof(ChallengeWindowSize), requestData.GetValue<string>("challengeWindow/windowSize"));
+browserData.Timezone = requestData.GetValue<string>("browserData/timezoneOffset");
+browserData.UserAgent = requestData.GetValue<string>("browserData/userAgent");
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.Token = requestData.GetValue<string>("card/reference");
+
+try
+{
+   ThreeDSecure threeDSecureData = new ThreeDSecure();
+   threeDSecureData.ServerTransactionId = requestData.GetValue<string>("versionCheckData/serverTransactionId");
+MethodUrlCompletion methodUrlCompletion = MethodUrlCompletion.YES;
+
+   threeDSecureData = Secure3dService.InitiateAuthentication(paymentMethod, threeDSecureData)
+      .WithAmount((decimal)requestData.GetValue<string>("order/amount").ToAmount())
+      .WithCurrency(requestData.GetValue<string>("order/currency"))
+      .WithOrderCreateDate(DateTime.Now)
+      .WithAddress(billingAddress, AddressType.Billing)
+      .WithAddress(shippingAddress, AddressType.Shipping)
+      .WithAddressMatchIndicator(false)
+      .WithCustomerEmail(requestData.GetValue<string>("payer/email"))
+     .WithAuthenticationSource((AuthenticationSource)Enum.Parse(typeof(AuthenticationSource), requestData.GetValue<string>("authenticationSource")))
+      .WithAuthenticationRequestType((AuthenticationRequestType)Enum.Parse(typeof(AuthenticationRequestType), requestData.GetValue<string>("authenticationRequestType")))
+   .WithMessageCategory((MessageCategory)Enum.Parse(typeof(MessageCategory), requestData.GetValue<string>("messageCategory")))
+      .WithChallengeRequestIndicator((ChallengeRequestIndicator)Enum.Parse(typeof(ChallengeRequestIndicator), requestData.GetValue<string>("challengeRequestIndicator")))
+      .WithBrowserData(browserData)
+      .WithMethodUrlCompletion(methodUrlCompletion)
+      .Execute();
+
+}
+catch (ApiException e)
+{
+   // TODO: add your error handling here
+}
+// Frictionless flow
+var response = new JsonDoc();
+if (!threeDSecureData.Status.Equals("CHALLENGE_REQUIRED")) {
+   response.Set("liabilityShift", threeDSecureData.LiabilityShift); // YES
+   response.Set("result", threeDSecureData.Status); // SUCCESS_AUTHENTICATED
+   response.Set("authenticationValue", threeDSecureData.AuthenticationValue); // AJkBCSNYJwAAAAPol4CUdAAAAAA=
+   response.Set("serverTransactionId", threeDSecureData.ServerTransactionId); // AUT_00668cda-df2a-4826-a3d6-b78d7234ca01
+   response.Set("messageVersion", threeDSecureData.MessageVersion); // 2.1.0
+   response.Set("eci", threeDSecureData.Eci); // 05
+
+}
+/*
+* TODO: pass the relevant outcome to the client-side
+* Sample string for frictionless flow:
+* {"liabilityShift":"YES","result":"SUCCESS_AUTHENTICATED","authenticationValue":"AJkBBidJlAAAAAPol4CUdAAAAAA=","serverTransactionId":"AUT_a345aa7c-40b5-4800-b32a-950aa6cb7f59","messageVersion":"2.1.0","eci":"05"}
+*
+* Sample string for authentication failed:
+* {"liabilityShift":"NO","result":"NOT_AUTHENTICATED","authenticationValue":null,"serverTransactionId":"AUT_e289ac18-d819-4130-ac24-891edbcd5be5","messageVersion":"2.1.0","eci":"07"}
+*/
+
+// Challenge Flow
+else {
+   response.Set("liabilityShift", threeDSecureData.LiabilityShift); // null
+   response.Set("status", threeDSecureData.Status); // CHALLENGE_REQUIRED
+   response.Set("challengeMandated", threeDSecureData.ChallengeMandated); // true
+   var challenge = new JsonDoc();
+   challenge.Set("requestUrl", threeDSecureData.IssuerAcsUrl);
+   challenge.Set("encodedChallengeRequest", threeDSecureData.PayerAuthenticationRequest); // Very long base64 encoded string
+   challenge.Set("messageType", threeDSecureData.MessageType); // creq
+   response.Set("challenge", challenge); 
+}
+
+/*
+* TODO: pass the relevant outcome to the client-side
+*
+* Sample string for challenge flow:
+* {"liabilityShift":null,"status":"CHALLENGE_REQUIRED","challengeMandated":true,"challenge":{"requestUrl":"https:\/\/acs2p.test.gpe.cz\/tds\/challenge\/brw\/288acb20-b40a-41ec-8bc7-ed721434c48a","encodedChallengeRequest":"ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjEuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICIzYmI3NjcwZi1hOGVmLTRkOTAtYWVlMS03ZWRiYmFiOWVkNzAiLAogICJhY3NUcmFuc0lEIiA6ICIyODhhY2IyMC1iNDBhLTQxZWMtOGJjNy1lZDcyMTQzNGM0OGEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNCIKfQ","messageType":"creq"}}
+*
+*/
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->country = 'IE';
+$config->merchantContactUrl = 'https://www.example.com/contact-us';
+$config->methodNotificationUrl = 'https://www.example.com/MethodNotification';
+$config->challengeNotificationUrl = 'https://www.example.com/ChallengeNotification';
+
+ServicesContainer::configureService($config);
+
+// TODO: consume card data sent from the JS Library ($requestData)
+
+// TODO: Add the customer's billing address
+$billingAddress = new Address();
+$billingAddress->streetAddress1 = "Apartment 852";
+$billingAddress->streetAddress2 = "Complex 741";
+$billingAddress->streetAddress3 = "Unit 4";
+$billingAddress->city = "Chicago";
+$billingAddress->state = "IL";
+$billingAddress->postalCode = "50001";
+$billingAddress->countryCode = "840";
+
+// TODO: Add the customer's shipping address
+$shippingAddress = new Address();
+$shippingAddress->streetAddress1 = "Flat 456";
+$shippingAddress->streetAddress2 = "House 789";
+$shippingAddress->streetAddress3 = "Basement Flat";
+$shippingAddress->city = "Halifax";
+$shippingAddress->postalCode = "W5 9HR";
+$shippingAddress->countryCode = "826";
+
+// TODO: Add captured browser data from the client-side and server-side
+$browserData = new BrowserData();
+$browserData->acceptHeader = $_SERVER['HTTP_ACCEPT'] ?? '';
+$browserData->colorDepth = $requestData->browserData->colorDepth;
+$browserData->ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+$browserData->javaEnabled = $requestData->browserData->javaEnabled ?? false;
+$browserData->javaScriptEnabled = $requestData->browserData->javascriptEnabled;
+$browserData->language = $requestData->browserData->language;
+$browserData->screenHeight = $requestData->browserData->screenHeight;
+$browserData->screenWidth = $requestData->browserData->screenWidth;
+$browserData->challengWindowSize = $requestData->challengeWindow->windowSize;
+$browserData->timeZone = $requestData->browserData->timezoneOffset;
+$browserData->userAgent = $requestData->browserData->userAgent;
+
+$paymentMethod = new CreditCardData();
+$paymentMethod->token = $requestData->card->reference;
+
+try {
+    $threeDSecureData = new ThreeDSecure();
+    $threeDSecureData->serverTransactionId = $requestData->versionCheckData->serverTransactionId;
+    $methodUrlCompletion = ($requestData->versionCheckData->methodData && $requestData->versionCheckData->methodUrl) ?
+    MethodUrlCompletion::YES : MethodUrlCompletion::NO;
+
+    $threeDSecureData = Secure3dService::initiateAuthentication($paymentMethod, $threeDSecureData)
+        ->withAmount($requestData->order->amount)
+        ->withCurrency($requestData->order->currency)
+        ->withOrderCreateDate(date('Y-m-d H:i:s'))
+        ->withAddress($billingAddress, AddressType::BILLING)
+        ->withAddress($shippingAddress, AddressType::SHIPPING)
+        ->withAddressMatchIndicator(false)
+        ->withCustomerEmail($requestData->payer->email)
+        ->withAuthenticationSource($requestData->authenticationSource)
+        ->withAuthenticationRequestType($requestData->authenticationRequestType)
+        ->withMessageCategory($requestData->messageCategory)
+        ->withChallengeRequestIndicator($requestData->challengeRequestIndicator)
+        ->withBrowserData($browserData)
+        ->withMethodUrlCompletion($methodUrlCompletion)
+        ->execute();
+
+    $response['liabilityShift'] = $threeDSecureData->liabilityShift;
+    // frictionless flow
+    if ($threeDSecureData->status !== 'CHALLENGE_REQUIRED') {
+        $response['result'] = $threeDSecureData->status;
+        $response['authenticationValue'] = $threeDSecureData->authenticationValue;
+        $response['serverTransactionId'] = $threeDSecureData->serverTransactionId;
+        $response['messageVersion'] = $threeDSecureData->messageVersion;
+        $response['eci'] = $threeDSecureData->eci;
+    } else { //challenge flow
+        $response['status'] = $threeDSecureData->status;
+        $response['challengeMandated'] = $threeDSecureData->challengeMandated;
+        $response['challenge']['requestUrl'] = $threeDSecureData->issuerAcsUrl;
+        $response['challenge']['encodedChallengeRequest'] = $threeDSecureData->payerAuthenticationRequest;
+        $response['challenge']['messageType'] = $threeDSecureData->messageType;
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+} catch (ApiException $e) {
+    // TODO: add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id": "AUT_a08c2bad-59b0-403e-bf6d-1787129e44d6",
+   "time_created": "2023-02-15T10:13:22.090Z",
+   "time_last_updated": "2023-02-15T10:01:00.155Z",
+   "transaction_type": "SALE",
+   "status": "CHALLENGE_REQUIRED",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "source": "BROWSER",
+   "three_ds": {
+      "server_trans_ref": "a08c2bad-59b0-403e-bf6d-1787129e44d6",
+      "acs_trans_ref": "60388d60-ad19-41ed-8d04-76e5e00edb9c",
+      "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+      "ds_trans_ref": "0da9c676-3659-4eda-bf9c-6df32aeec109",
+      "eci": "",
+      "liability_shift": "",
+      "status": "CHALLENGE_REQUIRED",
+      "status_reason": "",
+      "authentication_source": "BROWSER",
+      "message_version": "2.1.0",
+      "authentication_value": "",
+      "cardholder_response_info": "",
+      "message_category": "PAYMENT_AUTHENTICATION",
+      "redirect_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/60388d60-ad19-41ed-8d04-76e5e00edb9c",
+      "acs_challenge_request_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/60388d60-ad19-41ed-8d04-76e5e00edb9c",
+      "challenge_status": "MANDATED",
+      "challenge_model": "OUT_OF_BAND_CHALLENGE",
+      "session_data_field_name": "threeDSSessionData",
+      "message_type": "creq",
+      "challenge_value": "ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjEuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICJhMDhjMmJhZC01OWIwLTQwM2UtYmY2ZC0xNzg3MTI5ZTQ0ZDYiLAogICJhY3NUcmFuc0lEIiA6ICI2MDM4OGQ2MC1hZDE5LTQxZWQtOGQwNC03NmU1ZTAwZWRiOWMiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNSIKfQ"
+   },
+   "notifications": {
+      "challenge_return_url": "https://www.example.com/ChallengeNotification"
+   },
+   "action": {
+      "id": "ACT_CIlS98KAq4aeYJhdwjw695x0uwW6V7",
+      "type": "INITIATE",
+      "time_created": "2022-06-01T09:34:14.068Z",
+      "result_code": "SUCCESS",
+      "app_id": "grf9Q3tGYqglXOmYXYGAeYfFvsmnXAGe",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+## Step 5: Frictionless & challenge flows
+At this point, the issuer analyzes the transaction based on the data your application provided as well as historical “normal” customer behavior and transaction analysis. If further authentication is not needed to decide whether the transaction should proceed or not, a challenge is not mandated (_frictionless flow_). If the Issuer decides that further authentication is needed before the transaction can proceed, it will mandate a challenge (_challenge flow_).
+   
+### Step 5.1 Frictionless flow
+In a frictionless flow, the issuer determines that either no challenge is required to authenticate the transaction or that the transaction should not proceed any further because it is considered high risk or fraud is suspected. For European merchants and transactions in scope of PSD2, the issuer will also determine if a valid exemption can be applied.
+
+Depending on the outcome and the relevant electronic commerce indicator (ECI) value, your application can now proceed to authorization.
+
+The following diagram shows the logic for a frictionless flow.
+![3D Secure Frictionless flow](/sites/default/files/2024-05/3DS2-Frictionless-Flow.jpg)
+   
+#### Sample frictionless response (server side)
+In our example below, we return the outcome to the client side. Hence, the Initiate Authentication method of the JavaScript Library receives the authentication response, and all that remains is to proceed to authorization (see Step 6).
+
+In the event of the ECI value indicating no liability shift away from the merchant, we return an authentication failed message to the client-side. In our client-side example above (initiate authentication), we included logic to handle each potential outcome:
+
+* Authentication Success and Authorization Success
+* Authentication Success and Authorization Failure
+* Authentication Failure
+
+You can tailor this flow to your application as needed. For example, you may choose to simply return the frictionless authentication outcome to the JavaScript Library and proceed to authorization from a different endpoint initiated by the client side. The JavaScript Library and SDK are completely flexible in this regard.
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id": "AUT_2bc660c9-5c09-4e73-bbdc-b39f7eed2281",
+   "time_created": "2022-06-01T09:26:38.462Z",
+   "time_last_updated": "2022-06-01T09:24:04.754Z",
+   "transaction_type": "SALE",
+   "status": "SUCCESS_AUTHENTICATED",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "source": "BROWSER",
+   "three_ds": {
+      "server_trans_ref": "2bc660c9-5c09-4e73-bbdc-b39f7eed2281",
+      "acs_trans_ref": "f02b66d0-e18c-41ec-8c01-971273148257",
+      "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+      "ds_trans_ref": "d09abcb4-f5cf-462c-a845-0e0a8f6bb1c9",
+      "eci": "05",
+      "liability_shift": "YES",
+      "status": "AUTHENTICATION_SUCCESSFUL",
+      "status_reason": "MEDIUM_CONFIDENCE",
+      "authentication_source": "BROWSER",
+      "message_version": "2.1.0",
+      "authentication_value": "AJkBB1lTGQAAABPhl4FSdAAAAAA=",
+      "cardholder_response_info": "",
+      "message_category": "PAYMENT_AUTHENTICATION",
+      "redirect_url": "",
+      "acs_challenge_request_url": "",
+      "challenge_status": "",
+      "challenge_model": "",
+      "session_data_field_name": "threeDSSessionData",
+      "message_type": "creq",
+      "challenge_value": ""
+   },
+   "notifications": {
+      "challenge_return_url": "https://example.com/challengenotification"
+   },
+   "action": {
+      "id": "ACT_4lSvrexbRC2vywI35KqEEsALzNnp7P",
+      "type": "INITIATE",
+      "time_created": "2022-06-01T09:26:38.462Z",
+      "result_code": "SUCCESS",
+      "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// See frictionless flow condition in JAVA code sample in Step 3
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// See frictionless flow condition in .NET code sample in Step 3
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+// See frictionless flow condition in PHP code sample in Step 3
+```
+</Code>
+</CodeGroup>
+   
+### Step 5.2 Challenge flow
+In a challenge flow, the issuer determines that further authentication is required for the transaction to proceed. Reasons can include a high-value transaction, unusual payment behavior for this particular customer (time of day, type of merchant, and so on), mismatching data, or insufficient data to make a determination.
+
+The following diagram shows the logic for a challenge flow.
+![3D Secure Challenge flow](/sites/default/files/2024-05/3DS2-Challenge-Flow.jpg)
+   
+#### Sample Challenge Response (server side)
+In our example, we return the necessary variables to the client side for the JavaScript Library to display the challenge to the customer. This includes the Issuer's ACS URL and the Encoded Challenge Request (`creq`). The challenge request is made up of various transaction variables, including the identifiers for the authentication (Server Transaction ID, ACS Transaction ID, and the Challenge Window Size).
+   
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id": "AUT_c77b467c-98c1-4f3f-af05-ed9b6efa8c00",
+   "time_created": "2022-06-03T15:45:40.493Z",
+   "time_last_updated": "2022-06-03T15:45:36.740Z",
+   "transaction_type": "SALE",
+   "status": "CHALLENGE_REQUIRED",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "US",
+   "source": "BROWSER",
+   "three_ds": {
+      "server_trans_ref": "c77b467c-98c1-4f3f-af05-ed9b6efa8c00",
+      "acs_trans_ref": "384b26d0-e354-41ec-8c03-435b033a82d1",
+      "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+      "ds_trans_ref": "482efe17-c92f-4476-934f-9a26fb942664",
+      "eci": "",
+      "liability_shift": "",
+      "status": "CHALLENGE_REQUIRED",
+      "status_reason": "",
+      "authentication_source": "BROWSER",
+      "message_version": "2.2.0",
+      "authentication_value": "",
+      "cardholder_response_info": "",
+      "message_category": "PAYMENT_AUTHENTICATION",
+      "redirect_url": "https://apis.sandbox.globalpay.com/ucp/authentications/redirect/eyJpZCI6IkFVVF9jNzdiNDY3Yy05OGMxLTRmM2YtYWYwNS1lZDliNmVmYThjMDAiLCJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl83ZTNlMmM3ZGYzNGY0MjgxOWIzZWRlZTMxMDIyZWUzZiIsImFjY291bnRfaWQiOiJUUkFfYzk5NjdhZDdkOGVjNGI0NmI2ZGQ0NGE2MWNkZTlhOTEiLCJtZXJjaGFudF9uYW1lIjoiU2FuZGJveF9tZXJjaGFudF8zIiwiYWNjb3VudF9uYW1lIjoidHJhbnNhY3Rpb25fcHJvY2Vzc2luZyIsImFjc191cmwiOiJodHRwczovL2FjczJwLnRlc3QuZ3BlLmN6L3Rkcy9jaGFsbGVuZ2UvYnJ3LzM4NGIyNmQwLWUzNTQtNDFlYy04YzAzLTQzNWIwMzNhODJkMSIsIm1lc3NhZ2VfdmVyc2lvbiI6IjIuMS4wIiwiYXBwX2lkIjoiZ3JmOVEzdEdZcWdsWE9tWVhZR0FlWWZGdnNtblhBR2UiLCJhcHBfbmFtZSI6Imhvc3RlZF9maWVsZHMiLCJhcHBfZGV2ZWxvcGVyIjoiamFzb24uYmFqYXJpYXNAZ2xvYmFscGF5LmNvbSJ9",
+      "acs_challenge_request_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/384b26d0-e354-41ec-8c03-435b033a82d1",
+      "challenge_status": "MANDATED",
+      "challenge_model": "OUT_OF_BAND_CHALLENGE",
+      "session_data_field_name": "threeDSSessionData",
+      "message_type": "creq",
+      "challenge_value": "ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjIuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICJjNzdiNDY3Yy05OGMxLTRmM2YtYWYwNS1lZDliNmVmYThjMDAiLAogICJhY3NUcmFuc0lEIiA6ICIzODRiMjZkMC1lMzU0LTQxZWMtOGMwMy00MzViMDMzYTgyZDEiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNSIKfQ"
+   },
+   "notifications": {
+      "challenge_return_url": "https://example.com/challengenotification"
+   },
+   "action": {
+      "id": "ACT_95XfCCO9AgtIIMDnWxSdl3mu4rSqGv",
+      "type": "INITIATE",
+      "time_created": "2022-06-03T15:45:40.493Z",
+      "result_code": "SUCCESS",
+      "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// See challenge flow condition in JAVA code sample in Step 3: Initiate authentication of this guide
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// See challenge flow condition in .NET code sample in Step 3: Initiate authentication of this guide
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+// See challenge flow condition in PHP code sample in Step 3: Initiate authentication of this guide
+```
+</Code>
+</CodeGroup>
+
+## Step 6: Present the challenge
+To facilitate authentication, the JavaScript Library opens the issuer's ACS URL in an iFrame while sending the challenge request to it. The content of the iFrame is formatted per the challenge-window size set in the library (`WINDOWED_600X400` is the default). The maximum amount of time that the iFrame should remain open to display the challenge is `600 seconds` (this is set by the Issuer’s ACS).
+
+The type of challenge displayed to the customer is determined by the Issuer’s ACS and aligns with at least two of the three elements of SCA:
+
+* Possession – Something only the customer has; for example, their mobile device registered with their bank to which they will receive a code in an SMS
+* Inherence – Something only the customer is; for example, their fingerprint or other form of biometric data
+* Knowledge – Something only the customer knows; for example, a unique passphrase or answer to a personal question
+   
+### ACS simulator
+In our Sandbox environment, we provides an issuer's ACS simulator that allows you to test different challenge outcomes.
+
+Once the challenge loads, after 10 seconds, the simulator automatically completes the authentication and generates an Authentication Successful response (`transStatus = “Y”`). This is intended to mimic a scenario in which a customer received a notification on their phone to authenticate using their banking app.
+
+Alternatively, clicking the CANCEL button generates an Authentication Failed response (`transStatus = “N”`). In either scenario, the response is sent in the Challenge Response message (`CRes`) to the Challenge Notification endpoint.
+   
+![Simulated Authentication Successful Response](/sites/default/files/2024-05/3ds2.2-ACS.PNG_cropped.png)
+
+### Sample challenge response (client side)
+When the challenge is complete and the JavaScript Library receives the response from the Challenge Notification endpoint, the iFrame closes and we proceed to the next step. As outlined previously, our Challenge Notification endpoint passes back the transaction status (`transStatus`) to the client side, notifying us if the authentication was successful or not, along with the Server Transaction ID on our system.
+
+On the client side, if the challenge completes successfully, we proceed to the next step by submitting our form to the authorization endpoint after appending the Server Transaction ID to it. For challenge scenarios, we need to execute one more request before sending the authorization request.
+   
+<Code id="Javascript" title="Javascript" language="xml" active>
+```
+// continued from previous step
+
+// Add serverTransactionId to form as a hidden input
+const serverTransactionId = document.createElement("input");
+serverTransactionId.type = "hidden";
+serverTransactionId.name = "serverTransactionId";
+serverTransactionId.value = authenticationData.serverTransactionId || authenticationData.challenge.response.data.threeDSServerTransID || versionCheckData.serverTransactionId
+
+// Submit data to authorization endpoint for processing
+paymentForm.appendChild(serverTransactionId);
+paymentForm.submit();
+return true;
+} catch (e) {
+   console.log(e);
+   console.error('An error occurred', e.reasons);
+   return false;
+}
+
+return false;
+};
+</script >
+```
+</Code>
+
+## Step 7: Get authentication result
+At this point, we know the customer has successfully completed the challenge. However, unlike in a frictionless scenario, our application doesn’t have all the data we need to proceed to authorization.
+
+When the customer completes the challenge, the Issuer’s ACS also sends the outcome to our 3D Secure solution, with the full authentication data. The Get Result method in the API allows us to retrieve the necessary data for authorization, including:
+
+* ECI
+* Authentication value
+* DS Trans ID (Directory Server Transaction ID)
+* Message version
+
+If the customer canceled during the challenge or the authentication did not proceed for another reason, the summary endpoint will include this information. You can then update your application or website accordingly.
+
+If you decide not to use our 3D Secure Authentication resource and do not send the Authentication ID (AUT_ID) returned by Authentication resource in the Authorization request or you are using a third party 3D Secure provider, you will be required to include the following fields in the Authorization request.
+
+* message_version
+* eci
+* value
+* server_trans_ref
+* ds_trans_ref
+
+Please refer to the [Sample Request for Third-party 3DS Authentication](/docs/risk-management/3D-secure/browser-authentication-guide#sample-request-for-third-party-3ds-authentication) in Step 8 - Authorization with 3DS2 data.
+
+When a liability shift is obtained via the 3D Secure process then these values above or the `AUT_ID` must be passed in the Authorization request. If not submitted, then the liability shift will not be granted in the event of a chargeback.
+
+### Sample Obtain Authentication data (server side)
+In our example, we only need to submit the REST API reference for the transaction, the `AUT_ID`. This returns all the information required to complete a 3D Secure authorization.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+https://apis.sandbox.globalpay.com/ucp/authentications/AUT_5dad4214-78a9-4003-a5a0-737ffa38181c/result
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("app_id");
+config.setAppKey("app_key");
+config.setEnvironment(Environment.TEST);
+config.setCountry("IE");
+config.setChannel(Channel.CardNotPresent.getValue());
+
+ServicesContainer.configureService(config);
+
+// TODO: consume data sent from the payment form (requestData)
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.setToken(requestData.get("paymentToken").getAsString());
+
+if (requestData.get("serverTransactionId") != null) {
+   try {
+      String serverTransactionId = requestData.get("serverTransactionId");
+      threeDSecureData = Secure3dService
+         .getAuthenticationData()
+         .withServerTransactionId(serverTransactionId)
+         .execute();
+
+   } catch (ApiException $e) {
+      // TODO: add your error handling here
+   }
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// TODO: configure client & request settings                
+GpApiConfig config = new GpApiConfig();
+config.AppId = "app_id";
+config.AppKey = "app_key";
+config.Environment = Entities.Environment.TEST;
+config.Country = "IE";
+config.Channel = Channel.CardNotPresent;
+
+ServicesContainer.ConfigureService(config);
+
+// TODO: consume card data sent from the JS Library (requestData)
+
+CreditCardData paymentMethod = new CreditCardData();
+paymentMethod.Token = requestData.GetValue<string>("paymentToken");
+
+if (requestData.GetValue<string>("serverTransactionId") != null) {
+   try {
+   string serverTransactionId = requestData.GetValue<string>("serverTransactionId");
+   threeDSecureData = Secure3dService
+      .GetAuthenticationData()
+      .WithServerTransactionId(serverTransactionId)
+      .Execute();
+
+   } catch (ApiException e) {
+      // TODO: add your error handling here
+   }
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->country = 'IE';
+
+// TODO: consume data sent from the payment form ($requestData)
+
+$paymentMethod = new CreditCardData();
+$paymentMethod->token = $requestData['paymentToken'];
+
+if (!empty($requestData['serverTransactionId'])) {
+   try {
+      $serverTransactionId = $requestData['serverTransactionId'];
+      $threeDSecureData = Secure3dService::getAuthenticationData()
+         ->withServerTransactionId($serverTransactionId)
+         ->execute();
+
+   } catch (ApiException $e) {
+   	// TODO: add your error handling here
+   }
+}
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id": "AUT_3df53b41-22eb-4db8-9861-56c28e0a37fb",
+   "time_created": "2022-06-03T15:53:01.974",
+   "status": "SUCCESS_AUTHENTICATED",
+   "channel": "CNP",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "source": "BROWSER",
+   "three_ds": {
+      "acs_trans_ref": "e0d13dd0-e354-41ec-8c03-435b033a82d6",
+      "ds_trans_ref": "3d2f6746-6e41-4136-9650-4929c3932801",
+      "server_trans_ref": "3df53b41-22eb-4db8-9861-56c28e0a37fb",
+      "acs_reference_number": "",
+      "liability_shift": "YES",
+      "authentication_type": "OUT_OF_BAND_CHALLENGE",
+      "authentication_value": "AAkBBVKDWAAAACcQl4FUdAoPFg0=",
+      "eci": "05",
+      "status": "AUTHENTICATION_SUCCESSFUL",
+      "status_reason": "",
+      "redirect_url": "https://apis.sandbox.globalpay.com/ucp/authentications/redirect/eyJpZCI6IkFVVF8zZGY1M2I0MS0yMmViLTRkYjgtOTg2MS01NmMyOGUwYTM3ZmIiLCJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl83ZTNlMmM3ZGYzNGY0MjgxOWIzZWRlZTMxMDIyZWUzZiIsImFjY291bnRfaWQiOiJUUkFfYzk5NjdhZDdkOGVjNGI0NmI2ZGQ0NGE2MWNkZTlhOTEiLCJtZXJjaGFudF9uYW1lIjoiU2FuZGJveF9tZXJjaGFudF8zIiwiYWNjb3VudF9uYW1lIjoidHJhbnNhY3Rpb25fcHJvY2Vzc2luZyIsImFjc191cmwiOiJodHRwczovL2FjczJwLnRlc3QuZ3BlLmN6L3Rkcy9jaGFsbGVuZ2UvYnJ3L2UwZDEzZGQwLWUzNTQtNDFlYy04YzAzLTQzNWIwMzNhODJkNiIsIm1lc3NhZ2VfdmVyc2lvbiI6IjIuMS4wIiwiYXBwX2lkIjoiZ3JmOVEzdEdZcWdsWE9tWVhZR0FlWWZGdnNtblhBR2UiLCJhcHBfbmFtZSI6Imhvc3RlZF9maWVsZHMiLCJhcHBfZGV2ZWxvcGVyIjoiamFzb24uYmFqYXJpYXNAZ2xvYmFscGF5LmNvbSJ9",
+      "acs_challenge_request_url": "https://acs2p.test.gpe.cz/tds/challenge/brw/e0d13dd0-e354-41ec-8c03-435b033a82d6",
+      "authentication_source": "BROWSER",
+      "challenge_value": "ewogICJtZXNzYWdlVHlwZSIgOiAiQ1JlcSIsCiAgIm1lc3NhZ2VWZXJzaW9uIiA6ICIyLjEuMCIsCiAgInRocmVlRFNTZXJ2ZXJUcmFuc0lEIiA6ICIzZGY1M2I0MS0yMmViLTRkYjgtOTg2MS01NmMyOGUwYTM3ZmIiLAogICJhY3NUcmFuc0lEIiA6ICJlMGQxM2RkMC1lMzU0LTQxZWMtOGMwMy00MzViMDMzYTgyZDYiLAogICJjaGFsbGVuZ2VXaW5kb3dTaXplIiA6ICIwNCIKfQ",
+      "message_category": "PAYMENT_AUTHENTICATION",
+      "message_version": "2.1.0",
+      "challenge_status": "NOT_MANDATED",
+      "authentication_request_type": "",
+      "acs_decoupled_response_indicator": "",
+      "whitelist_status": "",
+      "message_extension": []
+   },
+   "action": {
+      "id": "ACT_LmP0hFBVsqmimUGlBHwhAUaCYDQE3I",
+      "type": "GET_CHALLENGE_RESULT",
+      "time_created": "2022-06-03T15:53:01.974",
+      "result_code": "SUCCESS",
+      "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+## Step 8: Authorization with 3DS2 data
+Now that the 3D Secure 2 process is complete, and depending on the ECI value returned, we can proceed to authorization while including the authentication data.
+
+Like we did in a frictionless scenario, here we check the ECI value to ensure it affords the merchant a liability shift. If it does, we proceed to authorization. At this point, the transaction is processed as normal and may be successful or declined based on standard criteria: sufficient funds, correct security code entered, and so forth.
+
+### Authentication endpoint
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer yuolhwoZKLmPSFK04rEoZIEwfZyZ' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "channel": "CNP",
+   "type": "SALE",
+   "amount": "1999",
+   "currency": "EUR",
+   "reference": "Test_1234sdfsd",
+   "country": "IE",
+   "payment_method": {
+      "name": "James Mason",
+      "entry_mode": "ECOM",
+      "id": "PMT_1c22346c-aafe-47f3-a1c5-231bdb734521",
+      "authentication": {
+         "id": "AUT_df8cf033-3c3f-4bc6-af75-73da2acb2f7c"
+      }
+   }
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+if (!threeDSecure.getLiabilityShift().equals("YES")
+        || (!threeDSecure.getStatus().equals("SUCCESS_AUTHENTICATED")
+        && !threeDSecure.getStatus().equals("SUCCESS_ATTEMPT_MADE"))) {
+) {
+   // TODO: avoid authorization and ask the customer to try another card instead
+   // e.g. available response data
+   // String liabilityShift = threeDSecureData.getLiabilityShift(); // NO
+   // String status = threeDSecureData.getStatus(); // NOT_AUTHENTICATED
+   // String statusReason = threeDSecureData.getStatusReason(); // CARD_AUTHENTICATION_FAILED
+}
+
+paymentMethod.setThreeDSecure(threeDSecureData);
+
+try {
+      // TODO: proceed to authorization with liability shift
+      gatewayResponse = paymentMethod
+         .authorize(requestData.get("amount").asBigDecimal())
+         .withCurrency(requestData.get("currency").getAsString())
+         .execute();
+
+   // TODO: handle gateway response
+   // e.g. available response data
+   // String responseCode = gatewayResponse.getResponseCode(); // SUCCESS
+   // String responseMessage = gatewayResponse.getResponseMessage(); // PREAUTHORIZED
+   // String authCode = gatewayResponse.getTransactionReference().getAuthCode(); // 00
+   // String transactionId = gatewayResponse.getTransactionReference().getTransactionId(); // TRN_87qJ8EIe4EyNGda9xAWPoa4awo6FbE_2189ef712481
+} catch (Exception e) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+if (!threeDSecureData.LiabilityShift.Equals("YES") ||
+   !threeDSecureData.Status.Equals("SUCCESS_AUTHENTICATED") ||
+   !threeDSecureData.Status.Equals("SUCCESS_ATTEMPT_MADE")
+) {
+  // TODO: avoid authorization and ask the customer to try another card instead
+  // e.g. available response data
+  // String liabilityShift = threeDSecureData.getLiabilityShift(); // NO
+  // String status = threeDSecureData.getStatus(); // NOT_AUTHENTICATED
+  // String statusReason = threeDSecureData.getStatusReason(); // CARD_AUTHENTICATION_FAILED
+   }
+
+paymentMethod.ThreeDSecure = threeDSecureData;
+
+try {
+      // TODO: proceed to authorization with liability shift
+      gatewayResponse = paymentMethod
+         .Authorize(requestData.GetValue<string>("amount").ToAmount())
+         .WithCurrency(requestData.GetValue<string>("currency"))
+         .Execute();
+
+     // TODO: handle gateway response
+     // e.g. available response data
+     // String responseCode = gatewayResponse.getResponseCode(); // SUCCESS
+     // String responseMessage = gatewayResponse.getResponseMessage(); // PREAUTHORIZED
+     // String authCode = gatewayResponse.getTransactionReference().getAuthCode(); // 00
+     // String transactionId = gatewayResponse.getTransactionReference().getTransactionId(); // TRN_87qJ8EIe4EyNGda9xAWPoa4awo6FbE_2189ef712481
+     
+} catch (Exception e) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+if ($threeDSecureData->liabilityShift !== 'YES' ||
+   ! in_array($threeDSecureData->status, [
+   	Secure3dStatus::SUCCESS_AUTHENTICATED,
+   	Secure3dStatus::SUCCESS_ATTEMPT_MADE
+   ])) {
+         // TODO: avoid authorization and ask the customer to try another card instead
+         // e.g. available response data
+         // $liabilityShift = $threeDSecureData->liabilityShift; // NO
+         // $status = $threeDSecureData->status; // NOT_AUTHENTICATED
+         // $statusReason = $threeDSecureData->statusReason; // CARD_AUTHENTICATION_FAILED
+   	}
+
+      $paymentMethod->threeDSecure = $threeDSecureData;
+}
+
+try {
+   // TODO: proceed to authorization with liability shift
+   $gatewayResponse = $paymentMethod->authorize($requestData['amount'])
+      ->withCurrency($requestData['currency'])
+      ->execute();
+
+   // TODO: handle gateway response
+   // e.g. available response data
+   // $responseCode	= $gatewayResponse->responseCode; // SUCCESS
+   // $responseMessage = $gatewayResponse->responseMessage; // PREAUTHORIZED
+   // $authCode = $gatewayResponse->transactionReference->authCode; // 00
+   // $transactionId = $gatewayResponse->transactionReference->transactionId; // TRN_87qJ8EIe4EyNGda9xAWPoa4awo6FbE_2189ef712481
+} catch (Exception $e) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+### [Conditional] Third-party 3DS Authentication
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer yuolhwoZKLmPSFK04rEoZIEwfZyZ' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "channel": "CNP",
+   "type": "SALE",
+   "amount": "1999",
+   "currency": "EUR",
+   "reference": "Test_1234sdfsd",
+   "country": "IE",
+   "payment_method": {
+      "name": "James Mason",
+      "entry_mode": "ECOM",
+      "id": "PMT_1c22346c-aafe-47f3-a1c5-231bdb734521",
+      "authentication": {
+         "three_ds": {
+            "message_version": "2.2.0",
+            "eci": "05",
+            "value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+            "server_trans_ref": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+            "ds_trans_ref": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+         }
+      }
+   }
+}'
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+"id": "TRN_pVOW1K2sc8hRP4Nymi0qveBP7gcFGb_st_1234sdfsd",
+   "time_created": "2022-06-01T09:42:42.252Z",
+   "type": "SALE",
+   "status": "CAPTURED",
+   "channel": "CNP",
+   "capture_mode": "AUTO",
+   "amount": "1999",
+   "currency": "EUR",
+   "country": "IE",
+   "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+   "merchant_name": "Sandbox_merchant_3",
+   "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+   "account_name": "transaction_processing",
+   "reference": "Test_1234sdfsd",
+   "payment_method": {
+      "result": "00",
+      "message": "[ test system ] AUTHORISED",
+      "entry_mode": "ECOM",
+      "authentication": {
+         "cavv_result": ""
+      },
+      "card": {
+         "funding": "CREDIT",
+         "brand": "VISA",
+         "masked_number_last4": "XXXXXXXXXXXX5262",
+         "authcode": "12345",
+         "brand_reference": "DxKmQE8NmDuXC1uV",
+         "brand_time_created": "",
+         "tag_response": "",
+         "cvv_result": "MATCHED",
+         "avs_address_result": "MATCHED",
+         "avs_postal_code_result": "MATCHED",
+         "avs_action": "",
+         "provider": {
+            "result": "00",
+            "cvv_result": "M",
+            "avs_address_result": "M",
+            "avs_postal_code_result": "M"
+         }
+      }
+   },
+   "batch_id": "BAT_1099150",
+   "action": {
+      "id": "ACT_pVOW1K2sc8hRP4Nymi0qveBP7gcFGb",
+      "type": "AUTHORIZE",
+      "time_created": "2022-06-01T09:42:42.252Z",
+      "result_code": "SUCCESS",
+      "app_id": "grf9Q3tGYqglXOmYXYGAeYfFvsmnXAGe",
+      "app_name": "demo_app"
+   }
+}
+```
+</Code>
+
+## Sample Hosted Fields and 3DS2
+The following is a complete client-side example for Hosted Fields and 3D Secure 2.
+
+<Code id="HTML" title="HTML" language="xml" active>
+```
+<form id="payment-form" name="checkout" action="PlaceOrder.php" method="post">
+	<!-- Target for the credit card form -->
+	<div id="credit-card"></div>
+	<input id="amount" name="amount" value="1999" type="text" hidden="hidden">
+	<input id="currency" name="currency" value="EUR" type="text" hidden="hidden">
+	<div><button id="start" type="button" hidden="hidden">Pay</button></div>
+</form>
+
+// Configure account
+window.GlobalPayments.configure({
+   accessToken: gpApiAccessToken,
+   env: 'sandbox',
+   apiVersion: '2021-03-22',
+});
+
+const paymentForm = document.getElementById("payment-form");
+
+
+// Create Form
+const cardForm = GlobalPayments.creditCard.form("#credit-card", {
+   style: "gp-default"
+});
+
+cardForm.on("token-success", (response) => {
+   // Add payment token to form as a hidden input
+   const token = document.createElement("input");
+   token.type = "hidden";
+   token.id = "payment-token";
+   token.name = "paymentToken";
+   token.value = response.paymentReference;
+
+   paymentForm.appendChild(token);
+
+   const start3DSButton = document.getElementById("start");
+   start3DSButton.click();
+});
+
+cardForm.on("token-error", (response) => {
+   // Show error to the consumer
+});
+cardForm.on("error", (response) => {
+   // Show error to the consumer
+});
+
+const {
+   checkVersion,
+   initiateAuthentication,
+   ChallengeWindowSize,
+} = GlobalPayments.ThreeDSecure;
+
+// Add submit click event handler
+document.addEventListener(“DOMContentLoaded”, () => {
+   const checkVersionButton = document.getElementById(“start”);
+   if (!checkVersionButton) {
+      return;
+   }
+
+   checkVersionButton.addEventListener(“click”, start3DS);
+});
+
+// Handle 3DS 2.0 workflow
+const start3DS = async (e) => {
+   e.preventDefault();
+   try {
+      const versionCheckData = await checkVersion(“/ThreeDSecure/CheckEnrollment / ”, {
+         card: {
+            reference: document.getElementById(“payment - token”).value,
+         },
+         order: {
+            amount: document.getElementById("amount").value,
+            currency: document.getElementById("currency").value,
+         }
+      });
+      if (versionCheckData.status === "NOT_ENROLLED" && versionCheckData.liabilityShift !== "YES") {
+         // TODO: avoid authorization and ask the customer to try another card instead
+         return false;
+      }
+      if (versionCheckData.liabilityShift === "YES") {
+         // TODO: proceed with authorization
+         paymentForm.submit();
+         return true;
+      }
+      const authenticationData = await initiateAuthentication(“/ThreeDSecure/InitiateAuthentication / ”, {
+         card: {
+            reference: document.getElementById(“payment - token”).value,
+         },
+         order: {
+            amount: document.getElementById("amount").value,
+            currency: document.getElementById("currency").value,
+               // shipping address
+               // billing address
+         },
+         payer: {
+            email: "john.smith@example.com",
+         },
+         versionCheckData: versionCheckData,
+         challengeWindow: {
+            windowSize: ChallengeWindowSize.Windowed600x400,
+            displayMode: “lightbox”,
+         }
+      });
+
+      // You have a liability shift and fraud protection
+      if (authenticationData.liabilityShift === "YES" && (authenticationData.result === "SUCCESS_AUTHENTICATED" || authenticationData.result === "SUCCESS_ATTEMPT_MADE")) {
+         // TODO: proceed with authorization
+         paymentForm.submit();
+         return true;
+      }
+
+      // Add serverTransactionId to form as a hidden input
+      const serverTransactionId = document.createElement("input");
+      serverTransactionId.type = "hidden";
+      serverTransactionId.name = "serverTransactionId";
+      serverTransactionId.value = authenticationData.serverTransactionId || authenticationData.challenge.response.data.threeDSServerTransID || versionCheckData.serverTransactionId;
+
+      // Submit data to the integration's backend for processing
+      paymentForm.appendChild(serverTransactionId);
+      paymentForm.submit();
+      return true;
+   } catch (error) {
+      console.log(error);
+      console.error(“An error occurred”, error.reasons);
+      return false;
+   }
+
+return false;
+};
+```
+</Code>
+
+## Integration references
+To get a deeper understanding of 3D Secure, we’ve provided some references for both API and SDK integrations. 
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+
+    <Card type="with_icon" link="/api/authentications" title="API /authentications" icon="window">
+        The full 3D secure resource for your reference.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/sdk/3DS2" title="SDK - 3DS guide" icon="code">
+        3DS integration is supported via our JavaScript 3DS library.
+    </Card>
+</CardsGroup>
+
+
+## Testing 3D Secure
+Our 3D Secure solution is available for testing in our free Sandbox environment registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        Download for multiple use cases under the 3D Secure folder.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

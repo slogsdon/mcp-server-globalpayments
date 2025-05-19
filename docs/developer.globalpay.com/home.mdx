@@ -1,0 +1,158 @@
+---
+---
+
+<MessageBar name="xml-api-moved" buttonText="Go to Docs" buttonUrl="/ecommerce/getting-started">
+    The XML API has moved.
+</MessageBar>
+
+<IntroSection
+    title="A complete commerce ecosystem delivering for you"
+    buttonUrl="/docs/getting-started/overview"
+    buttonText="Show Me the Process"
+    imgAlt="Card input fields joined to a Transaction Reports webpage via a terminal, the internet, and devices."
+>
+    A simple integration connects you to our vast payments ecosystem. Our market-leading technology connects every aspect of commerce:
+    * **In-Store:** Integrate with our point-of-sale (POS) solutions.
+    * **Online:** Accept payments from anywhere in the world.
+    * **Omnichannel:** Combine online with POS for a seamless customer experience.
+</IntroSection>
+
+<OnlinePayments
+    title="Online Payments"
+    buttonUrl="/docs/payments/online/overview"
+    buttonText="Go to Docs"
+color="grey"
+    imgAlt="Card input fields joined to a Transaction Reports webpage via a terminal, the internet, and devices."
+>
+    With an API or SDK integration, we can help you take payments securely online while meeting 
+    <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> requirements. 
+    Quickly add pre-built forms ([**Hosted Fields**](/docs/payments/online/hosted-fields-overview), [**Drop-In UI**](/docs/payments/online/drop-in-ui-overview)) 
+    or allow us to handle the payment experience for you with our [**Hosted Payment Page**](/docs/payments/online/hosted-payment-page-overview) on your website or a 
+    [**payment link**](/docs/payments/online/pay-by-link-overview) to give customers via QR code, email, or text.
+</OnlinePayments>
+
+<InStorePaymentsSection
+    title="In-Store Payments" 
+    buttonUrl="/docs/payments/in-store/overview"
+    buttonText="Go to POS"
+    imgAlt="Illustration of a payment page on a handheld device surrounded by colorful credit card shapes."
+>
+    Use our API or an SDK to embed card-present payments into your POS device. Or, use our cloud service to meet all your business needs.
+    * [**Terminals:**](/docs/payments/in-store/standalone) Available "out of the box" or integrated to your existing POS system, with do-business-anywhere connectivity.
+    * [**Semi-Integration:**](/docs/payments/in-store/semi-integration) Pair your ePOS with an Android or Ingenico terminal, or find one from one of our integration partners. No <Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip> certification needed.
+    * [**Full Integration:**](/docs/payments/in-store/full-integration) Available "out of the box" or integrated to your existing POS system, with do-business-anywhere connectivity.
+    * [**Cloud Integration:**](/docs/payments/in-store/cloud ) Handle your whole business, not just payments. Requires less code and certification than a traditional semi-integration.
+</InStorePaymentsSection>
+
+<PaymentSolutionsSection
+    title="Payment Solutions" 
+    imgAlt="Icons for a person, settings, and a device’s payment page all connected to an Order Summary webpage."
+color="grey"
+>
+    Integrate our customizable solutions or add to your existing payment experience so you can connect into numerous regions, channels, and payment methods worldwide. We have solutions for every level of expertise:
+
+    **No-Code:** Download one of our compatible plugins like Adobe Commerce (Magento) or WooCommerce for an "out of the box" payment page. [**Go to Plugins &gt;**](/docs/integration-options/plugins)
+
+    **Low-Code:** Use an SDK or client-side library to simplify your integration and get to market faster. [**Go to SDKs &gt;**](/docs/integration-options/sdk/overview)
+
+    **High-Code:** Send direct API requests to have the most control with a highly customized integration. [**Go to API &gt;**](/docs/integration-options/api)
+</PaymentSolutionsSection>
+
+<PluginsSection
+    title="Feature-Rich Plugins"
+    integrationType="No-Code Integration"
+    buttonUrl="/docs/integration-options/plugins"
+    buttonText="Go to Docs"
+    columns={ // displayed desktop only
+        <>
+            <IntegrationColumn>
+                <PluginBox title="PrestaShop" imgSrc="/gh-assets/home-assets/prestashop.png" url="/docs/integration-options/plugins/prestashop" />
+                <PluginBox title="WooCommerce" imgSrc="/gh-assets/home-assets/woocommerce.png" url="/docs/integration-options/plugins/woocommerce" />
+            </IntegrationColumn>
+            <IntegrationColumn>
+                <PluginBox title="Adobe Commerce (formerly Magento)" imgSrc="/gh-assets/home-assets/adobecommerce.png" url="/docs/integration-options/plugins/adobe" />
+                <PluginBox title="OpenCart 3" imgSrc="/gh-assets/home-assets/opencart.png" url="/docs/integration-options/plugins/opencart" />
+            </IntegrationColumn>
+        </>
+    }
+>
+    Tap into the world's leading retail shopping carts and platforms by simply downloading and configuring one of our compatible plugins for your website.
+    <MobilePlugins>
+        <PluginBox title="PrestaShop" imgSrc="/gh-assets/home-assets/prestashop.png" url="/docs/integration-options/plugins/prestashop" />
+        <PluginBox title="WooCommerce" imgSrc="/gh-assets/home-assets/woocommerce.png" url="/docs/integration-options/plugins/woocommerce" />
+        <PluginBox title="Adobe Commerce (formerly Magento)" imgSrc="/gh-assets/home-assets/adobecommerce.png" url="/docs/integration-options/plugins/adobe" />
+        <PluginBox title="OpenCart 3" imgSrc="/gh-assets/home-assets/opencart.png" url="/docs/integration-options/plugins/opencart" />
+    </MobilePlugins>
+</PluginsSection>
+
+<SDKsAndLibsSection
+    title="SDKs and Libraries"
+color="grey"
+    integrationType="Low-Code Integration"
+    buttonUrl="/docs/integration-options/sdk/overview"
+    buttonText="Go to Docs"
+    columns={ // displayed desktop only
+        <>
+            <IntegrationColumn>
+                <SDKBox title="Java" description="Install the Java SDK into your integration." imgSrc='/gh-assets/home-assets/java.svg' url="/docs/integration-options/sdk/java" />
+                <SDKBox title="PHP" description="Install the PHP SDK into your integration." imgSrc='/gh-assets/home-assets/php.svg' url="/docs/integration-options/sdk/php" />
+                <SDKBox title=".NET" description="Install the .NET SDK into your integration." imgSrc='/gh-assets/home-assets/NET.svg' url="/docs/integration-options/sdk/net" />
+            </IntegrationColumn>
+            <IntegrationColumn>
+                <SDKBox title="JavaScript" description="Integrate the Drop-In UI payment form into your web application." imgSrc='/gh-assets/home-assets/javascript.svg' url="/docs/integration-options/sdk/javascript" />
+                <SDKBox title="Android" description="Access our Android Library to use in your integration." imgSrc='/gh-assets/home-assets/android.svg' url="/docs/integration-options/sdk/android" />
+                <SDKBox title="iOS" description="Integrate our iOS Library into your project manually or via Cocopods." imgSrc='/gh-assets/home-assets/ios.svg' url="/docs/integration-options/sdk/ios" />
+            </IntegrationColumn>
+        </>
+    }
+>
+    Integrate using one of our server-side SDKs like Java or PHP, or client-side libraries like JavaScript.
+    <MobileSDKs>
+        <SDKBox title="Java" description="Install the Java SDK into your integration." imgSrc='/gh-assets/home-assets/java.svg' url="/docs/integration-options/sdk/java" />
+        <SDKBox title="PHP" description="Install the PHP SDK into your integration." imgSrc='/gh-assets/home-assets/php.svg' url="/docs/integration-options/sdk/php" />
+        <SDKBox title=".NET" description="Install the .NET SDK into your integration." imgSrc='/gh-assets/home-assets/NET.svg' url="/docs/integration-options/sdk/net" />
+        <SDKBox title="JavaScript" description="Integrate the Drop-In UI payment form into your web application." imgSrc='/gh-assets/home-assets/javascript.svg' url="/docs/integration-options/sdk/javascript" />
+        <SDKBox title="Android" description="Access our Android Library to use in your integration." imgSrc='/gh-assets/home-assets/android.svg' url="/docs/integration-options/sdk/android" />
+        <SDKBox title="iOS" description="Integrate our iOS Library into your project manually or via Cocopods." imgSrc='/gh-assets/home-assets/ios.svg' url="/docs/integration-options/sdk/ios" />
+    </MobileSDKs>
+</SDKsAndLibsSection>
+
+<DirectAPISection
+    title="Direct API"
+    integrationType="High-Code Integration"
+    buttonUrl="/api/overview"
+    buttonText="Go to API References"
+    imgAlt="Blank computer window with a popup showing four HTTP commands: Get, Post, Patch, and Delete."
+>
+    Connect into numerous regions, channels, and payment methods worldwide with one integration. Customers pay anytime, anywhere, and on any device.
+</DirectAPISection>
+
+<ExpandYourIntegrationSection
+    title="Expand Your Integration"
+color="grey"
+    boxes={
+        <>
+            <FeatureBox order={1} icon="coin" title="Card Storage" description="Tokenize card details to charge customers later." url="/docs/payments/tokenization/card-storage-guide" />
+            <FeatureBox order={2} icon="lock-alt" title="3D Secure & SCA" description="Enhance security with stronger authentication for online payments." url="/docs/risk-management/3D-secure/overview" />
+            <FeatureBox order={3} icon="qrcode" title="QR Code Payments" description="Let customers use Alipay and WeChat Pay for payments." url="/docs/payments/payment-methods/qr-codes-overview" />
+
+            <FeatureBox order={4} icon="wallet" title="Digital Wallets" description="Explore ways to let customers use their favorite stored cards." url="/docs/payments/payment-methods/digital-wallets/overview" />
+            <FeatureBox order={5} icon="money-bill-wave" title="Alternative Payment Methods" description="Integrate with alternative and local payment methods." url="/docs/payments/payment-methods/alternative-payment-methods-guide" />
+            <FeatureBox order={6} icon="landmark" title="Open Banking" description="Allow customers to pay using their bank account." url="/docs/payments/payment-methods/open-banking-overview" />
+
+            <FeatureBox order={7} icon="money-check-dollar-pen" title="Buy Now Pay Later" description="Provide a flexible payment option that can increase purchases." url="/docs/payments/payment-methods/buy-now-pay-later-overview" />
+            <FeatureBox order={8} icon="file-chart-column" title="Real-Time Data Reporting" description="Reconcile transactions and get a detailed audit trail for all account activities." url="/docs/reporting/real-time-reporting-guide" />
+            <FeatureBox order={9} icon="money-bill" title="Manage Payments" description="Capture, refund, or void transactions from your integration." url="/docs/payments/manage-payments/overview" />
+        </>
+    }
+>
+    We're always adding new ways to help your business.
+</ExpandYourIntegrationSection>
+
+<LetsGetStarted
+    title="Let's Get Started"
+    buttonUrl="/docs/getting-started/overview"
+    buttonText="Show Me the Process"
+>
+    Get registered, get your free test credentials, and get closer to the full range of payment-processing capabilities our API offers.
+</LetsGetStarted>

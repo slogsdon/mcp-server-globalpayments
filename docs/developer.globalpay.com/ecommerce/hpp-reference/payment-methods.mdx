@@ -1,0 +1,388 @@
+---
+title: "Payment Methods"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/25/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present changes to the HPP request and response where applicable to the payment method. For more information on Alternative Payment Methods (APMs), see our [main article](/ecommerce/expand-your-integration/payment-methods).
+
+## Initiate
+In this request, we set up integration fields for five APMs (in addition to our standard authorization fields). This will give you access to over 20 APMs. For others that require additional information, you can browse each payment method below.
+
+Once the customer makes their choice, the HPP redirects their browser to the payment method so they can authenticate and authorize the transaction. Once that’s complete, they will be redirected back to your application along with the transaction response.
+
+To present the most relevant payment methods to your customer, you can pre-select one or more in the request. To do this, include the optional `PM_METHODS` field.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180614095601">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- APMs Mandatory Fields -->
+  <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value="DE">
+  <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+  <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/returnUrl">
+  <input type="hidden" name="HPP_TX_STATUS_URL" value="https://www.example.com/statusUrl">
+  <!-- APMs Mandatory Fields -->
+  <!-- APMs Optional Fields -->
+  <input type="hidden" name="PM_METHODS" value="cards|paypal|testpay|sepapm|sofort">
+  <!-- End APMs Optional Fields -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| HPP Version | integer |     | M   | 1   | This must be set to 2. |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: \[a-zA-Z0-9.-\] |
+| First Name | string | alphanumeric | M   | 1-60 | Customer’s first name.The value should be the same as the value that appears on the card. |
+| Last Name | string | alphanumeric | M   | 1-60 | Customer’s last name. The value should be the same as the value that appears on the card. |
+| Merchant Response URL | string | Standard URL Format | O   | 0-255 | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| Status Update URL | string | URL | M   | 1-2083 | The endpoint which will receive payment status messages. This will include the result of the transaction or any updates to the transaction status. For certain asynchronous payment methods these notifications may come minutes, hours or days after the initial authorization. |
+| PM Methods | string | alphanumeric | O   | 0-100 | Optional field which allows you to select payment method(s) to offer the customer, or route customer to a specific one.  <br/>"cards\|paypal\|sofort"  <br/>If you offer a specific range of payment methods you should also provide the additional required and optional fields for any of these payment methods.  <br/>Allowed characters: \[a-z\|\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Redirect response
+
+Once the customer completes their transaction with the payment method, they are redirected to the URL you provided in the `MERCHANT_RESPONSE_URL` field of the HPP request. The current status of the transaction will also be sent as an HTTP POST to that URL.
+
+Your application might put the customer on hold for a few seconds while it checks to see if the Status URL was sent a final update. You can then redirect the customer to a final success or failure page.
+
+#### Sample response
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+[RESULT=01,
+ MESSAGE=PENDING,
+ FUNDSTATUS=WAITING
+ PASREF=14631546336115597,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20171003164640,
+ AMOUNT=1001,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ SHIPPING_CODE=R90|ZQ7,
+ SHIPPING_CO=GB,
+ BILLING_CODE=E77|4QJ,
+ BILLING_CO=GB,
+ COMMENT1=Mobile Channel,
+ COMMENT2=Down Payment,
+ PAYMENTMETHOD=sofort,
+ WAITFORNOTIFICATION=0,
+ PAYMENTPURPOSE=37TC6LD Test Transaction&
+ HPP_CUSTOMER_FIRSTNAME=James,
+ HPP_CUSTOMER_LASTNAME=Mason,
+ HPP_CUSTOMER_COUNTRY=DE,
+ HPP_CUSTOMER_BANK_ACCOUNT=9876543210,
+ HPP_CUSTOMER_IBAN=DE84837473949793743749,
+ HPP_CUSTOMER_BIC=GENODEF1GW1,
+ HPP_CUSTOMER_BANK_NAME=Volksbank Raiffeisenbank,
+ HPP_CUSTOMER_BANK_CODE=13061028,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |   
+| Result | string | numeric | The result code indicating the outcome of the transaction.  <br/>00 - Transaction completed successfully and finalized.  <br/>101 - Transaction did not complete successfully. No further status will be communicated.  <br/>01 - Transaction outcome is pending. The final status will be sent to the Status Update URL provided. |
+| Message | string | enum | The text value corresponding to the numeric value returned for the result. The following values may be returned:  <br/>SUCCEEDED  <br/>FAILED  <br/>PENDING  <br/>INDOUBT |
+| Fund Status | string | enum | Funds status of the transaction, possible values:  <br/>NOT\_EXPECTED  <br/>WAITING  <br/>RECEIVED  <br/>MISSING |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction. Allowed characters: \[a-zA-Z0-9␣\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Amount | integer | numeric | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Merchant Response URL | string | Standard URL Format | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| HPP Lang | string | enum | Used to set what language HPP is displayed in. If the field is not sent, the default language set on your account will be displayed. This can be configured by your account manager. Please see the list of [HPP Language Codes](/ecommerce/hpp-reference/language-codes). |
+| Billing or Shipping Code | string | alphanumeric | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Billing or Shipping Co | string | ISO 3166-1 alpha-2 | Two-character country code of the billing or shipping address. |
+| Comment | string | alphanumeric | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Wait For Notification | boolean |     | A value of 1 indicates that the transaction will most likely remain in status PENDING for a number of hours or even days until the Status Update URL will be notified of the final outcome. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - what the customer will see on the proof of payment. For example, on their bank statement. |
+| Account Holder Name | string | alphanumeric | The name of the account holder. |
+| Country | string | ISO 3166-1 alpha-2 | Two-character country code. |
+| Account Number | string | alphanumeric | The customer’s account number. Allowed characters: \[a-zA-Z0-9\]  <br/>Brazil - must be at least 4 digits.  <br/>Mexico - 18 digit CLABE.  <br/>Germany - digits only, no leading zeros |
+| IBAN | string | alphanumeric | Code that identifies the customer's bank, account number itself and the country of origin.  <br/>Allowed characters: \[A-Z0-9\] |
+| BIC | string | alphanumeric | Customer Bank Code Must be a valid BIC.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Bank Name | string | alphanumeric | Customer bank name. |
+| Bank Code | string | alphanumeric | Bank code of the customer’s account.  <br/>Allowed characters: \[a-zA-Z0-9\] |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Status update
+
+The URL specified in the `HPP_TX_STATUS_URL` field receives the final status. Depending on the payment method used, this can happen at the same time as the customer is redirected to your response URL, moments after — or, potentially, the final status update might come days later.
+
+For payment methods in which you expect the final status update to come days later, your Status URL will need to accept the message sent by us, find the correct order in your application, and update the status accordingly. You may want to inform the customer at this point that their payment was finally accepted. You can also initiate the dispatch of items to the customer.
+
+The timeout period indicates how long the customer has to complete the payment, and by extension, how long your application may need to wait to receive the final status. For timeout details, see the individual [Supported Payment Methods](/payment-methods-list).
+
+#### Sample HTTP GET
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20160829141523&
+merchantid=MerchantId&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=00&
+message=SUCCEEDED&
+pasref=14627849160897986&
+paymentmethod=sofort&
+waitfornotification=0&
+fundstatus=RECIEVED&
+paymentpurpose=37TC6LD Test Transaction&
+acountholdername=James Mason&
+country=DE&
+accountnumber=9876543210&
+iban=DE84837473949793743749&
+bic=GENODEF1GW1&
+bankname=Volksbank Raiffeisenbank&
+bankcode=13061028&
+redirectoptional=0
+```
+</Code>
+
+#### HTTP GET syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction.  <br/>**00** - transaction completed successfully and finalized.  <br/>**101** - the transaction did not complete successfully. No further status will be communicated.  <br/>**01** the transaction outcome is pending. The final status will be sent to the Status Update URL provided. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Wait For Notification | boolean |     | A value of **1** indicates that the transaction will most likely remain in status PENDING for a number of hours or even days until the Status Update URL will be notified of the final outcome. |
+| Fund Status | string | enum | Funds status of the transaction, possible values:  <br/>**NOT\_EXPECTED**  <br/>**WAITING**  <br/>**RECEIVED**  <br/>**MISSING** |
+| Payment Purpose | string | alphanumeric | Payment descriptor - what the customer will see on the proof of payment. For example, on their bank statement. |
+| Account Holder Name | string | alphanumeric | The name of the account holder. |
+| Country | string | ISO 3166-1 alpha-2 | 2 character country code. |
+| Account Number | string | alphanumeric | The customer’s account number.  <br/>Brazil - must be at least 4 digits.  <br/>Mexico - 18 digit CLABE.  <br/>Germany - digits only, no leading zeros  <br/>Allowed characters: \[a-zA-Z0-9\] |
+| IBAN | string | alphanumeric | Code that identifies the customer's bank, account number itself and the country of origin.  <br/>Allowed characters: \[A-Z0-9\] |
+| BIC | string | alphanumeric | Customer Bank Code Must be a valid BIC.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Bank Name | string | alphanumeric | Customer bank name. |
+| Bank Code | string | alphanumeric | Bank code of the customer’s account.  <br/>Allowed characters: \[a-zA-Z0-9\] |
+| Redirect Optional | boolean |     | Indicates that a redirect to the payment method is not required. Some payment methods (for example, SEPA DirectDebit) provide the option to redirect the customer to a page to display additional information about the payment. |
+
+## Test pay
+To test your integration, we provide a simple simulator application that allows you to test the customer being redirected to the HPP and the payment method, along with your Response and Status URLs.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180614095601">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- APMs Mandatory Fields -->
+  <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value="DE">
+  <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+  <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/returnUrl">
+  <input type="hidden" name="HPP_TX_STATUS_URL" value="https://www.example.com/statusUrl">
+  <!-- APMs Mandatory Fields -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+## Simulator page
+
+![Test Pay Simulator Page](/gh-assets/ecommerce/apm_simulator-page.jpg)
+
+The Simulator page provides a range of messages to send to the Return and Status URLs. The delay selection determines when the Status URL receives the final status update. You can test PMs in which  the final status is sent moments, hours, or even days after the transaction is completed by the customer. 
+
+The final status might also be sent at the same time as the redirection and message to the Return URL (No Delay). The responses returned by the simulator will be the same format of those outlined in the other steps in this guide.
+
+The response and delay selections are outlined below.
+
+| Response Selection | Delay Selection |
+| --- | --- |
+| Succeeded | No delay |
+| Pending | 30s after submit |
+| Failed UserAbort | 1m after submit |
+| Failed InputData | 5m after submit |
+| Failed LocalDecline | 15m after submit |
+| Failed RemoteDecline | 1h after submit |
+| Failed Timeout |     |
+| Failed LocalError |     |
+| Failed RemoteError |     |
+| Failed Unknown |     |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Follow these steps to build the hash for the Initiate request type.
+
+1. Using the SHA-1 algorithm, hash a string made up of the request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency"
+```
+</Code>
+
+Based on the POST example above, our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the Response hash
+Use the tabs below to follow the steps for a certain request type: Redirect Response and Status Update
+
+<Infobox>
+The Timestamp returned in the response will be identical to the one sent in the request POST. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables (for example, the Amount) against what was stored in your application at the time the request POST was sent.
+</Infobox>
+
+<Tabs active="redirect">  
+<Tab id="redirect" title="Redirect Response">
+
+1. Using the SHA-1 algorithm, hash a string made up of some of the response values
+The blueprint of the hash for the response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.00.SUCCEEDED.14963290674458276.sofort"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string and check the output against what was returned in the HPP response
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+ 
+<Tab id="status" title="Status Update">
+
+1. Using the SHA-1 algorithm, hash a string made up of some of the response values
+The blueprint of the hash for the response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205184615.MerchantId.N6qsk4kYRZihmPrTXWYS6g.00.SUCCEEDED.14963290674458276.sofort"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string and check the output against what was returned in the HPP response
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>
+
+## Postman collection
+Our Postman collection for alternative payment methods is available for downloading. You can use this collection to test transactions for all of our alternative and local [supported payment methods](/payment-methods-list?2) via the XML API.
+
+The zip file below contains the following files:
+
+* LPM Postman Collection — A JSON file that contains HPP, XML, and JSON calls
+* LPM Environment — A JSON file for use with the HPP and JSON calls
+
+To download the collection (.zip file), click the button below:
+<index-button type="anchor" href="/gh-assets/files/ecommerce/apm_postman_05-2023_hpp.zip">Download File</index-button>

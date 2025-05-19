@@ -1,0 +1,123 @@
+---
+title: 'Lists'
+search_results: 'API Definitions - Lists'
+subtitle: 'Learn how to use parameters and values to control multiple query results'
+tag: 'rest'
+created: '16/09/2024'
+---
+This guide outlines the different query string parameters and values that can be passed in the request to retrieve a list of resources. These concepts apply to all lists of resources, regardless of whether it is a list of transactions, disputes, or deposits. 
+
+You can append query string parameters and values to the end of a resource endpoint to represent [search criteria](#search-criteria), fields to return, and [pagination](#pagination) information when retrieving lists of resources.
+
+## Search criteria
+Search criteria are query string parameters and values that indicate the resources to return in a list response. The following search criteria is used to return a list of disputes that are waiting on a response from the merchant (`status=WITH_MERCHANT`).
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X GET https://apis.globalpay.com/ucp/disputes?status=WITH_MERCHANT 
+    -H "Content-type: application/json" 
+    -H "X-GP-Version: 2021-03-22" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+```
+</Code>
+
+## Pagination
+
+Data can be returned more efficiently by using the pagination query parameters to retrieve pages of records for a large data set.
+
+| Property | Description |
+| --- | --- |
+| order_by | Indicates the resource field to order the list by. The default is DATE_CREATED. | 
+| order | Sets the ordering direction and can be ASC or DESC. The default is DESC. | 
+| page_size | The number of records in the list to return in a single list response. The default is 5 and the max is 1000. | 
+| page | Indicates what portion (page) of the full result list to return with this particular request. For example, a page of 1 and page_size of 10 will return records 1 to 10 of the entire result set, and a page of 2 and page_size of 10 will return records 11 to 20 of the entire result set, and so on. | 
+
+<br />
+The below example modifies the previous one so that only records 10-14 are returned and that the data set is ordered by the date the merchant needs to respond by, with the most recent first.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X GET https://apis.globalpay.com/ucp/disputes?status=WITH_MERCHANT
+&order_by=time_to_respond_by&order=DESC&page_size=5&page=3 
+     -H "Content-type: application/json" 
+     -H "X-GP-Version: 2022-12-31" 
+     -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+```
+</Code>
+
+## List response
+The response to a list of resources can contain:
+
+* The count of the total number of resources across the entire list, not just that page
+* The count of resources returned in the current page
+* The list of resources for the current page
+
+The `total_count` value is returned on the first page and only if the search date range is within one month.
+
+To determine the total number of pages to retrieve to get the entire result list, you can use the `total_count` on page 1 response if it's returned.
+
+Alternatively, you can use the `current_page_size` from the response. When the `current_page_size` is less than the `page_size` then that is the last page to be retrieved.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X GET https://apis.globalpay.com/ucp/disputes?status=WITH_MERCHANT
+&order_by=time_to_respond_by&order=DESC&page_size=5&page=3 
+     -H "Content-type: application/json" 
+     -H "X-GP-Version: 2022-12-31" 
+     -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw" 
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+  "total_count": 8,
+  "current_page_size": 8,
+  "merchant_id": "MER_62251730c5574bbcb268191b5f315de8",
+  "merchant_name": "TEST MERCHANT",
+  "account_id": "DIA_882c832d13e04185bb6e213d6303ed98",
+  "account_name": "testdispute",
+
+  "disputes": [
+    {
+      "id": "DIS_lskdnfosdfjsdfsdf23dasd1",
+      "status": "WITH_MERCHANT",
+      "time_to_respond_by": "2019-02-22T10:24:43.761Z"
+    },
+    {
+      "id": "DIS_lskdnfosdfjsdfsdf23dasd2",
+      "status": "WITH_MERCHANT",
+      "time_to_respond_by": "2019-02-22T10:24:43.761Z",
+      ...
+    },
+    {
+      "id": "DIS_lskdnfosdfjsdfsdf23dasd3",
+      "status": "WITH_MERCHANT",
+      "time_to_respond_by": "2019-02-22T10:24:43.761Z",
+      ...
+    },
+    {
+      "id": "DIS_lskdnfosdfjsdfsdf23dasd4",
+      "status": "WITH_MERCHANT",
+      "time_to_respond_by": "2019-02-22T10:24:43.761Z",
+      ...
+    },
+    {
+      "id": "DIS_lskdnfosdfjsdfsdf23dasd5",
+      "status": "WITH_MERCHANT",
+      "time_to_respond_by": "2019-02-22T10:24:43.761Z",
+      ...
+    },
+    {..}
+  ]
+}
+```
+</Code>

@@ -1,0 +1,66 @@
+---
+title: 'File Processing - Overview'
+search_results: 'Global Payments - File Processing Overview'
+subtitle: 'Process large volumes of transactions in one file'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+Our File Processing solution allows merchants or partners to upload bulk files with high volumes of requests, such as transactions, in one file. You can generate this file automatically using your Customer Relationship Management (CRM) system or export it manually from a spreadsheet. All of our APIs are accessible using the dynamic file format. 
+
+With File Processing, you can:
+* Process bulk files of large volumes of card payments.
+* Convert a large number of tokens at once.
+* Control what data is sent from your CRM rather than streaming all of it.
+* Manually upload any file as a one-time import.
+* Process bulk data from merchant onboarding (partners only).
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our File Processing solution. Keep in mind that this section doesn’t cover all use cases.
+
+##### Use case #1: Recurring transactions
+A video streaming service wants to process a recurring transactions file on the first day of the month so that they can bill all of their customers with subscription memberships. After getting set up with our File Processing solution, they export a file from their system and upload it to ours. When the file is finished processing, they download the response file. Now they can view the results for each transaction and update their systems accordingly.
+
+##### Use case #2: Token conversion and creation
+A merchant needs to tokenize a large volume of tokens. The merchant is new to us and therefore needs to convert their “legacy” tokens to ours. So, the merchant uses our File Processing solution to convert all of the tokens at once. The merchant could also use our solution to create network tokens in bulk.
+
+##### Use case #3: Onboarding merchants (partners only)
+A partner wants to onboard a large number of new merchants at the same time. As part of the onboarding process, there are several tasks that need to be done for each merchant: 
+
+* Create a merchant in the system.
+* Add the platforms the merchant will use.
+* Add the account capabilities the merchant will use.
+* Create app credentials for the merchant.
+* Securely share app credentials with the merchant.
+
+To make the whole process easier, the partner decides to access our onboarding APIs via the File Processing solution so that the above onboarding tasks can be automated.
+
+## How does it work?
+Once you’re set up to use our File Processing solution, you can start the process to upload a file. First, you create your file in the comma-separated values (.csv) format. We can accept files up to 10 MB. You can use our provided templates to ensure that your request file is properly formatted.
+
+You’ll then need to send a create request to our API to get a signed URL so that you have a secure location to upload the file to. The URL is valid for 24 hours. The response will also include a unique File Processing Resource ID (`FPR_ID`) to represent the file you plan to upload. Next, you’ll encrypt your file using part of a key pair that you’ve created using an open-source public key cryptosystem (OpenPGP). 
+
+After you send the encrypted file to our API, we’ll decrypt it and process all of the records in the file. We’ll then send a webhook to notify you when the file is finished processing. This will include a signed URL from which you can download the response file. The response file contains the results for each transaction in the file.
+
+At a high level, File Processing works like this:
+![Diagram flow showing interaction between the merchant, our API, and our File Processing solution to process a file.](/gh-assets/file-processing_flow.png)
+ <p style={{textAlign: "center"}}>**File Processing Typical Flow**</p>
+
+## File statuses
+The status of your uploaded file changes as it is being processed by our API and our File Processing solution. The following table describes when the status occurs during the process.
+
+| File Status | Description |
+| -------- | ------- |
+| INITIATED | The initial status of all newly created file resources. Occurs after the API sends the signed URL to upload your file to. |
+| UPLOADED | Occurs after you upload the bulk file to the signed URL provided by the API. |
+| PENDING | Occurs after record validation if the combinations are deemed valid by our File Processing solution. |
+| SUBMITTED | Occurs once the file has been fully processed. |
+| FAILED | Occurs after record validation if the combinations are deemed invalid by our File Processing solution. |
+| COMPLETED | Occurs after the response file is generated and the API sends you the signed URL to download the encrypted response file via webhook notification. |
+
+## Next steps
+To try our File Processing solution, follow the steps and code samples in our [guide](/docs/operations/file-processing-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+  </Infobox>

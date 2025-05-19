@@ -1,0 +1,159 @@
+---
+title: "Dynamic Currency Conversion"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/27/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, along with examples of request and response values. For more information on Dynamic Currency Conversion (DCC), see our [main article](/ecommerce/expand-your-integration/dcc).
+
+## DCC example
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- DCC Optional Field -->
+  <input type="hidden" name="DCC_ENABLE" value="1">
+  <!-- End DCC Optional Field -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Additional request fields syntax
+_Type_ indicates whether the element is Mandatory ( M), Optional ( O), or Conditional ( C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |
+| DCC Enable |     | O   |     | This field determines whether DCC is activated or not. |
+
+#### Sample response
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[DCCCCP=Currency Conversion Processor,
+ DCCRATE=1.6728,
+ DCCMERCHANTAMOUNT=1001,
+ DCCCARDHOLDERAMOUNT=1674,
+ DCCMERCHANTCURRENCY=GBP,
+ DCCCARDHOLDERCURRENCY=AUD,
+ DCCMARGINRATEPERCENTAGE=3,
+ DCCEXCHANGERATESOURCENAME=Reuters Wholesale Interbank,
+ DCCCOMMISSIONPERCENTAGE=0,
+ DCCEXCHANGERATESOURCETIMESTAMP=20180613173251,
+ DCCCHOICE=Yes]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| CCP | string | enum | The name of the Currency Conversion Processor (CCP) the request is to be sent to. Allowed values:  <br/>**FEXCO**  <br/>**EUROCONEX** |
+| Rate | string | numeric | The exchange rate offered by the Currency Conversion Processor for this transaction. Inclusive of the margin from the DCC provider which is provided in the Margin Percentage field. |
+| Merchant Amount | integer |     | The amount in the merchant base currency sent in the request. |
+| Cardholder Amount | integer |     | The converted amount to offer the cardholder. |
+| Margin Percentage | double |     | The foreign exchange markup in relation to the ECB Daily Rate. |
+| Exchange Rate Source | string | alphanumeric | Source of the exchange rate. European Central Bank. |
+| Commission Percentage | double |     | Currently not used. |
+| Exchange Rate Source Timestamp | string | numeric | Timestamp of the exchange rate source. |
+| DCC Choice | string | enum | Whether the customer chose to pay in the currency of their card. Can be YES or NO. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team. 
+</Infobox>
+
+### Build the request hash
+Build the request hash for the DCC Example. 
+
+1. Using the SHA-1 algorithm, hash a string made up of the request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency"
+```
+</Code>
+
+Based on the POST example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205184615.MerchantID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 01 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+Check the request hash for the DCC Example.
+
+<Infobox>
+The Timestamp returned in the response will be identical to the one sent in the request POST. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables, for example the Amount, against what was stored in your application at the time the request POST was sent.
+</Infobox>
+
+1. Using the SHA-1 algorithm, hash a string made up of some of the response values
+The blueprint of the hash for the response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205184615.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string and check the output against what was returned in the HPP response
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

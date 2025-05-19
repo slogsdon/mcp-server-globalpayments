@@ -1,0 +1,1263 @@
+---
+title: "Network Tokens - Guide"
+subtitle: "Learn how to use a network token for card storage"
+tag: "xml"
+created: "02/03/2025"
+---
+In this guide, you’ll learn how to use a network token as part of our Card Storage Service. This includes sending requests for a new payer and a new card, third-party get requests, and detokenizing a card. We also provide information on using network tokens in Auth transactions and a standalone option for merchants who don’t store cards with us.
+
+The steps in this guide are the same whether you integrate via direct API or our Hosted Payment Page.
+
+For more information on network tokens, see our [Overview](/ecommerce/expand-your-integration/network-tokens).
+
+## Sample payer variables
+
+<Code id="java" title="" language="java" active>
+```
+$f_name = "Jason";
+$s_name = "Mason";
+$city = "Leicester";
+$county = "Leicestershire";
+$country = "United Kingdom";
+$email = "john@mason.com";
+```
+</Code>
+
+#### Transaction variables
+
+<Code id="java" title="" language="java" active>
+```
+$card_num = "*************"; //card number
+$ch_name = "**** *****"; // cardholder name
+$amount = "***";
+$currency = "***";
+$expdate = "****"; // exp date
+$type = "****"; //card type
+```
+</Code>
+
+#### Account variables
+
+<Code id="java" title="" language="java" active>
+```
+$merchantid = "***"; //  merchant id
+$account = "***"; // account name
+$orderid = "***"; // can be randomly generated
+$payerref = "***"; // customer id
+$cardref = "***"; // card id
+$token = "***"; // pmt-token
+$ref = "***"; // can be randomly generated
+$srd = "***"; // can be randomly generated
+```
+</Code>
+
+## Step 1: Create a payer
+Before you can proceed to make a new card token or network token, you must create a payer. The `payer-new` request includes the information as shown in the sample below. Once you’ve created a payer, you can proceed to Step 2.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+$request = "<request type="payer-new" timestamp="$timestamp">
+      <merchantid>$merchantid</merchantid>
+      <account>$account</account>
+      <orderid>$orderid</orderid>
+      <payer ref="$payeref" type="Retail">
+            <title>Mr.</title>
+            <firstname>$f_name</firstname>
+            <surname>$s_name</surname>
+            <email>$email</email>
+            <dateofbirth>19151222</dateofbirth>
+            <address>
+            <city>$city</city>
+            <county>$county</county>
+            <country code="GB">$country</country>
+            </address>
+            <passphrase>Classical</passphrase>
+          </payer>
+       
+      <sha1hash>$sha1hash</sha1hash>
+    </request>";
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class country { 
+	public String code;
+	public String text;
+}
+
+public class address { 
+	public String city;
+	public String county;
+	public country country;
+}
+
+public class payer { 
+	public String title;
+	public String firstname;
+	public String surname;
+	public String email;
+	public int dateofbirth;
+	public address address;
+	public String passphrase;
+	public String ref;
+	public String type;
+	public String text;
+}
+
+public class request { 
+	public String merchantid;
+	public String account;
+	public String orderid;
+	public payer payer;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="country")]
+public class Country { 
+
+	[XmlAttribute(AttributeName="code")] 
+	public string Code { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+
+[XmlRoot(ElementName="address")]
+public class Address { 
+
+	[XmlElement(ElementName="city")] 
+	public string City { get; set; } 
+
+	[XmlElement(ElementName="county")] 
+	public string County { get; set; } 
+
+	[XmlElement(ElementName="country")] 
+	public Country Country { get; set; } 
+}
+
+[XmlRoot(ElementName="payer")]
+public class Payer { 
+
+	[XmlElement(ElementName="title")] 
+	public string Title { get; set; } 
+
+	[XmlElement(ElementName="firstname")] 
+	public string Firstname { get; set; } 
+
+	[XmlElement(ElementName="surname")] 
+	public string Surname { get; set; } 
+
+	[XmlElement(ElementName="email")] 
+	public string Email { get; set; } 
+
+	[XmlElement(ElementName="dateofbirth")] 
+	public int Dateofbirth { get; set; } 
+
+	[XmlElement(ElementName="address")] 
+	public Address Address { get; set; } 
+
+	[XmlElement(ElementName="passphrase")] 
+	public string Passphrase { get; set; } 
+
+	[XmlAttribute(AttributeName="ref")] 
+	public string Ref { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="account")] 
+	public string Account { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="payer")] 
+	public Payer Payer { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "accountId";
+$config->sharedSecret = "secret";
+ServicesContainer::configureService($config);
+
+$newCustomer = new Customer();
+$newCustomer->key = '0f357b45-9aa4-4453-a685-c69232e9024f';
+$newCustomer->title = "Mr.";
+$newCustomer->firstName = "James";
+$newCustomer->lastName = "Mason";
+$newCustomer->company = "Global Payments";
+$newCustomer->address = new Address();
+$newCustomer->address->streetAddress1 = "Flat 123";
+$newCustomer->address->streetAddress2 = "House 456";
+$newCustomer->address->streetAddress3 = "The Cul-De-Sac";
+$newCustomer->address->city = "Halifax";
+$newCustomer->address->province = "West Yorkshire";
+$newCustomer->address->postalCode = "W6 9HR";
+$newCustomer->address->country = "United Kingdom";
+$newCustomer->homePhone = "+35312345678";
+$newCustomer->workPhone = "+3531987654321";
+$newCustomer->fax = "+124546871258";
+$newCustomer->mobilePhone = "+25544778544";
+$newCustomer->email = "text@example.com";
+$newCustomer->dateOfBirth = date('Ymd',strtotime('1985-12-22'));
+
+try {
+    $payer = $newCustomer->Create();
+} catch (GatewayException $e) {
+    // check for already created
+    if ($e->responseCode != "501") {
+        echo $e->responseMessage;
+    } else {
+        echo 'Payer already exists!';
+    }
+}
+$payerId = $payer->id;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20240416162802">
+  <merchantid>MerchantId</merchantid>
+  <account>AccountName</account>
+  <orderid>20240416172802-183</orderid>
+  <result>00</result>
+  <message>Successful</message>
+  <pasref>84ec146a1fad41b383d1037248f70fcb</pasref>
+  <authcode/>
+  <batchid/>
+  <timetaken>0</timetaken>
+  <processingtimetaken/>
+  <sha1hash>e25da6f323b492ebb51e8fd29c543d2c736f7588</sha1hash>
+</response>
+```
+</Code>
+
+## Step 2: Create a new card
+
+Now that a new payer is created, you can send a `card-new` request. This creates a new token, which the API then returns as a network token in addition to the acquirer token. 
+
+If you want to receive both the network token and the acquirer token in the response, add the following `returnfields` in the request. However, adding `returnfields` is not necessary for network-token creation as the token is created regardless.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+$request = "<request type="card-new" timestamp="$timestamp">
+            <merchantid>$merchantid</merchantid>
+            <account>$account</account>
+            <orderid>$orderid</orderid>
+            <card>
+                <ref>$ref</ref>
+                <payerref>$payeref</payerref>
+                <number>$card_num</number>
+                <expdate>$expdate</expdate>
+                <chname>$ch_name</chname>
+                <type>$type</type>
+            </card>
+            <returnfields networktoken="1"/>
+            <sha1hash>$sha1hash</sha1hash>
+        </request>";
+/// Hash variables: $timestamp.$merchantid.$orderid...$payeref.$ch_name.$card_num
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class card { 
+	public String ref;
+	public String payerref;
+	public String number;
+	public String expdate;
+	public String chname;
+	public String type;
+}
+
+public class returnfields { 
+	public int networktoken;
+	public int token;
+}
+
+public class request { 
+	public String merchantid;
+	public String account;
+	public String orderid;
+	public card card;
+	public returnfields returnfields;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="card")]
+public class Card { 
+
+	[XmlElement(ElementName="ref")] 
+	public string Ref { get; set; } 
+
+	[XmlElement(ElementName="payerref")] 
+	public string Payerref { get; set; } 
+
+	[XmlElement(ElementName="number")] 
+	public string Number { get; set; } 
+
+	[XmlElement(ElementName="expdate")] 
+	public string Expdate { get; set; } 
+
+	[XmlElement(ElementName="chname")] 
+	public string Chname { get; set; } 
+
+	[XmlElement(ElementName="type")] 
+	public string Type { get; set; } 
+}
+
+[XmlRoot(ElementName="returnfields")]
+public class Returnfields { 
+
+	[XmlAttribute(AttributeName="networktoken")] 
+	public int Networktoken { get; set; } 
+
+	[XmlAttribute(AttributeName="token")] 
+	public int Token { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="account")] 
+	public string Account { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="card")] 
+	public Card Card { get; set; } 
+
+	[XmlElement(ElementName="returnfields")] 
+	public Returnfields Returnfields { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+//coming soon
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20240416162802">
+<merchantid>merchantid</merchantid>
+ <account>AccountName</account>
+  <orderid>20240416173729-931</orderid>
+  <networktoken>2222690419268210</networktoken>
+  <networktokenexpiry>0527</networktokenexpiry>
+  <result>00</result>
+  <message>Successful</message>
+  <pasref>852011055bd64f84be5ae3c63800c364</pasref>
+  <authcode/>
+  <batchid/>
+  <timetaken>0</timetaken>
+  <processingtimetaken/>
+  <sha1hash>5222067c6ffd59866c018fefbc64c4d0296b79f5</sha1hash>
+  <token>PMT_445ba23e-a46d-4fad-9937-41891823bd3e</token>
+</response>
+```
+</Code>
+
+## Third-party card request
+
+Using the `thirdparty-card-get` request exposes a number of data points, including the network token and expiration date, among others. 
+The entire list of available `returnfields` is included in the sample request below. You can customize the request based on your needs.
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+// Transaction details
+$merchantid = "***"; //  merchant id
+$orderid = "***"; // can be randomly generated
+$payerref = "****"; //customer reference from dashboard
+$cardref = "*****";  //card reference also from dashboard
+
+
+$request = "<request type="thirdparty-card-get" timestamp="$timestamp">
+<merchantid>$merchantid</merchantid>
+<orderid>$orderid</orderid>
+<account>$account</account>
+<ddi>
+  <payerref>$payerref</payerref>
+  <ref>$cardref</ref>
+</ddi>
+<!--
+<ddi>
+<token><P
+</ddi>
+--> 
+<returnfields networktoken = "1" payerref="1" ref="1" setupdate="1" status="1" cardnumber="1" cardexpiry="1" cardtype="1" cardname="1" token="1"/>
+<sha1hash>$sha1hash</sha1hash>
+</request>";
+
+/// Hash variables: $timestamp.$merchantid.$payerref.$cardref
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class ddi { 
+	public String payerref;
+	public String ref;
+}
+
+public class returnfields { 
+	public int networktoken;
+	public int payerref;
+	public int ref;
+	public int setupdate;
+	public int status;
+	public int cardnumber;
+	public int cardexpiry;
+	public int cardtype;
+	public int cardname;
+	public int token;
+}
+
+public class request { 
+	public String merchantid;
+	public String orderid;
+	public ddi ddi;
+	public returnfields returnfields;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="ddi")]
+public class Ddi { 
+
+	[XmlElement(ElementName="payerref")] 
+	public string Payerref { get; set; } 
+
+	[XmlElement(ElementName="ref")] 
+	public string Ref { get; set; } 
+}
+
+[XmlRoot(ElementName="returnfields")]
+public class Returnfields { 
+
+	[XmlAttribute(AttributeName="networktoken")] 
+	public int Networktoken { get; set; } 
+
+	[XmlAttribute(AttributeName="payerref")] 
+	public int Payerref { get; set; } 
+
+	[XmlAttribute(AttributeName="ref")] 
+	public int Ref { get; set; } 
+
+	[XmlAttribute(AttributeName="setupdate")] 
+	public int Setupdate { get; set; } 
+
+	[XmlAttribute(AttributeName="status")] 
+	public int Status { get; set; } 
+
+	[XmlAttribute(AttributeName="cardnumber")] 
+	public int Cardnumber { get; set; } 
+
+	[XmlAttribute(AttributeName="cardexpiry")] 
+	public int Cardexpiry { get; set; } 
+
+	[XmlAttribute(AttributeName="cardtype")] 
+	public int Cardtype { get; set; } 
+
+	[XmlAttribute(AttributeName="cardname")] 
+	public int Cardname { get; set; } 
+
+	[XmlAttribute(AttributeName="token")] 
+	public int Token { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="ddi")] 
+	public Ddi Ddi { get; set; } 
+
+	[XmlElement(ElementName="returnfields")] 
+	public Returnfields Returnfields { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+//coming soon
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20240416164256">
+  <merchantid>MerchantId</merchantid>
+  <result>00</result>
+  <message>Successful</message>
+  <list>
+    <item 
+    token="PMT_db4c9acc-4614-4dc3-afbd-a6cf8e90e8bf"
+    status="A" 
+    setupdate="1702032172"
+    ref="103352"
+    payerref="20231206343217-968"
+    cardtype="MC"
+    cardnumber="xxxxxxxxxxxx0055"
+    cardname="James Mason"
+    cardexpiry="1225"
+    networktoken="2222690419310194"
+    networktokenexpiry="0527"
+     />
+  </list>
+  <timetaken>0</timetaken>
+  <md5hash>ba41c9f6cf2f5f7b25b2f09954556b5d</md5hash>
+  <sha1hash>fc72c210fe83351bb8c7d174c7b1e265e8a5cafe</sha1hash>
+</response>
+```
+</Code>
+
+
+## Detokenize
+
+Detokenizing the card will return the token requestor id (`TRID`) and scheme token requestor id (`STRID`). This makes it possible for you to use multiple payment service providers (PSPs) if desired.
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+$request = "<request type="card-detokenise" timestamp="$timestamp">
+                <merchantid>$merchantid</merchantid>    
+                <account>$account</account>    
+                <orderid>$orderid</orderid>
+                <payerref>$payerref</payerref>    
+                <ref>$cardref</ref>
+                <returnfields token="1" networktoken= "1"/>    
+            <sha1hash>$sha1hash</sha1hash>
+        </request>";
+
+/// Hash variables: $timestamp.$merchantid.$payerref.$cardref.
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class amount { 
+	public String currency;
+	public String text;
+}
+
+public class storedcredential { 
+	public String srd;
+	public String type;
+	public String initiator;
+	public String sequence;
+}
+
+public class request { 
+	public String merchantid;
+	public String account;
+	public List<String> orderid;
+	public amount amount;
+	public String payerref;
+	public String cardref;
+	public String channel;
+	public storedcredential storedcredential;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="returnfields")]
+public class Returnfields { 
+
+	[XmlAttribute(AttributeName="token")] 
+	public int Token { get; set; } 
+
+	[XmlAttribute(AttributeName="networktoken")] 
+	public int Networktoken { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="account")] 
+	public string Account { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="payerref")] 
+	public string Payerref { get; set; } 
+
+	[XmlElement(ElementName="ref")] 
+	public string Ref { get; set; } 
+
+	[XmlElement(ElementName="returnfields")] 
+	public Returnfields Returnfields { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+//coming soon
+```
+</Code>
+</CodeGroup>
+
+#### Sample response 
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20240416164105">
+  <merchantid>MerchantId</merchantid>
+  <result>00</result>
+  <message>Successful</message>
+  <timetaken>0</timetaken>
+  <card>
+    <number>370295069663597</number>
+    <expdate>1225</expdate>
+    <type>AMEX</type>
+    <chname>James Mason</chname>
+    <createdate>20240107162832</createdate>
+    <status>A</status>
+    <ref>ref-8636</ref>
+    <networktoken>374245002751005</networktoken>
+    <networktokenexpiry>0540</networktokenexpiry>
+    <tokenrequestorid>6c2b9b4d-5ff6-49dc-b449-2846f3e96f13</tokenrequestorid>
+    <schemetokenrequestorid>37936260501</schemetokenrequestorid>
+  </card>
+  <sha1hash>4d6ebf768c94c1a7810235943cae595d930efb6b</sha1hash>
+</response>
+```
+</Code>
+
+
+## Auth MIT and CIT
+
+It’s possible to use network tokens in place of card information in Auth transactions by substituting the token for the card value in merchant-initiated transactions (MITs) or customer-initiated transactions (CITs). This is not necessary, however, as the card value will be swapped out for network tokens if one exists. 
+
+### Card Auth MIT
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+$request = "<request type='auth' timestamp='$timestamp'>
+            <merchantid>$merchantid</merchantid>
+            <account>$account</account>
+            <orderid>$orderid</orderid>
+            <channel>MOTO</channel>
+            <amount currency='$currency'>$amount</amount>
+            <card>
+            <number>$networktoken</number>
+            <expdate>$expdate</expdate>
+            <type>$type</type>
+            <chname>$name</chname>
+            </card>
+            <storedcredential>
+                <type>recurring</type>
+                <initiator>cardholder</initiator>
+                <sequence>first</sequence>
+            </storedcredential>
+         <autosettle flag='1'/>
+            <sha1hash>$sha1hash</sha1hash>
+        </request>";
+
+/// Hash variables : "$timestamp.$merchantid.$orderid.$amount.$currency.$networktoken";
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class amount { 
+	public String currency;
+	public String text;
+}
+
+public class card { 
+	public String number;
+	public String expdate;
+	public String type;
+	public String chname;
+}
+
+public class storedcredential { 
+	public String type;
+	public String initiator;
+	public String sequence;
+}
+
+public class autosettle { 
+	public int flag;
+}
+
+public class request { 
+	public String merchantid;
+	public String account;
+	public String orderid;
+	public String channel;
+	public amount amount;
+	public card card;
+	public storedcredential storedcredential;
+	public autosettle autosettle;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="amount")]
+public class Amount { 
+
+	[XmlAttribute(AttributeName="currency")] 
+	public string Currency { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+
+[XmlRoot(ElementName="card")]
+public class Card { 
+
+	[XmlElement(ElementName="number")] 
+	public string Number { get; set; } 
+
+	[XmlElement(ElementName="expdate")] 
+	public string Expdate { get; set; } 
+
+	[XmlElement(ElementName="type")] 
+	public string Type { get; set; } 
+
+	[XmlElement(ElementName="chname")] 
+	public string Chname { get; set; } 
+}
+
+[XmlRoot(ElementName="storedcredential")]
+public class Storedcredential { 
+
+	[XmlElement(ElementName="type")] 
+	public string Type { get; set; } 
+
+	[XmlElement(ElementName="initiator")] 
+	public string Initiator { get; set; } 
+
+	[XmlElement(ElementName="sequence")] 
+	public string Sequence { get; set; } 
+}
+
+[XmlRoot(ElementName="autosettle")]
+public class Autosettle { 
+
+	[XmlAttribute(AttributeName="flag")] 
+	public int Flag { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="account")] 
+	public string Account { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="channel")] 
+	public string Channel { get; set; } 
+
+	[XmlElement(ElementName="amount")] 
+	public Amount Amount { get; set; } 
+
+	[XmlElement(ElementName="card")] 
+	public Card Card { get; set; } 
+
+	[XmlElement(ElementName="storedcredential")] 
+	public Storedcredential Storedcredential { get; set; } 
+
+	[XmlElement(ElementName="autosettle")] 
+	public Autosettle Autosettle { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+//coming soon
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20240923123808">
+  <merchantid>merchantid</merchantid>
+  <account>account</account>
+  <orderid>20240923133808-433</orderid>
+  <authcode>123456</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>1441120</batchid>
+  <message>[ test system ] Authorised</message>
+  <pasref>17270914888354845</pasref>
+  <timetaken>0</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <acquirerresponse><![CDATA[ ]]></acquirerresponse>
+  <srd>hNIGGCbubyxF9Zoi</srd>
+  <cardissuer>
+    <commercial/>
+    <cardtype/>
+    <country/>
+    <countrycode/>
+    <bank/>
+  </cardissuer>
+  <sha1hash>e69421311a393b334c004de1bb678aa591ca0c19</sha1hash>
+</response>
+```
+</Code>
+
+### Card Auth - CIT
+
+#### Sample request
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+$request = "<request type="auth" timestamp="$timestamp">
+            <merchantid>$merchantid</merchantid>
+            <account>$account</account>
+            <orderid>$orderid</orderid>
+            <channel>ECOM</channel>
+            <amount currency="$currency">$amount</amount>
+            <card>
+            <number>$networktoken</number>
+            <expdate>$networktokenexpirydate</expdate>
+            <chname>$ch_name</chname>
+            <type>$type</type>
+            </card>
+            <tokenvalue>
+               <cryptogram>oenlske2kdlfkk3jlffs333432fde3</cryptogram>
+               <eci>1</eci>
+            </tokenvalue>
+         <autosettle flag="1"/>
+            <sha1hash>$sha1hash</sha1hash>
+        </request>";
+
+/// Hash variables:$timestamp.$merchantid.$orderid.$amount.$currency.$networktoken
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+public class amount { 
+	public String currency;
+	public String text;
+}
+
+public class cvn { 
+	public int number;
+}
+
+public class card { 
+	public String number;
+	public int expdate;
+	public String chname;
+	public String type;
+	public cvn cvn;
+}
+
+public class tokenvalue { 
+	public String cryptogram;
+	public int eci;
+}
+
+public class autosettle { 
+	public int flag;
+}
+
+public class request { 
+	public String merchantid;
+	public String account;
+	public String orderid;
+	public String channel;
+	public amount amount;
+	public card card;
+	public tokenvalue tokenvalue;
+	public autosettle autosettle;
+	public String sha1hash;
+	public String type;
+	public String timestamp;
+	public String text;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// using System.Xml.Serialization;
+// XmlSerializer serializer = new XmlSerializer(typeof(Request));
+// using (StringReader reader = new StringReader(xml))
+// {
+//    var test = (Request)serializer.Deserialize(reader);
+// }
+
+[XmlRoot(ElementName="amount")]
+public class Amount { 
+
+	[XmlAttribute(AttributeName="currency")] 
+	public string Currency { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+
+[XmlRoot(ElementName="cvn")]
+public class Cvn { 
+
+	[XmlElement(ElementName="number")] 
+	public int Number { get; set; } 
+}
+
+[XmlRoot(ElementName="card")]
+public class Card { 
+
+	[XmlElement(ElementName="number")] 
+	public string Number { get; set; } 
+
+	[XmlElement(ElementName="expdate")] 
+	public int Expdate { get; set; } 
+
+	[XmlElement(ElementName="chname")] 
+	public string Chname { get; set; } 
+
+	[XmlElement(ElementName="type")] 
+	public string Type { get; set; } 
+
+	[XmlElement(ElementName="cvn")] 
+	public Cvn Cvn { get; set; } 
+}
+
+[XmlRoot(ElementName="tokenvalue")]
+public class Tokenvalue { 
+
+	[XmlElement(ElementName="cryptogram")] 
+	public string Cryptogram { get; set; } 
+
+	[XmlElement(ElementName="eci")] 
+	public int Eci { get; set; } 
+}
+
+[XmlRoot(ElementName="autosettle")]
+public class Autosettle { 
+
+	[XmlAttribute(AttributeName="flag")] 
+	public int Flag { get; set; } 
+}
+
+[XmlRoot(ElementName="request")]
+public class Request { 
+
+	[XmlElement(ElementName="merchantid")] 
+	public string Merchantid { get; set; } 
+
+	[XmlElement(ElementName="account")] 
+	public string Account { get; set; } 
+
+	[XmlElement(ElementName="orderid")] 
+	public string Orderid { get; set; } 
+
+	[XmlElement(ElementName="channel")] 
+	public string Channel { get; set; } 
+
+	[XmlElement(ElementName="amount")] 
+	public Amount Amount { get; set; } 
+
+	[XmlElement(ElementName="card")] 
+	public Card Card { get; set; } 
+
+	[XmlElement(ElementName="tokenvalue")] 
+	public Tokenvalue Tokenvalue { get; set; } 
+
+	[XmlElement(ElementName="autosettle")] 
+	public Autosettle Autosettle { get; set; } 
+
+	[XmlElement(ElementName="sha1hash")] 
+	public string Sha1hash { get; set; } 
+
+	[XmlAttribute(AttributeName="type")] 
+	public string Type { get; set; } 
+
+	[XmlAttribute(AttributeName="timestamp")] 
+	public string Timestamp { get; set; } 
+
+	[XmlText] 
+	public string Text { get; set; } 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+//coming soon
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20240417114051">
+  <merchantid>MerchantId</merchantid>
+ <account>AccountName</account>
+  <orderid>20240417124050-953</orderid>
+  <authcode>123456</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>1381517</batchid>
+  <message>[ test system ] Authorised</message>
+  <pasref>17133504510469551</pasref>
+  <timetaken>0</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>9Mcd3n3yy2gzvgPi</srd>
+  <sha1hash>57c99b6c31d6f26107f6ead01cd4b575fd65854e</sha1hash>
+</response>
+```
+</Code>
+
+## Standalone network tokens
+
+Our Network Tokens solution can be used even if you're not storing cards with us. This makes it possible for you to use multiple PSPs if desired.
+
+#### Sample Sandbox request URL
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://api.sandbox.globalpay-ecommerce.com/card-storage/merchants/merchantId/network-tokens/accountName' \
+--header 'Authorization: securehash 91e9063aed61da6f09d8f21d7f537585a0e72e4f' \
+--header 'x-realex-application-id: apigee' \
+--header 'x-api-key: 030a8944-f976-44d8-a774-f8152c5f13f7' \
+--header 'Content-Type: application/json' \
+--data '{
+    "pan": "{{cardNumber}}",
+    "expiration_date": "{{cardExpDate}}",
+    "card_scheme":"{{cardType}}"
+}
+```
+</Code>
+
+#### Hash value
+
+<Code id="JSON" title="" language="json" active>
+```
+clientId + "." + accountName + "." + panNumber
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="" language="json" active>
+```
+{
+    "merchant_id": "merchantId",
+    "account": "accountname",
+    "network_token": "4895370016970953",
+    "expiration_date": "1136",
+    "status": "ACTIVE"
+}
+```
+</Code>
+
+## Testing network tokens
+
+Our Network Tokens - Card Storage Service is available for testing in our Sandbox environment for registered users of this developer portal. Use our test cards to try different scenarios for your application to handle. For more information, see our test cards for [Network Tokens](/resources/test-card-numbers#network-tokens-CSS).
+
+## Enhance your integration
+Explore more functionality to enrich your application or website. For the detailed XML API specification and a full list of features, see the [API Reference](/ecommerce/api/overview).
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/ecommerce/api/card-storage" title="Card Storage - API Reference" icon="window">
+        See the full API specification for card storage.
+    </Card>
+ <Card type="with_icon" link="/ecommerce/expand-your-integration/card-storage" title="Card Storage" icon="coin">
+Securely store card data with no added PCI DSS requirements.
+</Card>
+ <Card type="with_icon" link="/ecommerce/expand-your-integration/digital-wallets" title="Digital Wallets" icon="wallet">
+        Help customers pay securely with just a scan, tap, or click.
+    </Card>
+ <Card type="with_icon" link="/ecommerce/expand-your-integration/card-blocking" title="Card Blocking" icon="filter-circle-xmark">
+        Limit what card types to accept for payment or storage.
+    </Card>
+</CardsGroup>

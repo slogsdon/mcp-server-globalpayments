@@ -1,0 +1,56 @@
+---
+title: 'Exemptions - Overview'
+search_results: 'Global Payments - Exemptions - Overview'
+subtitle: 'Use exemptions to help reduce payment friction'
+tag: 'rest'
+created: '18/09/2024'
+---
+
+In this article, we discuss how merchants can use our 3D Secure 2 Exemption Optimization and accompanying solutions to solve for both compliant transactions and a seamless customer experience. Exemptions are part of the European strong customer authentication (SCA) regulations set in <Tooltip content="Payment Services Directive 2">PSD2</Tooltip>. The idea is to allow for an easier payment experience with less friction for the customer under certain conditions. This includes transactions where the value of the payment is low or where robust risk analysis is performed.
+
+Exemptions might be applied by the issuer based on the transaction details or might be specifically requested by the merchant, with their acquirer’s permission. 3D Secure 2, the authentication protocol used by card brands such as Visa and Mastercard, provides a framework for merchants to benefit from SCA exemptions.
+
+## When to request an exemption
+You can flag an exemption request during both the 3D Secure 2 authentication and the payment authorization. Or, you can choose to flag an exemption during the payment authorization step only. Submitting the request during both steps ensures the best chance that the exemption will be applied, as the issuer receives much more data about the transaction and the customer. For certain low-risk transactions, however, you may want to flag an exemption in just the authorization message to see if the issuer will approve the exemption without the use of 3D Secure 2.
+
+<Infobox>
+  When a merchant requests an exemption (whether via authentication or directly in authorization) and it's successfully applied, they'll no longer be able to avail of a liability shift if a fraud-related chargeback occurs.
+</Infobox>
+
+## Available exemptions
+The following table provides the available exemptions and indicates whether they are applicable to be flagged during 3D Secure 2 authentication, authorization, or both.
+| Exemption | Description | Authentication | Authorization |
+| --- | --- | --- | --- |
+| Transaction Risk Analysis | Allows for transactions to be exempted from SCA if a robust risk analysis is performed. Whether it can be applied also depends on fraud thresholds pertaining to your acquirer. | Y | Y   |
+| Low-Value Transactions | Transactions up to 30 EUR (or converted equivalent) can be exempted from SCA, dependent on the following criteria:<ul><li>Up to a maximum of five (5) consecutive transactions</li><li>Or, up to a cumulative limit of 100 EUR (or converted equivalent)</li></ul> | N | Y   |
+| Trusted Beneficiary | Customers can add a merchant to a list of “trusted beneficiaries” held by the issuer. Subsequent payments to trusted merchants can then be exempted from SCA. | Y | Y   |
+| Secure Corporate Payments | Transactions that meet the following criteria:<ul><li>Initiated by a corporate customer using, for example, a virtual card</li><li>Originated in a secure corporate environment such as a company-wide travel and expenses system</li></ul> | N | Y   |
+
+## Issuer response
+The following table provides the values in the response for exemptions that are available to request in the authentication message. The response indicates if the issuer accepted the exemption request or not.
+| Card Type | ECI | Authentication Value | Transaction Status | Transaction Status Reason |
+| --- | --- | --- | --- | --- |
+| Visa | 07 <br/><br/> or <br/><br/> Blank | Present | AUTHENTICATION_SUCCESSFUL   | N/A   |
+| Mastercard | 06 | Leading indicator is kN | 3D Secure 2.2: <br/> CHALLENGE_PREFERENCE_ <br/> ACKNOWLEDGED_ <br/> INFORMATIONAL_ONLY <br/><br/> 3D Secure 2.1: <br/> AUTHENTICATION_FAILED| 3D Secure 2.2: <br/> N/A <br/><br/> 3D Secure 2.1: <br/> SCHEME_STATUS_REASON81 |
+
+## Next steps
+Check out the following guides to learn more about our exemption solutions.
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/TRA" title="Transaction Risk Analysis" icon="magnifying-glass-chart">
+        Identify customer exemptions and avoid unnecessary authentications.
+    </Card>
+
+    <Card type="with_icon" link="/docs/low-value-transactions" title="Low-Value Transactions" icon="down-from-dotted-line">
+        Avoid unnecessary authentications for transactions under a certain amount.
+    </Card>
+</CardsGroup>
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/trusted-beneficiary" title="Trusted Beneficiary" icon="list-check">
+        Use a trusted merchant list to avoid unnecessary authentications.
+    </Card>
+  
+    <Card type="with_icon" link="/docs/secure-corp-payments" title="Secure Corporate Payments" icon="building-shield">
+        Request an exemption for corporate customer transactions.
+    </Card>
+</CardsGroup>

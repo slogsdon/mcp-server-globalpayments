@@ -1,0 +1,70 @@
+---
+title: "Unified Payments API - September 29, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "09-29-2022"
+---
+
+<ReleaseNoteSection title="Convert Transaction Amount">
+    <ReleaseNoteDetail type="added">
+        * Enhancement to the Currency Conversion resource:
+            * Two new fields returned in the response of the Convert Amount method:
+                * minor_unit
+                * Formatted_amount
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Create a Sale or Refund">
+    <ReleaseNoteDetail type="changed">
+        * Enum change for "brand" field:
+            * "CUP" enum changed to "UNIONPAY"
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * Transactions resource enhancement for Card Present:
+            * New enum "WHOLE" added to the "authorization_mode" field
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Pay by Links / Links Resource">
+    <ReleaseNoteDetail type="changed">
+        * Enums for the "shippable" field changed to "YES" or "NO"
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * New "transactions" object containing the detail of each Transaction associated with the Link
+
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * New "reference" field
+
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * Additional query parameters for the Get a Link and Get a List of Links methods:
+            * status
+            * usage_mode
+            * name
+            * description
+            * reference
+            * shippable
+            * expiration_date
+            * currency
+            * amount
+            * country
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Access Token Resource">
+    <ReleaseNoteDetail type="added">
+        * New optional field "restricted_token" in the Create Access Token method; this field accepts the strings "YES" or "NO"
+        * The restricted access token when used to create a Stored Payment Method will return masked values for the below fields in the response:
+            * merchant_id
+            * Merchant_name
+            * Account_id
+            * Account_name
+            * App_id
+            * app_name
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

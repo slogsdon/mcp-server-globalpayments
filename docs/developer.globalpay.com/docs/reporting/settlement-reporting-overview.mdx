@@ -1,0 +1,36 @@
+---
+title: 'Settlement Reporting - Overview'
+search_results: 'Global Payments - Settlement Reporting Overview'
+subtitle: 'Simplify reconciliation and get customized daily deposit data'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+Settlement Reporting helps merchants simplify their daily fund transfer process by automating the reconciliation of funds transferred to their bank accounts with transactions from multiple payment channels. Our Deposits, Transactions, and Disputes capabilities offer maximum flexibility for pulling the deposit data, whether it's by timeframe, status, bank account number, and so on.
+
+With Settlement Reporting, you can:
+* Pull a list of deposits made to your bank account
+* Obtain each deposit’s granular details for transactions, fees, and disputes
+
+Settlement Reporting data is available the day after a transaction was processed. To see a transaction included in the report in real-time (that is, within 5 seconds of a transaction’s completion), you need to use our [Real-Time Data Reporting](/docs/reporting/real-time-reporting-guide) feature and be processing transactions through the API.
+
+<Infobox>
+  Settlement Reporting is available only to merchants who use us as their acquirer.
+</Infobox>
+
+## How does it work?
+When you process a sale or refund transaction, we move the appropriate funds to or from the customer’s card and settles the transaction with the relevant card issuer. We handle your transactions from any payment channel, whether through an ecommerce website, point-of-sale (POS) platform, or call center. 
+
+After aggregating all of your transactions over a determined period, we then transfer those funds to your specified bank account. This transfer of funds, or _deposit_, is made up of the sales and refunds you’ve processed within that period, including any deductions such as card processing fees and disputes (also known as _chargebacks_). 
+
+Merchants who process a small number of transactions per day receive only one deposit per day, whereas larger volume merchants receive multiple ones.
+
+## Sandbox testing
+When testing Settlement Reporting, our server returns a list of test transactions instead of real ones. This is because in our Sandbox environment, the settlement data is delivered via a standalone test harness, and reporting doesn’t generate from integration activity. In other words, the transactions you execute in Sandbox aren’t batched and flagged for settlement. However, the data does reflect Production.
+
+## Next steps
+To try our Settlement Reporting solution, follow the steps and code samples in our [guide](/docs/reporting/settlement-reporting-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+  </Infobox>

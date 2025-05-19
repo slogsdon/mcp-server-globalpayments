@@ -1,0 +1,80 @@
+---
+title: 'SEPA Direct Debit - Model C'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/sepamm.png" />
+</div>
+
+| **Payment Type**           | Direct Debit                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Payment Method String**  | sepamm                                                                                                                                         |
+| **Available Countries**    | AD, AT, BE, BG, CH, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IS, IT, LI, LT, LU, LV, MC, MT, NL, NO, PL, PT, RO, SE, SI, SK, SM, VA |
+| **Available Currencies**   | EUR                                                                                                                                            |
+| **Min Transaction Amount** | EUR 0.10                                                                                                                                       |
+| **Max Transaction Amount** | EUR 1,000                                                                                                                                      |
+| **Supports Refunds**       | Full & Partial with 365 day limit                                                                                                              |
+| **Chargebacks**            | Yes                                                                                                                                            |
+| **Sandbox**                | Yes                                                                                                                                            |
+| **Timeout**                | Not Applicable                                                                                                                                 |
+
+**Note:** Unlike other non-card payment methods, SEPA follows a synchronous flow and a response is provided immediately confirming if the mandate was set up.
+
+### Sample request
+
+<Code id="xml" title="XML" language="markup">
+```
+<?xml version='1.0' encoding='UTF-8'?>
+<request type='payment-set' timestamp='{{ timestamp }}'>
+    <merchantid>Merchant ID</merchantid>
+    <account>internet</account>
+    <amount currency='EUR'>1001</amount>
+    <autosettle flag='1' />
+    <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+    <paymentmethod>sepamm</paymentmethod>
+    <paymentmethoddetails>
+        <returnurl>https://www.example.com/returnUrl</returnurl>
+        <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+        <descriptor>Test Transaction</descriptor>
+        <country>DE</country>
+        <accountholdername>James Mason</accountholdername>
+        <!-- Begin Mandatory / Optional Additional Fields -->
+        <bankaccount>
+            <iban>DE84837473949793743749</iban>
+        </bankaccount>
+        <mandate>
+            <mandatereference>sepa-01012017</mandatereference>
+            <mandateurl>https://www.example.com/mandate/sepa-01012017</mandateurl>
+            <mandatesignaturedate>2017-06-15</mandatesignaturedate>
+            <sequencetype>oneOff</sequencetype>
+        </mandate>
+    </paymentmethoddetails>
+    <tssinfo>
+        <custnum>248b1c43-0fb2-4fa1-9b1c-8cca3cfb4269</custnum>
+    </tssinfo>
+    <!-- End Mandatory / Optional Additional Fields -->
+    <comments>
+        <comment id='1'>Mobile Channel</comment>
+        <comment id='2'>Down Payment</comment>
+    </comments>
+    <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>
+</request>
+```
+</Code>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name               | Type | Format                                    | Length | Description                                                                                                                                                                                                                                                                                                  |
+| ------------------ | ---- | ----------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| IBAN               | M    | \[A-Z\]{2}\[0-9\]{2}\[0-9,A-Z\]{10,30}    | 34     | Code that identifies the customer's bank, account number itself and the country of origin.                                                                                                                                                                                                                   |
+| Mandate Reference  | M    | \[A-Za-z0-9:?/+(),. -\]\*                 | 0-35   | A unique reference for this mandate.                                                                                                                                                                                                                                                                         |
+| Mandate URL        | M    | xsd:anyURI                                | 1-255  | Valid URL pointing to the SEPA mandate, needs to be accessible by risk and compliance department.                                                                                                                                                                                                            |
+| Mandate Signature  | M    | \[0-9\]{4}-\[0-9\]{2}-\[0-9\]{2}          | 10     | Date of mandate signature. Format: YYYY-MM-DD.                                                                                                                                                                                                                                                               |
+| Sequence Type      | O    | \[A-Za-z\]\*                              | 0-9    | Can take 4 values: **oneOff** \- The direct debit is executed once. This is the default value. **first** \- First direct debit in a series of recurring ones. **recurring** \- Follow-up direct debit in a series of recurring ones. **final** \- Last direct debits in a series of recurring direct debits. |
+| Customer Number    | O    | \[a-zA-Z0-9\\-\\s\\.,\\+@\_\]\*           | 0-50   | A unique reference for this customer for example from your CRM system                                                                                                                                                                                                                                        |
+| Consumer Name      | O    | \[a-zA-Z0-9\\-\\s\\.,\\+@\_\]\*           | 0-50   | A unique reference for this customer; for example, from your CRM system.                                                                                                                                                                                                                                     |
+| Dynamic Descriptor | O    | a-z A-Z 0-9 \[space\] / - French-accented | 25     | Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement.                                                                                                                       |

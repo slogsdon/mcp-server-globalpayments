@@ -1,0 +1,322 @@
+---
+title: 'Dynamic Currency Conversion - Guide'
+search_results: 'Global Payments - Dynamic Currency Conversion Guide'
+subtitle: 'Learn how to let international customers pay in their home currency'
+tag: 'rest'
+created: '23/08/2024'
+---
+
+<Infobox>
+  This feature is currently not available in the United States or Canada. For more information, check with your account manager. 
+</Infobox>
+   
+Our Dynamic Currency Conversion (DCC) solution enables you to offer cardholders traveling internationally the choice of paying either in the currency of their own card or the currency that the merchant trades in. The customer is offered an exchange rate at the point of sale rather than at the point of settlement, which is what happens if DCC is not present.
+   
+<Tabs active="api">
+  <Tab id="api" title="API">
+In this guide, you'll learn how to obtain the relevant currency and exchange rate, present the option to the customer, and process the authorization. We also provide information on complying with requirements to display exchange rates and fees.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+    
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+    
+## Step 1: Check card currency and exchange rate
+    
+    To start, we need to check if the card is available for DCC and what the current exchange rate is.
+
+    * If the card is eligible for DCC, you’ll receive an `AVAILABLE` status.
+    * If the card is not eligible for DCC or the card currency is the same as your base currency, you’ll receive a `NOT_AVAILABLE` status.
+   
+    #### Sample request
+    <Code id="JSON" title="JSON" language="JSON" active>
+```json
+   POST https://apis.sandbox.globalpay.com/ucp/currency-conversions
+
+{
+    "account_name": "dcc",
+    "channel": "CNP",
+    "amount": "2300",
+    "currency": "EUR",
+    "country": "GB",
+    "reference": "ORDER_35359361",
+    "payment_method": {
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4006097467207025",
+            "expiry_month": "12",
+            "expiry_year": "25"
+        }
+    }
+}   
+```
+    </Code>
+    
+    #### Sample response
+  
+        <Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "CCS_LUAa1xpkuWeBPuREJXiA7Ua0ySQGHM",
+    "time_created": "2021-06-30T16:05:02.491Z",
+    "model": "FROM_TRANSACTION_CURRENCY",
+    "status": "AVAILABLE",
+    "country": "GB",
+    "transaction_type": "SALE",
+    "amount": "2300",
+    "currency": "EUR",
+    "exchange_rate": "1.6250",
+    "payer_amount": "3738",
+    "payer_currency": "AUD",
+    "margin_rate_percentage": "03.7500",
+    "exchange_rate_source": "REUTERS WHOLESALE INTERBANK",
+    "exchange_rate_time_created": "2018-08-20T11:17",
+    "commission_percentage": "00.0000",
+    "merchant_id": "MER_c11ad71fb6474bb9b8d753e16ef35708",
+    "merchant_name": "DCC_Test",
+    "account_id": "TRA_cb12a5ccd1704066beab6a49d6f39cee",
+    "account_name": "dcc",
+    "reference": "ORDER_35359361",
+    "payment_method": {
+        "result": "00",
+        "message": "Success",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX7025"
+        }
+    },
+    "action": {
+        "id": "ACT_LUAa1xpkuWeBPuREJXiA7Ua0ySQGHM",
+        "type": "RATE_LOOKUP",
+        "time_created": "2021-06-30T16:05:02.491Z",
+        "result_code": "SUCCESS",
+        "app_id": "L6reqt6WUjenvyQi0PJgUsF6RUXU1tto",
+        "app_name": "DCC_Test"
+    }
+}
+```
+    </Code>
+    
+    ## Step 2: Offer currency choice to customer
+    
+    Now that we have the card currency, exchange rate, and amount, we can present the option to the customer. 
+
+For this example, the card currency is Swedish Krona (SEK) and our base currency is Euro (EUR).
+    
+![Payment screen showing which currency to pay in.](/gh-assets/dcc_select-currency.png)
+ <p style={{textAlign: "center"}}>**DCC Choice Example**</p>   
+
+    ## Step 3: Send authorization with DCC details
+    
+    Once the customer selects the currency, you can send the Authorization along with the DCC information to reflect the customer’s choice. 
+    
+    ### DCC CHOSEN
+    
+    In this example, the customer has chosen to pay in the currency of their card. You can populate the converted amount, rate, and currency into the request.
+    
+        #### Sample request
+    <Code id="JSON" title="JSON" language="JSON" active>
+```json
+POST https://apis.sandbox.globalpay.com/ucp/transactions
+
+{
+    "account_name": "dcc",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "2300",
+    "currency": "EUR",
+    "country": "GB",
+    "reference": "ORDER_35359361",
+    "payment_method": {
+        "first_name": "James",
+        "last_name": "Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4006097467207025",
+            "expiry_month": "12",
+            "expiry_year": "25",
+            "cvv": "996"
+        }
+    },
+    "currency_conversion": {
+        "id": "CCS_g47zV5MsiNjRyX89lCx41xfIfF7G7f"
+    }
+}
+```
+    </Code>
+    
+    ### DCC NOT_AVAILABLE or NOT_CHOSEN
+    
+    In this example, DCC is not available or the customer has not chosen to pay in the currency of their card. No DCC data is submitted as part of the Authorization message.
+    
+            #### Sample request
+    <Code id="JSON" title="JSON" language="JSON" active>
+```json
+POST https://apis.sandbox.globalpay.com/ucp/transactions
+
+{
+    "account_name": "dcc",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "2300",
+    "currency": "EUR",
+    "country": "GB",
+    "reference": "ORDER_35359361",
+    "payment_method": {
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4006097467207025",
+            "expiry_month": "12",
+            "expiry_year": "25",
+            "cvv": "996"
+        }
+    }
+}
+```
+    </Code>
+    
+    ## Compliance with EEA currencies
+    
+#### Markup transparency rules
+    
+In April 2020, the European Union introduced new rules governing the transparency of a merchant markup on currency conversions for certain currencies in the European Economic Area (EEA). These currencies include: **EUR**, **BGN**, **HRK**, **DKK**, **HUF**, **PLN**, **CZK**, **RON**, and **SEK**. For merchants utilizing DCC, the EEA rules mean that if the exchange rate offered to the customer has a markup that makes the amount above the European Central Bank (ECB) exchange rate, this percentage rate must be displayed to the consumer. 
+
+When the customer is presented with the choice to pay in the currency of their card or the merchant’s base currency, the markup amount should be displayed to them. If the exchange rate offered is the same or less than the ECB rate, the markup should be displayed as 0%.
+
+The value of the rate field returned in the Rate Lookup response will be the rate provided by the merchant or a third-party Currency Conversion Processor (CCP), inclusive of their markup. The value of the margin percentage field will reflect the markup rate of the merchant or CCP in relation to the current ECB rate.
+   
+#### HPP Example
+   
+Either the merchant or CCP provides the interbank exchange rate available at the time of transaction and displays it to the customer. This way, the customer knows the exchange rate before they complete the payment. They can then choose whether to continue with the conversion or pay in the merchant’s base currency.
+
+When the customer is presented with the choice to pay in the currency of their card or the merchant’s base currency, the markup percentage and commission applied will be displayed to them. This can alleviate any concerns customers may have about any subsequent processing for foreign-exchange conversion.
+
+In this example on our Hosted Payment Page (HPP), the base currency is British pound sterling (GPB) and the card currency is Hong Kong Dollar (HKD).
+
+![Payment screen showing the exchange rate and markup.](/gh-assets/dcc_compliance-info.png)
+ <p style={{textAlign: "center"}}>**DCC Section with Compliance Information**</p>
+
+</Tab>
+  <Tab id="hpp" title="HPP">   
+    In this guide, we show you how to enable DCC on the Hosted Payment Page (HPP). We also provide information on complying with requirements to display exchange rates and fees.
+    
+## Enable DCC on the HPP
+    
+To enable DCC, we simply add one field in the Create HPP Link request:
+
+    * <code class="highlight">order.transaction_configuration.currency_conversion_mode</code>
+
+#### Sample request
+        <Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl 'https://apis.sandbox.globalpay.com/ucp/links' \
+--header 'Connection: keep-alive' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'x-gp-version: 2021-03-22' \
+--header 'Authorization:  Bearer bBj5Bv4RoOz4xTJ7V5XtjLBHLN1h' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "type": "HOSTED_PAYMENT_PAGE",
+   "name": "Bill Payment",
+   "description": "February and March Invoice",
+   "reference": "82c2dbd5-549d-4967-aeea-51b3f320046a",
+   "payer": {
+      "name": "James Mason",
+      "language": "en",
+      "email": "jamesmason@example.com",
+      "mobile_phone": {
+         "country_code": "44",
+         "subsriber_number": "1801555888"
+      },
+      "billing_address": {
+         "line_1": "Flat 456",
+         "line_2": "House 456",
+         "line_3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "44",
+         "country": "GB"
+      }
+   },
+   "order": {
+      "amount": "1000",
+      "currency": "EUR",
+      "reference": "order-645",
+      "transaction_configuration": {
+         "channel": "CNP",
+         "country": "GB",
+         "capture_mode": "AUTO",
+         "allowed_payment_methods": [
+            "CARD"
+         ],
+         "currency_conversion_mode": "YES"
+      },
+      "payment_method_configuration": {
+         "authentications": {
+            "preference": "CHALLENGE_PREFERRED"
+         }
+      }
+   },
+   "notifications": {
+      "return_url": "https://www.example.com/return_url",
+      "status_url": "https://www.example.com/status_url"
+   }
+}'
+```
+    </Code>
+## Additional request fields
+    | Element/Field | Category | Format | Type | Length | Description |
+    | --- | --- | --- | --- | --- | --- |
+    | order.transaction_ , configuration. , currency_ , conversion_ , mode | string | boolean | O | | Determines whether DCC is activated. Allowable values: <br /> **YES** <br /> **NO** |
+    
+#### DCC example
+Now that we enabled DCC on the HPP, the option is displayed to the customer.
+
+For this example, our base currency is Euro (EUR) and the card currency is Swedish Krona (SEK).
+
+![Payment screen showing which currency to pay in.](/gh-assets/dcc_select-currency.png)
+ <p style={{textAlign: "center"}}>**DCC Choice Example**</p>
+
+## Compliance with EEA currencies
+    
+#### Markup transparency rules
+    
+In April 2020, the European Union introduced new rules governing the transparency of a merchant markup on currency conversions for certain currencies in the European Economic Area (EEA). These currencies include: **EUR**, **BGN**, **HRK**, **DKK**, **HUF**, **PLN**, **CZK**, **RON**, and **SEK**. For merchants utilizing DCC, the EEA rules mean that if the exchange rate offered to the customer has a markup that makes the amount above the European Central Bank (ECB) exchange rate, this percentage rate must be displayed to the consumer. 
+
+When the customer is presented with the choice to pay in the currency of their card or the merchant’s base currency, the markup amount should be displayed to them. If the exchange rate offered is the same or less than the ECB rate, the markup should be displayed as 0%.
+
+The value of the rate field returned in the Rate Lookup response will be the rate provided by the merchant or a third-party Currency Conversion Processor (CCP), inclusive of their markup. The value of the margin percentage field will reflect the markup rate of the merchant or CCP in relation to the current ECB rate.
+   
+#### HPP example
+   
+Either the merchant or CCP provides the interbank exchange rate available at the time of transaction and displays it to the customer. This way, the customer knows the exchange rate before they complete the payment. They can then choose whether to continue with the conversion or pay in the merchant’s base currency.
+
+When the customer is presented with the choice to pay in the currency of their card or the merchant’s base currency, the markup percentage and commission applied will be displayed to them. This can alleviate any concerns customers may have about any subsequent processing for foreign-exchange conversion.
+
+For this example, our base currency is British pound sterling (GPB) and the card currency is Hong Kong Dollar (HKD).
+
+![Payment screen showing the exchange rate and markup.](/gh-assets/dcc_compliance-info.png)
+ <p style={{textAlign: "center"}}>**DCC Section with Compliance Information**</p>
+ 
+## Enhance your integration
+  
+Below are value-added services you can enable for the HPP.
+	  
+  <CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+  <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide" title="Alternative Payment Methods" icon="money-bill-wave">
+        Discover additional transaction options.
+    </Card>
+  <Card type="with_icon" link="/docs/payments/payment-methods/digital-wallets/overview" title="Digital Wallets" icon="wallet">
+        Let customers make quick payments in-person, online, or on a mobile device. 
+    </Card>
+</CardsGroup>
+    
+   </Tab>
+</Tabs>
+ 

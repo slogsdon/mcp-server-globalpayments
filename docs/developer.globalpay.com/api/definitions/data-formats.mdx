@@ -1,0 +1,72 @@
+---
+title: 'Data Formats'
+search_results: 'API Definitions - Data Formats'
+subtitle: 'See what standards and formats our API uses to represent common values'
+tag: 'rest'
+created: '16/09/2024'
+---
+## Encoding
+The API assumes UTF-8 encoding in API requests and always returns UTF-8 encoding in all responses.
+
+## Date and time
+The API accepts and generates dates and times in the [ISO-8601](https://en.wikipedia.org/wiki/ISO_8601#General_principles) format and set to UTC. Date and times created and submitted by users must be in ISO-8601 but can be in the user's own timezone. 
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+200 OK                                           
+{
+    "id": "TRN_noXZxzpagCCMyJT08Sz2tGkPji8WXN",
+    "time_created": "2021-03-20T13:44:14.327Z",
+    "type": "SALE",
+    "status": "CAPTURED",                       
+    "channel": "CP",
+    ...
+```
+</Code>
+## Amounts
+Amounts are always represented in the smallest common currency unit. There are no decimal points in amount values.
+
+Here are some examples of currencies with different exponents and how the amount is represented in the API.
+| Currency / Exponent | Example |
+| --- | --- |
+| US Dollar - 2 exponent currency	| $100.99 --> 10099 |
+| Euro - 2 exponent currency | €34.59 --> 3459 |
+| Japanese Yen - 0 exponent currency	| ¥145 --> 145 |
+| Tunisian Dinar - 3 exponent currency	| DT 53.454 --> 53454| 
+## Currencies
+Currencies are always represented by the [ISO 4217 alpha code](https://en.wikipedia.org/wiki/ISO_4217#Active_codes).
+
+For example:
+| Currency | ISO 4217 Code |
+| --- | --- |
+| US Dollar	| USD |
+| Pound Sterling	| GBP |
+| Canadian Dollar	| CAD |
+| Singapore Dollar |	SGD |
+| Euro	| EUR |
+| Japanese Yen	| JPY |
+| Tunisian Dinar	| TND |
+## Countries
+Countries are represented by the [ISO-3166-1(alpha-2 code)](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Decoding_table).
+
+For example:
+| Country | ISO 3166-1 (Alpha-2 code) |
+| --- | --- |
+| United States of America | US |
+| Singapore | SG |
+| Canada | CA |
+| Great Britain | GB |
+| Australia | AU |
+| Japan | JP |
+| Hong Kong | HK |
+## Languages
+Languages are represented by the format [ISO-639-1(alpha-2)](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) alone or a combined  [ISO-639-1(alpha-2)](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) and [ISO-3166-1(alpha-2 code)](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Decoding_table) by a hyphen delimiter.
+
+For example:
+| Language | ISO-639-1_ISO 3166-1 |
+| --- | --- |
+| English | en | 
+| French | fr | 
+| French Canadian | fr_CA | 
+| Spanish | es | 
+| Mexican Spanish | es_MX | 

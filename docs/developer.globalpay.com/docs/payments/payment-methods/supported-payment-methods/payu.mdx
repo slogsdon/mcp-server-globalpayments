@@ -1,0 +1,117 @@
+---
+title: 'PayU'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/payu.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers             |
+| -------------------------- | -------------------------- |
+| **Payment Method String**  | payu                       |
+| **Available Countries**    | CZ, PL                     |
+| **Available Currencies**   | CZK, PLN                   |
+| **Min Transaction Amount** | 1 PLN/3 CZK                |
+| **Max Transaction Amount** | Depends on customer's bank |
+| **Supports Refunds**       | Yes                        |
+| **Chargebacks**            | No                         |
+| **Sandbox**                | Yes                        |
+| **Timeout**                | 1 Hour                     |
+
+### Sample request
+<CodeGroup>
+	<Code id="html" title="HTTP POST (HPP)" language="markup" active>
+	```
+	<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+	<input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+	<input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+	<input type="hidden" name="ACCOUNT" value ="internet">
+	<input type="hidden" name="ORDER_ID" value ="20230203213246-63dd7d7ed82e0">
+	<input type="hidden" name="AMOUNT" value ="322">
+	<input type="hidden" name="CURRENCY" value ="CZK">
+	<input type="hidden" name="SHA1HASH" value ="93c1f9b05c513822e3ada93b8492d3092ca999a3">
+	<input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+	<input type="hidden" name="HPP_VERSION" value ="2">
+	<input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="CZ">
+	<input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+	<input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+	<input type="hidden" name="MERCHANT_RESPONSE_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_TX_STATUS_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+	<input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+	<input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+	<input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+	<input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+	<input type="hidden" name="HPP_LANG" value ="EN">
+	<input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+	<input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+	<input type="hidden" name="COMMENT1" value="Mobile Channel">
+	<input type="hidden" name="COMMENT2" value="Down Payment">
+	<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+	<input type="submit" value="Click here to Purchase">
+	</form>
+	```
+	</Code>
+	<Code id="xml" title="XML" language="markup">
+	```
+	<?xml version='1.0' encoding='UTF-8'?>			
+	<request type='payment-set' timestamp='{{timestamp}}'>			
+		<merchantid>Merchant ID</merchantid>		
+		<account>internet</account>		
+		<amount currency='CZK'>322</amount>		
+		<autosettle flag='1' />		
+		<orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+		<paymentmethod>payu</paymentmethod>		
+		<paymentmethoddetails>		
+			<returnurl>https://www.example.com/returnUrl</returnurl>	
+			<errorurl>https://www.example.com/errorUrl</errorurl>	
+			<statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+			<descriptor>Test Transaction</descriptor>	
+			<country>CZ</country>	
+			<accountholdername>James Mason</accountholdername>	
+				
+		</paymentmethoddetails>		
+		<comments>		
+			<comment id='1'>Mobile Channel</comment>	
+			<comment id='2'>Down Payment</comment>	
+		</comments>		
+		<sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+	</request>
+	```
+	</Code>
+	<Code id="json" title="JSON" language="json">
+	```
+	{                        
+		"account_name": "{{acc_name}}",                
+		"type": "SALE",                
+		"channel": "CNP",                
+		"amount": "322",                
+		"currency": "CZK",                
+		"reference": "{{reference}}",                
+		"country": "CZ",                
+		"payment_method": {                
+			"entry_mode": "ECOM",        
+			"apm": {        
+				"provider": "payu"
+			}        
+		},                
+		"notifications": {                
+		"return_url": "<Replace with your own endpoints>",                
+		"status_url": "<Replace with your own endpoints>"                
+		},                
+		"payer": {}                
+	}
+	```
+	</Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name               | Type | Format                                                                 | Length | Description                                                                                                                                                                            |
+| ------------------ | ---- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer Email     | O    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80   | The email address of the customer.                                                                                                                                                     |
+| Dynamic Descriptor | O    | a-z A-Z 0-9 \[space\] / - French-accented                              | 25     | Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement. |

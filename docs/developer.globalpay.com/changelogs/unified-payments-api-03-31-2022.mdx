@@ -1,0 +1,37 @@
+---
+title: "Unified Payments API - January 31, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "03-31-2022"
+---
+
+<ReleaseNoteSection title="Buy Now Pay Later (BNPL) Support">
+    <ReleaseNoteDetail type="added">
+        - BNPL support for these providers:
+            - Affirm
+            - Clearpay
+            - Klarna
+        - BNPL supported transaction types:
+            - Authorize
+            - Linked Refund
+            - Reverse/void
+            - Capture
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Buy Now Pay Later (BNPL) Object">
+    <ReleaseNoteDetail type="added">
+        - New BNPL object in the payment methods block in the Transaction resource
+        - To see the full object, see the [Step By Step Guide](/docs/payments/payment-methods/buy-now-pay-later-guide)
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement for Order.reference Field">
+    <ReleaseNoteDetail type="changed">
+        - Enhancement for Card Present (all territories) and Card Not Present (Asia Pacific) to the Order.reference field for the below request and response:
+            - Sale 
+            - Standalone Refund: 
+                - Order.reference is now returned in the response for all endpoints
+                - Value is now present in the batch detail reports (where supported)
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

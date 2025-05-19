@@ -1,0 +1,406 @@
+---
+title: 'Batches - Guide'
+search_results: 'Global Payments - Payment Batches Guide'
+subtitle: 'Learn how to close batches and later review them'
+tag: 'rest'
+created: '06/08/2024'
+---
+<Infobox type="danger">
+This feature is only available for Customer Present transaction processing.
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on sending an API request to manually close a batch and researching a closed batch using the batch ID.
+
+## What is it?
+
+Card-present transactions are managed in batches. Typically, a _batch_ of transactions is an entire business day for a merchant. A batch must be closed for transactions to be settled and funded. Depending on your region, our platform may automatically batch your daily transactions for you. However, in some regions, you may need to batch them yourself on your application. 
+
+## How does it work?
+
+The main things to know about batches:
+
+* Before implementing batches, check with your account manager for any specific market or platform requirements. 
+* The `batch_id` is returned in all transaction responses and is required to submit a batch-close request.
+* The Batch ID is made up of three parts:
+        * The resource identifier: BAT_
+        * Our batch ID – Not sequential, unique per terminal
+        * Our batch sequence number – Sequential per terminal, starting at 001 and incrementing with each transaction
+ * A financial transaction (for example, a sale or refund) will create a batch if one is not open. Non-financial commands, such as verify, will not open a batch.
+ * Batch queries are limited to 90 days.
+ * Batch size in all regions except Asia-Pacific is limited to 9,999. In Asia Pacific, the maximum batch size is 900 transactions.
+ * The total combined amount of all transactions in a batch cannot exceed 9,999,999,999.99.
+
+## Prerequisites
+
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Send a batch-close request
+
+Body data is not necessary to close a batch, only the standard header data (including your valid access token). You can close the current batch by sending a POST command to the _/batches_ endpoint with the batch ID returned in every transaction. 
+
+A successful batch close will return a status of `CLOSED`.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/batches/BAT_611718-215' \
+--header 'Authorization: Bearer WVLzMsuEQzSEFfXX9D8tDl8t6YSG' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Content-Type: application/json'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardPresent);
+config.setEnvironment(Environment.TEST);
+
+String configName = "CONFIG_NAME";
+
+ServicesContainer.configureService(config, configName);
+
+String batchReference = "BAT_1035455-218";
+
+try {
+    BatchSummary batchSummary = BatchService.closeBatch(batchReference, configName);
+
+    // API raw response key "id"
+    String batchId = batchSummary.getBatchReference();
+    // API raw response key "host_breakdown.getcount"
+    Integer hostTotalCnt = batchSummary.getHostTotalCnt();
+    // API raw response key "host_breakdown.getamount"
+    BigDecimal hostTotalAmt = batchSummary.getHostTotalAmt();
+    // API raw response key "device_reference"
+    Integer processedDeviceId = batchSummary.getProcessedDeviceId();
+    // API raw response key "transaction_count"
+    Integer transactionCount = batchSummary.getTransactionCount();
+    // API raw response key "amount"
+    BigDecimal totalAmount = batchSummary.getTotalAmount();
+    // API raw response key "sales.getcount"
+    Integer salesCount = batchSummary.getBatchTotals().getSalesCount();
+    // API raw response key "sales.getamount"
+    BigDecimal salesAmount = batchSummary.getBatchTotals().getSaleAmount();
+    // API raw response key "refunds.getcount"
+    Integer refundsCount = batchSummary.getBatchTotals().getRefundsCount();
+    // API raw response key "refunds.getamount"
+    BigDecimal refundsAmount = batchSummary.getBatchTotals().getRefundsAmount();
+    // API raw response key "funding_debit.getcount"
+    Integer fundingDebitCount = batchSummary.getBatchTotals().getFundingDebitCount();
+    // API raw response key "funding_credit.getcount"
+    Integer fundingCreditCount = batchSummary.getBatchTotals().getFundingCreditCount();
+    // API raw response key "funding_debit.getamount"
+    BigDecimal fundingDebitAmount = batchSummary.getBatchTotals().getFundingDebitAmount();
+    // API raw response key "funding_credit.getamount"
+    BigDecimal fundingCreditAmount = batchSummary.getBatchTotals().getFundingCreditAmount();
+    // API raw response key "brand_breakdown"
+    HashMap<String, BatchTotals> brandBreakdown = batchSummary.getBrandBreakdown();
+    return;
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+config.AppId = "appID";
+config.AppKey = "appKey";
+config.Channel = Channel.CardPresent;            
+              
+ServicesContainer.ConfigureService(config);
+var batchSummary = BatchService.CloseBatch("BAT_933340-213");
+
+var status = batchSummary.Status; //CLOSED
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+$batchReference = 'BAT_1017430-723';
+
+try {
+    $batch = BatchService::closeBatch($batchReference);
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+/** @var \GlobalPayments\Api\Entities\BatchSummary $batchSummary */
+$batchSummary = $batch->batchSummary;
+$batchId = $batchSummary->id; // API raw response key "id"
+$hostTotalCnt = $batchSummary->hostTotalCnt; // API raw response key "host_breakdown->count"
+$hostTotalAmt = $batchSummary->hostTotalAmt; // API raw response key "host_breakdown->amount"
+$processedDeviceId = $batchSummary->processedDeviceId; // API raw response key "device_reference"
+$transactionCount = $batchSummary->transactionCount; // API raw response key "transaction_count"
+$totalAmount = $batchSummary->totalAmount; // API raw response key "amount"
+$salesCount = $batchSummary->batchTotals->salesCount; // API raw response key "sales->count"
+$salesAmount = $batchSummary->batchTotals->saleAmount; // API raw response key "sales->amount"
+$refundsCount = $batchSummary->batchTotals->refundsCount; // API raw response key "refunds->count"
+$refundsAmount = $batchSummary->batchTotals->refundsAmount; // API raw response key "refunds->amount"
+$fundingDebitCount =  $batchSummary->batchTotals->fundingDebitCount; // API raw response key "funding_debit->count"
+$fundingCreditCount =  $batchSummary->batchTotals->fundingCreditCount; // API raw response key "funding_credit->count"
+$fundingDebitAmount  = $batchSummary->batchTotals->fundingDebitAmount; // API raw response key "funding_debit->amount"
+$fundingCreditAmount  = $batchSummary->batchTotals->fundingCreditAmount; // API raw response key "funding_credit->amount"
+$brandBreakdown = $batchSummary->brandBreakdown; // API raw response key "brand_breakdown"
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "id": "BAT_933340-213",
+    "status": "CLOSED",
+    "time_created": "2024-01-31T13:33:00Z",
+    "time_last_updated": "2024-01-31T18:08:29.307Z",
+    "time_closed": "2024-01-31T18:08:00Z",
+    "open_action_id": "1945288291",
+    "close_action_id": "ACT_nwmrHEmZ7iT94n1pwkPCCuS17gzhh9",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_6716058969854a48b33347043ff8225f",
+    "account_name": "Transaction_Processing",
+    "site_reference": "140271",
+    "device_reference": "514",
+    "transaction_count": 48,
+    "amount": "31396",
+    "currency": "USD",
+    "gratuity_amount": "100",
+    "sales": {
+        "count": 36,
+        "amount": "45012"
+    },
+    "refunds": {
+        "count": 12,
+        "amount": "-13616"
+    },
+    "funding_debit": {
+        "count": 0,
+        "amount": "0"
+    },
+    "funding_credit": {
+        "count": 48,
+        "amount": "31396"
+    },
+    "brand_breakdown": [
+        {
+            "brand": "MASTERCARD",
+            "count": 1,
+            "amount": "100",
+            "gratuity_amount": "0",
+            "sales": {
+                "count": 1,
+                "amount": "100"
+            },
+            "refunds": {
+                "count": 0,
+                "amount": "0"
+            },
+            "funding_debit": {
+                "count": 0,
+                "amount": "0"
+            },
+            "funding_credit": {
+                "count": 1,
+                "amount": "100"
+            }
+        },
+        {
+            "brand": "VISA",
+            "count": 47,
+            "amount": "31296",
+            "gratuity_amount": "100",
+            "sales": {
+                "count": 35,
+                "amount": "44912"
+            },
+            "refunds": {
+                "count": 12,
+                "amount": "-13616"
+            },
+            "funding_debit": {
+                "count": 0,
+                "amount": "0"
+            },
+            "funding_credit": {
+                "count": 47,
+                "amount": "31296"
+            }
+        }
+    ],
+    "host_breakdown": {
+        "merchant_name": "GP API CP",
+        "reference": "2323",
+        "count": 48,
+        "amount": "31396",
+        "funding_debit": {
+            "sales": {
+                "count": 0,
+                "amount": "0"
+            },
+            "refunds": {
+                "count": 0,
+                "amount": "0"
+            }
+        },
+        "funding_credit": {
+            "sales": {
+                "count": 36,
+                "amount": "45012"
+            },
+            "refunds": {
+                "count": 12,
+                "amount": "-13616"
+            }
+        }
+    },
+    "action": {
+        "id": "ACT_nwmrHEmZ7iT94n1pwkPCCuS17gzhh9",
+        "type": "CLOSE",
+        "time_created": "2024-01-31T18:08:29.307Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+```
+</Code>
+
+## Check batch by ID
+
+To query a batch to determine what it contained, send a GET command to the _/batches_ endpoint with the ID you want to investigate. This returns all the relevant data, including the totals for the batch you’re researching. Incidentally, what is returned is separate from our reporting endpoint.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --compressed -X GET "https://apis.sandbox.globalpay.com/ucp/batches/{id}" \
+-H "Authorization: Bearer CdqyD9r7orAGau004u5NecG03JPy" \
+-H "X-GP-Version: 2021-03-22" \
+-H "Accept: application/json" \
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "id": "BAT_855049-899",
+    "status": "OPEN",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "time_closed": "2021-05-03T21:23:39.718Z",
+    "open_action_id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "close_action_id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "merchant_id": "MER_A6A1EC44522F96630ABEA17A",
+    "merchant_name": "ABC INDUSTRIES",
+    "account_id": "TRA_86920f927028745yt34d077d88beb29b",
+    "account_name": "transaction_processing",
+    "site_reference": "string",
+    "device_reference": "string",
+    "batch_transaction_count": 126,
+    "amount": "12000",
+    "currency": "USD",
+    "gratuity_amount": "500",
+    "sales": {
+        "count": 123,
+        "amount": "12300"
+    },
+    "refunds": {
+        "count": 3,
+        "amount": "300"
+    },
+    "funding_debit": {
+        "count": 100,
+        "amount": "10000"
+    },
+    "funding_credit": {
+        "count": 26,
+        "amount": "2300"
+    },
+    "brand_breakdown": [
+        {
+            "brand": "VISA",
+            "amount": "8300",
+            "count": 83,
+            "gratuity_amount": "500",
+            "sales": {
+                "count": 80,
+                "amount": "8000"
+            },
+            "refunds": {
+                "count": 3,
+                "amount": "300"
+            },
+            "funding_debit": {
+                "count": 80,
+                "amount": "8000"
+            },
+            "funding_credit": {
+                "count": 3,
+                "amount": "300"
+            }
+        }
+    ],
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "BATCH_SINGLE",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## Integration references
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and # integrations. For the full detailed API specification, see the [API Explorer](/api/overview). 
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/batches" title="/batches - API Explorer" icon="window">
+        Close and review batches by ID.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Batch commands are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

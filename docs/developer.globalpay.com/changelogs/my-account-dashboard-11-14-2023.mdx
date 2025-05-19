@@ -1,0 +1,39 @@
+---
+title: "My Account Dashboard"
+tags: ["Dev Portal"]
+version: "Version 2.0"
+date: "11-14-2023"
+---
+
+<ReleaseNoteSection title="My Profile Menu">
+    <ReleaseNoteDetail type="changed">
+        * Removed two menu items: Unified Payments Apps and Ecommerce Apps
+        * Added three menu items:
+            * My Keys (goes to My Sandbox Credentials table on the account dashboard)
+            * Saved Pages (goes to the Manage Saved Pages page)
+            * Research Community (goes to Research Community section of the account dashboard)
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="App Pages">
+    <ReleaseNoteDetail type="changed">
+        * (XML API) Removed separate page for requesting and viewing credentials.
+        * Added ability to create a REST API app or request XML API credentials on the account dashboard (My Sandbox Credentials table).
+        * (REST API) Added a “Create an App” page for generating API keys and configuring capabilities and permissions. Includes a help link to our [Getting Started](/docs/Unified-Payments-Apps "Getting Started Guide") guide.
+        * (REST API) Removed tab format from the App Details page; moved ability to toggle the app status on/off to account dashboard (My Sandbox Credentials table).
+        * (REST API) Added search boxes to filter capabilities and permissions as you type.
+        * (REST API) Added Select All checkbox to remove/add permissions all at once.
+
+        ![Appkeygraphic](/sites/default/files/2023-11/appkeygraphic.svg)
+
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="My Sandbox Credentials Table">
+    <ReleaseNoteDetail type="changed">
+        * Moved to a higher location on the account dashboard.
+        * Added “Create a new app” dropdown with selections to create a REST API app or request XML API credentials.
+        * Added a tooltip to explain what an app is.
+        * (REST API) Added ability to toggle an app’s status on/off.
+        * Changed View Credentials button to launch a pop-up window; includes ability to copy and show/hide keys.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

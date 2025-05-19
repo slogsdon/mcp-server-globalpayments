@@ -1,0 +1,209 @@
+---
+title: "Configuration Code for SDKs"
+subtitle: "Configure client and request settings before sending a request"
+tag: "xml"
+created: "01/24/2025"
+---
+The following configuration code samples are applicable to each feature we provide SDK code samples for. This includes Card Payments, Card Storage, Digital Wallets, Payment Methods, and so forth.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GpEcomConfigconfig = new GpEcomConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+var config = new GpEcomConfig();
+config.MerchantId = "MerchantId";
+config.AccountId = "internet";
+config.SharedSecret = "secret";
+config.ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\PaymentMethods\CreditCardData;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+```
+</Code>
+</CodeGroup>
+
+## Rebate/refund passwords
+For the XML API gateway, a separate rebate/refund password needs to be supplied to the configuration for those transaction types.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+config.setRebatePassword("rebate");
+config.setRefundPassword("refund");
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+config.RebatePassword = "rebate";
+config.RefundPassword = "refund";
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config->rebatePassword = 'rebate';
+$config->refundPassword = 'refund';
+```
+</Code>
+</CodeGroup>
+
+## Multiple/named configurations
+
+An optional configuration name parameter can be passed to the `ConfigureService` method of the `ServicesContainer` object to differentiate between configurations and allow multiple configurations for a single service to be held and referenced simultaneously within the `ServicesContainer` singleton. If no configuration name is provided, the default value of “default” will be used. If the configuration name is already referenced within the collection of the `ServicesContainer`, the existing configuration with that name will be replaced by the new one.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+ServicesContainer.configureService(config, “default”);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+ServicesContainer.ConfigureService(config, "default");
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+ServicesContainer::configureService($config, "default");
+```
+</Code>
+</CodeGroup>
+
+The configuration names can then be passed to the `Execute` method of any builder to specify which configuration the transaction should use when processing the request.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+Transaction response = card.charge(...)
+    …
+    .execute(“default”);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+Transaction response = card.Charge(...)
+                    ...
+    .Execute("default");
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$response = $card->charge(...)
+    …
+    ->execute("default");
+```
+</Code>
+</CodeGroup>
+
+## Removing named configurations
+
+Named configurations can be removed from the collection by passing a null configuration object with the configuration name you want to remove.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+ServicesContainer.configureService(null, ‘default’);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpEcomConfig config = new GpEcomConfig();
+config = null;
+ServicesContainer.ConfigureService(config, "default");
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+ServicesContainer::configureService(null, "default");
+```
+</Code>
+</CodeGroup>
+
+## Best practices
+The `ServicesContainer` object is a singleton, which means object instantiation is restricted to a singular instance and all references to this object return the same instance throughout the life of the application. Given this design pattern, the SDK is best configured once at application startup.
+
+<Infobox>
+It is not necessary, nor recommended, to configure the SDK prior to every interaction. 
+</Infobox>
+
+## Logging
+
+### Enable logging flag
+
+Some of the SDKs support the `EnableLogging` property. Setting this flag to true will cause the SDK to output the raw request and response messages to the IDE console. By example, this would be the debug window for .NET, or the system.io.out for Java. The `EnableLogging` flag is not available on all SDKs as the style of logging is not available on all IDEs.
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+config.enableLogging(true);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+config.RequestLogger = new RequestConsoleLogger();
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+```
+</Code>
+</CodeGroup>
+
+### IRequestLogger interface
+
+The SDK provides the IRequestLogger interface, an implementation of which is accepted by the SDK configuration. This interface allows the SDK to work with an application's existing logging system to capture the raw request and response messages generated by the SDK.
+
+The interface defines two methods:
+
+* `RequestSent` – The raw request generated by the SDK will be passed to this method as a string.
+* `ResponseReceived` – The raw response received from the gateway will be passed to this method as a string. 
+
+For PCI compliance, the raw requests and responses provided through the `EnableLogging` flag and the IRequestLogger interface only contain masked card numbers.

@@ -1,0 +1,589 @@
+---
+title: 'Manage Payments - Capture'
+search_results: 'Global Payments - Manage Payments Capture'
+subtitle: 'Learn how to perform a pre-authorization for a delayed capture'
+tag: 'rest'
+created: '15/08/2024'
+---
+<Infobox>
+Availability of this feature in production depends on your allowed live configuration. 
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on performing a delayed-capture authorization and sending a Capture request to include the transaction for settlement file.
+
+## What is it?
+
+Sometimes you may want to pre-authorize a transaction and have a pending charge on the customer’s card, such as bar tabs or lodging reservations. In these cases, you don’t want to finalize the transaction amount, as actions by the customer might change the final amount.
+
+## How does it work?
+
+The main things to know about capture:
+
+* To capture a transaction, you must use the original ID returned in the authorization response.
+* You can capture a transaction for any amount up to 115% of the original value. However, to avail of the chargeback protection provided by 3D Secure, you must capture for the full amount.
+* If you don’t include an amount in your request, the full amount will be captured by default.
+* In some cases, multiple captures may be performed. This can facilitate use cases like split shipment. However, availability is determined by your setup. Consult your integration support for assistance.
+
+<img alt="Diagram of the Capture Process Flow" src="/gh-assets/manage-payments-diagram.png" width="800" style={{display: "block", margin: "0 auto"}} />
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Perform a delayed-capture authorization
+
+<Infobox>This step creates a transaction that will **not** be paid out, as it is set to be captured later. A pre-authorized transaction like this is necessary for the capture command to be used.</Infobox>
+
+First, we process a delayed-capture authorization. This will authorize the funds on the customer’s card, but the transaction won't be placed in the settlement file until we capture it. The amount of time the funds can remain ring-fenced on the customer's card may vary among different issuers and acquirers. Card brands such as Visa and Mastercard have their own rules around how long transactions can wait to be captured.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```json
+    curl -L -X POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+-H 'X-Gp-Version:  [custom:gp_api_version]' \
+-H 'Accept: application/json' \
+-H 'Accept-Encoding: gzip' \
+-H 'Authorization: Bearer db670P7tddBGi72UdMRhnoiF8kh9' \
+-H 'Content-Type: application/json' \
+-d '{
+    "account_name": "Transaction_Processing",
+    "type": "SALE",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "1999",
+    "currency": "CHF",
+    "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+    "country": "BG",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "MOTO",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "05",
+            "expiry_year": "25",
+            "cvv": "852",
+            "cvv_indicator": "PRESENT",
+            "avs_address": "Flat 123",
+            "avs_postal_code": "50001"
+        }
+    }
+}
+'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+config.setCountry("BG");
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(DateTime.now().getMonthOfYear());
+card.setExpYear(DateTime.now().getYear() + 1);
+card.setCvn("852");
+card.setCardHolderName("James Mason");
+card.setEntryMethod(ManualEntryMethod.Moto);
+
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Flat 123");
+billingAddress.setPostalCode("50001");
+
+try {
+
+    Transaction response = card.authorize(new BigDecimal("19.99"))
+            .withCurrency("CHF")
+            .withClientTransactionId("93459c78-f3f9-427c-84df-ca0584bb55bf")
+            .withAddress(billingAddress)
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getAuthorizedAmount();
+    // API raw response key "payment_method->card->avs_postal_code_result"
+    String avsResponseCode = response.getAvsResponseCode();
+    // API raw response key "payment_method->card->avs_address_result"
+    String avsAddressResponse = response.getAvsAddressResponse();
+    // API raw response key "payment_method->card->cvv_result"
+    String cvnResponseMessage = response.getCvnResponseMessage();
+    // API raw response key "payment_method->card->brand_reference"
+    String cardBrand = response.getCardDetails().getBrand();
+    // API raw response key "payment_method->card->masked_number_last4"
+    String maskedNumberLast4 = response.getCardDetails().getMaskedNumberLast4();
+    // capture_mode == "MULTIPLE"
+    boolean multiCapture = response.isMultiCapture();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->card->authcode"
+    String $authCode = response.getAuthorizationCode();
+    // API raw response key "risk_assessment->mode"
+    String fraudResponseMode = response.getFraudFilterResponse().getFraudResponseMode();
+    // API raw response key "risk_assessment->result"
+    String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult();
+    // API raw response key "risk_assessment->rules"
+    List<FraudRule> fraudResponseRules = response.getFraudFilterResponse().getFraudResponseRules();
+    // API raw response key "payment_method->card->brand_reference"
+    String brandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+    // API raw response key "payment_method->card->provider->cvv_result"
+    String cardIssuerCvv = response.getCardIssuerResponse().getCvvResult();
+    // API raw response key "payment_method->card->provider->avs_address_result"
+    String cardIssuerAvsAddressResult = response.getCardIssuerResponse().getAvsAddressResult();
+    // API raw response key "payment_method->card->provider->avs_postal_code_result"
+    String cardIssuerAvsPostalCodeResult = response.getCardIssuerResponse().getAvsPostalCodeResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="NET" title=".NET" language="dotnet">
+```dotnet
+    var config = new GpApiConfig();
+            config.AppId = "4gPqnGBkppGYvoE5UX9EWQlotTxGUDbs";
+            config.AppKey = "FQyJA5VuEQfcji2M";
+            config.Channel = Channel.CardNotPresent;
+            config.RequestLogger = new RequestConsoleLogger();
+            config.Country = "BG";
+                          
+            
+            ServicesContainer.ConfigureService(config);
+
+            CreditCardData card = new CreditCardData();
+
+            card.Number = "4263970000005262";
+            card.ExpMonth = ExpMonth;
+            card.ExpYear = ExpYear;
+            card.Cvn = "123";
+            card.CardPresent = true;
+            card.EntryMethod = ManualEntryMethod.Moto;
+
+            try
+            {
+                var transaction = card.Authorize(7.8m)
+               .WithCurrency("CHF")
+               .Execute();
+
+                var response = transaction.ResponseCode; //SUCCESS
+                var status = transaction.ResponseMessage; //PREAUTHORIZED
+            }
+            catch (Exception)
+            {
+                //TODO: Add your exception handling here              
+            }
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```php
+    $config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->country = 'BG';
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = date('m');
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cvn = "852";
+$card->cardHolderName = "James Mason";
+$card->entryMethod = ManualEntryMethod::MOTO;
+
+$billingAddress = new Address();
+$billingAddress->streetAddress1 = "Flat 123";
+$billingAddress->postalCode = "50001";
+
+try {
+    $response = $card->authorize(19.99)
+        ->withCurrency('CHF')
+        ->withClientTransactionId('93459c78-f3f9-427c-84df-ca0584bb55bf')
+        ->withAddress($billingAddress)
+        ->execute();
+} catch (GatewayException $ex) {
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->authorizedAmount; // API raw response key "amount"
+//API raw response key "payment_method->card->avs_postal_code_result"
+$avsResponseCode = $response->avsResponseCode;
+//API raw response key "payment_method->card->->avs_address_result"
+$avsAddressResponse  = $response->avsAddressResponse;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $response->fraudFilterResponse->fraudResponseMode;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $response->fraudFilterResponse->fraudResponseResult;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $response->fraudFilterResponse->fraudResponseRules;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->cvv_result"
+$cardIssuerCvv = $response->cardIssuerResponse->cvvResult;
+//API raw response key "payment_method->card->provider->avs_address_result"
+$cardIssuerAvsAddressResult = $response->cardIssuerResponse->avsAddressResult;
+//API raw response key "payment_method->card->provider->avs_postal_code_result"
+$cardIssuerAvsPostalCodeResult = $response->cardIssuerResponse->avsPostalCodeResult;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_vMpI7vjdSs3c6ona5QncNLDIooCnTs_ca0584bb55bf",
+    "time_created": "2024-08-12T13:17:53.539Z",
+    "type": "SALE",
+    "status": "PREAUTHORIZED",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "1999",
+    "currency": "CHF",
+    "country": "BG",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_6716058969854a48b33347043ff8225f",
+    "account_name": "Transaction_Processing",
+    "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+    "payment_method": {
+        "result": "00",
+        "message": "(00)[ test system ] AUTHORISED",
+        "entry_mode": "MOTO",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "123456",
+            "brand_reference": "pWx303GMt3Rtlxdf",
+            "brand_time_created": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "ACCEPTED",
+            "rules": [
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "",
+    "action": {
+        "id": "ACT_vMpI7vjdSs3c6ona5QncNLDIooCnTs",
+        "type": "PREAUTHORIZE",
+        "time_created": "2024-08-12T13:17:53.539Z",
+        "result_code": "SUCCESS",
+        "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+        "app_name": "dev_portal_demo"
+    }
+}
+```
+</Code>
+
+## Step 2: Capture a transaction
+
+If successfully authorized, the funds will be ring-fenced on the customer's account. When you want to include the transaction in the next settlement file (also known as a _batch_), you can simply send a Capture (Settle) request. When the transaction is captured with the acquirer, the funds are deducted from the customer’s account and settled into your account.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -L -X POST 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_6uKEyxaJMeIdyfniUVJs9nKMLpaniX/capture' \
+-H 'AUTHORIZATION: Bearer WVLzMsuEQzSEFfXX9D8tDl8t6YSG' \
+-H 'ACCEPT: application/json' \
+-H 'ACCEPT-ENCODING: gzip' \
+-H 'X-GP-VERSION: 2021-03-22' \
+-H 'CONTENT-TYPE: application/json' \
+-d '{
+    "amount": "11099",
+    "gratuity_amount": "11099",
+    "capture_sequence": "FIRST",
+    "total_capture_count": "number",
+    "lodging": {
+        "booking_reference": "string",
+        "duration_days": "number",
+        "room_tax_amount": "string",
+        "date_checked_in": "string",
+        "date_checked_out": "string",
+        "daily_rate_amount": "string",
+        "charge_items": "array"
+    },
+    "payment_method": {
+        "card": {
+            "tag": "string"
+        }
+    }
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+LodgingData lodgingInfo = new LodgingData();
+lodgingInfo.setBookingReference("s9RpaDwXq1sPRkbP");
+lodgingInfo.setStayDuration(10);
+lodgingInfo.setCheckInDate(DateTime.now());
+lodgingInfo.setCheckOutDate(DateTime.now().plusDays(7));
+lodgingInfo.setRate(new BigDecimal("13.49"));
+
+String tag = "string";
+
+Transaction transaction = Transaction.fromId("TRN_xk3noK4R3acBcujTLB5aoceH2THh6h_642f31d98ac7");
+
+try {
+
+    Transaction response = transaction.capture(new BigDecimal("11.99"))
+            .withGratuity(new BigDecimal("11.99"))
+            .withMultiCapture(1, 1)
+            .withLodgingData(lodgingInfo)
+            .withTagData(tag)
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "payment_method->batch_id"
+    String batchReference = response.getBatchSummary().getBatchReference();
+    // capture_mode == "MULTIPLE"
+    boolean multiCapture = response.isMultiCapture();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->card->authcode"
+    String $authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String brandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="NET" title=".NET" language="dotnet">
+```dotnet
+    var config = new GpApiConfig();
+            config.AppId = "appId";
+            config.AppKey = "appKey";
+            config.Channel = Channel.CardNotPresent;
+            config.RequestLogger = new RequestConsoleLogger();
+            config.Country = "BG";
+                        
+            
+            ServicesContainer.ConfigureService(config);            
+
+            try
+            {
+                Transaction transaction = Transaction.FromId("TRN_r4qdItNRLydA8PVh0wx21WLoArNsAe_198be20b5355")
+               
+                var capture = transaction.Capture(8.8m)
+                .WithGratuity(1m)
+                .Execute();
+
+                var response = capture.ResponseCode; //SUCCESS
+                var status = capture.ResponseMessage; //CAPTURED
+               
+            }
+            catch (Exception)
+            {
+                //TODO: Add your exception handling here              
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```php
+    $config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+
+$lodgingInfo = new LodgingData();
+$lodgingInfo->bookingReference = 's9RpaDwXq1sPRkbP';
+$lodgingInfo->durationDays = 10;
+$lodgingInfo->checkedInDate = date('Y-m-d H:i:s');
+$lodgingInfo->checkedOutDate = date('Y-m-d H:i:s', strtotime("+7 days"));
+$lodgingInfo->dailyRateAmount = '13.49';
+$tag = 'string';
+
+$trn = Transaction::fromId('TRN_xk3noK4R3acBcujTLB5aoceH2THh6h_642f31d98ac7');
+
+try {    
+    $response = $trn->capture(11.99)
+        ->withGratuity(11.99)
+        ->withMultiCapture(StoredCredentialSequence::FIRST, 1)
+        ->withLodgingData($lodgingInfo)
+        ->withTagData($tag)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+// API raw response key "payment_method->batch_id"
+$batchReference = $response->batchSummary->batchReference; 
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+    ```
+</Code>
+    
+    </CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2026-05-03T21:23:39.718Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "11099",
+    "currency": "USD",
+    "country": "US",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "batch_id": "BAT_234234234",
+    "payment_method": {
+        "result": "string",
+        "message": "string",
+        "card": {
+            "authcode": "string",
+            "brand_reference": "string"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "ADJUST",
+        "time_created": "2026-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## Integration references
+
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        See the full transaction endpoint, including captures.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Captures are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

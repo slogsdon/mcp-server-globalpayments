@@ -1,0 +1,19 @@
+---
+title: "Unified Payments API - May 05, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "05-05-2022"
+---
+
+<ReleaseNoteSection title="Settlement Reporting for Buy Now Pay Later (BNPL)">
+    <ReleaseNoteDetail type="added">
+        - BNPL transactions are now visible through the settlement reporting resource
+        - New fields introduced as part of settlement reporting for BNPL:
+            - transaction.id
+            - transaction.payment_method.bnpl.reference
+            - transaction.payment_method.bnpl.provider
+            - transaction.fees.fixed_amount_decimal
+            - Transaction.fees.tax_amount_decimal
+        - No new permission is required to view BNPL data in the settlement reporting resource
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

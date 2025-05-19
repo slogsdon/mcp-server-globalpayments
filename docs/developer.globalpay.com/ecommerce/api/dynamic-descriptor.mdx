@@ -1,0 +1,42 @@
+---
+title: "Dynamic Descriptor"
+subtitle: ""
+tag: "xml"
+created: "02/18/2025"
+---
+Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement. This additional information can help avoid unnecessary disputes.
+
+For example, if your legal merchant name is different from the DBA name you’re using for your ecommerce website, the descriptor can be the website name. That way, it will appear on the customer’s bank statement to help them recognize the charge.
+
+<Infobox>
+Dynamic Descriptor is currently only supported by acquirers **Global Payments North America** and **Allied Irish Banks**. Both the issuer and the acquirer must support this functionality. Please consult with your account manager or support agent before using.
+</Infobox>
+
+#### Sample request
+You can set a descriptor for an authorization, capture, or refund. Text passed through will appear in ALL CAPS on the customer's bank statement.
+<Code id="markup" title="XML" language="markup" active>
+```
+<request timestamp="20210517154040" type="auth">
+    <merchantid>heartlandgpsandbox</merchantid>
+    <account>api</account>
+    <orderid>MTYxN2M1ZjctZjVhZGFiYg</orderid>
+    <amount currency="USD">1000</amount>
+    <autosettle flag="0" />
+    <narrative>
+        <chargedescription>ALTERNATIVE DBA</chargedescription>
+    </narrative>
+    <card>
+        <number>4111111111111111</number>
+        <expdate>1222</expdate>
+        <chname>Joe Smith</chname>
+        <type>VISA</type>
+        <cvn>
+            <number>123</number>
+            <presind>1</presind>
+        </cvn>
+    </card>
+    <sha1hash>502a429ec5aeb9252c569d8467c9ac21308e6084</sha1hash>
+</request>
+```
+</Code>
+

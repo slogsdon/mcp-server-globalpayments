@@ -1,0 +1,1445 @@
+---
+title: "Open Banking Guide"
+subtitle: "Learn how to let customers pay using their bank account"
+tag: "xml"
+created: "02/03/2025"
+---
+For more information on Open Banking and Bank Payment, see our [Overview](/ecommerce/expand-your-integration/open-banking).
+
+<Tabs active="api">  
+
+<Tab id="api" title="API">
+
+In this guide, you’ll learn how to process a transaction with the Bank Payment payment method via direct API integration using our Bank Payment infrastructure. We also provide information on [testing Bank Payment](#testing-bank-payment), including a checklist for testing key scenarios and steps to use our mock bank for the redirect.
+
+## Step 1: Create a transaction
+First, we submit a mandatory request to initiate a Bank Payment transaction. It needs to include the transaction’s core parameters so that we have enough information to create the payment with our infrastructure partner, Token, and the customer’s bank. A successful transaction request will return a unique Bank Payment transaction identifier and a redirect URL, which you’ll use to facilitate the customer confirmation of the transaction (Step 2). 
+
+The following illustration shows the high-level flow for creating a Bank Payment transaction.
+
+![Interaction between the customer, merchant, and API to create a transaction.](/gh-assets/ecommerce/open-banking_api-s1-flow.png)
+
+#### Sample request
+
+<div><Infobox>
+Where payment.scheme is FASTER PAYMENTS, available payment.destination fields will be account_number, sort_code, and name. <br />
+
+Where payment.scheme is SEPA, available payment.destination fields will be iban and name.
+</Infobox></div>
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.globalpay-ecommerce.com/openbanking/payments
+-H "Content-Type: application/json"
+-H "Authorization: SHA512 a641a3f6937a809b5fec294160f1a9e451a518835110854c4280150bf69206a4562709e69a3d29b90671d887f78b993cadf973a2d93e33207afdd33d78741399"
+-X POST
+-d '{
+    "merchant_id": "openbankingsandbox",
+    "account_id": "internet",
+    "request_timestamp": "20220118101735",
+    "order": {
+      "amount": "1000",
+      "currency": "GBP",
+      "id": "70692f734e06416eb72541d72",
+      "description": "description"
+    },
+    "payment": {
+        "scheme": "FASTERPAYMENTS",
+        "destination": {
+            "account_number": "99999999",
+            "sort_code": "777777",
+            "name": "MrSeller"
+        },
+        "remittance_reference": {
+            "type": "TEXT",
+            "value": "Nike Bounce Shoes"
+        }
+    },
+    "return_url": "https://www.example.com/returnUrl",
+    "status_url": "https://www.example.com/notificationUrl"
+}
+'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("openbankingsandbox");
+config.setSharedSecret("sharedsecret");
+config.setAccountId("internet");
+config.setEnableBankPayment(true);
+config.setShaHashType(ShaHashType.SHA512);
+config.setEnableLogging(true);
+
+ServicesContainer.configureService(config);
+
+BankPayment bankPayment = new BankPayment();
+bankPayment.setAccountNumber("12345678");
+bankPayment.setSortCode("406650");
+bankPayment.setAccountName("AccountName");
+bankPayment.setReturnUrl("https://www.example.com/returnUrl");
+bankPayment.setStatusUpdateUrl("https://www.example.com/notificationUrl");
+
+try {
+   Transaction transaction =
+           bankPayment
+                   .charge(new BigDecimal("10"))
+                   .withCurrency("GBP")
+                   .withRemittanceReference(RemittanceReferenceType.TEXT, "Nike Bounce Shoes")
+                   .withDescription("Description")
+                   .execute();
+   String obTransactionId = transaction.getBankPaymentResponse().getId();
+} catch (GatewayException ex) {
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpEcomConfig config = new GpEcomConfig();
+            config.MerchantId = "openbankingsandbox";
+            config.SharedSecret = "sharedsecret";
+            config.AccountId = "internet";
+            config.EnableBankPayment = true;
+            config.ShaHashType = ShaHashType.SHA512;
+            config.RequestLogger = new RequestConsoleLogger();            
+
+            ServicesContainer.ConfigureService(config);
+
+            BankPayment bankPayment = new BankPayment();
+            bankPayment.AccountNumber = "12345678";
+            bankPayment.SortCode = "406650";
+            bankPayment.AccountName = "AccountName";
+            bankPayment.ReturnUrl = "https://www.example.com/returnUrl";
+            bankPayment.StatusUpdateUrl = "https://www.example.com/notificationUrl";
+
+            try
+            {
+                var transaction = bankPayment.Charge(10m)
+                .WithCurrency("GBP")
+                .WithRemittanceReference(RemittanceReferenceType.TEXT, "Nike Bounce Shoes")
+                .WithDescription("Description")
+                .Execute();
+	   var obTransactionId = transaction.BankPaymentResponse.Id;
+            }
+            catch (GatewayException ex)
+            {
+                // TODO: Add your exception handling here
+
+            }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\PaymentMethods\BankPayment;
+use GlobalPayments\Api\Entities\Enums\RemittanceReferenceType;
+use GlobalPayments\Api\Entities\Enums\ShaHashType;
+use GlobalPayments\Api\Entities\Exceptions\GatewayException;
+use GlobalPayments\Api\ServicesContainer;
+
+$config = new GpEcomConfig();
+$config->merchantId = 'openbankingsandbox';
+$config->sharedSecret = 'sharedsecret';
+$config->accountId = 'internet';
+$config->enableBankPayment = true;
+$config->shaHashType = ShaHashType::SHA512;
+ServicesContainer::configureService($config);
+
+$bankPayment = new BankPayment();
+$bankPayment->accountNumber = '12345678';
+$bankPayment->sortCode = '406650';
+$bankPayment->accountName = 'AccountName';
+$bankPayment->returnUrl = 'https://www.example.com/returnUrl';
+$bankPayment->statusUpdateUrl = 'https://www.example.com/notificationUrl';
+
+try {
+    $trn = $bankPayment->charge(10.00)
+        ->withCurrency('GBP')
+        ->withRemittanceReference(RemittanceReferenceType::TEXT, 'Nike Bounce Shoes')
+        ->execute();
+} catch (GatewayException $e) {
+    // TODO: Add your exception handling here
+}
+
+$responseMessage = $trn->responseMessage; // BankPaymentStatus::PAYMENT_INITIATED
+$redirectUrl = $trn->bankPaymentResponse->redirectUrl; //https://api.sandbox.globalpay-ecommerce.com/openbanking/process/SGRRg7KZQZTp39mxRb
+$bankPaymentId = $trn->bankPaymentResponse->id; // SGRRg7KZQZTp39mxRb
+```
+</Code>
+</CodeGroup>
+
+<div><Infobox>
+There are certain use cases where PAN data can be passed through in the remittance fields with Type = PAN and Value = the 16-digit PAN. This is available via API only. For more information, contact your account manager.
+</Infobox></div>
+
+### Bank Payment conditional fields
+The Bank Payment conditional fields (type = C) capture the merchant’s bank details that are required to complete the transaction. These fields are conditional based on the payment types SEPA or FASTERPAYMENTS. However, these fields remain optional. If they remain blank in the request, we will use the bank details in our database. You can still opt to use different details on a request-by-request basis, which will override what is stored in our database. This is only relevant for Direct Settlement. For Managed Settlement, we provide the bank details.
+
+### How to build the request hash 
+
+##### 1. Hash a string made up of the request values
+
+You can use any of the following algorithms: **SHA1, SHA256, SHA384,** or **SHA512**. We highly recommend **SHA512**. The blueprint of the hash for this request is:
+
+No bank details included in the request:
+
+<Code id="xml" title="" language="xml">
+```
+"Timestamp.merchantid.orderid.amount.currency.sortcode.accountnumber.iban"
+```
+</Code>
+
+The timezone is Europe/Dublin and should be the time the transaction is initiated.
+
+Our initial string for a GBP transaction will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20220118101735.MerchantId.3400dd37-101d-4940-be15-3c963b6109b3.1001.GBP.123456.12345678."
+```
+</Code>
+
+If the payment method type was SEPA, we don’t include the Sort Code and Account Number. So, our EUR string would be:
+
+<Code id="xml" title="" language="xml">
+```
+"20220118101735.MerchantId.3400dd37-101d-4940-be15-3c963b6109b3.1001.GBP...123456789101112"
+```
+</Code>
+
+If the bank details are not sent in the request (managed settlement or using the default details from your configuration), then the `sortcode.accountnumber.iban` would need to be populated as blank while generating hash to comply with the hash format.  
+
+##### 2. Concatenate the hashed string with your Shared Secret with a dot(.) as a separator
+
+After step 1, you'll have a string that you can now concatenate with your Shared Secret. For example: `Po8lRRT67a` is the Shared Secret in the below example.
+
+<Code id="xml" title="" language="xml">
+```
+"e8aedc5ddc9025f72ee71a6f7a48aaa638a09493354f65efd984ffefbe5420867d121f3b395644300063f349f79293511ac481d02bfb39531e227e2ff70224a7.Po8lRRT67a"
+```
+</Code>
+
+##### 3. Hash the concatenated string
+
+The final string to add to the request header should be a hash of your concatenated string, using the same algorithm as in step 1.
+
+<Code id="xml" title="" language="xml">
+```
+a641a3f6937a809b5fec294160f1a9e451a518835110854c4280150bf69206a4562709e69a3d29b90671d887f78b993cadf973a2d93e33207afdd33d78741399
+```
+</Code>
+
+#### Sample response
+The response to a Transaction Initiation request is either a payment initiation record or a failure message (code and message). If the transaction was successfully initiated, the response returns the order.id that you provided in the request. It also includes the redirect URL and unique Bank Payment transaction identifier generated by us. 
+
+<Code id="json" title="JSON" language="json">
+```
+{
+   "order": {
+        "id": "70692f734e06416eb72541d72"
+    },
+   "ob_trans_id": "lQBGLEiQxzQsw8clv2",
+   "status": "PAYMENT_INITIATED",
+   "redirect_url": "https://sandbox.globalpay-ecommerce.com/openbanking/process/lQBGLEiQxzQsw8clv2"
+}
+```
+</Code>
+
+#### Response syntax - payment successfully initiated
+
+| Element/Field | Format | Description |
+| --- | --- | --- |
+| id  | string | Order ID. The unique merchant created identifier for the transaction (echoed back to the merchant). |
+| ob_trans_id | string | Bank Payment Transaction ID. Unique identifier assigned by the Bank Payment service for the transaction. |
+| status | string | Message text of the response from the Bank Payment service. |
+| Redirect_url | string | URL the customer’s browser must be directed to continue the transaction. |
+
+#### Response syntax - payment initiation failed
+
+| Element/Field | Format | Description |
+| --- | --- | --- |
+| code | numeric | Three-digit error code. |
+| message | string | Error code and description of the error. The following error codes may be received:  <br/>  <br/>401 Merchant is not enabled for Open Banking  <br/>401 Merchant currency is not enabled for Open Banking  <br/>401 UNAUTHORIZED: Please check your code and the Developer Documentation (hash mismatch error)  <br/>400 [descriptive message about specific error in the request fields]  <br/>500 INTERNAL SERVER ERROR |
+
+## Step 2: Redirect the customer to bank selection
+After initiating the Bank Payment transaction, you then redirect the customer to the Bank Selection screen. The customer’s browser will be redirected to Bank Payment solution and then to our infrastructure partner Token.io (Token), who hosts the bank selection user interface (UI).
+
+The following illustration shows the high-level flow for redirecting the customer to select a bank.
+
+![Interaction between the customer, merchant, and API to redirect the customer flow.](/gh-assets/ecommerce/open-banking_api-s2-flow.png)
+
+#### Sample redirect code 
+
+<Code id="markup" title="" language="markup">
+```
+<script>
+   window.location = "https://sandbox.globalpay-ecommerce.com/openbanking/process/lQBGLEiQxzQsw8clv2";
+ </script>
+```
+</Code>
+
+#### Optional parameters for redirect URL
+The browser will be redirected back to the Return URL (`return_url`) you specified in Step 1. The redirection will include the Bank Payment Transaction ID (`ob_trans_id`) as a URL parameter. At this point, you’ll need to temporarily hold the customer while you query the final status of the transaction. 
+
+##### Sample HTTP POST
+
+<Code id="markup" title="" language="markup">
+```
+https://www.example.com/returnUrl?ob_trans_id=lQBGLEiQxzQsw8clv2
+```
+</Code>
+
+##### Country
+Adding `?country=XX` to the web-app URL, where XX equals the two-letter ISO alpha-2 country code, pre-selects the country value in the Bank Selection screen viewed by the customer. For example: 
+
+<Code id="markup" title="" language="markup">
+```
+https://sandbox.globalpay-ecommerce.com/openbanking/process/lQBGLEiQxzQsw8clv2?country=GB 
+```
+</Code>
+
+The above URL pre-selects the United Kingdom as the country. You have the option to save a default country in the initial configuration. This would be the default country, but if you include the country in the request, this will override the configuration.
+
+##### Language
+English is the default language, but adding `?lang=XX` to the web-app URL, where XX equals the two-letter ISO 639-1 language code, specifies the language the UI appears in. For example: 
+
+<Code id="markup" title="" language="markup">
+```
+https://sandbox.globalpay-ecommerce.com/openbanking/process/lQBGLEiQxzQsw8clv2?lang=DE 
+```
+</Code>
+
+The above URL sets the initial language to German (DE). The user can override this selection by clicking the language button in the top-right corner. Supported languages include English, German, Slovenian, Portuguese, Italian, French, Czech, Polish, Spanish, Hungarian, and Dutch.
+
+## Step 3: Get transaction status (GET /payments)
+After receiving a callback on `return_url` with the `ob_trans_id` parameter, you need to call the GET /payments endpoint with `ob_trans_id` to receive payment status. With this in mind, in the case of asynchronous payment methods, the Return URL should be treated as an interim step. 
+
+Your application may choose to hold the customer here for a few moments (for example, 5 seconds) while you call the GET /payment endpoint and wait to check if the Status URL is sent a final update. In the event of the Status URL not receiving the final status update within your determined time limit, you can display a message to the customer informing them that their order will be processed when the final status is received.
+
+The following illustration shows the high-level flow to receive the payment status.
+
+![Interaction between the customer, merchant, and API to get a transaction.](/gh-assets/ecommerce/open-banking_api-s3-flow.png)
+
+### GET /payments endpoint
+This endpoint is used to fetch the status of a transaction based on query parameters. This endpoint is also protected with a hash check. See also the [More about GET /payments endpoints](#more-about-GET) section below. 
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl "https://api.globalpay-ecommerce.com/openbanking/payments?timestamp=20211006140127&merchantId=openbankingsandbox&obTransId=rBVzTOOLtHLoRFiOt9&returnPii=true"
+-H "Authorization: SHA512 1f8b259a8162c8409c05d817f1f4ba19b2cd65844422511a61702a3df0d0c9879f4decd3c25cc27998bf895c987cbfa5cedca091219ba53cff8e9d03d8e34d52"
+-X GET
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("openbankingsandbox");
+config.setSharedSecret("sharedsecret");
+config.setAccountId("internet");
+config.setEnableBankPayment(true);
+config.setShaHashType(ShaHashType.SHA512);
+config.setEnableLogging(true);
+
+ServicesContainer.configureService(config);
+
+try {
+   String obTransId = "z3R25YFZZUq2iruwRl";
+   var detail =
+           ReportingService
+                   .bankPaymentDetail(obTransId, 1, 10)
+                   .execute();
+} catch (GatewayException ex) {
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpEcomConfig config = new GpEcomConfig();
+            config.MerchantId = "openbankingsandbox";
+            config.SharedSecret = "sharedsecret";
+            config.AccountId = "internet";
+            config.EnableBankPayment = true;
+            config.ShaHashType = ShaHashType.SHA512;
+            config.RequestLogger = new RequestConsoleLogger();            
+
+            ServicesContainer.ConfigureService(config);            
+
+            try
+            {
+                string obTransId = "z3R25YFZZUq2iruwRl";
+                var detail = ReportingService.BankPaymentDetail(obTransId, 1, 10)
+               .Execute();
+            }
+            catch (GatewayException ex)
+            {
+                // TODO: Add your exception handling here
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('../autoload_standalone.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Services\ReportingService;
+use GlobalPayments\Api\Entities\Enums\ShaHashType;
+use GlobalPayments\Api\Entities\Exceptions\GatewayException;
+use GlobalPayments\Api\ServicesContainer;
+
+$config = new GpEcomConfig();
+$config->merchantId = 'openbankingsandbox';
+$config->sharedSecret = 'sharedsecret';
+$config->accountId = 'internet';
+$config->enableBankPayment = true;
+$config->shaHashType = ShaHashType::SHA512;
+ServicesContainer::configureService($config);
+
+try {
+    $response = ReportingService::bankPaymentDetail('rBVzTOOLtHLoRFiOt9')
+        ->execute();
+} catch (GatewayException $e) {
+    // TODO: Add your exception handling here
+}
+
+$trn = reset($response->result);
+$bankPaymentId = $trn->transactionId;
+$bankPaymentStatus = $trn->transactionStatus;
+$bankPaymentDate = $trn->transactionDate->format('Y-m-d H:i:s');
+$amount = $trn->amount;
+$currency = $trn->currency;
+$orderId = $trn->orderId; //YzIyYWY2OTMtYjY3OGZkNA
+$bankPaymentType = $trn->bankPaymentResponse->type; //FASTERPAYMENTS
+```
+</Code>
+</CodeGroup>
+
+<div><Infobox>
+The Billing Address field is not required for Bank Payment. If you’re offering Bank Payment only (without cards) and not shipping any goods (services, bills, paying a balance), this is less information for the customer to type in.
+</Infobox></div>
+
+### How to build the request hash for payment initiation / creating a transaction
+
+##### 1. Hash a string made up of the request values
+
+You can use any of the following algorithms: **SHA1, SHA256, SHA384,** or **SHA512**. We highly recommend **SHA512**. The blueprint of the hash for this request is below. Leave unused fields blank.
+
+<Code id="xml" title="" language="xml">
+```
+timestamp.merchantId.accountId.obTransId.startDateAndTimeStamp.endDateAndTimeStamp.returnPii
+```
+</Code>
+
+GET timestamp should be today’s date.
+
+`returnPii` - Indicates if sensitive information such as destination account number, account sort code, IBAN, and account name, should be returned in the response. If set to TRUE, the data will be returned; if set to FALSE, the data will not be returned.
+
+Below is the initial string for a request that contains `timestamp`, `merchant_id`, `ob_trans_id`, and `returnPii`. Leave unused fields blank.
+
+<Code id="xml" title="" language="xml">
+```
+20220421155117.realexprepro..WdSec0LZ80yMZzmhYK...true
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret with a dot(.) as a separator.
+
+After step 1, you'll have a string that you can now concatenate with your Shared Secret. For example: **secret** is the Shared Secret in the below example that uses SHA512.
+
+<Code id="xml" title="" language="xml">
+```
+"2db35465d399cbd50d871ae3f90f04923e2415ef0f7801da4b82a00b29dac3419e81e24df07077c84db65dcbf43996ddd2d9625afabe0869be9dc8a9031aef66.secret"
+```
+</Code>
+
+##### 3. Hash the concatenated string
+
+The final string that we add to the request header should be a hash of your concatenated string, using the same algorithm as in step 1.
+
+<Code id="xml" title="" language="xml">
+```
+5cd8442eda79bb313cd3ef94ccc97e8474a27aad8ecd7fa4d7c5e59c47c89eae5cecae97e90fb3a0d68669a28aaa81d76d018ffe8a8b036f8d6a1f161121d136
+```
+</Code>
+
+If the customer drops out of the journey and redirects back to the payment page, a new payment request and a new hash will need to be created. 
+
+### Inform the customer
+Once you know the final status of the transaction, you can display your standard success or failure message to the customer, confirm their transaction, and complete your payment process. Or, in the case of failure, loop the customer back to try again or try another payment method.
+
+Open Banking transactions are asynchronous, meaning that most transactions have an initial status of “Processing” with a result of  “Intermediate” before receiving a “Final” result from the bank (Success/Failure). An Intermediate result might also indicate that the customer is progressing through their payment journey.
+
+The following table describes the various API statuses and results.
+
+  
+| Status | Description | Result |
+| --- | --- | --- |
+| PAYMENT_INITIATED | Payment request has been sent to the Open Banking Service and the consumer will begin their payment journey. | N/A |
+| SUCCESS | Transaction is complete and the bank has given a successful response. | Final |
+| PROCESSING | Customer’s bank has not yet completed the payment.  <br/>Timeframe to complete:  <br/>Faster Payments: 2 hours  <br/>SEPA: 24 hours | Intermediate |
+| REQUEST_CONSUMER_CONSENT | Customer is in the journey. | Intermediate |
+| PAYMENT_NOT_COMPLETED | Customer dropped out of the journey. | Final |
+| INVALID_STATUS | Token is unable to map the raw bank status. | Final |
+| FAILURE_EXPIRED | Only relevant for 1-step banks. Callback not received from the bank to notify us and the merchant that the customer completed authorization during the required timeframe (15 minutes after transfer creation) and the payment expired. | Final |
+| FAILURE_INSUFFICIENT_FUNDS | The customer completed the payment but does not have enough funds, the payment is declined. | Final |
+| FAILURE_GENERIC | Typically a tech failure, but it can also be that the bank sends us a failure callback without further information nor transaction status. | Final |
+| FAILURE_PERMISSION_DENIED | Only relevant for 2-step banks.  User denied authorization at the bank. | Final |
+| FAILURE_CANCELED | Status from the bank. Mapped from ISO20022 status CANC. | Final |
+| PENDING_EXTERNAL_AUTHORIZATION | Pre Status - Not end, SEPA only - bank waiting for the user. Waiting for user authorization at the bank. Will transition to FAILURE_EXPIRED if the user doesn't authorize the payment within 15 minutes. | Intermediate |
+| FAILURE_DECLINED | Usually means bank rejection. Mapped from ISO20022 status RJCT. | Final |
+| Bad Request | Input into the payment request is not correct. | Final |
+| UNAUTHORIZED | Typically an issue with the hash. | Final |
+| INTERNAL_SERVER_ERROR | Issue with our server. | Final |
+| ERROR_NOT_FOUND | Issue with our server. | Final |
+| NOT_ENABLED_FOR_MERCHANT | Bank Payment was not configured on the merchant’s sub-account. | Final |
+
+## [Conditional] status update
+In the event that the bank holds the funds for fraud or other checks, the status will remain as PROCESSING until the bank actually moves the funds (the customer will see Submitted on the UI). Once the funds have moved, Token makes a webhook call to us with the `obTransId`. We retrieve the current payment status from Token. After getting the current status, we will send a message to your Status URL letting you know there is an update.
+
+The `status_url` is not always notified. If the status is terminal (Success/Decline/Error) when we redirect the customer to your `return_url`, we will not send a webhook to the `status_url`. The `status_url` is only notified when the status changes. 
+
+* For **GBP/Faster Payments**, the maximum wait time to return the final status is 2 hours.
+* For **EUR / Single Euro Payments Area (SEPA)** transfers, the maximum wait time to return the final status is the same day or the next day, depending on the time of the transaction.
+
+It’s possible to get this notification before the customer returns to the `return_url`. If this happens, you should proceed to do a GET to retrieve the status. A customer could have exited the browser at this stage of the journey, which could result in no update on the `return_url` (or they might return at a later time). Some merchants set up optional polling as an additional check to ensure that they have the latest status. We have this polling in place with the banks to ensure we retrieve the latest status from them.
+
+You will receive a notification on the status URL (`status_url` in payment initiation request). It will include the Bank Payment Transaction ID (`ob_trans_id`) as a URL parameter.
+
+#### Sample notification
+
+<Code id="xml" title="" language="xml">
+```
+https://www.example.com/notificationUrl?ob_trans_id=vBpD6WcCjZEVdr1F94
+```
+</Code>
+
+After getting a notification about a status change, you can query the API (GET /payments) to get the latest status of the transaction (see Step 3).
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+//Production
+curl "https://api.globalpay-ecommerce.com/openbanking/payments?timestamp=20220727162823&merchantId={{envMerchantId}}&obTransId=k24dw4UnuSxq7nX1DP&returnPii=true"
+-H "Content-type: application/json"
+-H "Authorization: securehash 3acf61a9f49ee7a57fb57d710b97dd00399342a4"
+-X GET
+
+//Sandbox
+curl "https://api.sandbox.globalpay-ecommerce.com/openbanking/payments?timestamp=20220727162823&merchantId={{envMerchantId}}&obTransId=k24dw4UnuSxq7nX1DP&returnPii=true"
+-H "Content-type: application/json"
+-H "Authorization: securehash 3acf61a9f49ee7a57fb57d710b97dd00399342a4"
+-X GET
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("openbankingsandbox");
+config.setSharedSecret("sharedsecret");
+config.setAccountId("internet");
+config.setEnableBankPayment(true);
+config.setShaHashType(ShaHashType.SHA512);
+config.setEnableLogging(true);
+
+ServicesContainer.configureService(config);
+
+try {
+   String obTransId = "z3R25YFZZUq2iruwRl";
+   TransactionSummaryPaged response =
+           ReportingService
+                   .bankPaymentDetail(obTransId, 1, 10)
+                   .where(SearchCriteria.ReturnPII, true)
+                   .execute();
+
+   TransactionSummary trn = response.getResults().get(0);
+   String bankPaymentId = trn.getTransactionId();
+   String bankPaymentStatus = trn.getTransactionStatus();
+   DateTime bankPaymentDate = trn.getTransactionDate();
+   BigDecimal amount = trn.getAmount();
+   String currency = trn.getCurrency();
+   BankPaymentType bankPaymentType = trn.getBankPaymentResponse().getType(); //FASTERPAYMENTS
+   String sortCode = trn.getBankPaymentResponse().getSortCode(); //406650
+   String accountName = trn.getBankPaymentResponse().getAccountName(); //AccountName
+   String accountNumber = trn.getBankPaymentResponse().getAccountNumber(); //12345678
+} catch (GatewayException ex) {
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpEcomConfig config = new GpEcomConfig();
+            config.MerchantId = "openbankingsandbox";
+            config.SharedSecret = "sharedsecret";
+            config.AccountId = "internet";
+            config.EnableBankPayment = true;
+            config.ShaHashType = ShaHashType.SHA512;
+            config.RequestLogger = new RequestConsoleLogger();
+
+            ServicesContainer.ConfigureService(config);
+
+            try
+            {
+                string obTransId = "z3R25YFZZUq2iruwRl";
+                var response = ReportingService.BankPaymentDetail(obTransId, 1, 10)
+                    .Where(SearchCriteria.ReturnPII, true)
+                    .Execute();
+
+                var trn = response.Results[0];
+                var bankPaymentId = trn.TransactionId;
+                var bankPaymentStatus = trn.TransactionStatus;
+                var bankPaymentDate = trn.TransactionDate;
+                var amount = trn.Amount;
+                var currency = trn.Currency;
+                var bankPaymentType = trn.BankPaymentResponse.Type; //FASTERPAYMENTS
+                var sortCode = trn.BankPaymentResponse.SortCode; //406650
+                var accountName = trn.BankPaymentResponse.AccountName; //AccountName
+                var accountNumber = trn.BankPaymentResponse.AccountNumber; //12345678
+            }
+            catch (GatewayException ex)
+            {
+                // TODO: Add your exception handling here
+            }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Services\ReportingService;
+use GlobalPayments\Api\Entities\Enums\ShaHashType;
+use GlobalPayments\Api\Entities\Exceptions\GatewayException;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Reporting\SearchCriteria;
+
+$config = new GpEcomConfig();
+$config->merchantId = 'openbankingsandbox';
+$config->sharedSecret = 'sharedsecret';
+$config->accountId = 'internet';
+$config->enableBankPayment = true;
+$config->shaHashType = ShaHashType::SHA512;
+ServicesContainer::configureService($config);
+
+try {
+    $response = ReportingService::bankPaymentDetail('k24dw4UnuSxq7nX1DP')
+        ->where(SearchCriteria::RETURN_PII, true)
+        ->execute();
+} catch (GatewayException $e) {
+    // TODO: Add your exception handling here
+}
+
+$trn = reset($response->result);
+$bankPaymentId = $trn->transactionId;
+$bankPaymentStatus = $trn->transactionStatus;
+$bankPaymentDate = $trn->transactionDate->format('Y-m-d H:i:s');
+$amount = $trn->amount;
+$currency = $trn->currency;
+$bankPaymentType = $trn->bankPaymentResponse->type; //FASTERPAYMENTS
+$sortCode = $trn->bankPaymentResponse->sortCode; //406650
+$accountName = $trn->bankPaymentResponse->accountName; //AccountName
+$accountNumber = $trn->bankPaymentResponse->accountNumber; //12345678
+```
+</Code>
+</CodeGroup>
+
+## More about GET /payments endpoints - Reporting API
+The GET /payments endpoint could also be used for querying payment reports based on the parameters below. The required fields are `merchantId` and either `ob_trans_id` or `startDateTime` and `endDateTime;` if absent, a BAD-REQUEST response (400) is returned. Other fields, such as `accountId` or `transactionState` are used to add more filters to the result list. If the `ob_trans_id` is present, do not include the `account_id`, as this will result in an error.
+
+If you send `ob_trans_id`, you will get back a list of one transaction. You could also pass in other optional fields as search query parameters to fetch a list of transactions meeting that search criteria. As an example, you could pass in `startDateTime` and `endDateTime` to fetch a list of transactions within a date range.
+
+#### GET request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| timestamp | timestamp | numeric | M   | 14  | Timestamp of the request. Can only be between yesterday and tomorrow. The timezone is Europe/Dublin.  <br />Format: YYYYMMDDHHMMSS |
+| merchantId | string | alphanumeric | M   | 1-50 | Client ID assigned by us. |
+| accountId | string | alphanumeric | O   | 1-50 | The sub-account for the request to be processed through. |
+| startDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (maximum range is 30 days). Format:YYYYMMDDHHMMSS |
+| endDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (maximum range is 30 days). Format:YYYYMMDDHHMMSS |
+| returnPii | boolean | True or False | O   | NA  | Indicates if sensitive information such as destination account number, IBAN, account name, or sort code should be sent back in the response (when set to TRUE). They will not be sent back if set to FALSE. |
+| obTransId | string | alphanumeric | O   | 18  | Bank PaymentTransaction ID. Unique identifier assigned by the Bank Payment service for a transaction. |
+| transactionState | enum | enum | O   | NA  | Enum with the following acceptable values for various transaction statuses:  <br />  <br />"PAYMENT_INITIATED" "REQUEST_CONSUMER_CONSENT"  <br />"PROCESSING"  <br />"UNKNOWN"  <br />"SUCCESS"  <br />"INVALID_STATUS"  <br />"FAILURE_INSUFFICIENT_FUNDS"  <br />"FAILURE_GENERIC"  <br />"FAILURE_PERMISSION_DENIED"  <br />"FAILURE_CANCELED"  <br />"FAILURE_EXPIRED" "PENDING_EXTERNAL_AUTHORIZATION" "FAILURE_DECLINED" |
+| pageSize | string | numeric | O   | 1-100 | Used to control the number of records per page. Useful for query parameters that result in a large list of transactions. If not provided, the value defaults to 100. |
+| pageNumber | string | numeric | O   | 1-1000000 | Indicates the starting page number of the report. Useful for query parameters that result in a large list of transactions. If not provided, the value defaults to 100. |
+
+#### Response syntax - GET call successfully executed 
+
+| Element/Field | Format | Description |
+| --- | --- | --- |  
+| pageNumber | numeric | Indicates the starting page number of the report. |
+| record_count | numeric | Indicates the number of records on a page. |
+| max_page_size | numeric | Indicates the maximum number of records on a page. |
+| total_number_of_records | numeric | Indicates the total number of records in the full report. |
+| payment_id | numeric | Sequential count identifier of the record in our Bank Payment service database. |
+| order_id | string | Unique merchant-created identifier for the transaction. |
+| amount | integer | The smallest unit of the currency. For example: 2000 = €20.00 |
+| currency | string | The processing currency of the transaction. |
+| dest_sort_code | string | [Conditional: only returned if returnPii parameter is set to TRUE in the request]. Returned for transactions where the method (payment_type) is FASTERPAYMENTS. The sort code of the destination account used for the receipt of funds for the transaction. (For Managed Settlement, this will be a collections account with us.) |
+| dest_account_number | string | [Conditional: only returned if returnPii parameter is set to TRUE in the request]. Returned for transactions where the method (payment_type) is FASTERPAYMENTS. The destination account number of the account used for the receipt of funds for the transaction. (For Managed Settlement, this will be a collections account with us.) |
+| dest_iban | string | [Conditional: only returned if returnPii parameter is set to TRUE in the request]. Returned for transactions where the method (payment_type) is SEPA. The IBAN of the account used for the receipt of funds for the transaction. (For Managed Settlement, this will be a collections account with us.) |
+| dest_account_name | string | The name of the merchant presented to the customer as the payee for the transaction. |
+| payment_type | string | The bank transfer method (scheme). Possible values: FASTERPAYMENTS or SEPA |
+| created_on | string | Timestamp from when the transaction was originally created. Format: YYYY-MM-DDTHH:MM:SS.SSS |
+| ob_trans_id | string | Bank Payment Transaction ID. Unique identifier assigned by our Bank Payment service for the transaction. |
+| status | string | Status of the transaction. Possible values for various transaction statuses:  <br />  <br />PAYMENT_INITIATED  <br />REQUEST_CONSUMER_CONSENT  <br />PROCESSING  <br />UNKNOWN  <br />SUCCESS  <br />INVALID_STATUS  <br />FAILURE_INSUFFICIENT_FUNDS  <br />FAILURE_GENERIC  <br />FAILURE_PERMISSION_DENIED  <br />FAILURE_CANCELED  <br />FAILURE_EXPIRED  <br />PENDING_EXTERNAL_AUTHORIZATION  <br />FAILURE_DECLINED |
+| token_request_id | string | Unique identifier generated by Token, the third-party technology partner that processed the Bank Payment transaction request. |
+| token_transfer_id | String | Unique identifier generated by Token, the third-party technology partner that processed the Bank Payment transaction request. |
+| merchant_id | string | Your Client ID assigned by us. |
+| account_id | string | The sub-account used to process the original Bank Payment transaction. |
+
+#### Response syntax - payment initiation failed
+
+| Element/Field | Format | Description |
+| --- | --- | --- |
+| code | numeric | Three-digit error code. |
+| message | string | Error code and description of the error. The following error codes may be received:  <br/>  <br/>401 Merchant is not enabled for Open Banking  <br/>401 Merchant currency is not enabled for Open Banking  <br/>401 UNAUTHORIZED: Please check your code and the Developer Documentation (hash mismatch error)  <br/>400 [descriptive message about specific error in the request fields]  <br/>500 INTERNAL SERVER ERROR |
+
+### Customer cancel
+If a customer drops out of the journey, you need to be able to return them to the payment flow. For example, the customer can click Cancel in the Bank Selection pages. This will redirect them to your response_url. Typically, you would want to show them their payment options again.
+
+The status you receive in these situations is Payment_Not_Compelete (result - 01).
+
+<div><Infobox>
+In Sandbox, when a customer cancels from the simulated bank (NatWest), a redirect to the `response_url` fails. Instead, they are redirected to a Technical Error page with the message: “We are unable to process your request due to a technical error.” <br />
+
+In Production, this message is, _“Sorry, looks like something went wrong. Please try again.”_
+</Infobox></div>
+
+## Refunds
+<div><Infobox>
+Endpoint (POST): <br />
+https://api.sandbox.globalpay-ecommerce.com/openbanking/refunds <br />
+For production, remove “sandbox” from the above URL. <br />
+Hash format (required only in header): <br />
+merchantId.accountId.timestamp.orderid.obTransId.amount
+</Infobox></div>
+
+Refunds are only applicable for merchants using Managed Settlement. Refunds can be initiated in the RealControl portal or via direct API integration, as shown in this section.
+
+To initiate a refund, you must use `OrderId` and `ob_trans_id` from the initial transaction. A refund can be full or partial (up to 100% of the initial transaction amount). The merchant sets the description. Refund transactions appear as “BANK PAYMNT REFUND” on the customer’s bank account statement.
+
+Refund transactions will generate a new `ob_trans_id`.
+
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "merchant_id": "merchant x",
+    "account_id": "account y",
+    "request_timestamp": "20220425170039",
+    "order": {
+      "id": "486d636dcfc04f47a4869a336",
+      "ob_trans_id": "WHV5Pit9U6TaOPod7E",
+      "amount": "100",
+      "description": "test refund"
+    }
+}
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "order": {
+        "currency": "GBP",
+        "amount": 100,
+        "id": "486d636dcfc04f47a4869a336"
+    },
+    "ob_trans_id": "7OekQpSR8tErZWHQn7",
+    "status": "SUCCESS"
+}
+```
+</Code>
+
+
+
+#### Refund request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Description | string | alphanumeric | M   | ≤18 | Used to describe the refund. |
+| obTransId | string | alphanumeric | M   |     | Identifies the initial transaction. |
+
+
+### GET /refunds request
+Most refunds give a SUCCESS response, but in some cases, it returns as INITIATION_PROCESSING. This is similar to a sale in which you're awaiting confirmation from the bank. If this happens, we recommend that you send a GET request to the below endpoint to retrieve the status of the transaction. Most transactions that start as INITIATION_PROCESSING are updated within 2 minutes. However, if the status doesn’t change after 2 minutes, poll the endpoint until you receive a successful response.
+
+This endpoint can also be used to retrieve a list of refunds based on search criteria. It accepts search criteria as query parameters. The Request Syntax table below contains fields that can be used for a search. You must use `obTransId` or `OrderId`, or the `startDatetime` and `endDateTime` for the query.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://api.sandbox.globalpay-ecommerce.com/openbanking/refunds?merchantId=openbanking&accountId=TestAccount&timestamp=20230823112408&startDateTime=20221001000000&endDateTime=20221031000000' \
+--header 'Authorization: SHA1 eabe1bb14697a78b7765ae7769f1c428c674973b'
+
+//For production, remove “sandbox” from the endpoint.
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| timestamp | timestamp | numeric | M   | 14  | The timestamp of the request.This could only be between yesterday and tomorrow. Format: YYYYMMDDHHMMSS |
+| merchantId | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us. |
+| accountId | string | alphanumeric | O   | 1-50 | The sub-account for this request to be processed through. It can accept comma-separated lists of accounts as well. |
+| startDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (max. range is 30 days). Format:YYYYMMDDHHMMSS |
+| endDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (max. range is 30 days). Format:YYYYMMDDHHMMSS |
+| orderId | string | alphanumeric | M   | 50  | Used for Bank Payment payment initiation. |
+| obTransId | string | alphanumeric | O   | 18  | Open Banking Transaction ID of the refund. Note that this relates to a refund and not a payment. |
+| transactionState | enum | enum | O   | NA  | Enum with below acceptable values for various Transaction statuses:  <br/>**INITIATION_PENDING**  <br/>**INITIATION_COMPLETED**  <br/>**INITIATION_REJECTED**  <br/>**INITIATION_FAILED**  <br/>**INITIATION_PROCESSING** |
+| pageSize | string | numeric | O   | 1-100 | Number of records provided per page. Used where the list of transactions for the query parameters is large. If not provided, default value is 100. |
+| pageNumber | string | numeric | O   | 1-1000000 | Page number of the records to start at. Used where the list of transactions for the query parameters is large. If not provided, the default value is 100. |
+
+The refund GET works based on passing the `obTransId` only and gives the status of a specific refund. The `orderId` is needed to get status of all the refund transactions (if you have many partial refunds), while obTransId can be provided to get status of specific refund transaction.
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "page_number": 1,
+    "record_count": 2,
+    "max_page_size": 100,
+    "total_number_of_records": 2,
+    "refunds": [
+        {
+            "order_id": "989af86aa17d41ab92d608c44",
+            "amount": "19",
+            "currency": "GBP",
+            "payment_type": "FASTERPAYMENTS",
+            "created_on": "2022-10-17T11:09:15.1433333",
+            "ob_trans_id": "lv2hOzOrtWLuJ4Vph1",
+            "status": "SUCCESS",
+            "merchant_id": "openbankingprodmgm",
+            "account_id": "GPAPIManaged",
+            "token_member_id": "m:26QwR7pYiMj7dmYdrpAYZyRg4LPk:5zKtXEAq",
+            "token_transfer_id": "b4557601:FduuWJHpi2"
+        },
+        {
+            "order_id": "51eeaa2433dd434faf8add7d2",
+            "amount": "19",
+            "currency": "GBP",
+            "payment_type": "FASTERPAYMENTS",
+            "created_on": "2022-10-17T11:52:01.2933333",
+            "ob_trans_id": "NwRSZiXEyajngYhr8f",
+            "status": "SUCCESS",
+            "merchant_id": "openbankingprodmgm",
+            "account_id": "GPAPIManaged",
+            "token_member_id": "m:26QwR7pYiMj7dmYdrpAYZyRg4LPk:5zKtXEAq",
+            "token_transfer_id": "b4557601:oC0Ux1wPEs"
+        }
+    ]
+}
+```
+</Code>
+
+#### Response syntax - GET call successfully executed 
+
+  
+| Element/Field | Format | Description |
+| --- | --- | --- |
+| pageNumber | numeric | Indicates the page number of the report. |
+| record_count | numeric | Indicates the number of records on this page. |
+| max_page_size | numeric | Indicates the maximum number of records on a page. |
+| total_number_of_records | numeric | Indicates the total number of records in the full report. |
+| refunds |     |     |
+| order_id | string | Unique merchant-created identifier for the transaction. |
+| amount | integer | Amount in the smallest unit of the currency. Example: 2000 = €20.00 |
+| currency | string | Processing currency of the transaction. |
+| payment_type | string | Bank transfer method (scheme). Possible values:  <br /> **FASTERPAYMENTS**  <br />**SEPA** |
+| created_on | string | Timestamp from when the transaction was originally created. Format: YYYY-MM-DDTHH:MM:SS.SSS |
+| ob_trans_id | string | Open Banking Transaction ID: Unique identifier assigned by the Bank Payment service for the refund. |
+| status | string | Status of the refund. Possible values:  <br/> **SUCCESS**  <br/> **INITIATION_PENDING** <br/> **INITIATION_COMPLETED** <br/> **INITIATION_REJECTED**  <br/> **INITIATION_FAILED** <br/> **INITIATION_PROCESSING** |
+| token_member_id | string | Related to the memberID whose Bank Payment license is used for the refund. |
+| token_transfer_id | String | Unique identifier generated by Token, the third-party technology partner that processed the Bank Payment transaction request. |
+| merchant_id | string | Client ID assigned by us. |
+| account_id | string | Sub-account used to process the original Bank Payment transaction. |
+
+### Refund statuses
+The following table describes the various refund statuses.
+
+| Status | Description |
+| --- | --- |
+| INITIATION_PENDING | The bank has not yet acknowledged the transaction. |
+| INITIATION_PROCESSING* | The bank has acknowledged the transaction and has started processing it. |
+| INVALID_STATUS | We can’t map the status the bank provided, e.g., the bank introduces a new status that we can’t recognize. |
+| INITIATION_FAILED | We failed to initiate the transfer, e.g., a bad request, or refund amount > sale amount. |
+| INITIATION_REJECTED | Transfer was rejected by the bank. |
+| INITIATION_NO_FINAL_STATUS_AVAILABLE - INITIATION_PROCESSING | Transactions move to this status after a certain timeout period. |
+| INITIATION_COMPLETE | Successful refund. |
+| *Transfers in INITIATION_PROCESSING will transition to INITIATION_NO_FINAL_STATUS_AVAILABLE after 1 day on Sandbox and 30 days on Production. |     |
+
+### App-to-app redirection
+If you offer Bank Payment on a mobile app, it’s important to seamlessly redirect from your app to the customer’s banking app, and then back to your app. To help with this, see the following developer documentation:
+
+* Apple: [Allowing apps and websites to link to your content](https://developer.apple.com/documentation/xcode/allowing-apps-and-websites-to-link-to-your-content)
+* Android: [Handling Android App Links](https://developer.android.com/training/app-links)
+* Token: [App-to-App integration](https://developer.token.io/token_rest_api_doc/content/f-app2app/app2app_integration.htm)
+
+### How to build the request hash for GET /refunds
+
+##### 1. Hash a string made up of the request values
+
+You can use any of the following algorithms: **SHA1, SHA256, SHA384,** or **SHA512**. We highly recommend **SHA512**. The blueprint of the hash for this request is (leave unused fields blank):
+
+<Code id="markup" title="" language="markup" active>
+```
+timestamp.merchantId.accountId.obTransId.orderId.startDateTime.endDateTime
+```
+</Code>
+
+For example:
+
+<Code id="markup" title="" language="markup" active>
+```
+20230817164543.realexprepro.openBankingHSBC..be4a8cd227954e289a5ea5b3d..
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret with a dot(.) as a separator
+
+After step 1, you'll have a string that you now concatenate with your Shared Secret. For example: secret is the shared secret in the below example.
+
+<Code id="markup" title="" language="markup" active>
+```
+"f8632615a7640e31b72eb44dbbd9646605c5e7dc.secret"
+```
+</Code>
+
+##### 3. Hash the concatenated string
+
+The final string that we add to the request header should be a hash, using the same algorithm as step 1, of your concatenated string.
+
+<Code id="markup" title="" language="markup" active>
+```
+febc2a2dafeba4227caed8ab2a4c7a64451a954c
+```
+</Code>
+
+Final Authorization header:
+
+<Code id="markup" title="" language="markup" active>
+```
+SHA1 febc2a2dafeba4227caed8ab2a4c7a64451a954c
+```
+</Code>
+
+## Testing Bank Payment
+Our Bank Payment solution is available for testing in our Sandbox environment for registered users of this developer portal. For Bank Payment, we provide "test banks" instead of test cards. Each one provides a different outcome. For a table of test banks and login information, see the [Bank Payment](/resources/test-card-numbers#open-banking) section of our Test Cards article.
+
+### Key test checklist - API
+A number of key testing scenarios should be used to test Bank Payment. Each one should be done in both Production and Sandbox:
+
+* Payment initiation request, creating a transaction, and ensuring the account is set up
+* Hash working as expected
+* GET latest status
+* GET hash
+* Completing a Successful end-to-end transaction
+* Retrieving the latest status of the transaction (if the transaction flows through the status Processing)
+* Customer cancels (from the Bank Selection page and from the bank). Also, if the customer exits the Confirmation page via the browser, resulting in no initial return/response_url)
+* Declines and errors, testing each outcome
+* Handling the customer back to your page from the customer’s bank
+* App-to-app redirection
+
+### How to use our mock bank for redirects
+For testing Bank Payment, we provide the fictitious bank for redirects. For a list of various amounts that correspond to different test scenarios, see our test cards for [Bank Payment](/resources/test-card-numbers#open-banking). 
+
+To use our mock bank, follow the steps below:
+
+1. Select the payment amount defined for the expected scenario. For example, if you select 104 GBP in the payment initiation call, you will receive FAILURE_PERMISSION_DENIED as a final status. <br/>
+    1. The amount would be £104, not £1.04.
+    2. This works for GBP and EUR.
+2. For the redirect, select the applicable mock bank as shown below. Type “mock” in the search box to find them quickly. <br/>
+++Note++: The "Mock One-Step Redirect Bank" option moves funds instantly without redirecting the customer. <br/>
+![Bank selection screen showing two options for the Mock Bank for testing.](/gh-assets/ecommerce/open-banking_mock-bank.png)
+3. Accept consent and get redirected back to the merchant. The mock bank does not have a front-end or bank UI.
+4. The UI will reflect the “Transitions through X” in the table in [Test Cards](/resources/test-card-numbers#open-banking). For example: PROCESSING in the back end will show as Submitted on the customer’s UI.
+
+## Postman collection
+Our Postman collection for Bank Payment is available for downloading as a JSON file. You can use this collection to test transactions via the XML API.
+
+The zip file below contains the following files:
+
+* open-banking.postman_22Jul2024.json.zip
+
+To download the collection (.zip file), click the button below:
+
+<index-button type="anchor" href="/gh-assets/files/ecommerce/open-banking.postman_22Jul2024.json.zip">Download File</index-button>
+
+   </Tab> 
+
+   <Tab id="hpp" title="HPP">
+
+In this guide, you’ll learn how to process a transaction with the Bank Payment payment method via the Hosted Payment Page (HPP) using our Bank Payment infrastructure. We also provide information on testing Bank Payment, including a checklist for testing key scenarios and steps to use our mock bank for the redirect.
+
+## Step 1: Initiate the payment
+First, we initiate the payment using the standard request details used for the HPP. Mandatory fields include your Response URL and a Status Update URL. The request needs to include the transaction’s core parameters so that we have enough information to create the payment with our technology partner and the customer’s bank.
+
+The following illustration shows the high-level flow for initiating a Bank Payment transaction.
+
+![Diagram flow of initiating the payment through HPP](/gh-assets/ecommerce/open-banking_hpp-s1-flow.png)
+
+#### Sample request
+The minimum additional HPP fields required to initiate a Bank Payment transaction include `MERCHANT_RESPONSE_URL`, `HPP_APM_DESCRIPTOR`, and `HPP_TX_STATUS_URL`. Bank details and country information can be stored in your account settings during your onboarding process with us.
+
+You also have the option to use `COMMENT1` or `COMMENT2` in place of the `HPP_APM_DESCRIPTOR` field.
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+Production
+<form action="https://pay.realexpayments.com/pay" method="POST" target="iframe">
+Sandbox
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180614095601">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+
+  <!-- Bank Payment Mandatory Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/returnUrl">
+  <input type="hidden" name="HPP_APM_DESCRIPTOR" value="Nike Running Shoes">
+  <!-- Bank Payment Mandatory Fields -->
+
+  <!-- Bank Payment  Conditional Fields -->
+
+<!--Optional fields for SEPA scheme: -->
+  <input type="hidden" name="HPP_OB_DST_ACCOUNT_IBAN" value="GB33BUKB20201555555555">
+  <input type="hidden" name="HPP_OB_DST_ACCOUNT_NAME" value="XXXXXXXXXXXXXXXXXXXolut">  
+ 
+
+<!--Optional fields for FASTERPAYMENTS scheme: -->
+  <input type="hidden" name="HPP_OB_DST_ACCOUNT_NUMBER" value="99999999">
+  <input type="hidden" name="HPP_OB_DST_ACCOUNT_NAME" value="XXXXXXXXXXXXXXXXXXXolut">
+  <input type="hidden" name="HPP_OB_DST_ACCOUNT_SORT_CODE" value="777777">
+  
+  <!-- Bank Payment  Conditional Fields -->
+
+  <!-- Bank Payment  Optional Fields -->
+ <input type="hidden" name="HPP_OB_CUSTOMER_COUNTRIES" value="FR|GB|IE">
+ <input type="hidden" name="PM_METHODS" value="cards|ob">
+  <!-- Bank Payment  Optional Fields -->
+
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Checkout Now">
+</form>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+        GpEcomConfig config = new GpEcomConfig();
+        config.setMerchantId("MerchantId");
+        config.setAccountId("internet");
+        config.setSharedSecret("sharedsecret)";
+        config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+        config.setEnableBankPayment(true);
+
+        HostedPaymentConfig hostedPaymentConfig = new HostedPaymentConfig();
+        hostedPaymentConfig.setVersion(HppVersion.Version2);
+        config.setHostedPaymentConfig(hostedPaymentConfig);
+
+        HostedService service = new HostedService(config);
+
+        HostedPaymentData hostedPaymentData = new HostedPaymentData();
+        hostedPaymentData.setTransactionStatusUrl("https://www.example.com/statusUrl");
+        hostedPaymentData.setMerchantResponseUrl("https://www.example.com/returnUrl");
+        hostedPaymentData.setHostedPaymentMethods(new HostedPaymentMethods[]{HostedPaymentMethods.CARDS, HostedPaymentMethods.OB});
+        hostedPaymentData.setCustomerCountry("FR|GB|IE");
+
+        BankPayment bankPayment = new BankPayment();
+        bankPayment.setAccountName("XXXXXXXXXXXXXXXXXXXolut");
+        bankPayment.setIban("GB33BUKB20201555555555");
+        bankPayment.setAccountNumber("99999999");
+        bankPayment.setSortCode("777777");
+
+        try {
+            var hppJson =
+                    service
+                            .charge(new BigDecimal(10.01))
+                            .withCurrency("EUR")
+                            .withOrderId("N6qsk4kYRZihmPrTXWYS6g")
+                            .withPaymentMethod(bankPayment)
+                            .withHostedPaymentData(hostedPaymentData)
+                            .serialize();
+
+            //with this, we can pass our json to the client side
+        } catch (ApiException ex) {
+            // TODO: Add your error handling here
+        }
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpEcomConfig config = new GpEcomConfig();
+            config.MerchantId = "MerchantId";
+            config.AccountId = "internet";
+            config.SharedSecret = "sharedsecret";
+            config.ServiceUrl = "https://pay.sandbox.realexpayments.com/pay";
+            config.EnableBankPayment = true;
+            config.HostedPaymentConfig = new HostedPaymentConfig();
+            config.HostedPaymentConfig.Version = HppVersion.VERSION_2;
+
+            HostedService service = new HostedService(config);
+
+            HostedPaymentData hostedPaymentData = new HostedPaymentData();
+            hostedPaymentData.TransactionStatusUrl = "https://www.example.com/statusUrl";
+            hostedPaymentData.MerchantResponseUrl = "https://www.example.com/returnUrl";
+            hostedPaymentData.HostedPaymentMethods = new HostedPaymentMethods[] { HostedPaymentMethods.CARDS, HostedPaymentMethods.OB };
+            hostedPaymentData.CustomerCountry = "FR|GB|IE";
+
+            BankPayment bankPayment = new BankPayment();
+            bankPayment.AccountName = "XXXXXXXXXXXXXXXXXXXolut";
+            bankPayment.Iban = "GB33BUKB20201555555555";
+            bankPayment.AccountNumber = "99999999";
+            bankPayment.SortCode = "777777";
+
+            try
+            {
+                var hppJson = service.Charge(10.01m)
+                    .WithCurrency("EUR")
+                    .WithOrderId("N6qsk4kYRZihmPrTXWYS6g")
+                    .WithPaymentMethod(bankPayment)
+                    .WithHostedPaymentData(hostedPaymentData)
+                    .Serialize();
+                //with this, we can pass our json to the client side
+            }
+            catch (ApiException ex) {
+                // TODO: Add your error handling here
+            }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpEcomConfig();
+$config->merchantId = 'MerchantId';
+$config->accountId = 'internet';
+$config->sharedSecret = "sharedsecret";
+$config->serviceUrl = 'https://pay.sandbox.realexpayments.com/pay';
+$config->enableBankPayment = true;
+$config->hostedPaymentConfig = new HostedPaymentConfig();
+$config->hostedPaymentConfig->version = HppVersion::VERSION_2;
+
+$service = new HostedService($config);
+
+$hostedPaymentData = new HostedPaymentData();
+$hostedPaymentData->transactionStatusUrl = 'https://www.example.com/statusUrl';
+$hostedPaymentData->merchantResponseUrl = 'https://www.example.com/returnUrl';
+$hostedPaymentData->presetPaymentMethods = [HostedPaymentMethods::CARDS, HostedPaymentMethods::OB];
+$hostedPaymentData->customerCountry = "FR|GB|IE";
+
+$bankPayment = new BankPayment();
+$bankPayment->accountName = 'XXXXXXXXXXXXXXXXXXXolut';
+$bankPayment->iban = 'GB33BUKB20201555555555';
+$bankPayment->accountNumber = '99999999';
+$bankPayment->sortCode = '777777';
+
+$hostedPaymentData->bankPayment = $bankPayment;
+
+try{
+    $hppJson = $service->charge(10.01)
+        ->withCurrency("EUR")
+        ->withOrderId('N6qsk4kYRZihmPrTXWYS6g')
+        ->withHostedPaymentData($hostedPaymentData)
+        ->serialize();
+    //with this, we can pass our json to the client side
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+### Bank Payment conditional fields
+The Bank Payment conditional fields (type = C) capture the merchant’s bank details that are required to complete the transaction. These fields are conditional based on the payment method types (SEPA or FASTERPAYMENTS) but remain optional. If you leave them blank in the request, we will use the bank details in our database. You can still opt to use different details on a request-by-request basis, which will override what is stored in our database. This is only relevant for Direct Settlement. For Managed Settlement, we provide the bank details. 
+
+<div><Infobox>
+The Billing Address field is not required for Bank Payment. If you’re offering Bank Payment only (without cards) and not shipping any goods (services, bills, paying a balance), this is less information for the customer to type in.
+</Infobox></div>
+
+### How to build the request hash for payment initiation / creating a transaction
+
+##### 1.  Hash a string made up of the request values
+
+You can use any of the following algorithms: **SHA1, SHA256**. The blueprint of the standard hash for this request is as follows.
+
+No bank details included in the request:
+
+<Code id="markup" title="" language="markup">
+```
+"timestamp.merchantid.orderid.amount.currency"
+```
+</Code>
+
+The timezone is Europe/Dublin and should be the time the transaction is initiated. The format is `yyyyMMddHHmmss`.
+
+Bank details included in the request:
+
+<Code id="markup" title="" language="markup">
+```
+"timestamp.merchantid.orderid.amount.currency.sortcode.accountnumber.iban"
+```
+</Code>
+
+Our initial string will be:
+
+<Code id="markup" title="" language="markup">
+```
+"20220118101735.MerchantId.3400dd37-101d-4940-be15-3c963b6109b3.1001.GBP.123456.12345678."
+```
+</Code>
+
+If the payment method type was SEPA, we don’t include the Sort Code and Account Number, but we still leave the placeholders for them. So, our EUR initial string would be:
+
+<Code id="markup" title="" language="markup">
+```
+"20220118101735.MerchantId.3400dd37-101d-4940-be15-3c963b6109b3.1001.GBP...123456789101112"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret with a dot (.) as a separator.
+
+After step 1, you'll have a string that you can now concatenate with their Shared Secret. For example: Po8lRRT67a is the shared secret in the below example.
+
+<Code id="markup" title="" language="markup">
+```
+"e8aedc5ddc9025f72ee71a6f7a48aaa638a09493354f65efd984ffefbe5420867d121f3b395644300063f349f79293511ac481d02bfb39531e227e2ff70224a7.Po8lRRT67a"
+```
+</Code>
+
+##### 3. Hash the concatenated string
+
+The final string that we added to the request header should be a hash, using the same algorithm as step 1 of your concatenated string.
+
+<Code id="markup" title="" language="markup">
+```
+a641a3f6937a809b5fec294160f1a9e451a518835110854c4280150bf69206a4562709e69a3d29b90671d887f78b993cadf973a2d93e33207afdd33d78741399
+```
+</Code>
+
+<div><Infobox>
+If the customer drops out of the journey and redirects back to the payment page, you will need to create a new payment request and hash.
+</Infobox></div>
+
+## Step 2: Redirect the customer to bank selection
+After initiating the Bank Payment transaction, you then redirect the customer to the Bank Selection screen. The customer’s browser will be redirected to our Bank Payment solution and then to our infrastructure partner Token, who hosts the Bank Selection user interface (UI).
+
+The following illustration shows the high-level flow for redirecting the customer to select a bank.
+
+![Diagram flow of redirecting the customer to the bank selection screen for the HPP.](/gh-assets/ecommerce/open-banking_hpp-s2-flow.png)
+
+### Receive the customer back to your application
+The browser will be redirected back to the `MERCHANT_RESPONSE_URL` you specified in Step 1. The redirection will include the Bank Payment Transaction ID (`ob_trans_id`) as a URL parameter. While the transaction is processing (the customer sees _Submitted_ on the UI), you’ll need to hold the customer temporarily while you query the final status of the transaction. This step is only required for payment transactions that are processing; for unsuccessful payment transactions, the merchant should display the appropriate error message to the customer.
+
+## Step 3: Handle the transaction response
+In this step, the HPP triggers the call to the `MERCHANT_RESPONSE_URL` to notify the merchant about flow completion. The browser then redirects back to the `MERCHANT_RESPONSE_URL` you specified in Step 1. You can use a button to redirect the customer back.
+
+The HTTP POST will include parameters with a timestamp, the unique identifier of the transaction, your Merchant ID, and a hash so that you can check the validity of the message.
+
+This HTTP POST will not update. If there is an instant Success result from the customer’s bank, it will show in this POST. If there is a Processing result, you will need to use GET Transaction Status (see Step 4). After the HPP renders the Bank Payment result, you can choose any landing page to display and use a button or script for the redirect.
+
+The following illustration shows the high-level flow for handling the transaction response.
+
+![Interaction between the Merchant and the HPP to handle the transaction response.](/gh-assets/ecommerce/open-banking_hpp-s3-flow.png)
+
+#### Sample response
+
+<Code id="markup" title="HTTP POST" language="markup">
+```
+[RESULT=01,
+ MESSAGE=PROCESSING,
+ FUNDSTATUS=WAITING
+ PASREF=14631546336115597,
+ AUTHCOD=
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20171003164640,
+ AMOUNT=1001,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ PAYMENTMETHOD=ob,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61]
+ ```
+</Code>
+
+The POST back mirrors what you sent in the initial request. It could have more than what is displayed above.
+
+#### Additional response fields syntax
+For the POST from the HPP to merchants at the end of payment flow, we reuse existing fields passed via `MERCHANT_RESPONSE_URL` fields. Therefore, you need to be familiar with new transaction status mappings. Merchants should respond to this POST request using the following fields.
+
+| HPP Field in POST to  <br/>MERCHANT_RESPONSE_URL | Description |
+| --- | --- |
+| RESULT | Transaction status as a numeric value. |
+| MESSAGE | Transaction status as a string value. |
+| PASREF | Open Banking Transaction Identifier _ob_trans_id_. |
+| AUTHCODE | Mapped to Token Request Id. |
+| SHA1HASH | Existing hash field to validate the integrity of the HPP message. |
+
+## Step 4: Receive the updated status
+In some scenarios, the bank might hold the funds to check for fraud or other issues. In these cases, the status remains as PROCESSING (01) until the bank actually moves the funds (the customer will see Submitted on the user interface). This is a conditional step. If you receive a Success (or Unsuccess/Error) response in the initial POST, you won’t receive an updated POST.   
+
+* For **GBP/Faster Payments**, the maximum wait time to return the final status is 2 hours.
+* For **EUR / Single Euro Payments Area (SEPA)** transfers, the maximum wait time to return the final status is the same day or the next day, depending on the time of the transaction.
+
+<div><Infobox>
+You have the option to provide the _HPP_TX_STATUS_URL_ in the request and then do a GET to retrieve this status. For more information, see Step 3 on the API tab.
+</Infobox></div>
+
+In this step, we do a second POST to your `MERCHANT_RESPONSE_URL` in the following format. 
+
+#### Final status update response
+
+<Code id="java" title="Java" language="java">
+```
+{
+  "incomingRequest": {
+	"url": "/responseUrl",
+	"method": "POST",
+	"headers": {
+  	"Accept": "*/*",
+  	"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+	},
+	"body": "RESULT=01&MESSAGE=SUCCESS&PASREF=M6WEcVG9nVvmAVkNcl&AUTHCODE=rq:3LnFnPZD2AA6YxqkueANe7fmEneP:5zKtXEAq&ACCOUNT=internet&MERCHANT_ID=MerchantId&ORDER_ID=N6qsk4kYRZihmPrTXWYS6g&TIMESTAMP=20240703100455&AMOUNT=100&PAYMENTMETHOD=ob&SHA1HASH=50c0056dfe29455da52f04f2cd15eaa669d65858&MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl"
+  },
+  "expectedResponse": {
+	"status": 200,
+	"headers": {
+  	"Content-Type": "text/plain"
+	}
+  }
+}
+ ```
+</Code>
+
+The initial POST typically mirrors the content you provided in the request. The second POST follows with a shorter body. The following illustration shows the difference between the initial POST and the second POST after the customer completes the payment.
+
+![Interaction between the customer and Bank Payment when receiving the updated status for HPP.](/gh-assets/ecommerce/open-banking_hpp-s4-flow.png)
+
+It’s possible to receive this second POST before the initial POST. This happens when the bank returns a final status before the customer redirects to your response URL. After completing the payment, the customer can either click the “Returning in XX…” countdown button to immediately redirect back to the response URL or wait the full 20 seconds for the redirect to happen automatically. It’s during this waiting period that the second POST might arrive before the initial one. In our Sandbox test environment, this will likely happen each time as the status updates almost immediately.
+
+### Inform the customer
+Once you know the final status of the transaction, you can display your standard success or failure message to the customer, confirm their transaction, and complete your payment process. Or, in the case of failure, loop the customer back to try again or try another payment method.
+
+The following table describes the HPP result fields.
+
+| HPP RESULT Field | Description |
+| --- | --- | 
+| 00  | Successful Finished Transaction |
+| 01  | Pending status<br />Payment initiated<br />Request consumer consent<br />Processing<br />Pending external authorization<br />Status not available<br />Payment not completed |
+| 100 | Failure - Declined |
+| 101 | Failure - Insufficient Funds |
+| 199 | Failure - <br /><br />Unknown Status<br />Invalid status |
+| 330 | Unknown |
+| 550 | Various Failures (e.g., failure invalid currency, failure generic, failure permission denied, failure canceled, failure quote expired, failure invalid amount, failure invalid quote, failure expired) <br /><br />See Message field for specific reason. |
+
+### Customer cancel
+If a customer drops out of the journey, you need to be able to return them to the payment flow. For example, the customer can click Cancel in the Bank Selection pages. This will redirect them to your `response_url`. Typically, you would want to show them their payment options again.
+
+The status you receive in these situations is _Payment_Not_Compelete (result - 01)_.
+
+<div><Infobox>
+In **Sandbox**, when a customer cancels from the simulated bank (NatWest), a redirect to the response_url fails. Instead, they are redirected to a Technical Error page with the message: “We are unable to process your request due to a technical error.” <br />
+
+In **Production**, this message is, “Sorry, looks like something went wrong. Please try again.”
+</Infobox></div>
+
+## Refunds
+
+<div><Infobox>
+**Endpoint (POST):** 
+https://api.sandbox.globalpay-ecommerce.com/openbanking/refunds <br />
+For production, remove “sandbox” from the above URL. <br />
+**Hash format (required only in header):**
+merchantId.accountId.timestamp.orderid.obTransId.amount
+</Infobox></div>
+
+Refunds are only applicable for merchants using Managed Settlement. For the HPP, refunds can be initiated in the RealControl portal or via direct API integration (for details, see the API tab of this article).
+
+Refund transactions will generate a new `ob_trans_id`.
+
+### Refund statuses
+The following table describes the various refund statuses.
+
+| Status | Description |
+| --- | --- |
+| INITIATION_PENDING | The bank has not yet acknowledged the transaction. |
+| INITIATION_PROCESSING* | The bank has acknowledged the transaction and has started processing it. |
+| INVALID_STATUS | We can’t map the status the bank provided, e.g., the bank introduces a new status that we can’t recognize. |
+| INITIATION_FAILED | We failed to initiate the transfer, e.g., a bad request, or refund amount > sale amount. |
+| INITIATION_REJECTED | Transfer was rejected by the bank. |
+| INITIATION_NO_FINAL_STATUS_AVAILABLE - INITIATION_PROCESSING | Transactions move to this status after a certain timeout period. |
+| INITIATION_COMPLETE | Successful refund. |
+| *Transfers in INITIATION_PROCESSING will transition to INITIATION_NO_FINAL_STATUS_AVAILABLE after 1 day on Sandbox and 30 days on Production. |     |
+
+### App-to-app redirection
+If you offer Bank Payment on a mobile app, it’s important to seamlessly redirect from your app to the customer’s banking app, and then back to your app. To help with this, see the following developer documentation:
+
+* Apple: [Allowing apps and websites to link to your content](https://developer.apple.com/documentation/xcode/allowing-apps-and-websites-to-link-to-your-content)
+* Android: [Handling Android App Links](https://developer.android.com/training/app-links)
+* Token: [App-to-App integration](https://developer.token.io/token_rest_api_doc/content/f-app2app/app2app_integration.htm)
+
+### iFrames
+iFrame sizing is predetermined by us. The customer remains in the iFrame until they are automatically redirected to their bank’s web page to access their account (the bank requires this). The customer is returned to the iFrame when they’ve completed the payment with their bank.
+
+## Testing Bank Payment
+Our Bank Payment solution is available for testing in our Sandbox environment for registered users of this developer portal. For Bank Payment, we provide "test banks" instead of test cards. Each one provides a different outcome. For a table of test banks and login information, see the [Bank Payment](/resources/test-card-numbers#open-banking) section of our Test Cards article. 
+
+### Key test checklist - HPP
+A number of key testing scenarios should be used to test Bank Payment. Each one should be done in **both** Production and Sandbox:
+
+* Payment initiation request, creating a transaction, and ensuring the account is set up
+* Hash working as expected
+* Both types of responses (POST 1 and 2)
+* Completing a Successful end-to-end transaction
+* Retrieving the latest status of the transaction (if the transaction flows through the status Processing)
+* Customer cancels (from the Bank Selection page and from the bank); also, if the customer exits the Confirmation page via the browser, resulting in no initial return/response_url)
+* Declines and errors, testing each outcome
+* App-to-app redirection
+* Handling the customer back to your page from the customer’s bank
+
+### How to use our mock bank for redirects
+For testing Bank Payment, we provide the fictitious bank for redirects. For a list of various amounts that correspond to different test scenarios, see the [Bank Payment](/resources/test-card-numbers#open-banking) section of our Test Cards article. 
+
+To use our mock bank, follow the steps below:
+
+1. Select the payment amount defined for the expected scenario. For example, if you select 104 GBP in the payment initiation call, you will receive FAILURE_PERMISSION_DENIED as a final status. <br/>
+    1. The amount would be £104, not £1.04.
+    2. This works for GBP and EUR.
+2. For the redirect, select the applicable mock bank as shown below. Type “mock” in the search box to find them quickly. <br/>
+++Note++: The "Mock One-Step Redirect Bank" option moves funds instantly without redirecting the customer. <br/>
+![Bank selection screen showing two options for the Mock Bank for testing.](/gh-assets/ecommerce/open-banking_mock-bank.png)
+3. Accept consent and get redirected back to the merchant. The mock bank does not have a front-end or bank UI.
+4. The UI will reflect the “Transitions through X” in the table in [Test Cards](/resources/test-card-numbers#open-banking). For example: PROCESSING in the back end will show as Submitted on the customer’s UI.
+
+</Tab>
+</Tabs>

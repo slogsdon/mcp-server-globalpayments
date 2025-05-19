@@ -1,0 +1,1091 @@
+---
+title: 'Real-Time Reporting - Guide'
+search_results: 'Global Payments - Real-Time Reporting Guide'
+subtitle: 'Learn how to reconcile transactions and get an audit trail of your account'
+tag: 'rest'
+created: '06/08/2024'
+---
+Our reporting APIs can be used to reconcile transactions but can also provide a detailed audit trail for all activities that take place on your account. This guide focuses on transaction processing, specifically authorizations, to demonstrate how the outcome and data returned by the issuer are available in real time. Any subsequent actions performed on the transaction or authorization are also recorded and available in real time.
+
+When you perform any action on any resource via our API, all of your data is instantly available to report on via GET methods. For example, you can pull a list of authentications, payment methods, or links based on particular search criteria. You can also obtain the details of a specific resource by using its specific identifier (ID).
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Get a list of transactions
+In this step, we pull a list of transactions based on specific search criteria. There are a number of search options, including:
+
+* Card brand
+* Status
+* Last four digits of the card
+
+#### Sample request
+In this example, we use a date range to obtain a list of all the transactions processed on a specific day. For better readability, we limited our page size to 2. For available search parameters and details of all request and response variables, see [Transactions](/api/transactions) in the API Explorer.
+
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/transactions"}}>
+    ```
+    curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/transactions?order=DESC&page_size=2&from_time_created=2021-03-30&to_time_created=2021-03-30' \
+--header 'Authorization: Bearer wuq80o5scA9ya5H2TBBpuNwgnOi3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22'
+    ```
+  </Code>
+    <Code id="JAVA" title="JAVA" language="java">
+    ```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+Date startDate = DateTime.now().minusMonths(1).toDate();
+Date enddate = DateTime.now().toDate();
+
+try {
+    TransactionSummaryPaged response = ReportingService.findTransactionsPaged(1, 10)
+            .orderBy(TransactionSortProperty.TimeCreated, SortDirection.Descending)
+            .where(SearchCriteria.StartDate, startDate)
+            .and(SearchCriteria.EndDate, enddate)
+            .execute();
+
+    // API raw response "total_record_count"
+    int totalRecordCount = response.getTotalRecordCount();
+    // API raw response "transactions"
+    List<TransactionSummary> transactions = response.getResults();
+    TransactionSummary transaction = transactions.get(0);
+    // API raw response "transactions[0]->id"
+    String transactionId = transaction.getTransactionId();
+    // API raw response "transactions[0]->time_created"
+    DateTime transactionDate = transaction.getTransactionDate();
+    // API raw response "transactions[0]->status"
+    String status = transaction.getTransactionStatus();
+    // API raw response "transactions[0]->type"
+    String type = transaction.getTransactionType();
+    // API raw response "transactions[0]->channel"
+    String channel = transaction.getChannel();
+    // API raw response "transactions[0]->amount"
+    BigDecimal amount = transaction.getAmount();
+    // API raw response "transactions[0]->gratuity_amount"
+    BigDecimal gratuityAmount = transaction.getGratuityAmount();
+    // API raw response "transactions[0]->currency"
+    String currency = transaction.getCurrency();
+    // API raw response "transactions[0]->reference"
+    String reference = transaction.getReferenceNumber();
+    // API raw response "transactions[0]->description"
+    String description = transaction.getDescription();
+    // API raw response "transactions[0]->order->reference"
+    String orderId = transaction.getOrderId();
+    // API raw response "transactions[0]->time_created_reference"
+    DateTime timeCreatedReference = transaction.getTransactionLocalDate();
+    // API raw response "transactions[0]->batch_id"
+    String batchId = transaction.getBatchSequenceNumber();
+    // API raw response "transactions[0]->country"
+    String country = transaction.getCountry();
+    // API raw response "transactions[0]->parent_resource_id"
+    String parentResourceId = transaction.getOriginalTransactionId();
+    // API raw response "transactions[0]->payment_method->result"
+    String gatewayResponseCode = transaction.getGatewayResponseCode();
+    // API raw response "transactions[0]->payment_method->message"
+    String gatewayResponseMessage = transaction.getGatewayResponseMessage();
+    // API raw response "transactions[0]->payment_method->entry_mode"
+    String entryMode = transaction.getEntryMode();
+    // API raw response "transactions[0]->payment_method->fingerprint"
+    String fingerprint = transaction.getFingerprint();
+    // API raw response "transactions[0]->payment_method->fingerprint_presence_indicator"
+    String fingerprintIndicator = transaction.getFingerprintIndicator();
+    // API raw response "transactions[0]->payment_method->name"
+    String cardHolderName = transaction.getCardHolderName();
+    // API raw response "transactions[0]->payment_method->card->brand"
+    String cardType = transaction.getCardType();
+    // API raw response "transactions[0]->payment_method->card->authcode"
+    String authCode = transaction.getAuthCode();
+    // API raw response "transactions[0]->payment_method->card->brand_reference"
+    String brandReference = transaction.getBrandReference();
+    // API raw response "transactions[0]->payment_method->card->masked_number_first6last4"
+    String maskedCardNumber = transaction.getMaskedCardNumber();
+    // API raw response "transactions[0]->risk_assessment->mode"
+    String fraudResponseMode = transaction.getFraudManagementResponse().getFraudResponseMode();
+    // API raw response "transactions[0]->risk_assessment->result"
+    String fraudResponseResult = transaction.getFraudManagementResponse().getFraudResponseResult();
+    // API raw response "transactions[0]->risk_assessment->rules"
+    Object fraudResponseRules = transaction.getFraudManagementResponse().getFraudResponseRules();
+    // API raw response "transactions[0]->system->mid"
+    String mid = transaction.getMerchantId();
+    // API raw response "transactions[0]->system->hierarchy"
+    String hierarchy = transaction.getMerchantHierarchy();
+    // API raw response "transactions[0]->system->name"
+    String systemMerchantName = transaction.getMerchantName();
+    // API raw response "transactions[0]->system->dba"
+    String dba = transaction.getMerchantDbaName();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+    ```
+    </Code>
+  <Code id="NET" title=".NET" language=".net">
+    ```
+    var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+DateTime StartDate = DateTime.UtcNow.AddMonths(-1);
+DateTime EndDate = DateTime.UtcNow;
+
+try
+{
+	PagedResult<TransactionSummary> response = ReportingService.FindTransactionsPaged(1,2)
+		.OrderBy(TransactionSortProperty.TimeCreated, SortDirection.Descending)
+		.Where(SearchCriteria.StartDate, StartDate)
+		.And(SearchCriteria.EndDate, EndDate)
+		.Execute();
+	// API raw response "total_record_count"
+	var totalRecordCount = response.TotalRecordCount;
+	// API raw response "transactions"
+	var transactions = response.Results;
+	TransactionSummary transaction = transactions.First();
+	// API raw response "transactions[0]->id"
+	var transactionId = transaction.TransactionId;
+	// API raw response "transactions[0]->time_created"
+	var transactionDate = transaction.TransactionDate;
+	// API raw response "transactions[0]->status"
+	var status = transaction.TransactionStatus;
+	// API raw response "transactions[0]->type"
+	var type = transaction.TransactionType;
+	// API raw response "transactions[0]->channel"
+	var channel = transaction.Channel;
+	// API raw response "transactions[0]->amount"
+	var amount = transaction.Amount;
+	// API raw response "transactions[0]->gratuity_amount"
+	var gratuityAmount = transaction.GratuityAmount;
+	// API raw response "transactions[0]->currency"
+	var currency = transaction.Currency;
+	// API raw response "transactions[0]->reference"
+	var reference = transaction.ReferenceNumber;
+	// API raw response "transactions[0]->description"
+	var description = transaction.Description;
+	// API raw response "transactions[0]->order->reference"
+	var orderId = transaction.OrderId;
+	// API raw response "transactions[0]->time_created_reference"
+	var timeCreatedReference = transaction.TransactionLocalDate;
+	// API raw response "transactions[0]->batch_id"
+	var batchId = transaction.BatchSequenceNumber;
+	// API raw response "transactions[0]->country"
+	var country = transaction.Country;
+	// API raw response "transactions[0]->parent_resource_id"
+	var parentResourceId = transaction.OriginalTransactionId;
+	// API raw response "transactions[0]->payment_method->result"
+	var gatewayResponseCode = transaction.GatewayResponseCode;
+	// API raw response "transactions[0]->payment_method->message"
+	var gatewayResponseMessage = transaction.GatewayResponseMessage;
+	// API raw response "transactions[0]->payment_method->entry_mode"
+	var entryMode = transaction.EntryMode;
+	// API raw response "transactions[0]->payment_method->fingerprint"
+	var fingerprint = transaction.Fingerprint;
+	// API raw response "transactions[0]->payment_method->fingerprint_presence_indicator"
+	var fingerprintIndicator = transaction.FingerprintIndicator;
+	// API raw response "transactions[0]->payment_method->name"
+	var cardHolderName = transaction.CardHolderName;
+	// API raw response "transactions[0]->payment_method->card->brand"
+	var cardType = transaction.CardType;
+	// API raw response "transactions[0]->payment_method->card->authcode"
+	var authCode = transaction.AuthCode;
+	// API raw response "transactions[0]->payment_method->card->brand_reference"
+	var brandReference = transaction.BrandReference;
+	// API raw response "transactions[0]->payment_method->card->masked_number_first6last4"
+	var maskedCardNumber = transaction.MaskedCardNumber;
+	// API raw response "transactions[0]->risk_assessment->mode"
+	var fraudResponseMode = transaction.FraudManagementResponse.FraudResponseMode;
+	// API raw response "transactions[0]->risk_assessment->result"
+	var fraudResponseResult = transaction.FraudManagementResponse.FraudResponseResult;
+	// API raw response "transactions[0]->risk_assessment->rules"
+	var fraudResponseRules = transaction.FraudManagementResponse.FraudResponseRules;
+	// API raw response "transactions[0]->system->mid"
+	var mid = transaction.MerchantId;
+	// API raw response "transactions[0]->system->hierarchy"
+	var hierarchy = transaction.MerchantHierarchy;
+	// API raw response "transactions[0]->system->name"
+	var systemMerchantName = transaction.MerchantName;
+	// API raw response "transactions[0]->system->dba"
+	var dba = transaction.MerchantDbaName;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+    ```
+  </Code>
+  <Code id="PHP" title="PHP" language="php">
+    ```
+config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$startDate = (new DateTime())->modify("-30 days")->setTime(0, 0, 0);
+$endDate = (new DateTime())->modify("-30 days")->setTime(23, 59, 59);
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $response */
+    $response = ReportingService::findTransactionsPaged(1, 2)
+        ->orderBy(TransactionSortProperty::TIME_CREATED, SortDirection::DESC)
+        ->where(SearchCriteria::START_DATE, $startDate)
+        ->andWith(SearchCriteria::END_DATE, $endDate)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+// API raw response "total_record_count"
+$totalRecordCount = $response->totalRecordCount;
+//API raw response "transactions"
+$transactionList = $response->result;
+if (empty($transactionList)) {
+    echo "No transactions found.\n";
+}
+/** @var \GlobalPayments\Api\Entities\Reporting\TransactionSummary $transaction */
+$transaction = reset($transactionList);
+// API raw response "transactions[0]->id"
+$transactionId = $transaction->transactionId;
+// API raw response "transactions[0]->time_created"
+$transactionDate = $transaction->transactionDate;
+// API raw response "transactions[0]->status"
+$status = $transaction->transactionStatus;
+// API raw response "transactions[0]->type"
+$type = $transaction->transactionType;
+// API raw response "transactions[0]->channel"
+$channel = $transaction->channel;
+// API raw response "transactions[0]->amount"
+$amount = $transaction->amount;
+// API raw response "transactions[0]->merchant_amount"
+$merchantAmount = $transaction->merchantAmount;
+// API raw response "transactions[0]->gratuity_amount"
+$gratuityAmount = $transaction->gratuityAmount; 
+// API raw response "transactions[0]->currency"
+$currency = $transaction->currency;
+// API raw response "transactions[0]->reference"
+$reference = $transaction->referenceNumber;
+// API raw response "transactions[0]->description"
+$description = $transaction->description;
+// API raw response "transactions[0]->order->reference"
+$orderId = $transaction->orderId;
+// API raw response "transactions[0]->time_created_reference"
+$timeCreatedReference = $transaction->transactionLocalDate;
+// API raw response "transactions[0]->batch_id"
+$batchId = $transaction->batchSequenceNumber;
+// API raw response "transactions[0]->country"
+$country = $transaction->country;
+// API raw response "transactions[0]->payment_method->result"
+$gatewayResponseCode = $transaction->gatewayResponseCode;
+// API raw response "transactions[0]->payment_method->message"
+$gatewayResponseMessage = $transaction->gatewayResponseMessage;
+// API raw response "transactions[0]->payment_method->entry_mode"
+$entryMode = $transaction->entryMode;
+// API raw response "transactions[0]->payment_method->fingerprint"
+$fingerprint = $transaction->fingerprint;
+// API raw response "transactions[0]->payment_method->fingerprint_presence_indicator"
+$fingerprintIndicator = $transaction->fingerprintIndicator;
+// API raw response "transactions[0]->payment_method->name"
+$cardHolderName = $transaction->cardHolderName;
+// API raw response "transactions[0]->payment_method->card->brand"
+$cardType = $transaction->cardDetails->brand;
+// API raw response "transactions[0]->payment_method->card->authcode"
+$authCode = $transaction->authCode;
+// API raw response "transactions[0]->payment_method->card->brand_reference"
+$brandReference = $transaction->cardDetails->brandReference;
+// API raw response "transactions[0]->payment_method->card->masked_number_first6last4"
+$maskedCardNumber = $transaction->cardDetails->maskedCardNumber;
+// API raw response "transactions[0]->currency_conversion->payer_amount"
+$dccPayerAmount = $transaction->dccRateData->cardHolderAmount ?? null;
+// API raw response "transactions[0]->currency_conversion->payer_currency"
+$dccPayerCurrency = $transaction->dccRateData->cardHolderCurrency ?? null;
+// API raw response "transactions[0]->currency_conversion->margin_rate_percentage"
+$dccMarginRatePercentage = $transaction->dccRateData->marginRatePercentage ?? null;
+// API raw response "transactions[0]->currency_conversion->exchange_rate"
+$dccExchangeRate = $transaction->dccRateData->cardHolderRate ?? null;
+// API raw response "transactions[0]->currency_conversion->commission_percentage"
+$dccCommissionPercentage = $transaction->dccRateData->commissionPercentage ?? null;
+// API raw response "transactions[0]->currency_conversion->exchange_rate_source"
+$dccExchangeRateSource = $transaction->dccRateData->exchangeRateSourceName ?? null;
+// API raw response "transactions[0]->currency_conversion->exchange_source_time"
+$dccExchangeRateSourceTime = $transaction->dccRateData->exchangeRateSourceTimestamp ?? null;
+// API raw response key "transactions[0]->risk_assessment->mode"
+$fraudResponseMode = $transaction->fraudManagementResponse->fraudResponseMode;
+// API raw response key "transactions[0]->risk_assessment->result"
+$fraudResponseResult = $transaction->fraudManagementResponse->fraudResponseResult;
+// API raw response key "transactions[0]->risk_assessment->rules"
+$fraudResponseRules = $transaction->fraudManagementResponse ->fraudResponseRules;
+// API raw response key "transactions[0]->system->mid"
+$mid = $transaction->merchantId;
+// API raw response key "transactions[0]->system->hierarchy"
+$systemHierarchy = $transaction->merchantHierarchy;
+// API raw response key "transactions[0]->system->name"
+$systemName = $transaction->merchantName;
+// API raw response key "transactions[0]->system->dba"
+$dba = $transaction->merchantDbaName;
+// API raw response key "transactions[0]->parent_resource_id"
+$parentResourceId = $transaction->originalTransactionId;
+    ```
+  </Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "total_record_count": 1155,
+    "current_page_size": 2,
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_6716058969854a48b33347043ff8225f",
+    "account_name": "Transaction_Processing",
+    "filter": {
+        "from_time_created": "2021-03-30T00:00:00.000Z",
+        "to_time_created": "2021-03-30T23:59:59.999Z"
+    },
+    "paging": {
+        "page_size": 2,
+        "page": 1,
+        "order": "DESC",
+        "order_by": "TIME_CREATED"
+    },
+    "transactions": [
+        {
+            "id": "TRN_l52ksA9raoU4gp2T07ZfCSBzqVMar0",
+            "time_created": "2021-03-30T23:40:23.311Z",
+            "status": "PREAUTHORIZED",
+            "type": "SALE",
+            "channel": "CNP",
+            "amount": "4500",
+            "partner_amount": "",
+            "merchant_amount": "",
+            "currency": "GBP",
+            "reference": "togWvZyfoSCkclYtcdEQ",
+            "time_created_reference": "",
+            "batch_id": "",
+            "country": "",
+            "payment_method": {
+                "message": "SUCCESS",
+                "entry_mode": "ECOM",
+                "fingerprint": "",
+                "fingerprint_presence_indicator": "",
+                "name": "James Mason",
+                "card": {
+                    "brand": "VISA",
+                    "authcode": "12345",
+                    "brand_reference": "mjVPe4n3VwyLdpjU",
+                    "masked_number_first6last4": "426397XXXXXX5262"
+                }
+            },
+            "action_create_id": "ACT_l52ksA9raoU4gp2T07ZfCSBzqVMar0",
+            "parent_resource_id": "TRN_l52ksA9raoU4gp2T07ZfCSBzqVMar0"
+        },
+        {
+            "id": "TRN_vmSQBXLBZbpHpo8nDnPf91NQec8nEm",
+            "time_created": "2021-03-30T23:39:08.180Z",
+            "status": "PREAUTHORIZED",
+            "type": "SALE",
+            "channel": "CNP",
+            "amount": "4500",
+            "partner_amount": "",
+            "merchant_amount": "",
+            "currency": "GBP",
+            "reference": "nFAqUCuoeCyXWHopjzlq",
+            "time_created_reference": "",
+            "batch_id": "",
+            "country": "",
+            "payment_method": {
+                "message": "SUCCESS",
+                "entry_mode": "ECOM",
+                "fingerprint": "",
+                "fingerprint_presence_indicator": "",
+                "name": "MR FOO BAR",
+                "card": {
+                    "brand": "VISA",
+                    "authcode": "12345",
+                    "brand_reference": "7yzJ3NF4rKoCan3z",
+                    "masked_number_first6last4": "426397XXXXXX5262"
+                }
+            },
+            "action_create_id": "ACT_vmSQBXLBZbpHpo8nDnPf91NQec8nEm",
+            "parent_resource_id": "TRN_vmSQBXLBZbpHpo8nDnPf91NQec8nEm"
+        }
+    ],
+    "action": {
+        "id": "ACT_zClF2MUwDM5ga7fvbZp2Owgv65ABfA",
+        "type": "TRANSACTION_LIST",
+        "time_created": "2022-03-31T10:59:01.516Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+```
+</Code>
+
+## Step 2: Get the details of a specific transaction
+When obtaining a list of transactions, a summary object is returned for each record. To pull the details of a specific transaction, we use its unique identifier. The response contains more data on the transaction, including specific variables and values passed as well as information on the payment method used.
+
+For more information on all request and response variables, see [Transactions](/api/transactions) in the API Explorer.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/transactions"}}>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_l52ksA9raoU4gp2T07ZfCSBzqVMar0' \
+--header 'Authorization: Bearer wuq80o5scA9ya5H2TBBpuNwgnOi3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22'
+    ```
+    </Code>
+
+  <Code id="JAVA" title="JAVA" language="java">
+    ```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+String transactionId = "TRN_bRpuhDJHK0czBI8dLxiCUn3Uk1yKKF_7e55cfad32ba";
+
+try {
+    TransactionSummary transaction = ReportingService.transactionDetail(transactionId)
+            .execute();
+
+    // API raw response "id"
+    String id = transaction.getTransactionId();
+    // API raw response "time_created"
+    DateTime transactionDate = transaction.getTransactionDate();
+    // API raw response "status"
+    String status = transaction.getTransactionStatus();
+    // API raw response "type"
+    String type = transaction.getTransactionType();
+    // API raw response "channel"
+    String channel = transaction.getChannel();
+    // API raw response "amount"
+    BigDecimal amount = transaction.getAmount();
+    // API raw response "gratuity_amount"
+    BigDecimal gratuityAmount = transaction.getGratuityAmount();
+    // API raw response "currency"
+    String currency = transaction.getCurrency();
+    // API raw response "reference"
+    String reference = transaction.getReferenceNumber();
+    // API raw response "description"
+    String description = transaction.getDescription();
+    // API raw response "order->reference"
+    String orderId = transaction.getOrderId();
+    // API raw response "time_created_reference"
+    DateTime timeCreatedReference = transaction.getTransactionLocalDate();
+    // API raw response "batch_id"
+    String batchId = transaction.getBatchSequenceNumber();
+    // API raw response "country"
+    String country = transaction.getCountry();
+    // API raw response "parent_resource_id"
+    String parentResourceId = transaction.getOriginalTransactionId();
+    // API raw response "payment_method->result"
+    String gatewayResponseCode = transaction.getGatewayResponseCode();
+    // API raw response "payment_method->message"
+    String gatewayResponseMessage = transaction.getGatewayResponseMessage();
+    // API raw response "payment_method->entry_mode"
+    String entryMode = transaction.getEntryMode();
+    // API raw response "payment_method->fingerprint"
+    String fingerprint = transaction.getFingerprint();
+    // API raw response "payment_method->fingerprint_presence_indicator"
+    String fingerprintIndicator = transaction.getFingerprintIndicator();
+    // API raw response "payment_method->name"
+    String cardHolderName = transaction.getCardHolderName();
+    // API raw response "payment_method->card->brand"
+    String cardType = transaction.getCardType();
+    // API raw response "payment_method->card->authcode"
+    String authCode = transaction.getAuthCode();
+    // API raw response "payment_method->card->brand_reference"
+    String brandReference = transaction.getBrandReference();
+    // API raw response "payment_method->card->masked_number_first6last4"
+    String maskedCardNumber = transaction.getMaskedCardNumber();
+    // API raw response "risk_assessment->mode"
+    String fraudResponseMode = transaction.getFraudManagementResponse().getFraudResponseMode();
+    // API raw response "risk_assessment->result"
+    String fraudResponseResult = transaction.getFraudManagementResponse().getFraudResponseResult();
+    // API raw response "risk_assessment->rules"
+    List<FraudRule> fraudResponseRules = transaction.getFraudManagementResponse().getFraudResponseRules();
+    // API raw response "system->mid"
+    String mid = transaction.getMerchantId();
+    // API raw response "system->hierarchy"
+    String hierarchy = transaction.getMerchantHierarchy();
+    // API raw response "system->name"
+    String systemMerchantName = transaction.getMerchantName();
+    // API raw response "system->dba"
+    String dba = transaction.getMerchantDbaName();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+    ```
+  </Code>
+	
+  <Code id="NET" title=".NET" language="net">
+    ```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+var transactionId = "TRN_bRpuhDJHK0czBI8dLxiCUn3Uk1yKKF_7e55cfad32ba";
+try
+{
+	TransactionSummary transaction = ReportingService.TransactionDetail(transactionId)
+		.Execute();
+	// API raw response "id"
+	var id = transaction.TransactionId;
+	// API raw response "time_created"
+	var transactionDate = transaction.TransactionDate;
+	// API raw response "status"
+	var status = transaction.TransactionStatus;
+	// API raw response "type"
+	var type = transaction.TransactionType;
+	// API raw response "channel"
+	var channel = transaction.Channel;
+	// API raw response "amount"
+	var amount = transaction.Amount;
+	// API raw response "gratuity_amount"
+	var gratuityAmount = transaction.GratuityAmount;
+	// API raw response "currency"
+	var currency = transaction.Currency;
+	// API raw response "reference"
+	var reference = transaction.ReferenceNumber;
+	// API raw response "description"
+	var description = transaction.Description;
+	// API raw response "order->reference"
+	var orderId = transaction.OrderId;
+	// API raw response "time_created_reference"
+	var timeCreatedReference = transaction.TransactionLocalDate;
+	// API raw response "batch_id"
+	var batchId = transaction.BatchSequenceNumber;
+	// API raw response "country"
+	var country = transaction.Country;
+	// API raw response "parent_resource_id"
+	var parentResourceId = transaction.OriginalTransactionId;
+	// API raw response "payment_method->result"
+	var gatewayResponseCode = transaction.GatewayResponseCode;
+	// API raw response "payment_method->message"
+	var gatewayResponseMessage = transaction.GatewayResponseMessage;
+	// API raw response "payment_method->entry_mode"
+	var entryMode = transaction.EntryMode;
+	// API raw response "payment_method->fingerprint"
+	var fingerprint = transaction.Fingerprint;
+	// API raw response "payment_method->fingerprint_presence_indicator"
+	var fingerprintIndicator = transaction.FingerprintIndicator;
+	// API raw response "payment_method->name"
+	var cardHolderName = transaction.CardHolderName;
+	// API raw response "payment_method->card->brand"
+	var cardType = transaction.CardType;
+	// API raw response "payment_method->card->authcode"
+	var authCode = transaction.AuthCode;
+	// API raw response "payment_method->card->brand_reference"
+	var brandReference = transaction.BrandReference;
+	// API raw response "payment_method->card->masked_number_first6last4"
+	var maskedCardNumber = transaction.MaskedCardNumber;
+	// API raw response "risk_assessment->mode"
+	var fraudResponseMode = transaction.FraudManagementResponse.FraudResponseMode;
+	// API raw response "risk_assessment->result"
+	var fraudResponseResult = transaction.FraudManagementResponse.FraudResponseResult;
+	// API raw response "risk_assessment->rules"
+	var fraudResponseRules = transaction.FraudManagementResponse.FraudResponseRules;
+	// API raw response "system->mid"
+	var mid = transaction.MerchantId;
+	// API raw response "system->hierarchy"
+	var hierarchy = transaction.MerchantHierarchy;
+	// API raw response "system->name"
+	var systemMerchantName = transaction.MerchantName;
+	// API raw response "system->dba"
+	var dba = transaction.MerchantDbaName;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+    ```
+  </Code>
+  <Code id="PHP" title="PHP" language="php">
+    ```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$transactionId = "TRN_bRpuhDJHK0czBI8dLxiCUn3Uk1yKKF_7e55cfad32ba";
+
+try {
+    /** @var \GlobalPayments\Api\Entities\Reporting\TransactionSummary $transaction */
+    $transaction = ReportingService::transactionDetail($transactionId)->execute();
+
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response "id"
+$id = $transaction->transactionId;
+// API raw response "time_created"
+$transactionDate = $transaction->transactionDate;
+// API raw response "status"
+$status = $transaction->transactionStatus;
+// API raw response "type"
+$type = $transaction->transactionType;
+// API raw response "channel"
+$channel = $transaction->channel;
+// API raw response "amount"
+$amount = $transaction->amount;
+// API raw response "merchant_amount"
+$merchantAmount = $transaction->merchantAmount;
+// API raw response "gratuity_amount"
+$gratuityAmount = $transaction->gratuityAmount;
+// API raw response "currency"
+$currency = $transaction->currency;
+// API raw response "reference"
+$reference = $transaction->referenceNumber;
+// API raw response "description"
+$description = $transaction->description;
+// API raw response "order->reference"
+$orderId = $transaction->orderId;
+// API raw response "time_created_reference"
+$timeCreatedReference = $transaction->transactionLocalDate;
+// API raw response "batch_id"
+$batchId = $transaction->batchSequenceNumber;
+// API raw response "country"
+$country = $transaction->country;
+// API raw response "payment_method->result"
+$gatewayResponseCode = $transaction->gatewayResponseCode;
+// API raw response "payment_method->message"
+$gatewayResponseMessage = $transaction->gatewayResponseMessage;
+// API raw response "payment_method->entry_mode"
+$entryMode = $transaction->entryMode;
+// API raw response "payment_method->fingerprint"
+$fingerprint = $transaction->fingerprint;
+// API raw response "payment_method->fingerprint_presence_indicator"
+$fingerprintIndicator = $transaction->fingerprintIndicator;
+// API raw response "payment_method->name"
+$cardHolderName = $transaction->cardHolderName;
+// API raw response "payment_method->card->brand"
+$cardType = $transaction->cardDetails->brand ?? null;
+// API raw response "payment_method->card->authcode"
+$authCode = $transaction->authCode;
+// API raw response "payment_method->card->brand_reference"
+$brandReference = $transaction->cardDetails->brandReference ?? null;
+// API raw response "payment_method->card->masked_number_first6last4"
+$maskedCardNumber = $transaction->cardDetails->maskedCardNumber ?? null;
+// API raw response "payment_method->card->cvv_result"
+$cvnResponseMessage = $transaction->cardDetails->cvnResponseMessage ?? null;
+// API raw response "payment_method->card->avs_address_result"
+$avsAddressResponse = $transaction->cardDetails->avsAddressResponse ?? null;
+// API raw response "payment_method->card->avs_postal_code_result"
+$avsResponseCode = $transaction->cardDetails->avsResponseCode ?? null;
+// API raw response "currency_conversion->payer_amount"
+$dccPayerAmount = $transaction->dccRateData->cardHolderAmount ?? null;
+// API raw response "currency_conversion->payer_currency"
+$dccPayerCurrency = $transaction->dccRateData->cardHolderCurrency ?? null;
+// API raw response "currency_conversion->margin_rate_percentage"
+$dccMarginRatePercentage = $transaction->dccRateData->marginRatePercentage ?? null;
+// API raw response "currency_conversion->exchange_rate"
+$dccExchangeRate = $transaction->dccRateData->cardHolderRate ?? null;
+// API raw response "currency_conversion->commission_percentage"
+$dccCommissionPercentage = $transaction->dccRateData->commissionPercentage ?? null;
+// API raw response "currency_conversion->exchange_rate_source"
+$dccExchangeRateSource = $transaction->dccRateData->exchangeRateSourceName ?? null;
+// API raw response "currency_conversion->exchange_source_time"
+$dccExchangeRateSourceTime = $transaction->dccRateData->exchangeRateSourceTimestamp ?? null;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $transaction->fraudManagementResponse->fraudResponseMode ?? null;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $transaction->fraudManagementResponse->fraudResponseResult ?? null;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $transaction->fraudManagementResponse ->fraudResponseRules ?? null;
+//API raw response key "system->mid"
+$mid = $transaction->merchantId;
+//API raw response key "system->hierarchy"
+$systemHierarchy = $transaction->merchantHierarchy;
+//API raw response key "system->name"
+$systemName = $transaction->merchantName;
+//API raw response key "system->dba"
+$dba = $transaction->merchantDbaName;
+//API raw response key "parent_resource_id"
+$parentResourceId = $transaction->originalTransactionId;
+    ```
+   </Code>
+</CodeGroup>
+
+## Step 3: Get a list of actions associated with a transaction
+Actions represent request and response messages sent by the merchant relating to a specific resource. In this step, we pull a list of actions related to one of the transactions returned previously. 
+
+There are a number of search criteria we could use, but here we just use a single resource ID: a transaction. In the response, there are two actions: the card being pre-authorized and the transaction being captured.
+
+For more information on the available search parameters and the details of all request and response variables, see [Actions](/api/actions) in the API Explorer.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/actions"}}>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/actions?order=DESC&page_size=5&resource_id=TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461' \
+--header 'Authorization: Bearer wuq80o5scA9ya5H2TBBpuNwgnOi3' \
+--header 'X-GP-Version: 2021-03-22'
+    ```
+    </Code>
+
+  <Code id="JAVA" title="JAVA" language="java">
+    ```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+String transactionId = "TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461";
+
+try {
+    ActionSummaryPaged response = ReportingService.findActionsPaged(1, 5)
+            .orderBy(ActionSortProperty.TimeCreated, SortDirection.Descending)
+            .where(SearchCriteria.ResourceId, transactionId)
+            .execute();
+
+    // API raw response "total_record_count"
+    int totalRecordCount = response.getTotalRecordCount();
+    // API raw response "paging->order_by"
+    String orderBy = response.getOrderBy();
+    // API raw response "paging->order"
+    String order = response.getOrder();
+    if (!response.results.isEmpty()) {
+        ActionSummary action = response.results.get(0);
+        // API raw response actions[0]->id
+        String id = action.getId();
+        // API raw response actions[0]->type
+        String type = action.getType();
+        // API raw response actions[0]->time_created
+        DateTime timeCreated = action.getTimeCreated();
+        // API raw response actions[0]->resource
+        String resource = action.getResource();
+        // API raw response actions[0]->version
+        String version = action.getVersion();
+        // API raw response actions[0]->resource_id
+        String resourceId = action.getResourceId();
+        // API raw response actions[0]->resource_status
+        String resourceStatus = action.getResourceStatus();
+        // API raw response actions[0]->http_response_code
+        String httpResponseCode = action.getHttpResponseCode();
+        // API raw response actions[0]->response_code
+        String responseCode = action.getResponseCode();
+        // API raw response actions[0]->app_id
+        String appId = action.getAppId();
+        // API raw response actions[0]->app_name
+        String appName = action.getAppName();
+        // API raw response actions[0]->account_id
+        String accountId = action.getAccountId();
+        // API raw response actions[0]->account_name
+        String accountName = action.getAccountName();
+        // API raw response actions[0]->merchant_name
+        String merchantName = action.getMerchantName();
+    }
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+    ```
+  </Code>
+  <Code id="NET" title=".NET" language="net">
+    ```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+try
+{
+	PagedResult<ActionSummary> response = ReportingService.FindActionsPaged(1,5)
+		.OrderBy(ActionSortProperty.TimeCreated, SortDirection.Descending)
+		.Where(SearchCriteria.ResourceId, "TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461")
+		.Execute();
+		
+	// API raw response "total_record_count"
+	var totalRecordCount = response.TotalRecordCount;
+	// API raw response "paging->order_by"
+	var orderBy = response.OrderBy;
+	// API raw response "paging->order"
+	var order = response.Order;
+	var action = response.Results.First();
+	// API raw response actions[0]->id
+	var id = action.Id;
+	// API raw response actions[0]->type
+	var type = action.Type;
+	// API raw response actions[0]->time_created
+	var timeCreated = action.TimeCreated;
+	// API raw response actions[0]->resource
+	var resource = action.Resource;
+	// API raw response actions[0]->version
+	var version = action.Version;
+	// API raw response actions[0]->resource_id
+	var resourceId = action.ResourceId;
+	// API raw response actions[0]->resource_status
+	var resourceStatus = action.ResourceStatus;
+	// API raw response actions[0]->http_response_code
+	var httpResponseCode = action.HttpResponseCode;
+	// API raw response actions[0]->response_code
+	var responseCode = action.ResponseCode;
+	// API raw response actions[0]->app_id
+	var appId = action.AppId;
+	// API raw response actions[0]->app_name
+	var appName = action.AppName;
+	// API raw response actions[0]->account_id
+	var accountId = action.AccountId;
+	// API raw response actions[0]->account_name
+	var accountName = action.AccountName;
+	// API raw response actions[0]->merchant_name
+	var merchantName = action.MerchantName;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+    ```
+  </Code>
+  <Code id="PHP" title="PHP" language="php">
+    ```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+$resourceId = 'TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461';
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $response */
+    $response = ReportingService::findActionsPaged(1, 5)
+        ->orderBy(ActionSortProperty::TIME_CREATED, SortDirection::DESC)
+        ->where(SearchCriteria::RESOURCE_ID, $resourceId)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+// API raw response "total_record_count"
+$totalRecordCount = $response->totalRecordCount; 
+$orderBy = $response->orderBy;  // API raw response "paging->order_by"
+$order = $response->order;  // API raw response "paging->order"
+if (count($response->result) > 0) {
+    /** @var \GlobalPayments\Api\Entities\Reporting\ActionSummary $action */
+    $action = reset($response->result);
+    // API raw response $actions[0]->id
+    $id = $action->id;
+    // API raw response $actions[0]->type
+    $type = $action->type;
+    // API raw response $actions[0]->time_created
+    $timeCreated = $action->timeCreated;
+    // API raw response $actions[0]->resource
+    $resource = $action->resource;
+    // API raw response $actions[0]->version
+    $version = $action->version;
+    // API raw response $actions[0]->resource_id
+    $resourceId = $action->resourceId;
+    // API raw response $actions[0]->resource_status
+    $resourceId = $action->resourceStatus;
+    // API raw response $actions[0]->http_response_code    
+    $httpResponseCode = $action->httpResponseCode; 
+    // API raw response $actions[0]->response_code
+    $responseCode = $action->responseCode;
+    // API raw response $actions[0]->app_id
+    $appId = $action->appId;
+    // API raw response $actions[0]->app_name
+    $appName = $action->appName;
+    // API raw response $actions[0]->account_id
+    $accountId = $action->accountId;
+    // API raw response $actions[0]->account_name
+    $accountName = $action->accountName;
+    // API raw response $actions[0]->merchant_name
+    $merchantName = $action->merchantName;
+}
+    ```
+   </Code>
+</CodeGroup>
+
+## Step 4: Get the details of a specific action
+For additional logging or auditing purposes, it’s also possible to obtain the details of a specific action. This includes the message that was sent by the merchant to the API, the response that was sent back with details about the merchant, and the app that was used.
+
+For more information on all request and response variables, see [Actions](/api/actions) in the API Explorer.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/actions"}}>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/actions/ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE' \
+--header 'Authorization: Bearer wuq80o5scA9ya5H2TBBpuNwgnOi3' \
+--header 'X-GP-Version: 2021-03-22'
+    ```
+    </Code>
+
+  <Code id="JAVA" title="JAVA" language="java">
+    ```
+// configure client & request settings
+GpApiConfig gpApiConfig = new GpApiConfig();
+gpApiConfig.setAppId(APP_ID);
+gpApiConfig.setAppKey(APP_KEY);
+ServicesContainer.configureService(gpApiConfig);
+
+final String actionId = "ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE";
+
+try {
+   ActionSummary response = ReportingService.actionDetail(actionId)
+                            .execute();
+
+   String newActionId = response.getId(); //ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE
+   DateTime actionDate = response.getTimeCreated();
+   String actionType = response.getType(); //CAPTURE
+   String resource = response.getResource(); //TRANSACTIONS
+   String resourceId = response.getResourceId(); //TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461
+   String resourceStatus = response.getResourceStatus(); //CAPTURED
+} catch (GatewayException ex) {
+   // TODO: add your error handling here
+}
+    ```
+  </Code>
+	
+  <Code id="NET" title=".NET" language="net">
+    ```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpApiConfig {
+                AppId = APP_ID,
+                AppKey = APP_KEY
+            });
+
+const string actionId = "ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE";
+try {
+    var response = ReportingService.ActionDetail(actionId)
+                   .Execute();
+
+    var newActionId = response.Id; //ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE
+    var actionDate = response.TimeCreated.ToString(); 
+    var actionType = response.Type; //CAPTURE
+    var resource = response.Resource; //TRANSACTIONS
+    var resourceId = response.ResourceId; //TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461
+    var resourceStatus = response.ResourceStatus; //CAPTURED
+} catch (GatewayException ex) {
+     // TODO: add your error handling here
+}
+    ```
+  </Code>
+  
+
+    <Code id="PHP" title="PHP" language="php">
+    ```
+use GlobalPayments\Api\Entities\Enums\SortDirection;
+use GlobalPayments\Api\Entities\Enums\ActionSortProperty;
+use GlobalPayments\Api\Entities\Reporting\SearchCriteria;
+use GlobalPayments\Api\Entities\Reporting\ActionSummary;
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpApiConfig;
+use GlobalPayments\Api\Services\ReportingService;
+use GlobalPayments\Api\ServicesContainer;
+
+// configure client & request settings
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+
+ServicesContainer::configureService($config);
+
+$actionId = 'ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE';
+$response = ReportingService::actionDetail($actionId)
+            ->execute();
+
+try{
+    $actionId = $response->id; //ACT_fOlT0ALO6A3f0Z7nwGAN95zSIetnJE
+    $actionType = $response->type; // CAPTURE
+    $actionDate = $response->timeCreated->format('Y-m-d H:i:s');
+    $resourceType = $response->resource; //TRANSACTIONS
+    $resourceId = $response->resourceId; //TRN_ebTw41MlQhD3ERxFIxRfp9MkKCzcIf_37427461
+    $resourceStatus = $response->resourceStatus; //CAPTURED
+} catch (ApiException $e) {
+    // TODO: add your error handling here
+}
+    ```
+    </Code>
+</CodeGroup>
+
+## Testing
+Our Real-Time Data Reporting solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Integration references
+To get a deeper understanding of Real-Time Data Reporting, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/api/transactions" title="API /transactions" icon="window">
+        Create and retrieve payment links.
+    </Card>
+     
+	 <Card type="with_icon" link="/api/actions" title="API /actions" icon="window">
+        Create and retrieve payment links.
+    </Card>
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for Real-Time Data Reporting.
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/docs/reporting/settlement-reporting-overview" title="Settlement Reporting" icon="file-alt">
+       Simplify reconciliation and get customized daily deposit data.
+    </Card>
+	
+	 <Card type="with_icon" link="/docs/operations/disputes-management-overview" title="Disputes Management" icon="comment-exclamation">
+        Automate the reporting and management of transaction disputes
+    </Card>
+	
+  <Card type="with_icon" link="/docs/operations/file-processing-overview" title="File Processing" icon="file-arrow-up">
+        Process large volumes of transactions in one file.
+    </Card>
+  </CardsGroup>
+

@@ -1,0 +1,257 @@
+---
+title: "Payment Methods SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+<Infobox>
+For users of the XML API: All elements, if included in the request, must appear in the exact sequence as shown in the examples of this guide.
+</Infobox>
+
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Initiate
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod(AlternativePaymentType.SOFORTUBERWEISUNG);
+
+paymentMethod.setReturnUrl("https://www.example.com/returnUrl");
+paymentMethod.setStatusUpdateUrl("https://www.example.com/statusUrl");
+paymentMethod.setDescriptor("Test Transaction");
+paymentMethod.setCountry("DE");
+paymentMethod.setAccountHolderName("James Mason");
+
+try {
+   Transaction response =
+           paymentMethod
+                   .charge(10.01)
+                   .withCurrency("EUR")
+                   .execute();
+
+   // response-.getAlternativePaymentResponse().getRedirectUrl()
+   // => the redirectUrl for Step2;
+} catch (ApiException e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod();
+
+paymentMethod.AlternativePaymentMethodType = AlternativePaymentType.SOFORTUBERWEISUNG;
+paymentMethod.ReturnUrl = "https://www.example.com/returnUrl";
+paymentMethod.StatusUpdateUrl = "https://www.example.com/statusUrl";
+paymentMethod.Descriptor = "Test Transaction";
+paymentMethod.Country = "DE";
+paymentMethod.AccountHolderName = "James Mason";
+
+try {
+    Transaction response =
+            paymentMethod
+                   .Charge((decimal)10.01)
+                   .WithCurrency("EUR")
+                   .Execute();
+
+// response-.getAlternativePaymentResponse().getRedirectUrl()
+                // => the redirectUrl for Step2;
+     }
+     catch (ApiException e)
+     {
+         // TODO: Add your error handling here
+     }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+$paymentMethod = new AlternativePaymentMethod(AlternativePaymentType::SOFORTUBERWEISUNG);
+
+$paymentMethod->returnUrl = 'https://www.example.com/returnUrl';
+$paymentMethod->statusUpdateUrl = 'https://www.example.com/statusUrl';
+$paymentMethod->descriptor = 'Test Transaction';
+$paymentMethod->country = 'DE';
+$paymentMethod->accountHolderName = 'James Mason';
+
+try {
+    $response = $paymentMethod->charge(10.01)
+        ->withCurrency("EUR")
+        ->execute();
+
+    // $response->alternativePaymentResponse->redirectUrl => the redirectUrl for Step2;
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Refund
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// the original order id
+String orderId = "wZLVqHNnbZKBJhbeiW";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the rebate transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   Transaction response =
+           transaction
+                   .refund(10)
+                   .withCurrency("EUR")
+                   .withAlternativePaymentType(AlternativePaymentType.SOFORTUBERWEISUNG)
+                   .execute();
+
+   String responseCode = response.getResponseCode();   // 00 == Success
+   String message = response.getResponseMessage();     // [ test system ] AUTHORIZED
+} catch (ApiException e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// the original order id
+string orderId = "wZLVqHNnbZKBJhbeiW";
+            // and the payments reference (pasref) from the authorization response
+string paymentsReference = "15113583374071921";
+            // create the rebate transaction object
+Transaction transaction = Transaction.FromId(paymentsReference, orderId);
+
+try {
+    Transaction response =
+             transaction
+             .Refund(10)
+             .WithCurrency("EUR")
+.WithAlternativePaymentType(AlternativePaymentType.SOFORTUBERWEISUNG)
+              .Execute();
+
+    string responseCode = response.ResponseCode;   // 00 == Success
+    string message = response.ResponseMessage;     // [ test system ] AUTHORIZED
+    }
+    catch (ApiException e)
+    {
+        // TODO: Add your error handling here
+    }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// the original order id
+$orderId = "wZLVqHNnbZKBJhbeiW";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the rebate transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+    $response = $transaction->refund(10)
+        ->withCurrency("EUR")
+        ->withAlternativePaymentType(AlternativePaymentType::SOFORTUBERWEISUNG)
+        ->execute();
+
+    $responseCode = $response->responseCode; // 00 == Success
+    $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Test Pay
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod(AlternativePaymentType.TESTPAY);
+
+paymentMethod.setReturnUrl("https://www.example.com/returnUrl");
+paymentMethod.setStatusUpdateUrl("https://www.example.com/statusUrl");
+paymentMethod.setDescriptor("Test Transaction");
+paymentMethod.setCountry("DE");
+paymentMethod.setAccountHolderName("James Mason");
+
+try {
+   Transaction response =
+           paymentMethod
+                   .charge(10.01)
+                   .withCurrency("EUR")
+                   .execute();
+
+   // $response->alternativePaymentResponse->redirectUrl => the redirectUrl for Step2;
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod();
+
+paymentMethod.AlternativePaymentMethodType = AlternativePaymentType.TESTPAY;
+paymentMethod.ReturnUrl = "https://www.example.com/returnUrl";
+paymentMethod.StatusUpdateUrl = "https://www.example.com/statusUrl";
+paymentMethod.Descriptor = "Test Transaction";
+paymentMethod.Country = "DE";
+paymentMethod.AccountHolderName = "James Mason";
+
+try
+{
+    Transaction response =
+            paymentMethod
+                    .Charge((decimal)10.01)
+                    .WithCurrency("EUR")
+                    .Execute();
+
+    // $response->alternativePaymentResponse->redirectUrl => the redirectUrl for Step2;
+}
+catch (ApiException e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+$paymentMethod = new AlternativePaymentMethod(AlternativePaymentType::TEST_PAY);
+
+$paymentMethod->returnUrl = 'https://www.example.com/returnUrl';
+$paymentMethod->statusUpdateUrl = 'https://www.example.com/statusUrl';
+$paymentMethod->descriptor = 'Test Transaction';
+$paymentMethod->country = 'DE';
+$paymentMethod->accountHolderName = 'James Mason';
+
+try {
+    $response = $paymentMethod->charge(10.01)
+        ->withCurrency("EUR")
+        ->execute();
+
+    // $response->alternativePaymentResponse->redirectUrl => the redirectUrl for Step2;
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+

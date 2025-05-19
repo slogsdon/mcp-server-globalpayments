@@ -1,0 +1,1124 @@
+---
+title: 'Disputes Management - Guide'
+search_results: 'Global Payments - Disputes & Chargeback Management Guide'
+subtitle: 'Learn how to automate the reporting and management of disputes'
+tag: 'rest'
+created: '06/08/2024'
+---
+In this guide, you'll learn how to obtain a list of disputes and get the details on a specific dispute case. We also cover how to resolve a dispute by either challenging or accepting it. In our example, we demonstrate a typical scenario that a merchant might go through when receiving a dispute.
+
+For more information on Disputes Management, see our [Overview](/docs/operations/disputes-management-overview).
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Get a list of disputes
+Our first step is to pull a list of disputes. You must submit the date range you want to query. You can include optional parameters such as the brand of the card involved, the dispute stage, the number of pages to return, the number of results per page, and so on. 
+
+The returned list of disputes will include all of the disputes types that are available for your application, such as chargebacks, retrievals, and arbitrations. To understand more about the different types of disputes, see our [Overview](/docs/operations/disputes-management-overview). You can also filter the list based on the dispute status: Closed, New, or Under Review.
+
+In our example, we don't use any filters as we want to return all the disputes in the timeframe specified.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl -L -X GET 'https://apis.sandbox.globalpay.com/unifiedcommerce/disputes?from_stage_time_created=2019-05-13' \
+  -H 'Authorization: Bearer 72hyeepo8DnW053OrqAEFwAzeDtC' \
+  -H 'X-Gp-Version: 2020-01-20' \
+  -H 'Accept: application/json' \
+  -H 'Accept-Encoding: gzip'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+Date startDate = DateTime.now().minusDays(30).toDate();
+
+try {
+    DisputeSummaryPaged disputes = ReportingService.findDisputesPaged(1, 10)
+            .where(DataServiceCriteria.StartStageDate, startDate)
+            .execute();
+
+    // API raw response "total_record_count"
+    int totalRecordCount = disputes.getTotalRecordCount();
+    // API raw response "disputes"
+    List<DisputeSummary> disputeList = disputes.getResults();
+    if (disputeList.isEmpty()) {
+        // TODO: Add empty disputes list handling here
+    }
+    DisputeSummary dispute = disputeList.get(0);
+    // API raw response "disputes[0]->id"
+    String id = dispute.getCaseId();
+    // API raw response "disputes[0]->stage_time_created"
+    DateTime timeCreated = dispute.getCaseIdTime();
+    // API raw response "disputes[0]->status"
+    String status = dispute.getCaseStatus();
+    // API raw response "disputes[0]->stage"
+    String stage = dispute.getCaseStage();
+    // API raw response "disputes[0]->amount"
+    BigDecimal amount = dispute.getCaseAmount();
+    // API raw response "disputes[0]->currency"
+    String currency = dispute.getCaseCurrency();
+    // API raw response "disputes[0]->system->mid"
+    String mid = dispute.getCaseMerchantId();
+    // API raw response "disputes[0]->system->hierarchy"
+    String hierarchy = dispute.getMerchantHierarchy();
+    // API raw response "disputes[0]->payment_method->card->number"
+    String maskedCardNumber = dispute.getTransactionMaskedCardNumber();
+    // API raw response "disputes[0]->payment_method->card->arn"
+    String arn = dispute.getTransactionARN();
+    // API raw response "disputes[0]->payment_method->card->brand"
+    String cardType = dispute.getTransactionCardType();
+    // API raw response "disputes[0]->reason_code"
+    String reasonCode = dispute.getReasonCode();
+    // API raw response "disputes[0]->reason_description"
+    String reason = dispute.getReason();
+    // API raw response "disputes[0]->order->reference"
+    String orderId = dispute.getTransactionOrderId();
+    // API raw response "disputes[0]->time_to_respond_by"
+    DateTime respondByDate = dispute.getRespondByDate();
+    // API raw response "disputes[0]->result"
+    String result = dispute.getResult();
+    // API raw response "disputes[0]->last_adjustment_amount"
+    BigDecimal lastAdjustmentAmount = dispute.getLastAdjustmentAmount();
+    // API raw response "disputes[0]->last_adjustment_currency"
+    String lastAdjustmentCurrency = dispute.getLastAdjustmentCurrency();
+    // API raw response "disputes[0]->last_adjustment_funding"
+    String lastAdjustmentFunding = dispute.getLastAdjustmentFunding();
+    return;
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}catch (IOException e) {
+    throw new RuntimeException(e.getMessage());
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+DateTime StartDate = DateTime.UtcNow.AddDays(-30);
+try
+{
+	PagedResult<DisputeSummary> response = ReportingService.FindDisputesPaged(1,10)
+		.Where(DataServiceCriteria.StartStageDate, StartDate)
+		.Execute();
+
+	// API raw response "total_record_count"
+	var totalRecordCount = response.TotalRecordCount;
+	DisputeSummary dispute = response.Results.First();
+	// API raw response "disputes[0]->id"
+	var id = dispute.CaseId;
+	// API raw response "disputes[0]->stage_time_created"
+	var timeCreated = dispute.CaseIdTime;
+	// API raw response "disputes[0]->status"
+	var status = dispute.CaseStatus;
+	// API raw response "disputes[0]->stage"
+	var stage = dispute.CaseStage;
+	// API raw response "disputes[0]->amount"
+	var amount = dispute.CaseAmount;
+	// API raw response "disputes[0]->currency"
+	var currency = dispute.CaseCurrency;
+	// API raw response "disputes[0]->reason_code"
+	var reasonCode = dispute.ReasonCode;
+	// API raw response "disputes[0]->reason_description"
+	var reason = dispute.Reason;
+	// API raw response "disputes[0]->time_to_respond_by"
+	var respondByDate = dispute.RespondByDate;
+	// API raw response "disputes[0]->result"
+	var result = dispute.Result;
+	// API raw response "disputes[0]->last_adjustment_amount"
+	var lastAdjustmentAmount = dispute.LastAdjustmentAmount;
+	// API raw response "disputes[0]->last_adjustment_currency"
+	var lastAdjustmentCurrency = dispute.LastAdjustmentCurrency;
+	// API raw response "disputes[0]->last_adjustment_funding"
+	var lastAdjustmentFunding = dispute.LastAdjustmentFunding;
+	// API raw response "disputes[0]->system->mid"
+	var mid = dispute.CaseMerchantId;
+	// API raw response "disputes[0]->system->hierarchy"
+	var systemHierarchy = dispute.MerchantHierarchy;
+	// API raw response "disputes[0]->payment_method->card->number"
+	var maskedCardNumber = dispute.TransactionMaskedCardNumber;
+	// API raw response "disputes[0]->payment_method->card->arn"
+	var arn = dispute.TransactionARN;
+	// API raw response "disputes[0]->payment_method->card->brand"
+	var cardType = dispute.TransactionCardType;
+	// API raw response "disputes[0]->order->reference"
+	var orderId = dispute.TransactionOrderId;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$startDate = (new DateTime())->modify("-30 days")->setTime(0, 0, 0);
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $disputes */
+    $disputes = ReportingService::findDisputesPaged(1, 10)
+        ->where(DataServiceCriteria::START_STAGE_DATE, $startDate)
+        ->execute();
+
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response "total_record_count"
+$totalRecordCount = $disputes->totalRecordCount;
+//API raw response "disputes"
+$disputeList = $disputes->result;
+if (empty($disputeList)) {
+    echo "No disputes found.\n";
+}
+/** @var \GlobalPayments\Api\Entities\Reporting\DisputeSummary $dispute */
+$dispute = reset($disputeList);
+// API raw response "disputes[0]->id"
+$id = $dispute->caseId;
+// API raw response "disputes[0]->stage_time_created"
+$timeCreated = $dispute->caseIdTime;
+// API raw response "disputes[0]->status"
+$status = $dispute->caseStatus;
+// API raw response "disputes[0]->stage"
+$stage = $dispute->caseStage;
+// API raw response "disputes[0]->amount"
+$amount = $dispute->caseAmount;
+// API raw response "disputes[0]->currency"
+$currency = $dispute->caseCurrency;
+// API raw response "disputes[0]->system->mid"
+$mid = $dispute->caseMerchantId;
+// API raw response "disputes[0]->system->hierarchy"
+$hierarchy = $dispute->merchantHierarchy;
+// API raw response "disputes[0]->payment_method->card->number"
+$maskedCardNumber = $dispute->transactionMaskedCardNumber;
+// API raw response "disputes[0]->payment_method->card->arn"
+$arn = $dispute->transactionARN;
+// API raw response "disputes[0]->payment_method->card->brand"
+$cardType = $dispute->transactionCardType;
+// API raw response "disputes[0]->reason_code"
+$reasonCode = $dispute->reasonCode;
+// API raw response "disputes[0]->reason_description"
+$reason = $dispute->reason;
+// API raw response "disputes[0]->order->reference"
+$orderId = $dispute->orderId;
+// API raw response "disputes[0]->time_to_respond_by"
+$respondByDate = $dispute->respondByDate;
+// API raw response "disputes[0]->result"
+$result = $dispute->result;
+// API raw response "disputes[0]->last_adjustment_amount"
+$lastAdjustmentAmount = $dispute->lastAdjustmentAmount;
+// API raw response "disputes[0]->last_adjustment_currency"
+$lastAdjustmentCurrency = $dispute->lastAdjustmentCurrency;
+// API raw response "disputes[0]->last_adjustment_funding"
+$lastAdjustmentFunding = $dispute->lastAdjustmentFunding;
+```
+</Code>
+</CodeGroup>
+
+### Disputes list response
+The response contains all of the disputes that were created from the date specified. This list includes the ID, status, amount, reason, date, and time the dispute was created.
+
+Depending on the use case, the data returned in the disputes list response may be enough information for your application to proceed to the next action (Step 2). Alternatively, we show you in the next step how to pull the full detail of an individual dispute.
+
+#### Sample response
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "total_count": 20,
+    "merchant_id": "MER_62251730c5574bbcb268191b5f315de8",
+    "merchant_name": "TEST MERCHANT",
+    "account_id": "DIA_882c832d13e04185bb6e213d6303ed98",
+    "account_name": "testdispute",
+    "disputes": [
+        {
+            "id": "DIS_SAND_abcd1234",
+            "time_created": "2020-02-23T13:34:38.276Z",
+            "status": "WITH_MERCHANT",
+            "stage": "RETRIEVAL",
+            "amount": "1000",
+            "currency": "USD",
+            "system": {
+                "mid": "627384967",
+                "hierarchy": "111-23-099-001-001"
+            },
+            "payment_method": {
+                "card": {
+                    "number": "424242xxxxxx4242",
+                    "arn": "834523482349123",
+                    "brand": "VISA"
+                }
+            },
+            "reason_code": "104",
+            "reason_description": "Other Fraud-Card Absent Environment",
+            "time_to_respond_by": "2020-03-11T13:34:38.276Z",
+            "result": "PENDING",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": ""
+        },
+        {
+            "id": "DIS_SAND_abcd1235",
+            "time_created": "2020-02-23T13:34:38.276Z",
+            "status": "WITH_MERCHANT",
+            "stage": "CHARGEBACK",
+            "amount": "1500",
+            "currency": "USD",
+            "system": {
+                "mid": "627384967",
+                "hierarchy": "111-23-099-001-001"
+            },
+            "payment_method": {
+                "card": {
+                    "number": "424242xxxxxx4242",
+                    "arn": "123934529762282",
+                    "brand": "VISA"
+                }
+            },
+            "reason_code": "132",
+            "reason_description": "Cancelled Recurring",
+            "time_to_respond_by": "2020-03-11T13:34:38.276Z",
+            "result": "PENDING",
+            "last_adjustment_amount": "1500",
+            "last_adjustment_currency": "USD",
+            "last_adjustment_funding": "DEBIT"
+        },
+        {
+            "id": "DIS_SAND_abcd1236",
+            "time_created": "2020-02-23T13:34:38.276Z",
+            "status": "WITH_MERCHANT",
+            "stage": "SECOND_CHARGEBACK",
+            "amount": "2000",
+            "currency": "USD",
+            "system": {
+                "mid": "627384967",
+                "hierarchy": "111-23-099-001-001"
+            },
+            "payment_method": {
+                "card": {
+                    "number": "424242xxxxxx4242",
+                    "arn": "549365667487346",
+                    "brand": "VISA"
+                }
+            },
+            "reason_code": "137",
+            "reason_description": "Cancelled Merchandise/Services",
+            "time_to_respond_by": "2020-03-11T13:34:38.276Z",
+            "result": "PENDING",
+            "last_adjustment_amount": "2000",
+            "last_adjustment_currency": "USD",
+            "last_adjustment_funding": "DEBIT"
+        },
+        {
+            "id": "DIS_SAND_abcd1237",
+            "time_created": "2020-02-23T13:34:38.276Z",
+            "status": "WITH_MERCHANT",
+            "stage": "PRE_ARBITRATION",
+            "amount": "2500",
+            "currency": "USD",
+            "system": {
+                "mid": "627384967",
+                "hierarchy": "111-23-099-001-001"
+            },
+            "payment_method": {
+                "card": {
+                    "number": "424242xxxxxx4242",
+                    "arn": "217450078337808",
+                    "brand": "VISA"
+                }
+            },
+            "reason_code": "1261",
+            "reason_description": "Duplicate Processing",
+            "time_to_respond_by": "2020-03-11T13:34:38.276Z",
+            "result": "PENDING",
+            "last_adjustment_amount": "2500",
+            "last_adjustment_currency": "USD",
+            "last_adjustment_funding": "DEBIT"
+        },
+        {
+            "id": "DIS_SAND_abcd1238",
+            "time_created": "2020-02-23T13:34:38.276Z",
+            "status": "WITH_MERCHANT",
+            "stage": "ARBITRATION",
+            "amount": "3000",
+            "currency": "USD",
+            "system": {
+                "mid": "627384967",
+                "hierarchy": "111-23-099-001-001"
+            },
+            "payment_method": {
+                "card": {
+                    "number": "543267xxxxxx7207",
+                    "arn": "974871170906920",
+                    "brand": "MASTERCARD"
+                }
+            },
+            "reason_code": "4834",
+            "reason_description": "Point of Interaction Error",
+            "time_to_respond_by": "2020-03-11T13:34:38.276Z",
+            "result": "PENDING",
+            "last_adjustment_amount": "3000",
+            "last_adjustment_currency": "USD",
+            "last_adjustment_funding": "DEBIT"
+        }
+    ],
+    "action": {
+        "id": "ACT_5blBTHnIs4aOCIvGwG7KizYUpsGI0g",
+        "type": "DISPUTE_LIST",
+        "time_created": "2020-03-06T13:34:38.406Z",
+        "result_code": "SUCCESS",
+        "app_id": "7ABZlMiSukISskkxxtDTMzpTN5nG5Jjw",
+        "app_name": "ucp-disputes-testharness"
+    }
+}
+```
+</Code>
+
+
+## [Optional] Get dispute information
+Using the unique ID returned in the list, you can obtain the full dispute record to understand more about the disputes that were raised. This will provide you with more detail regarding a single dispute such as a chargeback, retrieval or arbitration.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl -L -X GET 'https://apis.sandbox.globalpay.com/unifiedcommerce/disputes/DIS_SAND_abcd1235' \
+  -H 'Authorization: Bearer 72hyeepo8DnW053OrqAEFwAzeDtC' \
+  -H 'X-GP-Version: 2020-01-20' \
+  -H 'Accept: application/json' \
+  -H 'Accept-Encoding: gzip'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+String disputeId = "DIS_SAND_abcd1235";
+
+try {
+    DisputeSummary dispute = ReportingService.disputeDetail(disputeId)
+            .execute();
+
+    // API raw response "id"
+    String id = dispute.getCaseId();
+    // API raw response "stage_time_created"
+    DateTime timeCreated = dispute.getCaseIdTime();
+    // API raw response "status"
+    String status = dispute.getCaseStatus();
+    // API raw response "stage"
+    String stage = dispute.getCaseStage();
+    // API raw response "stage_time_created"
+    DateTime stageTimeCreated = dispute.getCaseStageTime();
+    // API raw response "amount"
+    BigDecimal amount = dispute.getCaseAmount();
+    // API raw response "currency"
+    String currency = dispute.getCaseCurrency();
+    // API raw response "payer_amount"
+    BigDecimal payerAmount = dispute.getDisputeCustomerAmount();
+    // API raw response "payer_currency"
+    String payerCurrency = dispute.getDisputeCustomerCurrency();
+    // API raw response "reason_code"
+    String reasonCode = dispute.getReasonCode();
+    // API raw response "reason_description"
+    String reason = dispute.getReason();
+    // API raw response "order->reference"
+    String orderId = dispute.getTransactionOrderId();
+    // API raw response "time_to_respond_by"
+    DateTime respondByDate = dispute.getRespondByDate();
+    // API raw response "result"
+    String result = dispute.getResult();
+    // API raw response "system->mid"
+    String mid = dispute.getCaseMerchantId();
+    // API raw response "system->hierarchy"
+    String hierarchy = dispute.getMerchantHierarchy();
+    // API raw response "system->name"
+    String systemName = dispute.getMerchantName();
+    // API raw response "last_adjustment_amount"
+    BigDecimal lastAdjustmentAmount = dispute.getLastAdjustmentAmount();
+    // API raw response "last_adjustment_currency"
+    String lastAdjustmentCurrency = dispute.getLastAdjustmentCurrency();
+    // API raw response "last_adjustment_funding"
+    String lastAdjustmentFunding = dispute.getLastAdjustmentFunding();
+    // API raw response "last_adjustment_time_created"
+    String lastAdjustmentTimeCreated = dispute.getLastAdjustmentTimeCreated();
+    // API raw response "payment_method_provider->comment"
+    ArrayList<String> issuerComments = dispute.getIssuerComment();
+    // API raw response "payment_method_provider->reference"
+    ArrayList<String> issuerReferences = dispute.getIssuerCaseNumber();
+    // API raw response "transaction->time_created"
+    DateTime trnTimeCreated = dispute.getTransactionTime();
+    // API raw response "transaction->type"
+    String transactionType = dispute.getTransactionType();
+    // API raw response "transaction->amount"
+    BigDecimal transactionAmount = dispute.getTransactionAmount();
+    // API raw response "transaction->currency"
+    String transactionCurrency = dispute.getTransactionCurrency();
+    // API raw response "transaction->reference"
+    String transactionReferenceNumber = dispute.getTransactionReferenceNumber();
+    // API raw response "payment_method->card->number"
+    String transactionMaskedCardNumber = dispute.getTransactionMaskedCardNumber();
+    // API raw response "payment_method->card->arn"
+    String transactionARN = dispute.getTransactionARN();
+    // API raw response "payment_method->card->brand"
+    String transactionCardType = dispute.getTransactionCardType();
+    // API raw response "payment_method->card->authcode"
+    String transactionAuthCode = dispute.getTransactionAuthCode();
+    // API raw response "payment_method->card->brand_reference"
+    String transactionBrandReference = dispute.getTransactionBrandReference();
+    // API raw response "documents"
+    ArrayList<DisputeDocument> documents = dispute.getDocuments();
+    return;
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+string disputeId = "DIS_SAND_abcd1235";
+try
+{
+	DisputeSummary dispute = ReportingService.DisputeDetail(disputeId)
+		.Execute();
+	
+	// API raw response "id"
+	var id = dispute.CaseId;
+	// API raw response "stage_time_created"
+	var timeCreated = dispute.CaseIdTime;
+	// API raw response "status"
+	var status = dispute.CaseStatus;
+	// API raw response "stage_time_created"
+	var stageTimeCreated = dispute.CaseStageTime;
+	// API raw response "stage"
+	var stage = dispute.CaseStage;
+	// API raw response "amount"
+	var amount = dispute.CaseAmount;
+	// API raw response "currency"
+	var currency = dispute.CaseCurrency;
+	// API raw response "payer_amount"
+	var payerAmount = dispute.DisputeCustomerAmount;
+	// API raw response "payer_currency"
+	var payerCurrency = dispute.DisputeCustomerCurrency;
+	// API raw response "reason_code"
+	var reasonCode = dispute.ReasonCode;
+	// API raw response "reason_description"
+	var reason = dispute.Reason;
+	// API raw response "time_to_respond_by"
+	var respondByDate = dispute.RespondByDate;
+	// API raw response "result"
+	var result = dispute.Result;
+	// API raw response "last_adjustment_amount"
+	var lastAdjustmentAmount = dispute.LastAdjustmentAmount;
+	// API raw response "last_adjustment_currency"
+	var lastAdjustmentCurrency = dispute.LastAdjustmentCurrency;
+	// API raw response "last_adjustment_funding"
+	var lastAdjustmentFunding = dispute.LastAdjustmentFunding;
+	// API raw response "system->mid"
+	var mid = dispute.CaseMerchantId;
+	// API raw response "system->hierarchy"
+	var systemHierarchy = dispute.MerchantHierarchy;
+	// API raw response "payment_method->card->number"
+	var maskedCardNumber = dispute.TransactionMaskedCardNumber;
+	// API raw response "payment_method->card->arn"
+	var arn = dispute.TransactionARN;
+	// API raw response "payment_method->card->brand"
+	var cardType = dispute.TransactionCardType;
+	// API raw response "payment_method->card->authcode"
+	var transactionAuthCode = dispute.TransactionAuthCode;
+	// API raw response "payment_method->card->brand_reference"
+	var transactionBrandReference = dispute.TransactionBrandReference;
+	// API raw response "order->reference"
+	var orderId = dispute.TransactionOrderId;
+	// API raw response "documents"
+	var documents = dispute.Documents;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$disputeId = "DIS_SAND_abcd1235";
+
+try {
+    /** @var \GlobalPayments\Api\Entities\Reporting\DisputeSummary $dispute */
+    $dispute = ReportingService::disputeDetail($disputeId)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response "id"
+$id = $dispute->caseId;
+// API raw response "stage_time_created"
+$timeCreated = $dispute->caseIdTime;
+// API raw response "status"
+$status = $dispute->caseStatus;
+// API raw response "stage"
+$stage = $dispute->caseStage;
+// API raw response "stage_time_created"
+$stageTimeCreated = $dispute->disputeStageTime;
+// API raw response "amount"
+$amount = $dispute->caseAmount;
+// API raw response "currency"
+$currency = $dispute->caseCurrency;
+// API raw response "payer_amount"
+$payerAmount = $dispute->disputeCustomerAmount;
+// API raw response "payer_currency"
+$payerCurrency = $dispute->disputeCustomerCurrency;
+// API raw response "reason_code"
+$reasonCode = $dispute->reasonCode;
+// API raw response "reason_description"
+$reason = $dispute->reason;
+// API raw response "order->reference"
+$orderId = $dispute->orderId;
+// API raw response "time_to_respond_by"
+$respondByDate = $dispute->respondByDate;
+// API raw response "result"
+$result = $dispute->result;
+// API raw response "system->mid"
+$mid = $dispute->caseMerchantId;
+// API raw response "system->hierarchy"
+$hierarchy = $dispute->merchantHierarchy;
+// API raw response "system->name"
+$systemName = $dispute->merchantName;
+// API raw response "last_adjustment_amount"
+$lastAdjustmentAmount = $dispute->lastAdjustmentAmount;
+// API raw response "last_adjustment_currency"
+$lastAdjustmentCurrency = $dispute->lastAdjustmentCurrency;
+// API raw response "last_adjustment_funding"
+$lastAdjustmentFunding = $dispute->lastAdjustmentFunding;
+// API raw response "last_adjustment_time_created"
+$lastAdjustmentTimeCreated = $dispute->lastAdjustmentTimeCreated;
+// API raw response "payment_method_provider->comment"
+$issuerComments = $dispute->issuerComment;
+// API raw response "payment_method_provider->reference"
+$issuerReferences = $dispute->issuerCaseNumber;
+// API raw response "transaction->time_created"
+$trnTimeCreated = $dispute->transactionTime;
+// API raw response "transaction->type"
+$transactionType = $dispute->transactionType;
+// API raw response "transaction->amount"
+$transactionAmount = $dispute->transactionAmount;
+// API raw response "transaction->currency"
+$transactionCurrency = $dispute->transactionCurrency;
+// API raw response "transaction->reference"
+$transactionReferenceNumber = $dispute->transactionReferenceNumber;
+// API raw response "payment_method->card->number"
+$transactionMaskedCardNumber = $dispute->transactionMaskedCardNumber;
+// API raw response "payment_method->card->arn"
+$transactionARN = $dispute->transactionARN;
+// API raw response "payment_method->card->brand"
+$transactionCardType = $dispute->transactionCardType;
+// API raw response "payment_method->card->authcode"
+$transactionAuthCode = $dispute->transactionAuthCode;
+// API raw response "payment_method->card->brand_reference"
+$transactionBrandReference = $dispute->transactionBrandReference;
+// API raw response "documents"
+$documents = $dispute->documents;
+```
+</Code>
+</CodeGroup>
+
+### Disputes information response
+The information returned in the response provides you with all the details regarding this dispute. This includes the current status of the dispute, the time and date when it was created, and any investigator comments. To see the full list of data that can be returned, see [Disputes](/api/disputes) in the API Explorer.
+
+#### Sample response
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+  "id": "DIS_SAND_abcd1235",
+  "time_created": "2020-02-26T09:31:43.806Z",
+  "merchant_id": "MER_62251730c5574bbcb268191b5f315de8",
+  "merchant_name": "TEST MERCHANT",
+  "account_id": "DIA_882c832d13e04185bb6e213d6303ed98",
+  "account_name": "testdispute",
+  "status": "WITH_MERCHANT",
+  "status_time_created": "2020-02-28T09:31:43.806Z",
+  "stage": "CHARGEBACK",
+  "stage_time_created": "2020-03-02T09:31:43.806Z",
+  "amount": "1500",
+  "currency": "USD",
+  "payer_amount": "1500",
+  "payer_currency": "USD",
+  "merchant_amount": "1500",
+  "merchant_currency": "USD",
+  "reason_code": "132",
+  "reason_description": "Cancelled Recurring",
+  "time_to_respond_by": "2020-03-14T09:31:43.806Z",
+  "result": "PENDING",
+  "investigator_comment": "WITH_MERCHANT CHARGEBACK PENDING 1500 USD 1500 USD",
+  "system": {
+      "mid": "627384967",
+      "hierarchy": "111-23-099-001-001",
+      "name": "ABC INC."
+  },
+  "last_adjustment_amount": "1500",
+  "last_adjustment_currency": "USD",
+  "last_adjustment_funding": "DEBIT",
+  "last_adjustment_time_created": "2020-03-05T09:31:43.806Z",
+  "net_financial_amount": "1500",
+  "net_financial_currency": "USD",
+  "net_financial_funding": "DEBIT",
+  "payment_method_provider": [
+      {
+          "comment": "issuer comments 34524",
+          "reference": "issuer-reference-0002",
+          "documents": []
+      }
+  ],
+  "transaction": {
+      "time_created": "2020-01-19T09:31:43.806Z",
+      "type": "SALE",
+      "amount": "1500",
+      "currency": "USD",
+      "reference": "my-trans-AAA2",
+      "remarks": "my-trans-AAA2",
+      "payment_method": {
+          "card": {
+              "number": "424242xxxxxx4242",
+              "arn": "123934529762282",
+              "brand": "VISA",
+              "authcode": "AA2399",
+              "brand_reference": "898375467348954"
+          }
+      }
+  },
+  "documents": [
+      {
+          "id": "DOC_MyEvidence_234234AVCDE-1",
+          "type": "SALES_RECEIPT"
+      }
+  ],
+  "action": {
+      "id": "ACT_5blBTHnIs4aOCIvGwG7KizYUpsGI0g",
+      "type": "DISPUTE_SINGLE",
+      "time_created": "2020-03-09T09:31:43.877Z",
+      "result_code": "SUCCESS",
+      "app_id": "7ABZlMiSukISskkxxtDTMzpTN5nG5Jjw",
+      "app_name": "ucp-disputes-testharness"
+  }
+}
+```
+</Code>
+
+## Step 2: Accept or challenge a dispute
+In the scenario of a chargeback or retrieval case, there are two actions you can take regarding the dispute: accept and take liability for the dispute or challenge it.
+
+### Challenge a dispute
+A dispute challenge requires some evidence, depending on the case type. This evidence can be in the form of a sales receipt, proof of delivery, or a copy of the terms and conditions. Each evidence document must be submitted as a base64-encoded string.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl -L -X POST 'https://apis.sandbox.globalpay.com/unifiedcommerce/disputes/DIS_SAND_abcd1235/challenge' \
+  -H 'Authorization: Bearer 72hyeepo8DnW053OrqAEFwAzeDtC' \
+  -H 'X-GP-Version: 2020-01-20' \
+  -H 'Accept: application/json' \
+  -H 'Accept-Encoding: gzip' \
+  -H 'Content-Type: application/json' \
+  -D '{
+    "documents": [
+      {
+      "type": "SALES_RECEIPT",
+      "b64_content": "R0lGODlhigPCAXAAACwAAAAAigPCAYf///8AQnv"
+      }
+    ]
+  }'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+DisputeSummary dispute = new DisputeSummary().fromId("DIS_SAND_abcd1234");
+DisputeDocument document = new DisputeDocument();
+document.setType("SALES_RECEIPT");
+document.setBase64Content("R0lGODlhigPCAXAAACwAAAAAigPCAYf///8AQnv");
+ArrayList<DisputeDocument> documents = new ArrayList<>();
+documents.add(document);
+
+try {
+    Transaction response = dispute.challenge(documents)
+            .execute();
+
+    // API raw response "id"
+    String id = response.getTransactionId();
+    // API raw response "status"
+    String status = response.getResponseMessage();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    return;
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+var disputeDocuments = new List<DisputeDocument> {
+	new DisputeDocument {
+		Type = "SALES_RECEIPT",
+		Base64Content = "R0lGODlhigPCAXAAACwAAAAAigPCAYf///8AQnv",
+	},
+	new DisputeDocument {
+		Type = "TERMS_AND_CONDITIONS",
+		Base64Content = "R0lGODlhigPCAXAAACwAAAAAigPCAYf///8AQnv",
+	}
+};
+DisputeSummary dispute = new DisputeSummary { 
+	CaseId = "DIS_SAND_abcd1241" 
+};
+try
+{
+	Transaction response = dispute.Challenge(disputeDocuments)
+		.Execute();
+	
+	// API raw response "id"
+	var id = response.TransactionId;
+	// API raw response "status"
+	var status = response.ResponseMessage;
+	// API raw response "action->result_code"
+	var responseCode = response.ResponseCode;
+	// API raw response "amount"
+	var amount = response.BalanceAmount;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$dispute = DisputeSummary::fromId("DIS_SAND_abcd1234");
+$document = new DisputeDocument();
+$document->type = 'SALES_RECEIPT';
+$document->b64_content = 'R0lGODlhigPCAXAAACwAAAAAigPCAYf///8AQnv';
+$documents[] = $document;
+try {
+    /** @var DisputeSummary $dispute */
+    $response = $dispute->challenge($documents)->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response "id"
+$id = $response->transactionId;
+// API raw response "status"
+$status = $response->responseMessage;
+// API raw response "action->result_code"
+$responseCode = $response->responseCode;
+// API raw response "amount"
+$amount = $response->balanceAmount;
+```
+</Code>
+</CodeGroup>
+  
+### Dispute challenge response
+The response of the challenge request contains information on the case, including the status, stage, and the result of the dispute. If successful, the evidence provided is sent to us to review and then sent to the issuer to support the chargeback case. If unsuccessful, detailed information is provided regarding the error.
+
+#### Sample response
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+ {
+    "id": "DIS_SAND_abcd1235",
+    "status": "UNDER_REVIEW",
+    "stage": "CHARGEBACK",
+    "amount": "1500",
+    "currency": "USD",
+    "reason_code": "132",
+    "reason_description": "Cancelled Recurring",
+    "result": "PENDING",
+    "documents": [
+        {
+            "id": "DOC_MyEvidence_234234AVCDE-0"
+        }
+    ],
+    "action": {
+        "id": "ACT_5blBTHnIs4aOCIvGwG7KizYUpsGI0g",
+        "type": "CHALLENGE",
+        "time_created": "2020-03-09T14:45:05.575Z",
+        "result_code": "SUCCESS",
+        "app_id": "7ABZlMiSukISskkxxtDTMzpTN5nG5Jjw",
+        "app_name": "ucp-disputes-testharness"
+    }
+}   
+```
+</Code>
+  
+### Accept a dispute
+There are a number of reasons to accept and take liability of a dispute. These reasons include:
+
+* If the dispute case is in fact valid.
+* The amount disputed is minimal and challenging the transaction does not justify the work involved.
+* To avoid proceeding to arbitration.
+
+To accept liability for a dispute, you just need to provide the unique ID of the case.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```  
+curl -L -X POST 'https://apis.sandbox.globalpay.com/unifiedcommerce/disputes/DIS_SAND_abcd1236/acceptance' \
+  -H 'Authorization: Bearer 72hyeepo8DnW053OrqAEFwAzeDtC' \
+  -H 'X-GP-Version: 2020-01-20' \
+  -H 'Accept: application/json' \
+  -H 'Accept-Encoding: gzip' \
+  -H 'Content-Type: application/json'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+DisputeSummary dispute = new DisputeSummary().fromId("DIS_SAND_abcd1234");
+
+try {
+    Transaction response = dispute.accept()
+            .execute();
+
+    // API raw response "id"
+    String id = response.getTransactionId();
+    // API raw response "status"
+    String status = response.getResponseMessage();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    return;
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+DisputeSummary dispute = new DisputeSummary { 
+	CaseId = "DIS_SAND_abcd1234" 
+};
+try
+{
+	Transaction response = dispute.Accept()
+		.Execute();
+	
+	// API raw response "id"
+	var id = response.TransactionId;
+	// API raw response "status"
+	var status = response.ResponseMessage;
+	// API raw response "action->result_code"
+	var responseCode = response.ResponseCode;
+	// API raw response "amount"
+	var amount = response.BalanceAmount;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$dispute = DisputeSummary::fromId("DIS_SAND_abcd1234");
+
+try {
+    $response = $dispute->accept()->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response "id"
+$id = $response->transactionId;
+// API raw response "status"
+$status = $response->responseMessage;
+// API raw response "amount"
+$amount = $response->balanceAmount;
+```
+</Code>
+</CodeGroup>
+
+### Accept response
+The response contains the status, stage, and the result of the dispute. It also contains information on the result of the action, whether it was successful or not.
+
+By accepting the dispute, you accept the liability of the dispute. The customer then retains the funds, and the case is closed. This also indicates that you do not want to take any further action in the case.
+
+#### Sample response
+<Code id="JSON" title="JSON" language="JSON" active>
+```  
+{
+    "id": "DIS_SAND_abcd1236",
+    "status": "CLOSED",
+    "stage": "SECOND_CHARGEBACK",
+    "amount": "2000",
+    "currency": "USD",
+    "reason_code": "137",
+    "reason_description": "Cancelled Merchandise/Services",
+    "result": "ACCEPTED",
+    "action": {
+        "id": "ACT_5blBTHnIs4aOCIvGwG7KizYUpsGI0g",
+        "type": "ACCEPT",
+        "time_created": "2020-03-10T10:30:43.322Z",
+        "result_code": "SUCCESS",
+        "app_id": "7ABZlMiSukISskkxxtDTMzpTN5nG5Jjw",
+        "app_name": "ucp-disputes-testharness"
+    }
+}
+```
+</Code>
+
+
+## Testing Disputes Management
+Our Disputes Management solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Integration references
+To get a deeper understanding of Disputes Management, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+
+    <Card type="with_icon" link="/api/disputes" title="API /disputes" icon="window">
+        Create and retrieve payment links.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for Disputes Management.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/reporting/real-time-reporting-guide" title="Real-Time Data Reporting" icon="file-chart-column">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/reporting/settlement-reporting-overview" title="Settlement Reporting" icon="file-alt">
+        Integrate with alternative and local payment methods.
+    </Card>
+  <Card type="with_icon" link="/docs/operations/file-processing-overview" title="File Processing" icon="file-arrow-up">
+        Integrate with alternative and local payment methods.
+    </Card>
+  </CardsGroup>

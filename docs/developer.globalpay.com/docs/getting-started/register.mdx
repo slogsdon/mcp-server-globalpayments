@@ -1,0 +1,132 @@
+---
+title: 'Register / Create an App'
+search_results: 'Global Payments Developer Portal'
+subtitle: 'Set up a free account and learn how to get your test credentials'
+tag: 'rest'
+created: '17/07/2024'
+---
+We’re happy you’ve decided to join us! There are a few things you need to take care of first before testing payments:
+* [Get registered](#get-registered)
+* [Create an app (generate keys)](#create-an-app-generate-keys)
+
+You’ll also find information on [what apps are](#what-are-apps), [managing your apps](#manage-your-apps), as well as an [apps glossary](#apps-glossary) to help you better understand our terminology. 
+
+## Get registered
+To use our free Sandbox test environment, you must be a registered user of our developer portal. Once registered, you can manage app test credentials for your different projects, test your integration before going live or try out new features, save your favorite pages to pick up where you left off, and join our Research Community to preview new features.
+
+<Infobox>
+If you already have an account on our Reporting or Disputes tools for merchants, you can use the same login for our developer portal. You just need to add your company name and region.
+    </Infobox>
+
+To get registered, click **Log In | Register** in the top-right corner of any page or click below.
+
+<index-button type="anchor" href="/user/b2c-login">Get Registered Now</index-button>
+
+## What are apps?
+We use the term _app_ to describe a set of credentials that developers need to execute API actions on our gateway. Each app consists of an App ID and App Key. The two together help to create a bearer token to access our endpoints and enable you to transact using REST API. An app also includes permission settings to customize capabilities, which in turn determines what API actions are allowed when sending requests.
+
+<Infobox type="danger">
+         App credentials (App ID and App Key) are specific to merchants and should never be shared with any unauthorized person.
+</Infobox>
+
+##### Sandbox test environment
+For Sandbox testing, you create your own apps from your account page of this developer portal and configure them as needed for testing your integration. Each test app can serve as an individual project you’re working on — for example, one app to test your ecommerce website and a second to test your ecommerce mobile application. However, you really only need one test app to access the Sandbox endpoint.
+
+<Code id="JSON" title="Sandbox" language="json" active>
+```
+https://apis.sandbox.globalpay.com
+```
+</Code>
+
+
+##### Production live environment
+When you eventually have a real Production account with us, an account manager will configure your app(s) based on what capabilities you sign up for and how many linked businesses you have. In Production, capabilities are referred to as _accounts_ because the `account_name` and `account_id` fields are used to identify what data your API request can access when you're processing real payments with us. Your account manager can add new accounts for you at any time, not just during the onboarding process.
+
+<Code id="JSON" title="Production" language="json" active>
+```
+https://apis.globalpay.com
+```
+</Code>
+
+### Permissions define capabilities
+For each test app you create, you can customize permissions to limit capabilities. Capabilities refer to our payment-processing solutions such as Transaction Processing, Tokenization, Dispute Management, Settlement Reporting, and so on. By default, all permissions are enabled when you first create a test app, so you would have to clear checkboxes to limit any capabilities. For more information on capabilities, see [Account Capabilities](/api/definitions/account-capabilities) in API Definitions.
+
+You can further customize each capability by deciding which individual request types (GET, POST, PATCH) for transactions, verifications, and authentications you want to allow. For example, for `dispute_management`, you could allow only `[GET] Disputes` to run a certain test scenario. 
+
+Our test apps are highly configurable for several reasons. You can try a new capability to see how it works before adding it to your Production account. Or, maybe you have several merchants you’re developing for and each one has (or will have) different capabilities enabled. In that case, you could create a test app for each merchant.
+
+## Create an app (generate keys)
+Before you can start testing your integration, you need to create your first test app to generate the test credentials needed to access our Sandbox endpoint (App ID and App Key). For more information on test apps, see the [What are apps?](#what-are-apps) section.
+
+To create an app:
+
+1.  From any Developer Portal page, click the Profile icon, and select **My Account**.<br/>
+    _You must be logged in to access this menu item_.
+2.  In the My Sandbox Credentials section of your dashboard, click the **Create a New App** arrow, and select **Unified Payments**. <br/>
+    _The Create an App page appears_.
+3.  Enter a name for your test app in the **Display Name** field. For example: _UK Website_ or _US Mobile App Transaction Processing_ <br/>  
+    _The display name can be changed at any time. However, the machine-readable app_name can’t be changed once the app is saved_.
+4.  ++Optional++: By default, a new app has all available capabilities and permissions enabled. To limit them, do the following. Otherwise, skip to the next step. 
+    1.  For the capability you want to limit, click its **Permissions** arrow (for example, _dispute_management_). To search for a certain capability, use the search box. <br/>
+        _The permissions dialog for that capability appears_.
+    2.  To search for a certain request type (for example, GET), use the search box.
+    3.  Clear the checkboxes for the permissions you want to disable. To disable all permissions for a capability, clear the **Select All** checkbox. 
+    4.  When finished, click the **Permissions** arrow again to close the dialog. Any changes will be reflected in the blue Enabled number. <br/> 
+        ++Note++: Changes are not yet saved at this point.
+5.  When finished creating the app, scroll down and click **Generate Keys**.  
+    _Your app credentials now appear on the left panel. You can copy them to use in the configuration section of your API request._
+6.  To return to your account, click the breadcrumb link at the top of the page. <br/> 
+    _Your new app appears in the My Sandbox Credentials table_.
+
+## Manage your apps
+You can create as many test apps as you need. We suggest giving them useful names so that you can keep track of them. For example, you may want to indicate the location that your simulated transactions will originate from or the permissions that the test app will have. So, you could name your test app something like, _US Apparel Online Transaction Processing_. You can’t delete a test app, but if you no longer want to use it, you can switch it off.
+
+Once you’ve created a test app, you can then view (and copy) your credentials (App Key + App ID) or edit the app to change the display name or reconfigure permissions at any time. 
+
+For more information on test apps, see the [What are apps?](#what-are-apps) section. 
+
+To view your credentials:
+
+1. From any Developer Portal page, click the Profile icon, and select **My Keys**.
+_You must be logged in to access this menu item_.
+2. In the **My Sandbox Credentials** section, locate the app you want to view keys for in the app list.
+3. Click **View Credentials**.
+_The credentials appear in a dialog_.
+4. To copy the credentials, click the copy icon. You can then paste the data into the configuration section of your API request. You’ll need to include both the App Key and App ID in the request.
+5. When finished viewing, click **Close**.
+
+To edit an app:
+
+1. From any Developer Portal page, click the Profile icon, and select **My Keys**.
+_You must be logged in to access this menu item_.
+2. In the **My Sandbox Credentials** section, locate the app you want to edit in the app list.
+3. Click **Edit App**.
+_The app details page appears_.
+4. To edit your app’s name, click in the **Display Name** field and enter the new name. When finished, scroll down to click **Save**. Or, click **Cancel** to cancel.
+_The machine-readable name for your app (App Name field) can’t be changed_.
+5. To configure capabilities and permissions for your app, use the **App Permissions** section. (For more information on capabilities, see [Account Capabilities](/api/definitions/account-capabilities) in API Definitions.)
+    1. For the capability you want to limit, click its **Permissions** down arrow (for example, _dispute_management_). To search for a certain capability, use the search box. <br /> _The permissions dialog for that capability appears_.
+    2. To search for a certain request type (for example, GET), use the search box.
+    3. Clear the checkboxes for the permissions you want to disable. To disable all permissions for a capability, clear the **Select All** checkbox. 
+    4. When finished, click the **Permissions** down arrow again to close the dialog. Any changes will be reflected in the blue Enabled number. <br/> ++Note:++ Changes are not yet saved at this point.
+6. When you’re finished editing your app, scroll down to click **Save**.
+
+## Apps glossary
+Here are some important terms related to app creation and management. 
+
+| Term    | Definition |
+| ------- | ---------- |
+| Account(s) | Payment-processing capabilities that can be added when you sign up with us, the most fundamental of which is Transaction Processing. Others include Tokenization, Dispute Management, Settlement Reporting, Risk Assessment, etc. Each capability you add is considered an account. You can only execute API actions based on what accounts you have configured.  |
+| Account ID | Unique identification of a capability type (i.e., one of our payment-processing solutions) that allows certain data to be accessed through an API request. When you want to use a capability in an API call, you need to include its ID in the API request’s account_id field. The first three letters identify which account capability it is (see Account Name entry). For example, an Account ID for Transaction Processing (TRA) would look something like this: TRA_123456789a123456789b123456789c |
+| Account Name | Standardized name of a capability type (i.e., one of our payment-processing solutions) that allows certain data to be accessed through an API request. When you want to use a capability in an API call, you need to include its name in the API request’s account_name field. Examples include: transaction_processing, dispute_management, risk_assessment, settlement_reporting |
+| App | Set of credentials that you need to execute API actions on our server. Each app consists of an App ID and App Key, which together serve as a bearer token to access our endpoints. An app also includes customized capabilities, which in turn determine what API actions are allowed when sending requests. For more information, see the [What are apps?](#what-are-apps) section. |
+| App Name | Machine-readable version of the display name you give your app when you first create it (i.e., underscores replace blank spaces). It’s created automatically and can be edited before the app is first saved but not after. Allowed characters: `[a-z_0-9]`. |
+| App ID & App Key | Set of credentials needed to access our server and execute API actions. To generate these credentials, you need to create a test app. Only one test app is necessary to access our Sandbox endpoint, but you might want to create several for different testing projects. <br /> **Note: These credentials are specific to a merchant and should not be shared.** |
+| Capability | One of our payment-processing solutions, the most fundamental of which is Transaction Processing. Others include Tokenization, Dispute Management, Settlement Reporting, Risk Assessment, etc. In Production, capabilities are referred to as _accounts_. |
+| Display Name (App) | Name that you give your test app. You can edit it at any time, but its associated machine-readable name (App Name field) can’t be edited once the test app has been created. |
+| Merchant | A person or business entity who is authorized to use our API. A merchant can only execute API actions based on the accounts configured for them and the permissions on those accounts. |
+| Merchant ID | System-generated unique identifier associated with an app. It’s specific to our API and is used to identify a merchant on our platform. Uses the prefix MER. <br /> For example: MER_7e3e2c7df34f42819b3edee31022ee3f |
+| Permissions | The individual request types (GET, POST, PATCH) for transactions, verifications, and authentications that are allowed for a capability in a test app. You can edit permissions for each capability associated with a test app. All required permissions are enabled by default when you first create a test app. |
+
+## Next steps
+Now that you have your test app credentials, there's one more thing you need before you can start building your integration: [an access token](/docs/getting-started/generate-token).

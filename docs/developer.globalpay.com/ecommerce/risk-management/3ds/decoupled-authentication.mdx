@@ -1,0 +1,299 @@
+---
+title: "Decoupled Authentication"
+subtitle: "Verify a customer's identity via a separate channel"
+tag: "xml"
+created: "01/28/2025"
+---
+In a standard browser or in-app 3D Secure 2 authentication, if a challenge is required it's always presented to the customer as part of the payment process during the transaction. For example, the challenge screen is displayed to the customer in their browser for a maximum of 10 minutes before it times out.
+
+In a _decoupled authentication_, the authentication of the customer (or challenge) occurs outside of their interaction with the merchant website or app. This method verifies the customer’s identity and authenticates the transaction via a separate channel—for example, a push notification to their banking app or via email. Merchants can set a time limit ranging from minutes to up to a week for the long the authentication may take.
+
+Decoupled authentication can be used as an alternative to the standard browser or in-app authentication methods provided by 3D Secure 2. It can also be used for scenarios where the customer does not have access to either a browser or app, for example, pay by text/SMS.
+
+The other use case for decoupled authentication is 3DS Requester (3RI) authentications, also known as merchant-initiated authentications. For more information on 3RI authentications, see [Merchant-Initiated Authentication (3RI)](/ecommerce/risk-management/3ds/3ri).
+
+## Step 1: Set up Notification URL
+
+The first thing we need to do before performing a decoupled authentication is set up and configure an endpoint in your application or website that will receive data and event notifications from us.
+
+This endpoint will receive a POST request with the Server Transaction ID as the URL parameter. This notifies you that the decoupled authentication is complete, and you can get the full authentication data by processing an Obtain Authentication Data request.
+
+For example, if your Decoupled Notification endpoint is:
+
+<Code id="markup" title="" language="markup">
+```
+  https://www.example.com/decoupledNotificationUrl
+```
+</Code>
+
+The POST from our 3D Secure 2 solution will be in the following format:
+
+<Code id="markup" title="" language="markup">
+```
+https://www.example.com/decoupledNotificationUrl?server_trans_id=ad0fffeb-bfff-44d0-881f-b857fe77c5a2
+```
+</Code>
+
+## Step 2: Check version
+
+In any 3D Secure 2 authentication, you must first check what versions of the protocol the card supports. In addition, the ACS Information Indicator field in the Check Version response tells us what 3D Secure 2 features the Issuer ACS can or cannot support. If the Issuer supports decoupled authentications, one of the values in this field will be: DECOUPLED_AUTHENTICATION_SUPPORTED
+
+For more information on the Check Version request, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+#### Sample request
+
+<Code id="json" title="JSON" language="json">
+```
+curl https://api.sandbox.globalpay-ecommerce.com/3ds2/protocol-versions
+-H "Content-type: application/json"
+-H "X-GP-VERSION: 2.2.0"
+-H "Authorization: securehash 0204a841510d67a46fbd305a60253d7bade32c6e"
+-X POST
+-d '{
+   "request_timestamp": "2019-07-30T08:41:07.590604",
+   "merchant_id": "MerchantId",
+   "account_id": "internet",
+   "number": "4263970000005262",
+   "scheme": "VISA",
+   "method_notification_url": "https://www.example.com/dsNotificationUrl"
+}'
+```
+</Code>
+
+#### Sample response
+
+<Code id="json" title="JSON" language="json">
+```
+{
+   "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+   "enrolled": true,
+   "ds_protocol_version_start": "2.1.0",
+   "ds_protocol_version_end": "2.2.0",
+   "acs_protocol_version_start": "2.1.0",
+   "acs_protocol_version_end": "2.2.0",
+   "acs_info_indicator": [
+      "AUTHENTICATION_AVAILABLE_AT_ACS","DECOUPLED_AUTHENTICATION_SUPPORTED"
+   ],
+   "method_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+   "method_data": {
+      "three_ds_server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+      "three_ds_method_notification_url": "https://www.example.com/dsNotificationUrl",
+      "encoded_method_data": "eyJ0aHJlZURTTWV0aG9kTm90aWZpY2F0aW9uVVJMIjoiaHR0cHM6XC9cL3d3dy5leGFtcGxlLmNvbVwvbm90aWZpY2F0aW9uVXJsIiwidGhyZWVEU1NlcnZlclRyYW5zSUQiOiJhZjY1YzM2OS01OWI5LTRmOGQtYjJmNi03ZDdkNWY1YzY5ZDUifQ"
+   }
+}
+```
+</Code>
+
+## Step 3: Initiate authentication
+In the authentication request, indicate that you want to perform a decoupled authentication and provide the maximum timeframe allowed, for example, 15 minutes, 2 days, or 1 week. You must also include your Decoupled Authentication URL.
+
+The Issuer responds to confirm whether decoupled authentication will be utilized for this transaction. If so, the Issuer authenticates the customer separately from the standard challenge authentication a customer experiences when purchasing using a browser or in-app. For example, a push notification through their banking app.
+
+For more information on the Initiate Authentication request, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+#### Sample request
+
+<Code id="json" title="JSON" language="json">
+```
+curl https://api.sandbox.globalpay-ecommerce.com/3ds2/authentications
+-H "Content-type: application/json"
+-H "X-GP-VERSION: 2.2.0"
+-H "Authorization: securehash abafc599cfa60c94b8f41d0668dac5ed6b0a21f7"
+-X POST
+-d '{
+   "request_timestamp": "2019-07-30T08:52:44.991911",
+   "authentication_source": "BROWSER",
+   "authentication_request_type": "PAYMENT_TRANSACTION",
+   "message_category": "PAYMENT_AUTHENTICATION",
+   "message_version": "2.2.0",
+   "challenge_request_indicator":"NO_PREFERENCE",
+   "server_trans_id": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+   "merchant_id": "MerchantId",
+   "account_id": "internet",
+   "card_detail": {
+      "number": "4263970000005262",
+      "scheme": "VISA",
+      "expiry_month": "10",
+      "expiry_year": "25",
+      "full_name": "James Mason"
+   },
+   "order": {
+      "date_time_created": "2019-04-26T10:19:32.552327",
+      "amount": "1001",
+      "currency": "EUR",
+      "id": "3400dd37-101d-4940-be15-3c963b6109b3",
+      "address_match_indicator": "false",
+      "shipping_address": {
+         "line1": "Apartment 852",
+         "line2": "Complex 741",
+         "line3": "House 963",
+         "city": "Chicago",
+         "postal_code": "50001",
+         "state": "IL",
+         "country": "840"
+      }
+   },
+   "payer": {
+      "email": "james.mason@example.com",
+      "billing_address": {
+         "line1": "Flat 123",
+         "line2": "House 456",
+         "line3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "W5 9HR",
+         "country": "826"
+      },
+      "mobile_phone": {
+         "country_code": "44",
+         "subscriber_number": "7123456789"
+      }
+   },
+   "decoupled_flow_request":"true",
+   "decoupled_flow_timeout":"40", 
+   "decoupled_notification_url": "https://www.example.com/decoupledNotificationUrl",
+   "challenge_notification_url": "https://www.example.com/challengeNotificationUrl",
+   "method_url_completion": "YES",
+   "browser_data": {
+      "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+      "color_depth": "TWENTY_FOUR_BITS",
+      "ip": "123.123.123.123",
+      "java_enabled": "true",
+      "javascript_enabled": "true",
+      "language": "en-US",
+      "screen_height": "1080",
+      "screen_width": "1920",
+      "challenge_window_size": "FULL_SCREEN",
+      "timezone": "0",
+      "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+   },
+   "merchant_contact_url": "https://www.example.com/about"
+}'
+```
+</Code>
+
+#### Request syntax (specific fields)
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Decoupled Flow Request | string | enum | O   | N/A | Indicates whether the Merchant requests to utilise Decoupled Authentication. Values accepted:  <br/>  <br/>**true**  <br/>**false**  <br/>  <br/>European merchants: optional for SCA. If not included in the request the default is false. |
+| Decoupled Flow Timeout | string | string | C   | 1-5 | Indicates the maximum amount of time that the Merchant will wait for an ACS to provide the results of a Decoupled Authentication transaction (in minutes).  <br/>Numeric values between 1 and 10080 accepted (minutes)  <br/>  <br/>Required if Decoupled Flow Request is set to true.  <br/>European merchants: optional for SCA. |
+| Decoupled Notification URL | string | URL | O   | 1-256 | The URL in your application that will receive the notification when the customer has completed the authentication. |
+
+#### Sample response
+
+If you submit the decoupled fields in the request, the response will include the ACS Decoupled Confirmation Indicator, which will tell you whether it is used or not.
+
+<Code id="json" title="JSON" language="json">
+```
+{
+   "server_trans_id": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+   "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+   "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+   "authentication_type": "DYNAMIC_CHALLENGE",
+   "challenge_mandated": true,
+   "status": "DECOUPLED_AUTHENTICATION_CONFIRMED",
+   "status_reason": "LOW_CONFIDENCE",
+   "challenge_request_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+   "authentication_source": "BROWSER",
+   "message_category": "PAYMENT_AUTHENTICATION",
+   "message_version": "2.2.0",
+   "encoded_creq": "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImFjc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VXaW5kb3dTaXplIjoiNjAweDQwMCIsIm1lc3NhZ2VUeXBlIjoiQ3JlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAifQ",
+   "acs_reference_number": "3DS_LOA_ACS_201_13579",
+   "decoupled_response_indicator": "DECOUPLED_AUTHENTICATION_UTILISED",
+   "whitelist_status": "PENDING_CARDHOLDER_CONFIRMATION"
+}
+```
+</Code>
+
+#### Response syntax (specific fields)
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Decoupled Response Indicator | string | enum | Indicates whether the ACS will utilise Decoupled Authentication to authenticate the Cardholder. Possible values:  <br/>  <br/>**DECOUPLED\_AUTHENTICATION\_UTILISED**  <br/>**DECOUPLED\_AUTHENTICATION\_NOT\_UTILISED** |
+
+## Step 4: Obtain authentication data
+
+Once authentication is complete, the card issuer sends the result to us. Our 3D Secure 2 solution then sends a POST with the Server Transaction ID to your Decoupled Notification endpoint. At that point, you can use the standard Obtain Authentication Data request to obtain the result and the corresponding data necessary for authorization such as the ECI, Authentication Value, and Directory Server (DS) Transaction ID.
+
+For more information on the Obtain Authentication request, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+The format of the request to obtain authentication data is:
+
+<Code id="markup" title="" language="markup">
+```
+https://api.sandbox.globalpay-ecommerce.com/3ds/authentications/{server_trans_id}?merchant_id={merchant_id}&request_timestamp={request_timestamp}
+```
+</Code>
+
+#### Sample request
+
+For more information on this functionality, including the full syntax of the request/response and how to build the digital signature or hash, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+#### Sample response
+
+<Code id="json" title="JSON" language="json">
+```
+{
+   "server_trans_id": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+   "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+   "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+   "authentication_type": "DYNAMIC_CHALLENGE",
+   "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+   "eci": "05",
+   "challenge_mandated": true,
+   "status": "AUTHENTICATION_SUCCESSFUL",
+   "status_reason": "MEDIUM_CONFIDENCE",
+   "challenge_request_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+   "authentication_source": "BROWSER",
+   "message_category": "PAYMENT_AUTHENTICATION",
+   "message_version": "2.2.0",
+   "encoded_creq": "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImFjc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VXaW5kb3dTaXplIjoiNjAweDQwMCIsIm1lc3NhZ2VUeXBlIjoiQ3JlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAifQ",
+   "acs_reference_number": "3DS_LOA_ACS_201_13579",
+   "acs_decoupled_confirmation_indicator": "DECOUPLED_AUTHENTICATION_UTILISED",
+   "whitelist_status": "PENDING_CARDHOLDER_CONFIRMATION"
+}
+```
+</Code>
+
+## Step 5: Authorization
+
+If you're processing the payment with us, now that the 3D Secure process is complete and depending on the ECI value returned, proceed to authorization while including the authentication data.
+
+<Code id="json" title="JSON" language="json">
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="EUR">1000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0525</expdate>
+    <chname>Philip Marlowe</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <mpi>
+    <eci>5</eci>
+    <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+    <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+    <message_version>2.2.0</message_version>
+  </mpi>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>
+
+
+
+
+

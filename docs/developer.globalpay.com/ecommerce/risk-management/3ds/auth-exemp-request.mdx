@@ -1,0 +1,371 @@
+---
+title: "Authorization with Exemption Request"
+subtitle: "Flag an exemption in an authorization message"
+tag: "xml"
+created: "01/28/2025"
+---
+As we explain in our [Exemptions to SCA](/ecommerce/risk-management/psd2-sca-exemptions) article, you can flag an exemption in the authorization message without first performing Strong Customer Authentication (SCA) for certain low-risk scenarios. After assessing the request’s validity, the Issuer will either apply the exemption or request authentication.
+
+Merchants should first consult with their acquirer before managing their own exemption messaging. To use exemption flags in authorizations contact our [support team](/support/integration-support). 
+
+## Request syntax
+
+The following table provides the request syntax for the Exemption Status field. An O in the Type column indicates that this field is optional.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Exemption Status | string | enum | O   | N/A | The exemption being requested. Allowed values:<br /><br />LOW\_VALUE  <br />TRANSACTION\_RISK\_ANALYSIS  <br />SECURE\_CORPORATE\_PAYMENT  <br />SCA\_DELEGATION |
+
+#### Sample request
+
+Here, we request an exemption for `TRANSACTION_RISK_ANALYSIS` in the authorization message.
+
+For more information on exemptions in an authorization message, see [Exemptions to SCA](/ecommerce/risk-management/psd2-sca-exemptions).
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="EUR">1000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0525</expdate>
+    <chname>Philip Marlowe</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <mpi>
+    <exempt_status>TRANSACTION_RISK_ANALYSIS</exempt_status>
+  </mpi>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("myMerchantId");
+config.setAccountId("ecomeos");
+config.setSharedSecret("secret");
+config.setMethodNotificationUrl("https://www.example.com/methodNotificationUrl");
+config.setChallengeNotificationUrl("https://www.example.com/challengeNotificationUrl");
+config.setSecure3dVersion(Secure3dVersion.TWO);
+config.setMerchantContactUrl("https://www.example.com");
+ 
+ServicesContainer.configureService(config);
+ 
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(DateTime.now().getYear() + 1);
+card.setCardHolderName("John Smith");
+ 
+// shipping address
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("Apartment 852");
+shippingAddress.setStreetAddress2("Complex 741");
+shippingAddress.setStreetAddress3("no");
+shippingAddress.setCity("Chicago");
+shippingAddress.setPostalCode("5001");
+shippingAddress.setState("IL");
+shippingAddress.setCountryCode("840");
+ 
+// billing address
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Flat 456");
+billingAddress.setStreetAddress2("House 789");
+billingAddress.setStreetAddress3("no");
+billingAddress.setCity("Halifax");
+billingAddress.setPostalCode("W5 9HR");
+billingAddress.setCountryCode("826");
+ 
+// browser data
+BrowserData browserData = new BrowserData();
+browserData.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8");
+browserData.setColorDepth(ColorDepth.TwentyFourBit);
+browserData.setIpAddress("123.123.123.123");
+browserData.setJavaEnabled(true);
+browserData.setLanguage("en");
+browserData.setScreenHeight(1080);
+browserData.setScreenWidth(1920);
+browserData.setChallengeWindowSize(ChallengeWindowSize.Windowed_600x400);
+browserData.setTimezone("0");
+browserData.setUserAgent("Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
+ 
+ThreeDSecure secureEcom =
+       Secure3dService
+               .checkEnrollment(card)
+               .execute(Secure3dVersion.TWO);
+ 
+assertNotNull(secureEcom);
+assertNotNull(secureEcom.getServerTransactionId());
+assertTrue(secureEcom.isEnrolled());
+assertEquals(Secure3dVersion.TWO, secureEcom.getVersion());
+ 
+// initiate authentication
+ThreeDSecure initAuth =
+       Secure3dService
+               .initiateAuthentication(card, secureEcom)
+               .withAmount(new BigDecimal(10.00))
+               .withCurrency("EUR")
+               .withOrderCreateDate(DateTime.now())
+               .withAddress(billingAddress, AddressType.Billing)
+               .withAddress(shippingAddress, AddressType.Shipping)
+               .withBrowserData(browserData)
+               .withMethodUrlCompletion(MethodUrlCompletion.No)
+               .withEnableExemptionOptimization(true)
+               .execute(Secure3dVersion.TWO);
+ 
+assertNotNull(initAuth);
+assertEquals("APPLY_EXEMPTION", initAuth.getExemptReason());
+assertEquals(ExemptStatus.TransactionRiskAnalysis, initAuth.getExemptStatus());
+ 
+// get authentication data
+secureEcom =
+       Secure3dService
+               .getAuthenticationData()
+               .withServerTransactionId(initAuth.getServerTransactionId())
+               .execute(Secure3dVersion.TWO);
+ 
+assertEquals(ExemptStatus.TransactionRiskAnalysis, secureEcom.getExemptStatus());
+card.setThreeDSecure(secureEcom);
+assertEquals("AUTHENTICATION_SUCCESSFUL", secureEcom.getStatus());
+ 
+card
+       .charge(new BigDecimal(10.00))
+       .withCurrency("EUR")
+       .execute();
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GatewayConfig config = new GpEcomConfig();
+config.MerchantId = "myMerchantId";
+config.AccountId = "ecomeos";
+config.SharedSecret = "secret";
+config.MethodNotificationUrl = "https://www.example.com/methodNotificationUrl";
+config.ChallengeNotificationUrl = "https://www.example.com/challengeNotificationUrl";          
+config.MerchantContactUrl = "https://www.example.com";
+config.Secure3dVersion = Secure3dVersion.Two;
+ 
+ServicesContainer.ConfigureService(config);
+ 
+CreditCardData card = new CreditCardData();            
+card.Number = "4263970000005262";
+card.ExpMonth = 12;
+card.ExpYear = DateTime.Now.Year + 1;
+card.CardHolderName = "John Smith";
+ 
+// Shipping address
+Address shippingAddress = new Address();
+shippingAddress.StreetAddress1 = "Apartment 852";
+shippingAddress.StreetAddress2 = "Complex 741";
+shippingAddress.StreetAddress3 = "no";
+shippingAddress.City = "Chicago";
+shippingAddress.PostalCode = "5001";
+shippingAddress.State = "IL";
+shippingAddress.CountryCode = "840";
+ 
+// Billing address
+Address billingAddress = new Address();
+billingAddress.StreetAddress1 = "Flat 456";
+billingAddress.StreetAddress2 = "House 789";
+billingAddress.StreetAddress3 = "no";
+billingAddress.City = "Halifax";
+billingAddress.PostalCode = "W5 9HR";
+billingAddress.CountryCode = "826";
+ 
+// Browser data
+BrowserData browserData = new BrowserData();            
+browserData.AcceptHeader = "text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8";
+browserData.ColorDepth = ColorDepth.TWENTY_FOUR_BITS;
+browserData.IpAddress = "123.123.123.123";
+browserData.JavaEnabled = true;
+browserData.Language = "en";
+browserData.ScreenHeight = 1080;
+browserData.ScreenWidth = 1920;
+browserData.ChallengeWindowSize = ChallengeWindowSize.WINDOWED_600X400;
+browserData.Timezone = "0";
+browserData.UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36";
+ 
+ ThreeDSecure secureEcom = Secure3dService.CheckEnrollment(card)
+                .Execute(Secure3dVersion.Two);
+ 
+            Assert.IsNotNull(secureEcom);
+            Assert.IsNotNull(secureEcom.ServerTransactionId);
+            Assert.AreEqual("True", secureEcom.Enrolled);
+ 
+            // initiate authentication
+            ThreeDSecure initAuth =
+                Secure3dService
+                        .InitiateAuthentication(card, secureEcom)
+                        .WithCurrency("EUR")
+                        .WithAmount(10m)
+                        .WithMethodUrlCompletion(MethodUrlCompletion.NO)
+                        .WithOrderCreateDate(DateTime.Now)
+                        .WithAddress(shippingAddress, AddressType.Shipping)
+                        .WithAddress(billingAddress, AddressType.Billing)
+                        .WithBrowserData(browserData)
+                        .WithEnableExemptionOptimization(true)
+                        .Execute(Secure3dVersion.Two);
+ 
+            Assert.IsNotNull(initAuth);
+            Assert.AreEqual("APPLY_EXEMPTION", initAuth.ExemptReason);
+            Assert.AreEqual(ExemptStatus.TRANSACTION_RISK_ANALYSIS, initAuth.ExemptStatus);
+            Assert.AreEqual("AUTHENTICATION_SUCCESSFUL", initAuth.Status);
+ 
+            // get authentication data
+            secureEcom = Secure3dService.GetAuthenticationData()
+                .WithServerTransactionId(initAuth.ServerTransactionId)                
+                .Execute(Secure3dVersion.Two);
+ 
+            Assert.AreEqual(ExemptStatus.TRANSACTION_RISK_ANALYSIS, secureEcom.ExemptStatus);
+            card.ThreeDSecure = secureEcom;
+            Assert.AreEqual("AUTHENTICATION_SUCCESSFUL", secureEcom.Status);
+ 
+            card.Charge(10m)
+                .WithCurrency("EUR")
+                .Execute();
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpEcomConfig();
+        $config->merchantId = 'myMerchantId';
+        $config->accountId = 'ecomeos';
+        $config->sharedSecret = 'secret';
+        $config->methodNotificationUrl = 'https://www.example.com/methodNotificationUrl';
+        $config->challengeNotificationUrl = 'https://www.example.com/challengeNotificationUrl';
+        $config->secure3dVersion = Secure3dVersion::TWO;
+        $config->merchantContactUrl = 'https://www.example.com';
+ 
+        ServicesContainer::configureService($config);
+ 
+        $card = new CreditCardData();
+        $card->number = 4263970000005262;
+        $card->expMonth = 12;
+        $card->expYear = intval(date('Y')) + 1;
+        $card->cardHolderName = 'John Smith';
+        $card->cvn = '123';
+        $card->cvnPresenceIndicator = CvnPresenceIndicator::PRESENT;
+ 
+        // shipping address
+        $shippingAddress = new Address();
+        $shippingAddress->streetAddress1 = 'Apartment 852';
+        $shippingAddress->streetAddress2 = 'Complex 741';
+        $shippingAddress->streetAddress3 = 'no';
+        $shippingAddress->city = 'Chicago';
+        $shippingAddress->postalCode = '5001';
+        $shippingAddress->state = 'IL';
+        $shippingAddress->countryCode = '840';
+ 
+        // billing address
+        $billingAddress = new Address();
+        $billingAddress->streetAddress1 = 'Flat 456';
+        $billingAddress->streetAddress2 = 'House 789';
+        $billingAddress->streetAddress3 = 'no';
+        $billingAddress->city = 'Halifax';
+        $billingAddress->postalCode = 'W5 9HR';
+        $billingAddress->countryCode = '826';
+ 
+        // browser data
+        $browserData = new BrowserData();
+        $browserData->acceptHeader = 'text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,*/*;q=0.8';
+        $browserData->colorDepth = ColorDepth::TWENTY_FOUR_BITS;
+        $browserData->ipAddress = '123.123.123.123';
+        $browserData->javaEnabled = true;
+        $browserData->javaScriptEnabled = true;
+        $browserData->language = 'en';
+        $browserData->screenHeight = 1080;
+        $browserData->screenWidth = 1920;
+        $browserData->challengWindowSize = ChallengeWindowSize::WINDOWED_600X400;
+        $browserData->timeZone = '0';
+        $browserData->userAgent = 'Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36';
+ 
+        $secureEcom = Secure3dService::checkEnrollment($card)
+            ->execute('default', Secure3dVersion::TWO);
+ 
+        $this->assertNotNull($secureEcom);
+        $this->assertNotNull($secureEcom->serverTransactionId);
+        $this->assertTrue($secureEcom->enrolled);
+        $this->assertEquals(Secure3dVersion::TWO, $secureEcom->getVersion());
+ 
+        // initiate authentication
+        $initAuth = Secure3dService::initiateAuthentication($card, $secureEcom)
+            ->withAmount(10.00)
+            ->withCurrency('EUR')
+            ->withOrderCreateDate(date('Y-m-d H:i:s'))
+            ->withAddress($billingAddress, AddressType::BILLING)
+            ->withAddress($shippingAddress, AddressType::SHIPPING)
+            ->withBrowserData($browserData)
+            ->withMethodUrlCompletion(MethodUrlCompletion::NO)
+            ->withEnableExemptionOptimization(true)
+            ->execute();
+ 
+        $this->assertNotNull($initAuth);
+        $this->assertEquals(ExemptionReason::APPLY_EXEMPTION, $initAuth->exemptReason);
+        $this->assertEquals(ExemptStatus::TRANSACTION_RISK_ANALYSIS, $initAuth->exemptStatus);
+ 
+        // get authentication data
+        $secureEcom = Secure3dService::getAuthenticationData()
+            ->withServerTransactionId($initAuth->serverTransactionId)
+            ->execute();
+        $this->assertEquals(ExemptStatus::TRANSACTION_RISK_ANALYSIS, $secureEcom->exemptStatus);
+        $card->threeDSecure = $secureEcom;
+        $this->assertEquals('AUTHENTICATION_SUCCESSFUL', $secureEcom->status);
+ 
+        $card->charge(10.00)
+            ->withCurrency('EUR')
+            ->execute();
+```
+</Code>
+</CodeGroup>
+
+## Soft decline (conditional)
+
+If the Issuer does not approve the exemption request and requires authentication before the payment can be processed further, you’ll receive a response code of 111. This is known as a soft decline. When your application or website receives this code, it should proceed with the standard 3D Secure 2 authentication steps (see [Authentication](/ecommerce/api/3d-secure-two#3ds2-initiate) in the API Reference).
+
+The following table provides the response syntax for the Result field.
+
+| Element/Field | Category | Format | Code | Description |
+| --- | --- | --- | --- | --- |
+| Result | string | numeric | 111 | Soft decline. Indicates that a SCA exemption cannot be applied and that the transaction must proceed through 3D Secure 2 authentication. |
+
+#### Sample response
+
+Here, the Issuer responds with a soft decline.
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <result>111</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <message>SCA Required</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>

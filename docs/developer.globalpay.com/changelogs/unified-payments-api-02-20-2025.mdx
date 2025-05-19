@@ -1,0 +1,57 @@
+---
+title: "REST API - February 20, 2025"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "02-20-2025"
+---
+
+<ReleaseNoteSection title="Headers">
+    <ReleaseNoteDetail type="changed">
+        * Added ability to send decompressed responses. Previously, all responses were encoded in `gzip` format. With this change, you can specify whether you want responses to use `gzip` formatting or `identity` formatting.
+            * The header parameter `accept-encoding` lets you determine compression options.
+            * To enable, set `accept-encoding` to `identity` on a request-by-request basis.
+            * `gzip` will remain the default option for response encoding if no value is sent within the header.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Links">
+    <ReleaseNoteDetail type="added">
+        Added additional fields for transactions via the Hosted Payment Page (HPP) so they can be accessed using the `GET /transaction Single` and `GET /transaction List` requests.
+
+        Fields mapped for Card transactions
+        1) `payment_method.name`
+        2) `payment_method.card.funding`
+        3) `payment_method.card.brand`
+        4) `payment_method.card.masked_number_first6last4`
+        5) `payer.reference`
+        6) `order.reference`
+
+        Fields mapped for Digital wallet transactions
+        1) `payment_method.entry_mode`
+        2) `payment_method.name`
+        3) `digital_wallet.provider`
+        4) `digital_wallet.brand`
+        5) `digital_wallet.masked_token_first6last4` 
+        6) `digital_wallet.masked_number_first6last4`
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Create a new query parameter called "resource" on the `/transactions` resource to allow users to search which resource they wish to see. This will allow you to more granularly filter requests.
+        * We have mapped the below existing fields for PayPal transactions. The change has been implemented for the following requests: `Initiate`, `Confirm`, `Capture`, `Refunds`.
+            * `description`
+            * `payer.reference`
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Verifications">
+    <ReleaseNoteDetail type="added">
+        We have updated the error message for all secondary transactions (Capture, Reverse, Linked Refund, Adjust, Incremental Auth, Confirm, Split, Hold, Release) where we receive `VER_id` as part of the request.
+
+        The new error message is as below:
+
+        `error _code: INVALID_ACTION`
+
+        `detailed_error_code: 40025`
+
+        `detailed_error_description: Cannot <#ACTION#> a verification`
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

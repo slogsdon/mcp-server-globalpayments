@@ -1,0 +1,79 @@
+---
+title: 'Hosted Fields - Overview'
+search_results: 'Global Payments - Hosted Fields Overview'
+subtitle: 'Use tokenization for maximum customization of your payment page.'
+tag: 'rest'
+created: '06/08/2024'
+---
+Hosted Fields provide the most flexibility to the checkout experience while still adhering to the minimum <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> requirements. Hosted Fields are prebuilt but customizable fields that accept customer card data, from which a single-use token is created to use as payment instead of the sensitive data. The token can then be stored so that the non-sensitive data can be reused, making future purchases easier for your customers.
+
+Hosted Fields are ideal for capturing card details at any point in the checkout process, driving a customer flow that is unique to your needs. For example, you can accept an email address, billing and shipping details, a discount code, or whatever custom information you require from your customer. When it comes to customization, you’re really only limited to the token’s expiration setting and whatever you can capture within that time frame.
+
+For merchants, the benefits of Hosted Fields include:
+* Simplest level of PCI DSS compliance: <Tooltip content="Self-Assessment Questionnaire A is for merchants who outsource card data responsibility to a third party.">SAQ A</Tooltip>
+* Prebuilt payment fields in iFrames as you need them for your checkout page
+* Secured fields to collect other customer details to enhance the checkout experience
+* Built-in input validation of payment fields
+* Seamless integration with desktop and mobile devices (both iOS and Android apps)
+* Cross-channel secure payment acceptance and customer identification
+<br></br>
+Here's an example of a fictitious company's checkout page using our prebuilt payment fields.
+
+![Alt text:
+An example of a payment page called HomeMerchant built with hosted fields.](/gh-assets/hosted-fields_example.png)
+<p style={{textAlign: "center"}}>**Hosted Fields Example**</p>
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our Hosted Fields solution. Keep in mind that this section doesn’t cover all of the use cases.
+
+##### Use case #1: Secure
+A large corporation wants to ensure that they are processing their transactions in a secure environment that is also PCI DSS compliant. Integrating with Hosted Fields means that sensitive card information is captured directly by us instead of their own website.
+
+##### Use case #2: Customizable
+A well-known airline wants the ability to customize the payment form to match the UI of their site to keep it familiar to the customer. Integrating with Hosted Fields means that the airline will have full control over the styling and placement of the individual fields in the payment form.
+
+##### Use case #3: Support
+A large online store wants to improve the efficiency of their customer support. With Hosted Fields, requests and responses are shared between the merchant and us. Most of these logs are available to support members, meaning that issues can be identified and investigated accordingly between the two parties. 
+
+## Product information
+##### What you get with Hosted Fields
+* Prebuilt input fields
+* Customizable card form
+* PCI DSS (SAQ A)
+
+##### What you can add to Hosted Fields
+* Card Storage
+* Payer Storage
+* Digital Wallets
+* Dynamic Currency Conversion
+
+##### Integration options
+* JavaScript Library
+* SDK or API
+
+##### Regions where you can use Hosted Fields
+* Europe
+* Asia-Pacific
+* Middle East
+* North America
+* Latin America
+* Africa
+
+
+## How do they work?
+When a customer submits the payment form, we create a single-use, or time-limited, token to represent the sensitive data (it expires after 30 minutes). This token can then be used in requests to take payments and authenticate via 3D Secure. Once converted to multiple-use, the token can store non-sensitive card data (that is, no security code) and any additional customer details for subsequent purchases.
+
+This single-use token is different from an access token, which we require for all requests and has a configurable expiration limit. A new access token with the required permissions must be created when performing a payment request or authentication.
+
+At a high level, Hosted Fields work like this:
+
+![Diagram flow of how Hosted Fields works at a high level.](/gh-assets/hosted-fields_flow.png)
+<p style={{textAlign: "center"}}>**Hosted Fields Typical Flow**</p>
+
+
+## Next steps
+To try Hosted Fields, follow the steps and code samples in our [guide](/docs/payments/online/hosted-fields-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

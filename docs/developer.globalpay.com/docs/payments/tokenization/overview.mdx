@@ -1,0 +1,35 @@
+---
+title: 'Tokenization - Overview'
+search_results: 'Global Payments - Tokenization Overview'
+subtitle: 'Store card and customer data for secure payments'
+tag: 'rest'
+created: '06/08/2024'
+---
+Tokenization is the capability to securely store and manage payment methods on our API in any region and across both online (card not present) and in-store (card present) environments. It involves replacing sensitive data with unique identification symbols, or _tokens_, that retain all the essential information about the data without compromising its security. These tokens can be used in place of the actual data to perform operations, such as processing payments, without exposing the sensitive information itself. 
+
+The <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> sets stringent requirements for handling and storing card information. Tokenization helps businesses comply with these regulations by minimizing the amount of sensitive data they handle and store.
+
+## Payment token types
+Payment tokens are different from the access tokens required to authorize and use our API. For more information on access tokens, see our [guide](/api/definitions/access-tokens). 
+
+There are two types of payment tokens:
+* Single-Use Payment Token – Valid for only a certain amount of time and for a single use, thus eliminating the risk of reuse in fraudulent activities. A single use token is automatically deleted after a few minutes, unless it is explicitly converted to a multi-use token to store the card information.
+* Multi-Use Payment Token – Can be used for multiple transactions. These tokens are typically linked to a specific payment method and can be reused for various transactions until they are explicitly invalidated. They provide a balance between security and convenience, making them suitable for scenarios where recurring transactions are needed.
+
+## Next steps
+Now that you have an understanding of the tokenization types, the next step is to look at the tokenization capabilities our API can provide you.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide" title="Card Storage">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/tokenization/payers-overview" title="Payers">
+        Store customer details for future transactions.
+    </Card>
+ 
+    <Card type="with_icon" link="/docs/payments/recurring/overview" title="Recurring Payments">
+        Make subsequent payments easier for your customers.
+    </Card>
+</CardsGroup>
+

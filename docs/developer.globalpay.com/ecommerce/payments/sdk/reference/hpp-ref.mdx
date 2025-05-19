@@ -1,0 +1,95 @@
+---
+title: "Hosted Payment Page SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+The SDK code samples we provide in our SDK Documentation section are applicable to both direct API integration and the Hosted Payment Page (HPP) for features like Card Payments, Card Storage, Payment Methods, and so forth. However, there are some important differences when using SDK code for HPP. This article explains the differences and provides helpful information relevant to the HPP.
+
+## HostedService object and configuration
+The HostedService object allows you to build and parse requests and responses to the HPP, respectively. It contains all the expected operations for processing through the HPP: Authorize, Charge, and Verify. 
+
+The HostedService object can be instantiated and configured like this:
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+HostedService _service = new HostedService(new GpEcomConfig {
+                MerchantId = "heartlandgpsandbox",
+                AccountId = "hpp",
+                SharedSecret = "secret",
+                HostedPaymentConfig = new HostedPaymentConfig {
+                    Language = "GB",
+                    ResponseUrl = "https://www.example.com/responseURL"
+                },
+            });
+```
+</Code>
+
+## Serialize vs. execute
+
+The Authorization, Charge, and Verify methods of the HostedService return the familiar  AuthorizationBuilder object used to construct your requests. In the case of the HPP, however, we call the Serialize method instead of the Execute method. This instructs the SDK to generate and return an HPP request. 
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var json = _service.Authorize(1m)
+                .WithCurrency("EUR")
+                .WithCustomerId("123456")
+                .WithAddress(new Address {
+                    PostalCode = "123|56",
+                    Country = "IRELAND"
+                }).Serialize();
+```
+</Code>
+
+## Sending the request to the HPP
+
+The rxp-hpp.js library can be used to initiate and send the SDK-generated request to the HPP. The library is available on [GitHub](https://github.com/globalpayments/rxp-js).
+
+<Code id="markup" title="HTML" language="markup">
+```
+<button id="payButtonId">Click here to pay</button>
+
+<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+<script src="rxp-hpp.js"></script>
+<script>
+    $(document).ready(function() {
+        $.getJSON("get-json.php", function(jsonFromRequestEndpoint) {
+            console.log(jsonFromRequestEndpoint);
+            RealexHpp.setHppUrl("https://pay.sandbox.realexpayments.com/pay");
+            /*
+             * if running this from localhost, for your response endpoint,
+             * you will need to expose your local server over the internet,
+             * for example, using ngrok
+             */
+            RealexHpp.lightbox.init("payButtonId", "response-endpoint.php", jsonFromRequestEndpoint);
+        });
+    });
+</script>
+```
+</Code>
+
+## Parsing the result
+
+The response from the HPP can be sent directly to the SDK to be parsed into a Transaction object by calling the ParseResponse method of the HostedService object. This allows for direct access to all the pertinent properties of the HPP response programmatically.
+
+The ParseResponse method accepts two parameters: The first is the raw HPP response, and the second is an optional flag indicating whether or not the HPP response is Base64 encoded. The default for this flag is false.
+
+<Code id="markup" title="" language="markup">
+```
+Transaction parsedResponse = _service.ParseResponse(response, true);
+```
+</Code>
+
+## Response values
+
+As previously stated, the Transaction object contains most of the _pertinent_ properties from the HPP response, not all. If you need to access values that are not already present on the Transaction object, the entirety of the HPP response can be accessed via the ResponseValues property of the Transaction object. This property contains a dictionary of every Key Value Pair returned by the HPP.
+
+<Code id="markup" title="" language="markup">
+```
+String value = parsedResponse.ResponseValues[{field name}];
+```
+</Code>
+
+## End-to-end example
+
+An end-to-end example in PHP can be found on [GitHub](https://github.com/globalpayments/php-sdk/tree/master/examples/gp-ecom/hpp). 

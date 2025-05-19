@@ -1,0 +1,353 @@
+---
+title: "Merchant-Initiated Transactions"
+subtitle: "Set up an MIT that is out of scope for SCA"
+tag: "xml"
+created: "01/28/2025"
+---
+
+A merchant-initiated transaction (MIT) refers to a card payment made by a merchant without the customer being actively involved, as part of an agreement made during an initial customer-initiated transaction (CIT).
+
+For an MIT to be considered out of scope for Strong Customer Authentication (SCA):
+
+* The initial CIT must have undergone 3D Secure 2 payment authentication with the Challenge Mandated flag to ensure a cardholder challenge.
+* All subsequent transactions must include the correct credential on file (COF) data.
+
+<Infobox>
+When flagged correctly, MITs are deemed as out of scope of the SCA requirements under Revised PSD2 within Europe and the UK. This allows MITs to be processed without further cardholder authentication required.
+</Infobox>
+
+## Types of MITs
+
+The following table describes the different types of MITs.
+
+|     |     |
+| --- | --- | 
+| MIT Type | Description |
+| Recurring | Transaction with a fixed amount but no fixed duration in which the merchant continues to process payments with the cardholder’s credentials until the cardholder cancels (for example, a subscription or a gym membership). |
+| Installments | Transaction with a fixed amount and duration in which the merchant can’t process the cardholder’s credentials once this fixed period ends. Installments are paid at an agreed amount on the same day of each month (for example, paying for a kitchen appliance over 12 months interest free). |
+| Oneoff | Unscheduled transaction with no fixed duration but with an agreed amount (for example, a travel card “top up” if the credit falls below a certain limit). |
+
+## Set up an MIT
+
+To learn how to set up an MIT, use the applicable guide below.
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+In this guide, we use our Card Storage solution to set up an MIT that is out of scope for SCA. To adhere to scheme rules, we first perform a 3D Secure 2 payment authentication, even though we’re not charging the card before we store it. Next, we follow the standard practice for card storage, which includes performing a validation (open-to-buy, OTB), creating the payer, and then storing the card against it.
+
+But first, we cover the scheme rules for setting up MITs and how they relate to SCA, 3D Secure 2, and exemptions. If you prefer to get right to implementing an MIT, skip ahead to Step 1.
+
+## PSD2: SCA & MITs
+
+For an MIT to qualify as out of scope, two conditions must be met: 1) the initial transaction undergoes 3D Secure payment authentication with the Challenge Mandated flag to ensure a cardholder challenge and 2) all subsequent transactions include the correct credential on file (COF) data.
+
+### 3D Secure 2 payment authentication
+When setting up an MIT, scheme rules require that merchants first perform a 3D Secure 2 payment authentication before storing the card details. Therefore, during the initial CIT in which the customer gives consent to store their credentials for future use, the merchant must always perform a payment authentication (as opposed to a non-payment authentication). This is true regardless of whether the merchant is actually charging the card at the time or just validating it (OTB). 
+
+### Credential on file
+A COF refers to card data for a particular customer (that is, their primary account number and expiration date), which has been stored with their consent. A COF indicates to Issuers and Acquirers that the merchant is storing the customer's card details, and the information is used by them when subsequent payments are made by the merchant. In order for an MIT to qualify as out of scope from SCA, the merchant must submit the correct COF data at each stage.
+
+<div><Infobox>
+For merchants using our Card Storage solution, COF data for MITs is populated with default values automatically. For more information on how we handle COF data, see [Credential On File](/ecommerce/risk-management/3ds/COF).
+</Infobox></div>
+
+The following table describes the key COF data points.
+
+|     |     |
+| --- | --- | 
+| Field | Value |
+| Message Category | Payment authentication (even if the customer initiated transaction is not a charge; for example, a card validation open-to-buy) |
+| Challenge Request Indicator | Challenge mandated |
+
+#### Sample request
+
+<Code id="json" title="JSON" language="json" active>
+```
+curl https: //api.sandbox.globalpay-ecommerce.com/3ds2/authentications
+-H "Content-type: application/json"
+-H "Authorization: securehash abafc599cfa60c94b8f41d0668dac5ed6b0a21f7"
+-X POST
+-d '{
+    "request_timestamp": "2020-08-31T16:42:33",
+    "authentication_source": "BROWSER",
+    "authentication_request_type": "ADD_CARD",
+    "message_category": "PAYMENT_AUTHENTICATION",
+    "message_version": "2.1.0",
+    "challenge_request_indicator": "CHALLENGE_MANDATED",
+    "server_trans_id": "65a9aa48-8400-4eab-b9ee-67df7facb004",
+    "merchant_id": "MerchantId",
+    "account_id": "internet",
+    "card_detail": {
+        "number": "4263970000005262",
+        "scheme": "VISA",
+        "expiry_month": "10",
+        "expiry_year": "25",
+        "full_name": "James Mason"
+    },
+    "order": {
+        "date_time_created": "2020-08-31T16:42:552327Z",
+        "id": "3400dd37-101d-4940-be15-3c963b6109b3",
+        "address_match_indicator": "false",
+        "shipping_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        }
+    },
+    "payer": {
+        "email": "james.mason@example.com",
+        "billing_address": {
+            "line1": "Flat 456",
+            "line2": "House 456",
+            "line3": "Unit 4",
+            "city": "Halifax",
+            "postal_code": "W5 9HR",
+            "country": "826"
+        },
+        "mobile_phone": {
+            "country_code": "44",
+            "subscriber_number": "7123456789"
+        }
+    },
+    "challenge_notification_url": "https://www.example.com/challengeNotificationUrl",
+    "method_url_completion": "YES",
+    "browser_data": {
+        "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "color_depth": "TWENTY_FOUR_BITS",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "challenge_window_size": "FULL_SCREEN",
+        "timezone": "0",
+        "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+    },
+    "merchant_contact_url": "https://www.example.com/about"
+```
+</Code>
+
+The Issuer’s response includes the necessary details required to authenticate the customer, as in a standard 3D Secure 2 challenge flow. For more information on authentication, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+## Step 2: Validate the card (OTB)
+
+An OTB transaction allows you to check that a card is still valid and active without actually processing a payment against it. While the outcome of the payment authentication will tell us this, the OTB will also allow us to perform the Security Code (CVN) and Address Verification Service (AVS) checks before storing the card. A scheme reference data (SRD) value will also be returned, which is important for subsequent transactions using these stored card details.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="otb" timestamp="20200831164233">
+    <merchantid>MerchantId</merchantid>
+    <account>internet</account>
+    <orderid>XmUfe9XqCfYBuqVJZBjv5T</orderid>
+    <card>
+        <number>4263970000005262</number>
+        <expdate>1025</expdate>
+        <chname>James Mason</chname>
+        <type>VISA</type>
+        <cvn>
+            <number>123</number>
+            <presind>1</presind>
+        </cvn>
+        <mpi>
+            <eci>5</eci>
+            <ds_trans_id>65a9aa48-8400-4eab-b9ee-67df7facb004</ds_trans_id>
+            <authentication_value>MTIzNDU2Nyg5MDA5ODc2NTQzMjE=</authentication_value>
+            <message_version>2.1.0</message_version>
+        </mpi>
+    </card>
+    <sha1hash>11e5d2ce54eec98892155715497e5c4c4866d998</sha1hash>
+</request>
+```
+</Code>
+
+## Step 3: Create a payer
+To store a card, first set up a customer reference (payer). You can also choose to store address and contact details for the customer. In this example, we’re using a random string generator for the customer references.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payer-new" timestamp="20200831164233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>OL0f0VYFQTyNG5IulhsMrg</orderid>
+  <payer ref="0f357b45-9aa4-4453-a685-c69232e9024f" type="Retail">
+    <title>Mr.</title>
+    <firstname>James</firstname>
+    <surname>Mason</surname>
+    <company>Global Payments</company>
+    <address>
+      <line1>Flat 123</line1>
+      <line2>House 456</line2>
+      <line3>The Cul-De-Sac</line3>
+      <city>Halifax</city>
+      <county>West Yorkshire</county>
+      <postcode>W6 9HR</postcode>
+      <country code="GB">United Kingdom</country>
+    </address>
+    <phonenumbers>
+      <home>+35312345678</home>
+      <work>+3531987654321</work>
+      <fax>+124546871258</fax>
+      <mobile>+25544778544</mobile>
+    </phonenumbers>
+    <email>text@example.com</email>
+    <dateofbirth>19851222</dateofbirth>
+    <state>Yorkshire and the Humber</state>
+    <passphrase>montgomery</passphrase>
+    <vatnumber>GB 123456789</vatnumber>
+    <varref>Car Part HV</varref>
+    <custnum>E8953893489</custnum>
+  </payer>
+  <sha1hash>8d7e42bba0d9f6ca81f6106bfd74d2911fad888b</sha1hash>
+</request>
+```
+</Code>
+
+## Step 4: Store the card
+Once the customer entity is created, you can now add cards to it. This request must contain the card data to be stored, a unique reference for it, and the customer reference it is to be added to. 
+
+Storing the COF sequence against the card indicates that the next transaction will be identified as subsequent rather than first, which is important if Global Payments is generating default values for your COF transactions. To link the initial authentication to subsequent recurring transactions, the SRD returned in the initial CIT response must be included.
+
+Now that you've stored the card, you can raise payments against it at a future date or enable a simple one-click checkout experience for the customer. For information on working with stored cards, see the API Reference for [Card Storage](/ecommerce/api/card-storage#api-receipt-in).
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="card-new" timestamp="20200831164233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>F-2knQ0iShKK6ezfaSLh2Q</orderid>
+  <card>
+    <ref>10c6a2c7-be7b-a13f-12638937a012</ref>
+    <payerref>0f357b45-9aa4-4453-a685-c69232e9024f</payerref>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+  </card>
+  <storedcredential>
+    <sequence>subsequent</sequence>
+    <srd>3wz43jaZBKyiTgec</srd>
+  </storedcredential>
+  <sha1hash>85fbaf68bb0e4fccd634facf6592b0677489709e</sha1hash>
+</request>
+```
+</Code>
+
+## Step 5: Charging the card
+
+Once you’ve completed the process of authenticating and storing the cardholder’s details, you can now proceed with charging the stored details.
+
+When setting up the receipt-in request, if you don’t include the COF fields, we will populate them for you. If you would like to manage these fields yourself, see our [Credential On File](/ecommerce/risk-management/3ds/COF) article.
+  </Tab> 
+    <Tab id="hpp" title="HPP">
+In this guide, we show you how to correctly perform the initial CIT through the Hosted Payment Page (HPP) so that you can process future MITs in line with PSD2 SCA regulations.
+
+## PSD2: SCA & MITs
+For an MIT to qualify as out of scope, two conditions must be met: 1) the initial transaction undergoes 3D Secure payment authentication with the Challenge Mandated flag to ensure a cardholder challenge and 2) all subsequent transactions include the correct Credential on File (COF) data.
+
+<div><Infobox>
+For the initial CIT through the HPP, Global Payments handles both 3D Secure cardholder authentication and COF requirements on behalf of the merchant.
+</Infobox></div>
+
+### Credential on file
+
+A COF refers to card data for a particular customer (that is, their primary account number and expiration date), which has been stored with their consent. A COF indicates to Issuers and Acquirers that the merchant is storing the customer's card details, and the information is used by them when subsequent payments are made by the merchant. In order for an MIT to qualify as out of scope from SCA, the merchant must submit the correct COF data at each stage.
+
+The following table describes the key COF data points.
+
+|     |     |
+| --- | --- | 
+| COF Field | Description |
+| Type | Indicates the relationship type the customer agreed to with the merchant and the category of transaction being processed (that is, recurring, installments, or oneoff). |
+| Initiator | Indicates who initiated the transaction (that is, customer or merchant). |
+| Sequence | Indicates which stage of the transaction sequence the payment occurs (that is, first or subsequent). |
+| Scheme Reference Data (SRD) | Unique identifier provided by a card scheme, such as Visa or Mastercard, that links to the payment history between the customer and merchant. |
+
+## Process CIT with 3DS authentication
+
+When processing an initial CIT that you plan to follow with an MIT, 3D Secure 2 payment authentication is required, and you’ll need to indicate to the Issuer that a challenge is mandated.
+
+The key data of the HPP request includes:
+
+*   3D Secure 2 mandatory fields
+*   Challenge Request Indicator = Challenge Mandated
+*   Card storage fields
+
+### Default behavior
+
+When using our Card Storage solution, if COF flags are not present in the HPP request, we’ll automatically flag the transaction for you with the following:
+
+*   Sequence = First
+*   Type = Oneoff
+*   Initiator = Cardholder
+
+These are default flags we apply if COF flags are not present in the transaction. However, you can manage these fields yourself. For more information, see our [Credential on File](/ecommerce/risk-management/3ds/COF) article.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+    <input type="hidden" name="TIMESTAMP" value="20180613110737">
+    <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+    <input type="hidden" name="ACCOUNT" value="internet">
+    <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+    <input type="hidden" name="AMOUNT" value="1999">
+    <input type="hidden" name="CURRENCY" value="EUR">
+    <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+    <input type="hidden" name="COMMENT1" value="Mobile Channel">
+    <input type="hidden" name="HPP_VERSION" value="2">
+    <input type="hidden" name="HPP_CHANNEL" value="ECOM">
+    <!-- Begin 3D Secure 2 Mandatory and Recommended Fields -->
+    <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="test@example.com">
+    <input type="hidden" name="HPP_CUSTOMER_PHONENUMBER_MOBILE" value="44|789456123">
+    <input type="hidden" name="HPP_BILLING_STREET1" value="Flat 123">
+    <input type="hidden" name="HPP_BILLING_STREET2" value="House 456">
+    <input type="hidden" name="HPP_BILLING_STREET3" value="Unit 4">
+    <input type="hidden" name="HPP_BILLING_CITY" value="Halifax">
+    <input type="hidden" name="HPP_BILLING_POSTALCODE" value="W5 9HR">
+    <input type="hidden" name="HPP_BILLING_COUNTRY" value="826">
+    <input type="hidden" name="HPP_SHIPPING_STREET1" value="Apartment 852">
+    <input type="hidden" name="HPP_SHIPPING_STREET2" value="Complex 741">
+    <input type="hidden" name="HPP_SHIPPING_STREET3" value="House 963">
+    <input type="hidden" name="HPP_SHIPPING_CITY" value="Chicago">
+    <input type="hidden" name="HPP_SHIPPING_STATE" value="IL">
+    <input type="hidden" name="HPP_SHIPPING_POSTALCODE" value="50001">
+    <input type="hidden" name="HPP_SHIPPING_COUNTRY" value="840">
+    <input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value="FALSE">
+    <input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value="CHALLENGE_MANDATED">
+    <!-- End 3D Secure 2 Mandatory and Recommended Fields -->
+    <!-- Card Storage Fields -->
+    <input type="hidden" name="CARD_STORAGE_ENABLE" value="1">
+    <input type="hidden" name="OFFER_SAVE_CARD" value="1">
+    <input type="hidden" name="PAYER_EXIST" value="0">
+    <input type="hidden" name="PAYER_REF" value="376a2598-412d-4805-9f47-c177d5605853">
+    <input type="hidden" name="PMT_REF" value="ca46344d-4292-47dc-9ced-e8a42ce66977">
+    <!-- End Card Storage Fields -->
+    <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+    <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+    <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+
+
+
+
+</Tab>
+</Tabs>

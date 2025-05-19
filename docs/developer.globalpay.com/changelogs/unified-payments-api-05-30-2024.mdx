@@ -1,0 +1,29 @@
+---
+title: "Unified Payments API - May 30, 2024"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "05-30-2024"
+---
+
+<ReleaseNoteSection title="Payers">
+    <ReleaseNoteDetail type="added">
+        Added new endpoint for Payers resource to retrieve details for a single Payer. This endpoint accepts an ID (PRY_ID) as a query parameter and returns the details for this Payer.
+
+        </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Response Description">
+    <ReleaseNoteDetail type="changed">
+        Change to the error description for a timeout. Error description:
+
+        <Code>
+        ```
+        {  
+            "error_code": "SYSTEM_ERROR_DOWNSTREAM",  
+            "detailed_error_code": "50013",  
+            "detailed_error_description": "205,Timeout error—Action failed unexpectedly. An automatic reversal will happen if charged. Please retry the transaction."  
+        }
+        ```
+        </Code>
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

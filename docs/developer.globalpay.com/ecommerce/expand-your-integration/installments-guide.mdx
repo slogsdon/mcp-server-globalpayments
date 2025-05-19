@@ -1,0 +1,414 @@
+---
+title: "Installments - Guide"
+subtitle: "Learn how to integrate installments for Visa customers"
+tag: "xml"
+created: "02/11/2025"
+---
+<Infobox>
+Installment Service is only available to merchants in Canada who use us as their acquirer and those in the UK using a GPUK connection. <br/>
+
+To see if your acquirer can support Installment Service, contact a member of our support team.
+</Infobox>
+
+For more information on our Installment Service, see our [Overview](/ecommerce/expand-your-integration/installments). 
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+In this guide, you'll learn how to directly integrate with Installment Service and how to use it to offer installment payments to your customers.
+
+<div><Infobox>
+The code samples in this guide are provided in JSON as well as XML.
+</Infobox></div>
+
+## Step 1: Set up the service
+To use our Installment Service, you first need to get it enabled on your account. To do this, contact your account manager.
+
+Setting up the service for direct API integration typically works like this:
+
+![Installment plan API flow between the customer, the merchant, our API, and Visa.](/gh-assets/ecommerce/installments_api-s1-setup.png)
+
+## Step 2: Retrieve installment plans
+
+<div><Infobox>
+Installment Service endpoints: <br/>
+**Sandbox:** https://api.sandbox.globalpay-ecommerce.com/installments/plans/match <br/>
+**Production:** https://api.globalpay-ecommerce.com/installments/plans/match
+</Infobox></div>
+
+Next, we use the `GetEligiblePlans` request to retrieve the eligible plans that match the Issuer’s criteria for the transaction.
+
+For syntax tables and security hash information, see the API Reference for [Installment Service](/ecommerce/api/installment-service).
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.sandbox.globalpay-ecommerce.com/installments/plans/match
+-H "Content-type: application/json"
+-H "Authorization: sha256hash ff90a189d9ba5a23eec8578ddffba350fbd701faaba7428c59b65ca2c83e1bdd" 
+-X POST 
+-d '{
+  "partner": "GPECOM",
+  "provider": "VIS",
+  "merchant_id": "MerchantId",
+  "account_id": "accountId",
+  "card": {
+    "number": "4263970000005262" 
+   },  
+  "amount": "1000",
+  "currency": "CAD",
+  "channel": "ECOM",
+  "request_timestamp": "2023-01-01T12:00:00.000Z",
+  "filter": {
+    "enabled": true,
+    "max_term_months_merchant_funded": 24,
+    "plan_type": "MERCHANT_FUNDED"
+    "amount_threshold": 1000
+  }
+}'
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "amount": 1000000,
+  "currency": "CAD",
+  "matched_plans": [
+    {
+      "name": "plan24CwAPR",
+      "type": "ISSUER_DEFAULT",
+      "number_of_installments": 24,
+      "installment_frequency": "MONTHLY",
+      "terms_and_conditions": [
+        {
+          "url": "http://www.myurl.com",
+          "version": "25798469",
+          "text": "You are selecting a 24-month installment plan. The total purchase amount will be deducted from your available credit limit. As set forth in your terms, your installment fee will be 13.99% APR calculated for 24 months. If you miss an installment payment, the standard rate of purchases will apply to the remaining installment balance.",
+          "language_code": "ENG"
+        }
+      ],
+      "cost_info": {
+        "annual_percentage_rate": 13.99,
+        "fee_info": [
+          {
+            "type": "CONSUMER",
+            "rate_percentage": 5,
+            "flat_fee": 0
+          }
+        ],
+        "total_plan_cost": 1130500,
+        "total_fees": 130500,
+        "total_upfront_fees": 100000,
+        "total_recurring_fees": 30500,
+        "first_installment": {
+          "upfront_fee": 100000,
+          "installment_fee": 1270,
+          "amount": 41666
+        },
+        "last_installment": {
+          "installment_fee": 1270,
+          "amount": 41666
+        },
+        "currency": "CAD"
+      },
+      "plan_id": "7533d4f7-6a10-5557-2e92-132d06157502"
+    }
+  ]
+}
+```
+</Code>
+
+## Step 3: Confirm selected plan
+To confirm the selected installment plan by the user, send the plan details in the Authorization request. After the cardholder selects an installment plan, the merchant should provide installment plan details in Auth and Receipt-in requests under the optional XML tag.
+
+For the full Authorization request, see the API Reference for [Card Payments](/ecommerce/api/card-payments#api-authorization).
+
+<div><Infobox>
+Installment Service Confirm selected plans endpoints: <br/>
+**Sandbox:** https://api.sandbox.globalpay-ecommerce.com/installments/confirmations <br/>
+**Production:** https://api.globalpay-ecommerce.com/installments/confirmations
+</Infobox></div>
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<installment>
+<provider>VIS</provider>
+<planid>3fa85f64-5717-4562-b3fc-2c963f66afa6</planid>
+<tcversion>2</tcversion>
+<tclang>eng</tclang>
+</installment>
+```
+</Code>
+
+## Step 4: Enrich checkout with installment details
+<div><Infobox>
+When displaying plan details, you must comply with the messaging options in our _Installments Enabled by Visa UX Guide_. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+</Infobox></div>
+
+For help with implementing the Installment Service into the checkout experience for your app or website, use our _Installments Enabled by Visa UX Guide_. The guide focuses on information visibility in ecommerce transactions and includes design requirements and marketing guidelines to help you get started. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+
+## Step 5: Display confirmation details and receipts
+<div><Infobox>
+When displaying plan details, you must comply with the messaging options in our _Installments Enabled by Visa UX Guide_. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+</Infobox></div>
+
+Once the payment is processed with the installment plan and the payment is complete, you can then display the details on the confirmation page and receipt. For an example, see our _Installments Enabled by Visa UX Guide_. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+
+## Display installment plan details
+Although not required, you can display installment plan details on other pages of your website or application, such as on the homepage or various product pages. Doing so can raise awareness of these payment options during the shopping process and can lead to higher customer conversion rates. 
+
+If you decide to display plan details on other pages, you must use the messaging options we provide in our Installments Enabled by Visa UX Guide. The guide focuses on information visibility in ecommerce transactions and includes design requirements and marketing guidelines to help you get started.
+
+To download the guide, click the button below. 
+
+<index-button type="anchor" href="/sites/default/files/2024-03/GP_Installments_enabled_by_Visa_UX-Guide_v1.0.pdf">Download Guide</index-button> <br/><br/><br/>
+
+## Testing
+Our Installment Service solution is available for testing in our Sandbox environment for registered users of this developer portal. Use our test cards to try different scenarios for your application to handle.
+
+For more information, see the [Installments](/resources/test-card-numbers#installments) section of our Test Cards article.
+
+## Enhance your solution
+Explore more functionality to enrich your application. For the detailed API specification and a full list of features, see the [API Reference](/ecommerce/api/overview).
+
+<CardsGroup type="with_icon">
+<Card type="with_icon" link="/ecommerce/api/installment-service" title="Installment Service - API Reference" icon="window">
+       See the full API specification for Installment Service.
+    </Card>
+<Card type="with_icon" link="/ecommerce/expand-your-integration/card-blocking" title="Card Blocking" icon="filter-circle-xmark">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/expand-your-integration/card-storage" title="Card Storage" icon="coin">
+Securely store card data with no increased PCI DSS compliance requirements.
+    </Card>
+</CardsGroup>
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+
+In this guide, you'll learn how to integrate Installment Service with the Hosted Payment Page (HPP) and how to use it to offer installment payments to your customers.
+
+## Step 1: Set up the service
+To use our Installment Service, you first need to get it enabled on your account. To do this, contact your account manager.
+
+Setting up the service for HPP integration typically works like this:
+
+![Installment plan HPP flow between the customer, the merchant, the HPP, and Visa.](/gh-assets/ecommerce/installments_hpp-s1-setup.png)
+
+## Step 2: Select and confirm plan
+There are two ways to perform this step (card on file and guest checkout). Select the applicable step for your region.
+
+**Canada**
+
+* [Card on file (Canada)](#card-on-file-canada)
+* [Guest checkout (Canada)](#guest-checkout-canada)
+
+**UK**
+
+* [Card on file (UK)](#card-on-file-uk)
+* [Guest checkout (UK)](#guest-checkout-uk)
+
+### Card on file (Canada)
+
+In this scenario, a customer with an existing account pays with a saved card.
+
+1. In the **Payment Details** section, expand **Pay with a saved card**, and select a card that is eligible for installments. 
+    ++Note++: Look for the green “Eligible for Installments” label as shown below. <br/><br/>
+    <img alt="Payment Details screen with the Eligible for Installments label in green."src="/gh-assets/ecommerce/installments_hpp-card-on-file.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+2. Choose an installment plan.
+    ++Note++: The default card payment option is PAY IN FULL. If available, up to two installment plans will be displayed underneath the default. <br/><br/>
+    <img alt="List of three installment plans: Pay In Full (selected), Pay In 6, and Pay In 12." src="/gh-assets/ecommerce/installments_hpp-list-of-plans.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+3. Review the T\&Cs of the selected installment plan. When finished, select the acknowledgement checkbox. <br/><br/>
+    <img alt="Confirmation checkbox with smaller text explaining the plan's terms and conditions." src="/gh-assets/ecommerce/installments_hpp-terms.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+    The expanded details of the selected installment plan include the following:
+      * Number of installments (for example, Pay In 6)
+      * Frequency of payments (for example, per month)
+      * Installment payment amount (for example, 108.00 CAD/month)
+      * Total fees per installment plan. <br/>
+      ++Note++: in the UK and Canada, the APR is required for display (for example, APR: 0%).
+      * Total amount inclusive of fees (for example, 648.00 CAD)
+      * Description of the T\&Cs
+      * Hyperlinked URL (additional terms within T\&Cs)
+      * Hyperlinked URL (additional terms within T&Cs)
+    
+4.  Click **Pay Now**. The payment is processed with the selected installment plan.
+
+### Guest checkout (Canada)
+In this scenario, a customer checking out as a guest pays with another card.
+
+1. In the **Payment Details** section, expand **Pay with another card**.
+2. Input the information for the new card. Once a card number is entered, the available installment plans will be displayed. <br/>
+    <img alt="Payment Details screen with the Pay with another card option expanded label in green." src="/gh-assets/ecommerce/installments_hpp-guest-checkout.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+3. Choose an installment plan.
+    ++Note++: The default card payment option is PAY IN FULL. If available, up to two installment plans will be displayed underneath the default. <br/>
+    <img alt="List of three installment plans: Pay In Full (selected), Pay In 6, and Pay In 12." src="/gh-assets/ecommerce/installments_hpp-list-of-plans.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+4. Review the T\&Cs of the selected installment plan. When finished, select the acknowledgement checkbox. <br/>
+    <img alt="Confirmation checkbox with smaller text explaining the plan's terms and conditions." src="/gh-assets/ecommerce/installments_hpp-terms.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+    The expanded details of the selected installment plan include the following:
+    * Number of installments (for example, Pay In 6)
+    * Frequency of payments (for example, per month)
+    * Installment payment amount (for example, 108.00 CAD/month)
+    * Total fees per installment plan. <br/>
+    ++Note++: in the UK and Canada, the APR is required for display (for example, APR: 0%).
+    * Total amount inclusive of fees (for example, 648.00 CAD)
+    * Description of the T\&Cs
+    * Hyperlinked URL (additional terms within T\&Cs)
+
+5. Click **Pay Now**. The payment is processed with the selected installment plan.
+
+### Card on file (UK)
+
+In this scenario, a customer with an existing account pays with a saved card.
+
+1. In the **Payment Details** section, expand **Pay with a saved card**, and select a card that is eligible for instalments.
+    ++Note++: Look for the green “Eligible for Instalments” label as shown below. <br/>
+    <img alt="Payment Details screen with the Pay with another card option expanded label in green." src="/gh-assets/ecommerce/installments_hpp-card-on-file_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+2. Choose an instalment plan.
+    ++Note++: The default card payment option is PAY NOW. If available, up to two instalment plans will be displayed under the default. <br/>
+    <img alt="List of three installment plans: Pay In Full (selected), Pay In 6, and Pay In 12." src="/gh-assets/ecommerce/installments_hpp-list-of-plans_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+3. Review the terms and conditions (T\&Cs) of the selected instalment plan. When finished, select the acknowledgement checkbox. <br/>
+    <img alt="Confirmation checkbox with smaller text explaining the plan's terms and conditions." src="/gh-assets/ecommerce/installments_hpp-terms_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+    The expanded details of the selected instalment plan include the following:  
+    * Number of instalments (for example, **PAY IN 6**)  
+    * Frequency of payments (for example, **/month**)  
+    * Instalment payment amount (for example, **108.00 GBP/month (incl.fee)**)  
+    * Fees per instalment plan including the annual percentage rate (APR) (for example, **Fees: 0.00 GBP/month (APR: 0%)**)  
+    * Total amount inclusive of fees (for example, **648.00 GBP (incl. 0.00 GBP fees)** )  
+    * Description of the T\&Cs  
+    * Hyperlinked URL (**Further Information and Privacy Policy** within T\&Cs)
+
+4. Click **Pay Now**. The payment is processed with the selected instalment plan.
+
+### Guest checkout (UK)
+
+In this scenario, a customer checking out as a guest pays with another card.
+
+1. In the **Payment Details** section, expand **Pay with another card**.  
+2. Input the information for the new card. Once a card number is entered, the available instalment plans will be displayed. <br/>
+    <img alt="Payment Details screen with the Pay with another card option expanded label in green." src="/gh-assets/ecommerce/installments_hpp-guest-checkout_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+3. Choose an instalment plan.
+    ++Note++: The default card payment option is PAY NOW. If available, up to two instalment plans will be displayed under the default. <br/>
+    <img alt="List of three installment plans: Pay In Full (selected), Pay In 6, and Pay In 12." src="/gh-assets/ecommerce/installments_hpp-list-of-plans_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+4. Review the terms and conditions (T\&Cs) of the selected instalment plan. When finished, select the acknowledgement checkbox. <br/>
+    <img alt="Confirmation checkbox with smaller text explaining the plan's terms and conditions." src="/gh-assets/ecommerce/installments_hpp-terms_uk.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} /> <br/>
+    The expanded details of the selected instalment plan include the following:  
+    * Number of instalments (for example, **PAY IN 6**)  
+    * Frequency of payments (for example, **/month**)  
+    * Instalment payment amount (for example, **108.00 GBP/month (incl.fee)**)  
+    * Fees per instalment plan including the annual percentage rate (APR) (for example,   **Fees: 0.00 GBP/month (APR: 0%)**)  
+    * Total amount inclusive of fees (for example, **648.00 GBP (incl. 0.00 GBP fees)** )  
+    * Description of the T\&Cs  
+    * Hyperlinked URL (**Further Information and Privacy Policy** within T\&Cs)
+
+5. Click **Pay Now**. The payment is processed with the selected instalment plan.
+
+## Step 3: Display confirmation details
+<div><Infobox>
+When displaying plan details, you must comply with the messaging options in our _Installments Enabled by Visa UX Guide_. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+</Infobox></div>
+
+Once the payment is processed with the installment plan and the payment is complete, you should then display the details on the confirmation page. For an example, see our Installments Enabled by Visa UX Guide. To download the guide, see the [Display installment plan details](display-installment-plan-details) section.
+
+The HPP response includes the following plan details, which you can use in your confirmation page display. 
+
+* `INS_number_of_installments`
+* `INS_installment_frequency`
+* `INS_instalment_payment_amount`
+* `INS_first_installment_fee`
+* `INS_total_fees`
+* `INS_annual_percentage_rate`
+* `INS_total_plan_cost`
+* `INS_currency`
+* `INS_terms_and_conditions_text`
+* `INS_terms_and_conditions_url`
+<br/>
+For details on the syntax of the HPP response, see the HPP Reference for [Installment Service](/ecommerce/hpp-reference/installments).
+
+## Language support
+The following languages are supported for Installment Service:
+
+* English
+* French Canadian 
+
+For translation assistance, contact your account manager.
+
+## Filtering installment plans
+You can filter installment plans by sending the following filter parameters in the request:
+
+* `HPP_PLAN_TYPE`
+* `HPP_MAX_TERM_MONTHS_MERCHANT_FUNDED`
+* `HPP_AMOUNT_THRESHOLD`
+
+If available, up to two installment plans will be displayed on the HPP.
+
+In the following example, both plans are `CONSUMER_FUNDED` on the HPP if available for a specific user.
+
+#### Sample request (payload)
+
+<Code id="json" title="JSON" language="json" lineHighlight="8-10"  active>
+```
+{
+"TIMESTAMP": "20240311160300",
+"MERCHANT_ID": "vayuvisa",
+"ACCOUNT": "installment",
+"CURRENCY": "CAD",
+"AMOUNT": "45000",
+"ORDER_ID": "853f6574-b02c-4cae-8e14-26506ab69809",
+"AUTO_SETTLE_FLAG":"0",
+"HPP_PLAN_TYPE":"CONSUMER_FUNDED",
+"HPP_MAX_TERM_MONTHS_MERCHANT_FUNDED":"",
+"HPP_AMOUNT_THRESHOLD":"",
+"SHA1HASH": "7c5be41124b37c40f3b8851ad2dd1bc11a70a972"
+}
+```
+</Code>
+<br/>
+For details on the syntax of the HPP response, see the HPP Reference for [Installment Service](/ecommerce/hpp-reference/installments).
+
+## Display installment plan details
+Although not required, you can display installment plan details on other pages of your website or application, such as on the homepage or various product pages. Doing so can raise awareness of these payment options during the shopping process and can lead to higher customer conversion rates. 
+
+If you decide to display plan details on other pages, you must use the messaging options we provide in our Installments Enabled by Visa UX Guide. The guide focuses on information visibility in ecommerce transactions and includes design requirements and marketing guidelines to help you get started.
+
+To download the guide, click the button below. 
+
+<index-button type="anchor" href="/sites/default/files/2024-03/GP_Installments_enabled_by_Visa_UX-Guide_v1.0.pdf">Download Guide</index-button> <br/><br/><br/>
+
+## Testing
+Our Installment Service solution is available for testing in our Sandbox environment for registered users of this developer portal. Use our test cards to try different scenarios for your application to handle.
+
+For more information, see the [Installments](/resources/test-card-numbers#installments) section of our Test Cards article.
+
+## Enhance your solution
+Explore more functionality to enrich your application. For the detailed HPP specification and a full list of features, see the [HPP Reference](/ecommerce/hpp-reference/overview).
+
+<CardsGroup type="with_icon">
+<Card type="with_icon" link="/hpp-reference/installments" title="Installment Service - HPP Reference" icon="window">
+       See the full HPP specification for Installment Service.
+    </Card>
+<Card type="with_icon" link="/ecommerce/expand-your-integration/card-blocking" title="Card Blocking" icon="filter-circle-xmark">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/expand-your-integration/card-storage" title="Card Storage" icon="coin">
+Securely store card data with no increased PCI DSS compliance requirements.
+    </Card>
+</CardsGroup>
+   </Tab>
+</Tabs>

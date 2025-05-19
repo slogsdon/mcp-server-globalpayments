@@ -1,0 +1,456 @@
+---
+title: 'File Processing - Guide'
+search_results: 'Global Payments - File Processing Guide'
+subtitle: 'Learn how to process bulk transactions in one file'
+tag: 'rest'
+created: '06/08/2024'
+---
+In this guide, you’ll learn how to generate your public-private key pair, share the public key with us, and receive our public key — all so that you can encrypt the file you want to process. You’ll then learn how to send the file to us for processing, receive the response file, and get the file details.
+
+For more information on our File Processing solution, see our [Overview](/docs/operations/file-processing-overview).
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## OpenPGP encryption
+For file encryption, we use [OpenPGP](https://openpgp.org), which is a widely used open-source cryptosystem for generating public-private key pairs. Encryption is needed for two files:
+
+* The request file you want to upload to our system
+* The response file we return that contains file details
+
+#### How it works
+First, contact [Integration Support](/support/integration-support) to let us know that you want to use File Processing (email is best). Once we reply, you can then create a public-private key pair as described below.
+
+Once we receive the email with your public key, we create our public-private key pair and share the public key with you via email. You then use the public part of this key pair to encrypt any request files you want to upload. The file must be created in the comma-separated values (.csv) format. We then decrypt your file using the private part of the key pair. Only we can decrypt your file.
+
+To create your public-private key pair, you can use the [OnlinePGP online tool](https://onlinepgp.com/). Make the following selections:
+
+* Algorithm: **RSA**
+* Key Size: **2048 bits**
+* Expiration: **Never Expires**
+
+You’ll then store the private key in your key truststore and share the public key with us via email (see details below). We then use the public part of this key pair to encrypt the response file we send to you. You then decrypt the response file using the private part of the key pair. Only you can decrypt this file. 
+
+#### How to email us
+So that we can encrypt the response file, you need to email us the public key from the public-private key pair you created in the OpenPGP online tool. Here is what we require in the email:
+
+* Subject line: (Your MER ID) – Details for File Processing 
+* Include in the email’s body: 
+  * Sandbox or Production credentials
+  * Merchant ID for Unified Payments API
+  * File Processing Account ID
+* Attach to the email: Public key from OpenPGP
+  
+You then need to send the email to [enterpriseintegrations.prodsupport\@globalpay.com](mailto:enterpriseintegrations.prodsupport@globalpay.com) with a 
+carbon copy (CC) to [api.integrations\@globalpay.com](mailto:api.integrations@globalpay.com).
+
+
+## Step 1: Create and encrypt the file
+First, you need to create the file that you plan to send to us for processing. The file must be created in the .csv format, and it cannot exceed **10 MB**. The three templates below can be used to get you started with creating your file. You'll need to modify each file to ensure that you're sending the appropriate fields required for your transactions.
+
+Sample files:
+* [Sale transaction file](/gh-assets/files/sample-sale-transaction-file.csv)
+* [Linked refund transactions file](/gh-assets/files/sample-linked-refund-transactions-file.csv)
+* [Reversal transaction file](/gh-assets/files/sample-reversal-transactions-file.csv)
+
+All fields that can typically be sent in JSON to the API become the column names in the file. If you need help with formatting, you can use our request template.
+
+After creating the .csv file, you then need to encrypt it in OpenPGP using the public key we gave you. For more information, see the [OpenPGP encryption](#openpgp-encryption) section. Only we can decrypt this file.
+
+## Step 2: Create the URL
+Next, you need to send a request to create the URL that you’ll send the file to. We then provide a signed URL in the response that is valid for 24 hours. You’ll also receive a unique File Processing Resource ID (`FPR_ID`), which can be used to check the details of the file. 
+
+The initial status of all newly created file resources is INITIATED. For more information on file statuses, see the [Overview](/docs/operations/file-processing-overview).  
+
+The `status_url` is the URL we will send a webhook to once the file has finished processing.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+url --location 'https://apis.sandbox.globalpay.com/ucp/files' \
+--header 'Authorization: Bearer PR3RmboHzLame3SmDcYMtaKSjFtC' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Accept: application/json' \
+--header 'Content-type: application/json' \
+--header 'Accept-Encoding: gzip' \
+--data '{
+    "account_name": "file_processing",
+    "notifications": {
+        "status_url": "https://eo9faqlbl8wkwmx.m.pipedream.net/"
+    }
+}'
+    ```
+    </Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardPresent);
+config.setStatusUrl("https://samplestatusurl.com/webhookresponse/");
+
+ServicesContainer.configureService(config);
+
+try {
+    FileProcessor response = new FileProcessingService().initiate();
+
+    // API raw response key "id"
+    String transactionId = response.getResourceId();
+    // API raw response key "url"
+    String uploadUrl = response.getUploadUrl();
+    // API raw response key "expiration_date"
+    String expirationDate = response.getExpirationDate();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String createdDate = response.getCreatedDate();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>	
+  <Code id="NET" title=".NET" language="net">
+    ```
+GpApiConfig config = new GpApiConfig();
+   config.AppId = "AppId";
+   config.AppKey = "AppKey";
+   config.Country = "US";
+   config.Channel = Channel.CardPresent;
+   config.ChallengeNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MethodNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MerchantContactUrl = "https://enp4qhvjseljg.x.pipedream.net/";
+   config.AccessTokenInfo = new AccessTokenInfo
+   {
+       TransactionProcessingAccountName = "transaction_processing"
+   };
+   config.StatusUrl = "https://eo9faqlbl8wkwmx.m.pipedream.net/";
+   ServicesContainer.ConfigureService(config);
+
+   try
+   {
+       FileProcessor response = new FileProcessingService().Initiate();
+       //response.ResponseCode -> "SUCCESS"
+       //response.ResponseMessage -> "INITIATED"
+   }
+   catch (Exception ex)
+   {
+       throw;
+   }
+    ```
+  </Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardPresent;
+$config->statusUrl = 'https://samplestatusurl.com/webhookresponse/';
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+try {
+    /** @var FileProcessor $response */
+    $response = FileProcessingService::initiate();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+// API raw "id"
+$resourceId = $response->resourceId;
+// API raw "url"
+$uploadUrl = $response->uploadUrl;
+// API raw "expiration_date"
+$expirationDate = $response->expirationDate;
+// API raw "status"
+$status = $response->status;
+// API raw "time_created"
+$createdDate = $response->createdDate;
+// API raw "action->result_code"
+$responseCode = $response->responseCode;
+```
+</Code>
+</CodeGroup>
+
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+    ```
+{
+    "id": "FPR_303b370ad02f4853b5296391ca5c0f35",
+    "time_created": "2024-11-28T13:34:39.513Z",
+    "status": "INITIATED",
+    "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+    "merchant_name": "Sandbox_Merchant_4",
+    "account_id": "FPA_d1b2792dab3e43718aaa3092b8589e27",
+    "account_name": "file_processing",
+    "url": "https://storage.googleapis.com/bkt-gouscnaic-file-processing-str01-unscanned/MER_c5d37eaf0e3841e083c232b2318af55c/Request/FPR_303b370ad02f4853b5296391ca5c0f35?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=file-processing-function%40pid-gousgnac-mega-gain-app.iam.gserviceaccount.com%2F20241128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20241128T133436Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=5930f745b81d7fe32e502ab5036ace993c8f11326be5f32629f1e92c10ddff1c7962ea7eb5d773bde944170806af18be5c9568de1bdf756c14af25c4f6f1ffdc519e4db17c761688880c879be437712b34fcaf1243c2a572cab3f2dfcb53d011fef1b4224a697aedf09bc804bb858a686f0f2a9f9c8f1a3b14af60ddd9b1b402030c5d599b81c58034ea34987ed2903b0ef7726ca1c1e1d756a0132693b0b53fc7c9eac997f13fcaf1dbb2104589459d121935a51e3f993f03560e0309830ae156850fe937bd02ef10e2664d6862dab2fa9472fdb8e43aa6d67514d4c95381a5212e6275cc97581f0579e998fe003281e85a1f233d6f3aad0ebe73b9afa685d8",
+    "expiration_date": "2024-11-28T13:49:36.560Z",
+    "action": {
+        "id": "ACT_H5LCD2KqYmtpAfPW7HclZM8FAK1yEI",
+        "type": "FILE_CREATE",
+        "time_created": "2024-11-28T13:34:39.513Z",
+        "result_code": "SUCCESS",
+        "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+        "app_name": "Postman_Collection_Test"
+    }
+}
+    ```
+    </Code>
+    
+  
+  
+  ## Step 3: Send the file and check status
+Now it’s time to actually send the encrypted file to us. This is achieved via a PUT request to the URL returned in Step&nbsp;2. **The maximum file size that can be uploaded is 10 MB**.
+
+We then decrypt and process the file and send you a webhook when the file is finished processing. You can check the status by using a GET request: `/ucp/files{id}`. For more information on file statuses, see the [Overview](/docs/operations/file-processing-overview).
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+curl --location --request PUT 'https://storage.googleapis.com/bkt-gouscnaic-file-processing-str01-unscanned/MER_c5d37eaf0e3841e083c232b2318af55c/Request/FPR_303b370ad02f4853b5296391ca5c0f35?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=file-processing-function%40pid-gousgnac-mega-gain-app.iam.gserviceaccount.com%2F20241128%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20241128T133436Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=5930f745b81d7fe32e502ab5036ace993c8f11326be5f32629f1e92c10ddff1c7962ea7eb5d773bde944170806af18be5c9568de1bdf756c14af25c4f6f1ffdc519e4db17c761688880c879be437712b34fcaf1243c2a572cab3f2dfcb53d011fef1b4224a697aedf09bc804bb858a686f0f2a9f9c8f1a3b14af60ddd9b1b402030c5d599b81c58034ea34987ed2903b0ef7726ca1c1e1d756a0132693b0b53fc7c9eac997f13fcaf1dbb2104589459d121935a51e3f993f03560e0309830ae156850fe937bd02ef10e2664d6862dab2fa9472fdb8e43aa6d67514d4c95381a5212e6275cc97581f0579e998fe003281e85a1f233d6f3aad0ebe73b9afa685d8' \
+--header 'Content-Type: text/csv' \
+--data '@/C:/Users/Downloads/Transactions.csv.encrypted.txt'
+    ```
+    </Code>
+	
+  <Code id="NET" title=".NET" language="net">
+    ```
+GpApiConfig config = new GpApiConfig();
+   config.AppId = "AppId";
+   config.AppKey = "AppKey";
+   config.Country = "US";
+   config.Channel = Channel.CardPresent;
+   config.ChallengeNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MethodNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MerchantContactUrl = "https://enp4qhvjseljg.x.pipedream.net/";
+   config.AccessTokenInfo = new AccessTokenInfo
+   {
+       TransactionProcessingAccountName = "transaction_processing"
+   };
+   config.StatusUrl = "https://eo9faqlbl8wkwmx.m.pipedream.net/";
+   ServicesContainer.ConfigureService(config);
+
+try
+   {
+       FileProcessor response = new FileProcessingService().Initiate();
+
+       FileProcessingClient client = new FileProcessingClient(response.UploadUrl);
+       var fileName = @"FileProcessing.encrypted.txt";
+       var fullPath = Path.GetFullPath(fileName);
+       var result = client.UploadFile(fullPath);  
+   }
+   catch (Exception ex)
+   {
+       throw;
+   }
+    ```
+  </Code>
+</CodeGroup>
+
+## Step 4:  Receive the webhook and response file
+Once the file is finished processing, a webhook POST notification is sent to the `status_url` you created in Step&nbsp;2. You can then use the provided link to download the response file.
+
+You need to send a GET request to the URL provided to download the file or you can copy and paste the URL into your browser. This response file will be encrypted using your public key that you sent to us. You will need to use your private key and password to decrypt the file. Only you will be able to decrypt the response file.
+
+#### Sample webhook
+<Code id="JSON" title="JSON" language="json" active>
+    ```
+{
+   "method":"POST",
+   "path":"/",
+   "query":{
+      
+   },
+   "client_ip":"123.123.123.123",
+   "url":"https://sample.net/",
+   "headers":{
+      "host":"qo9faqlbl8wkwmx.sample.net",
+      "content-length":"1893",
+      "access-control-allow-origin":"",
+      "access-control-allow-headers":"origin, apikey, apienv, Authorization, x-requested-with, accept, content-type,X-GP-Version,X-GP-version,x-gp-version",
+      "access-control-max-age":"3628800",
+      "access-control-allow-methods":"POST",
+      "access-control-allow-credentials":"true",
+      "cache-control":"private,no-store",
+      "strict-transport-security":"max-age=31536000; includeSubDomains;",
+      "x-content-type-options":"nosniff",
+      "x_global_transaction_id":"rrt-8f1f2d17-9d8d-40cf-8d85-5fd50dc606778tx78",
+      "x_global_transaction_id_source":"gp-apigee",
+      "apigee_x_global_transaction_id":"rrt-2614871067568800024-c-gea1-32143-51623357-1.1",
+      "x-gp-file-id":"FPR_6bd1965c1cc6430ca19c964a5404dedd",
+      "content-type":"application/json",
+      "x-gp-signature":"d5cc6450645e3c1b2b86d097c4b5fb19dc48d9224d02bd300f6876f3cdf508b4e683761a3205aa5e1f94b2998982d10858776adb9fdfd5abc377ecdd0ca24f94"
+   },
+   "body":{
+      "id":"FPR_6bd1965c1cc6430ca19c964a5404dedd",
+      "time_created":"2023-11-25T12:09:28.148Z",
+      "status":"COMPLETED",
+      "response_file_id":"FPR_6bd1965c1cc6430ca19c964a5404dedd_RESP",
+      "total_record_count":"19",
+      "response_files":[
+         {
+            "response_file_id":"FPR_6bd1965c1cc6430ca19c964a5404dedd_RESP",
+            "name":"RESPONSE_RECORDS",
+            "time_created":"2023-11-25T12:11:19.322Z",
+            "url":"https://storage.googleapis.com/bkt-gouscnaic-file-processing-str01-clean/MER_c3b3d1ba27684fccb2f391eb5f7a9104/Response/FPR_6bd1965c1cc6430ca19c964a5404dedd_RESP?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=file-processing-function%40pid-gousgnac-mega-gain-app.iam.gserviceaccount.com%2F20231125%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20231125T121119Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=4e1c1448e9208f1561458baae6927ba4792b54f7752b05343d73bc331b835f47892f047818e83308075d8396a14087b2da94bd7417bbf7d3d0aa36263d63e9f6fc2829bd453774dfbe42b5c7c927513e675d966ab23941de4de5b132023071f33c2134f48af4b20d8383d5041dfed31c1a18c4ef4f777d97750e700e2cfed69c78d3aee1c4d09113541ab6de051a2733e2d3dfc36d0052091614be846eadcb83b10cd86b21690e36c9f7daca47a92e7877bcbcca05f4800669a278fdb5f7523e7f52f9afdec54b9aa551da6a5ead55c4de40fa121e409428f8528079ca48e745cb53b15b4978806c63d5751e71f7ed84515a9c0c7b87d3eb392145f02d87b7f8",
+            "expiration_date":"2023-11-25T14:11:19.323Z"
+         }
+      ],
+      "action":{
+         "id":"ACT_euSwZVjl7TKB3w8n47Q6hJNzleUgPI",
+         "type":"STATUS_NOTIFICATION",
+         "time_created":"2023-11-25T12:11:20.671Z",
+         "result_code":"SUCCESS",
+         "app_id":"fWkEqBHQNyLrWCAtp1vCWDbo10kf5jr6",
+         "app_name":"File-Processing-SystemApp-CERT"
+      }
+   }
+}
+    ```
+    </Code>
+    
+## Step 5: Get file details
+You can check the status of a file and download the encrypted response file by sending a GET request to `/ucp/files/{FPR_ID}`. To decrypt the file, use the private key of the key pair you created in the [OpenPGP encryption](#openpgp-encryption) section.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/files/FPR_1fb42784270642b1b04fcb9d1e99cb11' \
+	--header 'Authorization: Bearer gy886f7FycZHyhuKeYr8VkU3CUYa' \
+	--header 'X-GP-Version: 2021-03-22' \
+	--header 'Accept: application/json' \
+	--header 'Content-type: application/json' \
+	--header 'Accept-Encoding: gzip'
+    ```
+    </Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardPresent);
+config.setStatusUrl("https://samplestatusurl.com/webhookresponse/");
+
+ServicesContainer.configureService(config);
+
+String resourceId = "FPR_971edc6eb0944d8d890dcba7a2a41bea";
+
+try {
+    FileProcessor response = new FileProcessingService().getDetails(resourceId);
+
+    // API raw response key "id"
+    String transactionId = response.getResourceId();
+    // API raw response key "time_created"
+    String createdDate = response.getCreatedDate();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "total_record_count"
+    String totalRecordCount = response.getTotalRecordCount();
+    // API raw response key "response_files"
+    List<FileUploaded> filesUploaded = response.getFilesUploaded();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>	
+  <Code id="NET" title=".NET" language="net">
+    ```
+GpApiConfig config = new GpApiConfig();
+   config.AppId = "AppId";
+   config.AppKey = "AppKey";
+   config.Country = "US";
+   config.Channel = Channel.CardPresent;
+   config.ChallengeNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MethodNotificationUrl = "https://ensi808o85za.x.pipedream.net/";
+   config.MerchantContactUrl = "https://enp4qhvjseljg.x.pipedream.net/";
+   config.AccessTokenInfo = new AccessTokenInfo
+   {
+       TransactionProcessingAccountName = "transaction_processing"
+   };
+   config.StatusUrl = "https://eo9faqlbl8wkwmx.m.pipedream.net/";
+   ServicesContainer.ConfigureService(config);
+
+string resourceId = "FPR_971edc6eb0944d8d890dcba7a2a41bea";
+   FileProcessor response = new FileProcessingService().GetDetails(resourceId);
+   //response.ResponseCode -> "SUCCESS"
+   //response.Status -> "COMPLETED"
+    ```
+  </Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardPresent;
+$config->statusUrl = 'https://eo9faqlbl8wkwmx.m.pipedream.net/';
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$resourceId = "FPR_0b185b7a95b3455a96a23d2146102d0a";
+try {
+    /** @var FileProcessor $response */
+    $response = FileProcessingService::getDetails($resourceId);
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+// API raw "id"
+$resourceId = $response->resourceId;
+// API raw "time_created"
+$createdDate = $response->createdDate;
+// API raw "status"
+$status = $response->status;
+// API raw "total_record_count"
+$total_record_count = $response->totalRecordCount;
+// API raw "response_files"
+$files = $response->files;
+```
+</Code>
+</CodeGroup>  
+  
+
+## Testing
+Our File Processing solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Explore more functionality to enrich your application or website. Below are value-added services you can enable for File Processing.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/reporting/real-time-reporting-guide" title="Real-Time Data Reporting" icon="file-chart-column">
+        Reconcile transactions and get an audit trail for all account activities.
+    </Card>
+
+    <Card type="with_icon" link="/docs/reporting/settlement-reporting-overview" title="Settlement Reporting" icon="file-alt">
+        Simplify reconciliation and get customized daily deposit data.
+    </Card>
+  <Card type="with_icon" link="/docs/operations/disputes-management-overview" title="Disputes Management" icon="comment-exclamation">
+        Automate the reporting and management of transaction disputes.
+    </Card>
+  </CardsGroup>
+

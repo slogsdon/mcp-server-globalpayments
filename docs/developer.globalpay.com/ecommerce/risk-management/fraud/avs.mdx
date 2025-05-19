@@ -1,0 +1,496 @@
+---
+title: "Address Verification Service"
+subtitle: "Verify a customer's address to ensure a smooth transaction"
+tag: "xml"
+created: "02/03/2025"
+---
+
+<Infobox>
+This functionality is available only for cardholders in the United States, Canada, and Great Britain and is not supported by all Acquirers or Issuers. For more information, contact a member of our support team.
+</Infobox>
+
+The Address Verification Service (AVS) verifies the cardholder's address by checking the information provided at the time of sale against the Issuer's records. If a transaction fails the AVS check, it will not automatically be declined. Instead, AVS acts as an advisory service and requires that the details of non-matched transactions be checked by your application.
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+For direct API integration, the AVS data is passed in the billing code address element and must be formatted correctly depending on the billing country of the cardholder, as shown in the following table. 
+
+| Billing Country | Format | Sample Address | Sample |
+| --- | --- | --- | --- |
+| US or CA | Concatenate the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 123  <br />House 456  <br />Chicago  <br />50001  <br />United States | "50001\|Flat 123" |
+| GB  | Concatenate **just the digits** from the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 456  <br />House 123  <br />Halifax  <br />WB3 A21  <br />United Kingdom |
+
+## AVS values
+For both the postcode and the first line of the address check, the following values can be returned.
+
+| Value | Description |
+| --- | --- |
+| M   | Matched |
+| N   | Not Matched |
+| I   | Problem with check |
+| U   | Unable to check, for example, Issuer not certified |
+| P   | Partial Match |
+
+## Sample response
+
+<CodeGroup>
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0519</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <!-- Begin AVS Elements -->
+  <tssinfo>
+    <address type="billing">
+      <code>50001|Flat 123</code>
+    </address>
+  </tssinfo>
+  <!-- End AVS Elements -->
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+// supply the customer's billing country and post code for avs checks
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("House 456");
+billingAddress.setPostalCode("50001");
+billingAddress.setCountry("US");
+
+try {
+   // process the authorization with fraud data
+   Transaction response = card.charge(new BigDecimal("19.99"))
+      .withCurrency("USD")
+      .withAddress(billingAddress, AddressType.Billing)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   String avsCheck = response.getAvsResponseCode(); // M ==  Matched
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+// supply the customer's billing country and post code for avs checks
+var billingAddress = new Address
+{
+   Country = "US",
+   StreetAddress1 = "House 456",
+   PostalCode = "50001"
+};
+
+try
+{
+   // process the authorization with fraud data
+   Transaction response = card.Charge(199.99m)
+      .WithCurrency("USD")
+      .WithAddress(billingAddress, AddressType.Billing)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   var avsCheck = response.AvsResponseCode; // M ==  Matched
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\PaymentMethods\CreditCardData;
+use GlobalPayments\Api\Entities\Address;
+use GlobalPayments\Api\Entities\Enums\AddressType;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+// supply the customer's billing country and post code for avs checks
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+try {
+   // create the capture authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   $avsPostCodeCheck = $response->avsResponseCode; // M = Matched
+   $avsAddressLineCheck->avsAddressResponse; // M = Matched
+}
+```
+</Code>
+</CodeGroup>
+
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+
+For the Hosted Payment Page (HPP), AVS data is passed in the `BILLING_CODE` field and must be formatted correctly depending on the billing country of the cardholder, as shown in the following table.
+
+| Billing Country | Format | Sample Address | Sample |
+| --- | --- | --- | --- |
+| US or CA | Concatenate the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 123  <br />House 456  <br />Chicago  <br />50001  <br />United States | "50001\|Flat 123" |
+| GB  | Concatenate **just the digits** from the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 456  <br />House 123  <br />Halifax  <br />WB3 A21  <br />United Kingdom | "321\|456" |
+
+## Sample request
+
+<CodeGroup>
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Begin AVS Field -->
+  <input type="hidden" name="BILLING_CODE" value="50001|Flat 123">
+  <!-- End AVS Feild -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client, request and HPP settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+HostedPaymentConfig hostedPaymentConfig = new HostedPaymentConfig();
+hostedPaymentConfig.setVersion(HppVersion.Version2);
+config.setHostedPaymentConfig(hostedPaymentConfig);
+
+HostedService service = new HostedService(config);
+
+Address billingAddress = new Address();
+billingAddress.setCountry("US");
+billingAddress.setPostalCode("50001|Flat 123");
+
+try {
+   String hppJson = service.charge(new BigDecimal("19.99"))
+      .withCurrency("EUR")
+      .withAddress(billingAddress, AddressType.Billing)
+      .serialize();
+   // TODO: pass the HPP JSON to the client-side
+} catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client, request and HPP settings
+var service = new HostedService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://pay.sandbox.realexpayments.com/pay",
+   HostedPaymentConfig = new HostedPaymentConfig
+   {
+      Version = "2"
+   }
+});
+
+var billingAddress = new Address
+{
+   Country = "US",
+   PostalCode = "50001|Flat 123"
+};
+
+try
+{
+   var hppJson = service.Charge(19.99m)
+      .WithCurrency("EUR")
+      .WithAddress(billingAddress, AddressType.Billing)
+      .Serialize();
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\HostedPaymentConfig;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Entities\Address;
+use GlobalPayments\Api\Entities\Enums\AddressType;
+use GlobalPayments\Api\Entities\Enums\HppVersion;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+$config->hostedPaymentConfig = new HostedPaymentConfig();
+$config->hostedPaymentConfig->version = HppVersion::VERSION_2;
+$service = new HostedService($config);
+
+// billing address
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+try {
+   $hppJson = $service->charge(19.99)
+      ->withCurrency("EUR")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->serialize();
+   // TODO: pass the HPP JSON to the client-side
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## AVS values
+For both the postcode and the first line of the address check, the following values can be returned.
+
+| Value | Description |
+| --- | --- |
+| M   | Matched |
+| N   | Not Matched |
+| I   | Problem with check |
+| U   | Unable to check; for example, Issuer not certified |
+| P   | Partial Match |
+
+## Sample response
+
+<CodeGroup>
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M]
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+HostedService service = new HostedService(config);
+
+/* TODO: grab the response JSON from the client-side.
+   sample response JSON (values will be Base64 encoded):
+   String responseJson = "{ \"MERCHANT_ID\": \"MerchantId\", \"ACCOUNT\": \"internet\", \"ORDER_ID\": \"GTI5Yxb0SumL_TkDMCAxQA\", \"AMOUNT\": \"1999\", "
+ + "\"TIMESTAMP\": \"20170725154824\", \"SHA1HASH\": \"843680654f377bfa845387fdbace35acc9d95778\", \"RESULT\": \"00\", \"AUTHCODE\": \"12345\", "
+ + "\"CARD_PAYMENT_BUTTON\": \"Place Order\", \"AVSADDRESSRESULT\": \"M\", \"AVSPOSTCODERESULT\": \"M\", \"BATCHID\": \"445196\", \"MESSAGE\": \"[ test system ] Authorised\", "
+ + "\"PASREF\": \"15011597872195765\", \"CVNRESULT\": \"M\", \"HPP_FRAUDFILTER_RESULT\": \"HOLD\", \"HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe\": "
+ + "\"HOLD\", \"HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305\": \"PASS\" }";
+ */
+
+try {
+   Transaction response = service.parseResponse(responseJson, true);
+   String responseCode = response.getResponseCode(); // 00
+   HashMap<String, String> responseValues = response.getResponseValues(); // get values accessible by key
+   String postCodeCheck = responseValues.get("AVSPOSTCODERESULT"); // M
+   String addressOneCheck = responseValues.get("AVSADDRESSRESULT"); // M
+   // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client settings
+var service = new HostedService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://pay.sandbox.realexpayments.com/pay"
+});
+
+/* TODO: grab the response JSON from the client-side for example:
+   var responseJson = Request.Form["hppResponse"];
+   sample response JSON (values will be Base64 encoded):
+   var responseJson = "{ \"MERCHANT_ID\": \"MerchantId\", \"ACCOUNT\": \"internet\", \"ORDER_ID\": \"GTI5Yxb0SumL_TkDMCAxQA\", \"AMOUNT\": \"1999\","
+   + "\"TIMESTAMP\": \"20170725154824\", \"SHA1HASH\": \"843680654f377bfa845387fdbace35acc9d95778\", \"RESULT\": \"00\", \"AUTHCODE\": \"12345\","
+   + "\"CARD_PAYMENT_BUTTON\": \"Place Order\", \"AVSADDRESSRESULT\": \"M\", \"AVSPOSTCODERESULT\": \"M\", \"BATCHID\": \"445196\","
+   + "\"MESSAGE\": \"[ test system ] Authorised\", \"PASREF\": \"15011597872195765\", \"CVNRESULT\": \"M\", \"HPP_FRAUDFILTER_RESULT\": \"PASS\"}";
+ */
+
+try
+{
+   // create the response object from the response JSON
+   Transaction response = service.ParseResponse(responseJson, true);
+   var orderId = response.OrderId; // GTI5Yxb0SumL_TkDMCAxQA
+   var responseCode = response.ResponseCode; // 00
+   var responseMessage = response.ResponseMessage; // [ test system ] Authorised
+   var responseValues = response.ResponseValues; // get values accessible by key
+
+   var postCodeCheck = responseValues["AVSPOSTCODERESULT"]; // M
+   var addressOneCheck = responseValues["AVSADDRESSRESULT"]; // M
+
+   // TODO: update your application and display transaction outcome to the customer
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+// configure client settings
+ServicesContainer::configureService($config);
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+$service = new HostedService($config);
+
+/*
+ * TODO: grab the response JSON from the client-side.
+ * sample response JSON (values will be Base64 encoded):
+ * $responseJson ='{"MERCHANT_ID":"MerchantId","ACCOUNT":"internet","ORDER_ID":"GTI5Yxb0SumL_TkDMCAxQA","AMOUNT":"1999",' .
+ * '"TIMESTAMP":"20170725154824","SHA1HASH":"843680654f377bfa845387fdbace35acc9d95778","RESULT":"00","AUTHCODE":"12345",' .
+ * '"CARD_PAYMENT_BUTTON":"Place Order","AVSADDRESSRESULT":"M","AVSPOSTCODERESULT":"M","BATCHID":"445196",' .
+ * '"MESSAGE":"[ test system ] Authorised","PASREF":"15011597872195765","CVNRESULT":"M","HPP_FRAUDFILTER_RESULT":"PASS",' .
+ * '"HPP_FRAUDFILTER_RULE_56257838-4590-4227-b946-11e061fb15fe":"HOLD","HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305":"PASS"}";
+ */
+
+try {
+   $parsedResponse = $service->parseResponse($responseJson, true);
+   $responseCode = $parsedResponse->responseCode; // 00
+   $responseValues = $parsedResponse->responseValues; // get values accessible by key
+
+   $postCodeCheck = $responseValues["AVSPOSTCODERESULT"]; // M
+   $addressOneCheck = $responseValues["AVSADDRESSRESULT"]; // M
+   // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+   </Tab>
+  
+</Tabs>

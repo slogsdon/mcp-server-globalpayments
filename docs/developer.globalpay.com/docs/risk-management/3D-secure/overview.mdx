@@ -1,0 +1,68 @@
+---
+title: '3D Secure & Strong Customer Authentication'
+search_results: 'Enhance security with stronger authentication for online payments.'
+subtitle: 'Mitigate risk via our 3D Secure and Fraud Management capabilities'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+3D Secure (3DS) is the authentication protocol used by card brands, such as Visa and Mastercard, to enable merchants to gain protection from fraud in a card-not-present (CNP) environment and to comply with European strong customer authentication (SCA) regulations set in <Tooltip content="Payment Services Directive 2">PSD2</Tooltip>.
+
+When 3DS2 is used with an authorization request requiring the customer to authenticate the card used in a transaction, the financial liability can shift from the merchant to the issuer in the event of a fraud-related chargeback.
+
+## How does 3DS work?
+
+#### High-level steps
+An end-to-end 3DS authentication involves multiple steps with different components. The table below describes the high-level steps:
+
+| 3DS Step | Description |
+| -------- | ------- |
+| Check Enrollment | Confirm that the card is enrolled in 3DS and which versions it supports. |
+| Device Profiling<br />(Conditional) | Facilitate the issuer’s access control server (ACS) gathering data about the cardholder’s device (depends on whether the Issuer’s ACS supports this). |
+| Initiate Authentication | The transaction, cardholder, and browser information is sent as part of the authentication request to the issuer. The following outcomes can occur: <ul><li> Frictionless Successful Authentication (Proceed to Authorization)</li><li>Frictionless Unsuccessful Authentication (Halt Transaction)</li><li>Challenge Required</li></ul> | Present the Challenge<br />(Conditional) | If the issuer determines that a challenge is required, the ACS must be displayed to the cardholder. The following outcomes can occur: <ul><li>Challenge Completed Successfully (Proceed to Authorization)</li><li>Challenge Not Completed Successfully (Halt Transaction)</li></ul>| Obtain Authentication Data<br />(Conditional) | If the cardholder completes the challenge successfully, obtain the necessary data for authorization. |
+| Authorization | Once the authentication is complete and a chargeback liability shift is available, proceed to authorization. |
+
+#### 3D Secure components
+Although there are multiple components that work together to perform a 3DS authentication, you'll primarily work with our server-side SDKs and client-side libraries and/or our REST API (depending on your integration type), as well as the issuer’s ACS. However, it’s worth familiarizing yourself with all of the components and who provides them (see table below).
+
+| Component Name | Provider | Description |
+| -------- | ------- | ------- |
+| Server-Side SDKs	 | Us | Collection of tools provided in a variety of languages to handle the communication between your application or website and our REST API. |
+| Client-Side Libraries	 | Us | Used with our REST API to provide an out-of-the-box payment form with secure data-capture fields. With 3DS, they also handle communication with the issuer's ACS. |
+| REST API | Us | A single integration point used to connect into numerous regions, channels, and payment methods worldwide. The REST API handles all communications with us, including with the 3DS server. |
+| 3DS Server	 | Us | Responsible for interfacing with the directory servers of the different card networks. |
+| Directory Server	 | 	Card Networks | The entry point into the 3DS ecosystem for card networks (Visa, Mastercard, etc.), including the issuer’s ACS. |
+| Access Control Server | (Card) Issuer | Responsible for the outcome of the authentication as well as providing the challenge to the cardholder if it’s a non-frictionless authentication. |
+
+## Liability shift
+Liability shift typically means that the responsibility for covering losses from fraudulent transactions transfers from the merchant to the issuing bank when the merchant authenticates the transaction using a 3DS protocol. If the merchant does not use a 3DS method to authenticate a credit card transaction, they remain liable for chargebacks and fraud-related losses.
+
+There are some differences in the liability shift offered by Mastercard, Visa, and American Express (AMEX). The following tables include the transaction status, electronic commerce indicator (ECI), authentication value, authentication flow, liability, and recommendation for each card brand.
+
+#### Mastercard
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| -------- | ------- | ------- | -------- | ------- | ------- |
+| Authentication Successful | 2 | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 1 | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 0 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 0 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; do not proceed to Authorization |
+
+#### Visa
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| -------- | ------- | ------- | -------- | ------- | ------- |
+| Authentication Successful | 5 | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 6 | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 7 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 7 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; do not proceed to Authorization |
+
+#### AMEX
+
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| -------- | ------- | ------- | -------- | ------- | ------- |
+| Authentication Successful | 5 | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 6 | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 7 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 7 | Not Present | Challenge/Frictionless	 | Merchant | No liability shift; do not proceed to Authorization |
+
+## Get integrated
+We provide multiple ways of adding 3DS and SCA to your payment flow. The most popular integration is via our [browser authentication guide](/docs/risk-management/3D-secure/browser-authentication-guide), but we do provide in-app and many more [3DS options](/docs/risk-management/3D-secure/3DS-more-overview).

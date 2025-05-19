@@ -1,0 +1,219 @@
+---
+title: 'Messages & Error Codes'
+search_results: 'Error Responses & Error Handling'
+subtitle: 'See examples of what responses are returned'
+tag: 'xml'
+created: '03/21/2025'
+---
+
+<Infobox>
+This guide documents the messages you might receive when integrating with our XML API. If you're using our REST API solution, see the REST-specific responses.
+</Infobox>
+
+## Frequently occurring
+
+<CardsGroup type="content">
+
+<Card type="content">
+##### ++101++<br/>
+**Declined by Bank**<br/>
+Generally insufficient funds or incorrect card data supplied, for example, expiry date or security code.
+</Card>
+
+<Card type="content">
+##### ++501++<br/>
+**This transaction has already been processed!**<br/>
+Each transaction must have a unique Order ID. This includes those that have been processed but were declined (for example, a 101 Decline).
+</Card>
+
+<Card type="content">
+##### ++505++ <br/>
+**You cannot use this service from there [[URL/IP]].**<br/>
+In Production transactions will only be accepted from designated IPs or URLs. If a transaction doesn't, it will be blocked.
+</Card>
+
+<Card type="content">
+##### ++505++<br/>
+**The refund password you entered was incorrect.**<br/>
+Refunds (Rebates) and Credits must be signed with a unique SHA-1 hash. This error indicates that the hashed value was incorrect.
+</Card>
+
+<Card type="content">
+##### ++508++<br/>
+**Incorrect hash. Please check your code and the Developers Documentation.**<br/>
+The hash included in the request was not the one expected. Usually indicates it has not has been constructed correctly or the Shared Secret is wrong. (505 for API)
+</Card>
+
+<Card type="content">
+##### ++511++<br/>
+**Unable to connect to the merchant's response URL [URL].**<br/>
+The HPP was unable to connect to the Response URL. Your application or website will not have received the transaction response. Common causes of this include firewall rules or server availability.
+</Card>
+
+</CardsGroup>
+
+## Everything else
+Below are the success and error codes and corresponding messages that both users and developers will come across when integrating with the following solutions:
+
+* [Direct API integration](#direct-api-integration)
+* [Hosted Payment Page](#hosted-payment-page)
+* [Both API and HPP](#both-api-and-hpp)
+* [3D Secure](#3d-secure)
+* [Scheduler](#scheduler)
+
+We have included insight into the cause of the errors and remedies to help troubleshoot should they arise.
+
+### Direct API integration
+  
+| Solution | Error No. | Description |
+| --- | --- | --- |
+| API | 501 | This transaction has already been processed. |
+| API | 502 | Compulsory field not present – cannot continue. Please check the Developer Documentation for compulsory fields |
+| API | 502 | Type \[type\] not implemented. Please check the Developer Documentation for allowed types. |
+| API | 503 | Request type not recognized. |
+| API | 503 | Request type \[type\] not allowed for this merchant. |
+| API | 504 | There is no such merchant id. Please contact Global Payments if you continue to experience this problem. |
+| API | 505 | sha1hash incorrect – check your code and the Developer’s Documentation. |
+| API | 505 | You are not allowed to access this service from there! (xxx.xxx.xxx.xxx). |
+| API | 505 | You are not allowed to access this service from there!(http://www.domain.com). |
+| API | 505 | The refund password you entered was incorrect. |
+| API | 506 | Invalid MERCHANT\_ID or ACCOUNT. Please contact the merchant. |
+| API | 506 | There is no such merchant account. Please contact Global Payments if you continue to experience this problem. |
+| API | 506 | No XML in request. |
+| API | 506 | Too much data. |
+| API | 506 | Bad XML Formation. |
+| API | 507 | Currency/card combination not allowed. |
+| API | 508 | Zero, negative or insufficient amount specified. |
+| API | 508 | Leading zeros or other error in amount field. |
+| API | 508 | Invalid characters in order id - please use only A-Z a-z 0-9 \_ - . |
+| API | 508 | Invalid data in merchant ID field. |
+| API | 508 | Invalid data in account field. |
+| API | 508 | Invalid data in currency field. |
+| API | 508 | Invalid data in timestamp field. |
+| API | 508 | Invalid timestamp. |
+| API | 508 | Transaction out of date. |
+| API | 508 | Invalid hash supplied. |
+| API | 508 | Invalid Auto Settle flag. |
+| API | 508 | Invalid Data in Billing code field. |
+| API | 508 | Invalid Data in Billing country field. |
+| API | 508 | Invalid Data in Shipping code field. |
+| API | 508 | Invalid Data in Shipping country field. |
+| API | 508 | Invalid characters in cust num - please use only A-Z a-z 0-9 \_ - . , + @. |
+| API | 508 | Invalid characters in variable reference - please use only A-Z a-z 0-9 \_ - . , + @. |
+| API | 508 | Invalid characters in product id - please use only A-Z a-z 0-9 \_ - . , + @. |
+| API | 508 | Invalid data in card type field. |
+| API | 508 | The original transaction failed! You can't rebate a failed transaction. |
+| API | 508 | You may only rebate up to 115% of the original amount. |
+| API | 508 | Original transaction not found. |
+| API | 508 | Can't find original transaction in database. |
+| API | 508 | Can't settle a settled transaction. |
+| API | 508 | Can't settle for more than 115% of that which you authorized. |
+| API | 508 | Installment is not allowed for this account. |
+| API | 508 | Installment is not allowed for this acquirer. |
+| API | 508 | Installment is not supported for this transaction. |
+| API | 508 | Can't settle for more than 105% of that which you authorized. |
+| API | 508 | You may only settle up to 105% of the original amount. |
+| API | 508 | Can't settle a settled transaction for Installment. |
+| API | 508 | Invalid data for installment request. |
+| API | 508 | Can't void a rebate for Installment. |
+| API | 509 | NonNumeric in Credit card number. |
+| API | 509 | Invalid credit card length. |
+| API | 509 | Card number fails Luhn Check. |
+| API | 509 | Invalid expiry date. |
+| API | 509 | Invalid expiry date. |
+| API | 509 | Card Expiry date in past. |
+| API | 509 | Expiry month invalid. |
+| API | 509 | That Card Number does not correspond to the card type you selected. |
+| API | 509 | Length of CVV data is incorrect. |
+| API | 510 | That amount is greater than the max allowed. |
+| API | 512 | This transaction has already been rebated and cannot be rebated again. |
+| API | 512 | You can't refund a delayed transaction that has not been sent for settlement. (You are refunding money to a customer that has not and never will be charged). |
+| API | 512 | Original transaction currency was not \[currency\]. |
+| API | 512 | You may only refund up to 105% of the original amount. |
+| API | 513 | Can't void a settled transaction. |
+
+### Hosted Payment Page
+
+| Solution | Error No. | Description |
+| --- | --- | --- |
+| HPP | 501 | This transaction (\*Order ID\*) has already been processed! If you feel this is incorrect please contact the merchant! |
+| HPP | 502 | AMOUNT element not allowed for OTB transactions. Please contact the merchant. |
+| HPP | 503 | Currency \[currency\] not allowed. Please contact the merchant. |
+| HPP | 505 | You cannot use this service from there \[\[URL\]\]. Please contact the merchant. |
+| HPP | 506 | Invalid MERCHANT\_ID or ACCOUNT. Please contact the merchant. |
+| HPP | 506 | Your account is in TEST mode, you cannot access the HPP live URL. |
+| HPP | 508 | Payment method/currency combination not configured for the merchant. Please contact the merchant. |
+| HPP | 508 | Mandatory field SHA1HASH not present - cannot continue. Please check the Developer Documentation for mandatory fields. |
+| HPP | 508 | Incorrect hash. Please check your code and the Developers Documentation. |
+| HPP | 508 | Unknown hash. Please contact the merchant, or refer to your code and the Developer's Documentation. |
+| HPP | 508 | Invalid data in MERCHANT\_ID field. Please contact the merchant. |
+| HPP | 508 | Invalid data in ACCOUNT field. Please contact the merchant. |
+| HPP | 508 | Invalid characters in order id - please use only A-Z a-z 0-9 \_ - or contact the merchant. |
+| HPP | 508 | Too many characters in the ORDER\_ID field. Please contact the merchant. |
+| HPP | 508 | Invalid TIMESTAMP: Not enough characters. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid TIMESTAMP: Too many characters. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid TIMESTAMP: Not enough characters. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid TIMESTAMP: Date invalid. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid TIMESTAMP: Time invalid. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid TIMESTAMP: Value exceeds allowable limit. Please contact the merchant or refer to the developer documentation. |
+| HPP | 508 | Invalid characters in AMOUNT field. Please contact the merchant. |
+| HPP | 508 | Too many digits in AMOUNT field. Please contact the merchant. |
+| HPP | 508 | AMOUNT too large. Please contact the merchant. |
+| HPP | 508 | Insufficient AMOUNT specified. Please contact the merchant. |
+| HPP | 508 | Leading zeros not allowed in AMOUNT field. Please contact the merchant. |
+| HPP | 508 | Invalid data in the AUTO\_SETTLE\_FLAG field. Please contact the merchant. |
+| HPP | 508 | Invalid RETURN\_TSS flag. Please contact the merchant. |
+| HPP | 508 | Incorrect number of characters in CURRENCY field. Please contact the merchant. |
+| HPP | 508 | Invalid currency specified in CURRENCY field. Please contact the merchant. |
+| HPP | 508 | AMOUNT field is mandatory. Please contact the merchant. |
+| HPP | 508 | Invalid ORDER\_ID field. Not enough characters. Please contact the merchant. |
+| HPP | 508 | Invalid TIMESTAMP: Possible unsafe character(s). Please contact the merchant or refer to the developers documentation. |
+| HPP | 508 | Exceeded character limit for CARD\_PAYMENT\_BUTTON field. Please contact merchant. |
+| HPP | 508 | Invalid data in MERCHANT\_DESCRIPTOR field. Please contact the merchant. |
+| HPP | 508 | Invalid data in HPP\_LANG field. Please contact the merchant. |
+| HPP | 508 | Unable to connect to the merchant's response URL \[Response URL\]. |
+| HPP | 511 | Invalid characters in MERCHANT\_RESPONSE\_URL. Please contact the merchant. |
+| HPP | 510 | Too Much Data sent from merchant response url. |
+| HPP | 510 | Unable\_to\_connect\_to\_the\_merchants\_response\_URL\_ {2} .\_Was\_able\_to\_connect\_to\_alternate\_URL. |
+
+### Both API and HPP
+
+| Solution | Error No. | Description |
+| --- | --- | --- |
+| API/HPP | 00  | Successful – The transaction has been authorized successfully; you may proceed with the sale. |
+| API/HPP | 101 | Decline - Generally insufficient funds or incorrect card data supplied, for example, expiry date or security code. |
+| API/HPP | 102 | Referral B - Contact the Authorization Center. Usually treated as a standard decline for Ecommerce systems, the transaction can still be processed using a Manual request once an authorization code is obtained. |
+| API/HPP | 103 | Referral A - The card has been reported lost or stolen. Usually treated as a standard decline for ecommerce systems. |
+| API/HPP | 111 | Soft Decline - Indicates that the Issuer requires Strong Customer Authentication (SCA) for a transaction. In order to avoid this outcome, please ensure you enable 3D Secure 2. |
+| API/HPP | 120 | Return when the settlement amount is 200% or over of the original authorized amount. Only applicable to test accounts domiciled in North America (CA/US). |
+| API/HPP | 121 | Return when the settlement amount is 25% or less of the original authorized amount. Only applicable to test accounts domiciled in North America (CA/US). |
+| API/HPP | 13x | Response from the Payment Decline Reason Code (PDRC) service. See our [PDRC guide](/ecommerce/expand-your-integration/pdrc). |
+| API/HPP | 2xx | Error with bank systems – generally you can tell the customer to try again later. The resolution time depends on the issue. |
+| API/HPP | 205 | Comms Error - installment connection error. |
+| API/HPP | 3xx | Error with Global Payments systems – generally you can tell the customer to try again later. The resolution time depends on the issue. |
+| API/HPP | 5xx | Invalid content in request message. These can be due to a formatting issue or account configuration. Please see the various 5xx examples below. |
+| API/HPP | 666 | Account deactivated – your Global Payments account has been suspended. Please contact Global Payments. |
+
+### 3D Secure
+
+| Solution | Error No. | Description |
+| --- | --- | --- |
+| 3D Secure | 110 | Transaction NOT permitted by merchant config. |
+| 3D Secure | 503 | No 3D Secure details setup for merchant \[merchant\_id\] with account \[account\_id\] using \[currency\] as currency and card type \[card type\]. |
+| 3D Secure | 508 | Exceeded character limit for ECI field. Please contact the merchant. |
+| 3D Secure | 508 | Invalid data in ECI field. Please contact the merchant. |
+| 3D Secure | 509 | An ECI value must be included for MPI enabled accounts. |
+| 3D Secure | 520 | Message ID in VERes not the same as VEReq. |
+| 3D Secure | 520 | Undefined Element in Message before VERes. |
+| 3D Secure | 520 | Invalid Element in Message before PARes. |
+| 3D Secure | 520 | Invalid Root Element. |
+
+### Scheduler
+
+| Solution | Error No. | Description |
+| --- | --- | --- |
+| Scheduler | 534 | Invalid value. The end date has to be greater than the start date. |
+| Scheduler | 535 | Invalid value, numtimes cannot be set to zero. |
+| Scheduler | 535 | Invalid value, numtimes cannot be greater than 999. |
+| Scheduler | 536 | numtimes value should be -1 if enddate is specified. |
+| Scheduler | 537 | The schedule expression is not valid. |

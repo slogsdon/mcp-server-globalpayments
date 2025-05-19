@@ -1,0 +1,271 @@
+---
+title: "Transaction Management SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Capture (Settle)
+
+<Infobox>
+3D Secure transactions must be settled for the original authorization amount to avail of the chargeback protection.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// a capture request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the capture transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the capture request, we must specify the amount and currency
+   Transaction response = transaction.capture(new BigDecimal("99.99"))
+                           .withCurrency("EUR")
+                           .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Settled Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// a capture request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the capture transaction object
+var capture = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the capture request, we must specify the amount and currency
+   Transaction response = capture.Capture(99.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Settled Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// a settle request requires the original order id
+$orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the settle transaction object
+$settle = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the settle request, we must specify the amount and currency
+   $response = $settle->capture(15.00)
+      ->withCurrency("EUR")
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Refund (Rebate)
+
+<Infobox>
+It's possible to process multiple refunds against one transaction, but this is not enabled by default. It must be requested by one of the primary listed contacts on your account. For more information, contact a member of our support team.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// a refund request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// and the auth code transaction response
+String authCode = "12345";
+
+// create the refund transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+transaction.setAuthorizationCode(authCode);
+
+try {
+   // send the refund request, we must specify the amount and currency
+   Transaction response = transaction.refund(new BigDecimal("99.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Rebated Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// a refund request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the transaction response
+var paymentsReference = "15113583374071921";
+// and the auth code transaction response
+var authCode = "12345";
+
+// create the refund transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+transaction.AuthorizationCode = authCode;
+
+try
+{
+   // send the refund request, we must specify the amount and currency
+   Transaction response = transaction.Refund(99.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Rebated Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// a settle request requires the original order id
+$orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// and the auth code transaction response
+$authCode = "12345";
+
+// create the rebate transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+$transaction->authorizationCode = $authCode;
+
+try {
+   // send the settle request, we must specify the amount and currency
+   $response = $transaction->refund(14.99)
+      ->withCurrency("EUR")
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Void (Cancel)
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// a void request requires the original order id
+String orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+String paymentsReference = "15113573969816936";
+// create the void transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the void request
+   Transaction response = transaction.voidTransaction()
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Voided Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// a void request requires the original order id
+var orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+var paymentsReference = "15113573969816936";
+// create the void transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the void request
+   Transaction response = transaction.Void()
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Voided Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// a void request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+$paymentsReference = "15113573969816936";
+// create the void transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+    // send the void request
+    $response = $transaction->void()
+            ->execute();
+
+    $result = $response->responseCode; // 00 == Success
+    $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>

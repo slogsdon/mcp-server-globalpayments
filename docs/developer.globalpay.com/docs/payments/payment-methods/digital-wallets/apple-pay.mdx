@@ -1,0 +1,944 @@
+---
+title: 'Apple Pay'
+search_results: 'Digital Wallets Apple Pay'
+subtitle: 'Let customers pay with their saved cards'
+tag: 'rest'
+created: '03/07/2025'
+---
+<Infobox>Apple Pay is not supported by all acquirers and not enabled by default on your account. For more information, contact a member of our support team.</Infobox>
+
+Apple Pay provides a highly secure instant payment experience. It allows users to securely store their card details on a Secure Element built into their Apple product and to use those card details to make payments. It can be used in-app or on the web to provide payment for real-world goods and services.
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+This guide focuses on integrating Apple Pay directly using our [REST API](/docs/integration-options/api). In addition to following some necessary setup steps with Apple, you’ll learn how to obtain and process the Apple Pay token as well as process an authorization.
+
+## Prerequisites
+
+You need:
+
+* API integration with us 
+* Apple developer account (register on the [Apple developer website](https://developer.apple.com/))
+* Apple Pay enabled on your account with us
+* Apple Merchant ID (set up through the [Apple developer website](https://developer.apple.com/))
+
+## Add Apple Pay functionality
+To add the Apple Pay functionality to a mobile application (in-app) or website (in-browser), perform the following steps.
+
+**In-app and in-browser:**
+
+1) Create Merchant Identifiers in your Apple developer account.
+2) Enable the Apple Pay capabilities on the Apple developer website.
+3) Create a payment processing certificate for each merchant identifier, and upload the certificate into our Ecommerce Portal. <br/>
+++Note++: Apple Pay uses this certificate to encrypt payment information, and we need to have this certificate to be able to decrypt and process the payment.
+
+**In-browser only (additional steps):**
+
+1) Register and validate your merchant domain with Apple.
+2) Create a Merchant Identity Certificate, convert it to two PEM files, and upload to your server. <br/>
+++Note++: Apple pay uses this certificate to authenticate communication with its servers (within the Validate Merchant step).
+
+## Obtain credentials
+Integrate into Apple Pay to obtain the encrypted payment credentials. Follow the applicable Apple guide below:
+
+* [In-app - Apple Pay PassKit](https://developer.apple.com/documentation/passkit/apple_pay/)
+* [In-browser - Apple Pay on the Web](https://developer.apple.com/documentation/apple_pay_on_the_web/)
+
+## Create and upload an Apple Pay certificate
+This step involves downloading a Certificate Signing Request (CSR) from Ecommerce Portal and uploading it to Apple. This will create the necessary Apple Pay certificate. You can then upload this certificate back to Ecommerce Portal so that you can process Apple Pay authorizations with your Client ID on our system.
+
+1) Log in to your account with us via our Ecommerce Portal:<br/>
+[Sandbox](https://realcontrol.sandbox.realexpayments.com/) or [Production](https://realcontrol.realexpayments.com/)
+2) On the **Client Settings** tab, navigate to the **Apple Pay** section. Click the **Obtain CSR** button to generate and download a new certificate.
+3) After downloading the CSR, go to your Apple developer account. Under the Identifiers tab on the top-right corner, select **Merchant IDs**. Select your project, and then click the **Create Certificate** button.
+
+## Obtain the Apple Pay token
+How to obtain an Apple Pay token is outlined in the "Working with Payment Requests" section of the Apple Pay Programming Guide. You'll need to ensure that the device and user can make payments and include the transaction details (currency code, amount, merchant identifier) along with billing and shipping information.
+
+When the user authorizes that the payment can be made, the token is created through a combination of Apple's server and the Secure Element on the device. Once you have the token, you can send it to our API to be processed. The same goes for both in-app and in-browser integrations. Find the instructions in the applicable link:
+
+* [In-app - PKPayment Request](https://developer.apple.com/documentation/passkit/pkpaymentrequest)
+* [In-browser - Payment Request API](https://developer.apple.com/documentation/apple_pay_on_the_web/payment_request_api)
+
+## Process an Apple Pay authorization
+Using the Create Transaction request, include the token obtained from the device instead of the standard card details captured from the customer.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "account_name": "Transaction_Processing",
+  "type": "SALE",
+  "channel": "CNP",
+  "capture_mode": "AUTO",
+  "amount": "1999",
+  "currency": "EUR",
+  "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+  "country": "IE",
+  "payment_method": {
+    "name": "James Mason",
+    "entry_mode": "ECOM",
+    "digital_wallet": {
+      "provider": "APPLEPAY",
+      "payment_token": {"applepaytoken"}
+    }
+  }
+}
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent.getValue());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setCardHolderName("James Mason");
+card.setToken("applepaytoken");
+card.setMobileType(MobilePaymentMethodType.APPLEPAY);
+card.setReaderPresent(true);
+
+try {
+   Transaction transaction =
+           card.charge(new BigDecimal("10"))
+                   .withCurrency("EUR")
+                   .withModifier(TransactionModifier.EncryptedMobile)
+                   .execute();
+} catch (GatewayException ex) {
+   throw ex;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+   config.AppId = AppId;
+   config.AppKey = AppKey;
+   config.Channel = Channel.CardNotPresent;
+
+   ServicesContainer.ConfigureService(config);
+
+   var card = new CreditCardData();
+   card.CardHolderName = "James Mason";
+   card.Token = "applepaytoken";
+   card.MobileType = EncyptedMobileType.APPLE_PAY;
+   card.ReaderPresent = true;
+   try
+   {
+      var transaction = card.Charge(10m)
+      .WithCurrency("EUR")
+      .WithModifier(TransactionModifier.EncryptedMobile)
+      .Execute();
+   }
+   catch (GatewayException ex)
+   {
+      throw ex;
+   }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = "APP_ID;
+$config->appKey = APP_KEY;
+$config->channel = Channel::CardNotPresent;
+$config->country = "IE";
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+// this is the Apple Pay token received from the JS library at step 2
+$card->token = 'applepaytoken'; 
+$card->mobileType = EncyptedMobileType::APPLE_PAY;
+$card->cardHolderName = "James Mason";
+try {
+   $transaction = $card->charge(10)
+      ->withCurrency("EUR")
+      ->withModifier(TransactionModifier::ENCRYPTED_MOBILE)
+      ->execute();
+} catch (GatewayException $e) {
+    //@TODO handle exception
+}
+
+$responseCode = $transaction->responseCode; // SUCCESS
+$transactionStatus = $transaction->responseMessage; //CAPTURED
+$transactionId = $transaction->transactionId;
+```
+</Code>
+</CodeGroup>
+
+## Testing Apple Pay
+You can test Apple Pay in our Sandbox environment. The amount specified in the token will map the tokenized data in the transaction to one of our test cards. For example, an amount of 10.00 will map to the successful Visa test card. For further details, see our test cards for [Apple Pay](/resources/test-card-numbers#apple-pay).
+
+## Enhance your solution
+For the detailed API specification and a full list of features, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction" title="Create a Transaction" icon="window">
+        Use our API Explorer code playground to try it out.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/digital-wallets/decrypted-wallets" title="Decrypted Digital Wallets" icon="lock-open">
+        Set up payload decryption to preview card data.
+    </Card>
+ <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+</CardsGroup>
+
+ </Tab> 
+   <Tab id="hpp" title="HPP">
+
+Apple Pay can be used on the [Hosted Payment Page](/docs/payments/online/hosted-payment-page-overview) (HPP) to provide payment for real-world goods and services. This guide focuses on implementing it on the HPP via full-page redirect or iFrame and Lightbox, with steps for both SDK and non-SDK integrators. 
+
+We also provide information on disabling Apple Pay for certain transactions, how to test your integration, and a preview of what Apple Pay looks like once successfully implemented (rollout).
+
+## Prerequisites
+To use Apple Pay on the HPP:
+* You must be using a certified  acquirer (check with your account manager) 
+* Your device must be either an:
+  * iPhone, iPad, or Macbook 
+* Your web browser must be:
+  * Safari, Chrome, or Mozilla
+
+## Implement Apple Pay
+There are several ways to implement Apple Pay on the HPP: full-page redirect or iFrame and Lightbox.  
+
+### Full-page redirect
+To add Apple Pay as a payment option using full-page redirect (checkout starts and finishes on our domain), you simply need to contact customer support to enable the feature. The implementation process typically includes the following steps:
+
+* **Contact customer support** – Reach out to [customer support](/support/integration-support) or your account manager to initiate the request to enable Apple Pay for your account. Be sure to provide the client IDs and the sub accounts you want to enable, along with your website for registration. 
+* **Enable Apple Pay feature** – Upon receiving the request, customer support will proceed to enable Apple Pay support for your account. This involves backend configurations and activations to ensure that your payment processing system is compatible with Apple Pay transactions.
+
+### iFrame and Lightbox
+
+To integrate Apple Pay with a checkout using an iFrame or Lightbox, there are extra steps to take to ensure that your domain is registered with Apple. We've provided steps for both SDK integrators and non-SDK integrators.
+
+#### For SDK integrators:
+
+1) Ensure that you are using the most up-to-date version of our [SDK](/docs/integration-options/sdk/overview).
+2) Create a .txt file and name it: <br/><br/>
+_apple-developer-merchantid-domain-association_ <br/><br/>
+3) Add the certification contents of [this file](https://pay.realexpayments.com/.well-known/apple-developer-merchantid-domain-association) to the file, and then upload to the .well-known folder in any/every root domain that hosts the HPP’s iFrame. <br/><br/>
+The URL should look like this: <br/><br/>
+_https://YOURWEBSITE.COM/.well-known/apple-developer-merchantid-domain-association_ <br/><br/>
+Where _"YOURWEBSITE.COM"_ is the root URL of your website.<br/><br/>
+4) Once this is complete, contact customer support with your URL so we can add it to our list of accepted domains for Apple Pay. In most cases, we can do this instantly, but if not, we'll contact you when it’s complete.
+
+<div>
+<Infobox>It’s possible to add multiple URLs to your account as long as each root url contains a<br/> _/.well-known_ file that follows the processes above.</Infobox>
+</div>
+#### For non-SDK integrators:
+Payment processing with Apple Pay within a cross-origin iFrame requires a Permissions Policy and requires the payment page to allow third-party payments. If this is not done, the button won’t show in the iFrame. For this reason, it’s important to ensure that your checkout iFrame is structured like so:
+
+<Code id="xml" title="" language="xml">
+```
+<iframe src="checkout_URL" allow="payment"></iframe>
+```
+</Code>
+<br/>
+Where `checkout_URL` is the URL dynamically generated by us.
+
+**Sandbox example:**
+
+<Code id="xml" title="" language="xml">
+```
+<iframe src="https://pay.sandbox.realexpayments.com/hosted-payments/blue/card.html?guid=5eed61f1-48cd-4393-b020-9aa1bd03c692"allow="payment"></iframe>
+```
+</Code>
+<br/>
+**Production example:**
+
+<Code id="xml" title="" language="xml">
+```
+<iframe src="https://pay.realexpayments.com/hosted-payments/blue/card.html?guid=5eed61f1-48cd-4393-b020-9aa1bd03c692"allow="payment"></iframe>
+```
+</Code>
+
+<div>
+<Infobox>The _src_ attribute values dynamically change on each checkout.</Infobox>
+</div>
+
+Once this is complete, you can follow the steps above [for SDK integrators](#for-sdk-integrators) to register your domain.
+
+<div>
+<Infobox>For information on cross-origin resource sharing (CORS), see the [definition](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) on Mozilla’s MDN website.</Infobox>
+</div>
+
+## Disable for some transactions
+In certain circumstances, merchants enabled for Apple Pay may not want to offer this option at all times. To achieve this, you can hide the Apple Pay option displayed on the HPP for a particular request by sending `HPP_ENABLE_APPLEPAY = False` in the HPP POST request. 
+
+| Field | Description |
+| --- | --- |
+| HPP\_ENABLE\_APPLEPAY | Determines whether the Apple Pay button displays on the HPP. Works only when Apple Pay is enabled.  <br/>Allowed value:  <br/>**False** - Hides the Apple Pay button on the HPP. |
+
+## Testing and integration
+Apple Pay is available for testing in our Sandbox environment. For the full list of Apple Pay test values, see our [Test Cards](/resources/test-card-numbers#card-apple-pay) article.
+
+<div>
+<Infobox>To complete testing in Apple’s sandbox and access their test cards, you first need to set up an Apple account. More information can be found on [Apple's website](https://developer.apple.com/apple-pay/sandbox-testing/).</Infobox>
+</div>
+
+The amount specified in the request will map the tokenized data in the transaction to one of Apple's test values. For example, an amount of 10.00 will map to the successful Visa test card.
+
+Once Apple Pay support is enabled, you should conduct testing in our Sandbox to ensure that your integration is seamless and functional. This may involve testing transactions using Apple devices at the point of sale on the HPP.
+
+<div>
+<Infobox>Setting up Apple Pay is a complicated process, and the setup is not something we can support. One alternative is to use a paid service that can replicate the Apple environment such as [Browserstack](https://www.browserstack.com/).</Infobox>
+</div>
+
+## Rollout
+After successful testing, you can proceed with the rollout of Apple Pay as a payment option for customers.
+
+![Hosted Payment Page with Apple Pay button.](/gh-assets/ecommerce/apple-pay_hpp-option.png)
+ <span style={{textAlign: "center"}}>**HPP - Apple Pay Option**</span>
+
+![Apple Pay card-selection pop-up screen on top of a grayed out HPP.](/gh-assets/ecommerce/apple-pay_hpp-selected.png)
+ <span style={{textAlign: "center"}}>**HPP - Apple Pay Option Selected**</span>
+
+## Enhance your solution
+
+Explore more functionality to enrich your application or website. For more information on the HPP, see our [Overview](/docs/payments/online/hosted-payment-page-overview).
+
+<CardsGroup type="with_icon">
+   <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+ <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide" title="Card Storage" icon="coin">
+        Securely store card data with no increased PCI DSS requirements.
+    </Card>
+    <Card type="with_icon" link="/docs/risk-management/fraud-management/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>
+  </Tab>
+    <Tab id="hosted" title="Drop-In UI">
+
+This guide focuses on integrating Apple Pay with our [Drop-In User Interface (UI)](/docs/payments/online/drop-in-ui-overview), which is a ready-made payment form using our [Hosted Fields](/docs/payments/online/hosted-fields-overview) solution. You’ll learn how to add Apple Pay to your payment form using our JavaScript Library and then charge it within your app or as a standalone payment method.
+
+To learn how to use the Hosted Fields components on their own with your existing payment form, see our [guide](https://developer.globalpay.com/docs/HF-guide).
+
+## Prerequisites
+
+You need:
+
+* API integration with us 
+* Apple developer account (register on the [Apple developer website](https://developer.apple.com/))
+* Apple Pay enabled on your account with us
+* Apple Merchant ID (set up through the [Apple developer website](https://developer.apple.com/))
+
+## Add Apple Pay functionality
+To add the Apple Pay functionality to a mobile application (in-app) or website (in-browser), perform the following steps.
+
+**In-app and in-browser:**
+
+1) Create Merchant Identifiers in your Apple developer account.
+2) Enable the Apple Pay capabilities on the Apple developer website.
+3) Create a payment processing certificate for each merchant identifier, and upload the certificate into our Ecommerce Portal. <br/>
+++Note++: Apple Pay uses this certificate to encrypt payment information, and we need to have this certificate to be able to decrypt and process the payment.
+
+**In-browser only (additional steps):**
+
+1) Register and validate your merchant domain with Apple.
+2) Create a Merchant Identity Certificate, convert it to two PEM files, and upload to your server. <br/>
+++Note++: Apple Pay uses this certificate to authenticate communication with its servers (within the [Validate merchant](#validate-merchant) step).
+
+## Create and upload an Apple Pay certificate
+This step involves downloading a Certificate Signing Request (CSR) from Ecommerce Portal and uploading it to Apple. This will create the necessary Apple Pay certificate. You can then upload this certificate back to Ecommerce Portal so that you can process Apple Pay authorizations with your Client ID for our system.
+
+1) Log in to your account via Ecommerce Portal: <br/>
+[Sandbox](https://realcontrol.sandbox.realexpayments.com/) or [Production](https://realcontrol.realexpayments.com/)
+2) On the **Client Settings** tab, navigate to the **Apple Pay** section. Click the **Obtain CSR** button to generate and download a new certificate.
+3) After downloading the CSR, go to your Apple developer account. Under the Identifiers tab on the top-right corner, select **Merchant IDs**. Select your project, and then click the **Create Certificate** button.
+
+## Step 1: Create an access token
+
+<Infobox>
+Our API endpoints: <br/>
+Sandbox: https://apis.sandbox.globalpay.com <br/>
+Production: https://apis.globalpay.com
+</Infobox>
+
+Before testing or implementing Apple Pay via the Drop-In UI, you first need to create an access token, which is required to execute any API requests. The token contains the actions that are permitted for your application.
+
+For added security and integrity, we recommend that you create one access token for each user session and set the "time to expire" to 10 minutes.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/accesstoken' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Accept: application/json' \
+--header 'Accept-Encoding: gzip' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+   "app_id": "appId",
+   "nonce": "2022-04-21T15:12:44.390Z",
+   "secret": "999585dc140865524c4d95f3fa0ce0eb5e2b565b95c67dd43425c4e16d0671cafe89e6e730992911cdf047c7f2f6ac8cc6486311a73dfcc81c763ccb24d0ed4c",
+   "grant_type": "client_credentials".
+   "permissions": [
+      "PMT_POST_Create_Single"
+   ],
+   "interval_to_expire": "10_MINUTES"
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent.getValue());
+config.setPermissions(new String[] { "PMT_POST_Create_Single" });
+config.setIntervalToExpire(IntervalToExpire.TEN_MINUTES);
+
+AccessTokenInfo info = GpApiService.generateTransactionKey(config);
+config.setAccessTokenInfo(info);
+ServicesContainer.configureService(config);
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+   config.AppId = "AppId";
+   config.AppKey = "AppKey";
+   config.Channel = Channel.CardNotPresent;
+   config.Permissions = new string[] { "PMT_POST_Create_Single" };
+   config.IntervalToExpire = IntervalToExpire.TEN_MINUTES;
+
+   var info = GpApiService.GenerateTransactionKey(config);
+   config.AccessTokenInfo = info;
+   ServicesContainer.ConfigureService(config);
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+/**
+* This sample code is not specific to the Global Payments SDK and is intended as a simple example and
+* should not be treated as Production-ready code. You'll need to add your own message parsing and
+* security in line with your application or website
+*/
+
+
+
+$config = new GpApiConfig();
+$config->appId = "APP_ID";
+$config->appKey = "APP_KEY";
+$config->channel = Channel::CardNotPresent;
+$config->permissions = ["PMT_POST_Create_Single"];
+$config->intervalToExpire = IntervalToExpire::TEN_MINUTES;
+
+$accessTokenInfo = GpApiService::generateTransactionKey($config);
+$accessToken = $accessTokenInfo->accessToken;
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Configure the JavaScript Library
+Once you’ve created the access token, you can now configure the JavaScript Library to enable Apple Pay in your payment form. 
+
+Add a `<div>` tag to render the Drop-In UI payment form to the customer.
+
+<Code id="markup" title="" language="markup">
+```
+<div id="payment-form"></div>
+```
+</Code>
+<br/>
+
+Next, we configure our JavaScript Library with the transaction details required for Apple Pay.
+<Code id="markup" title="JavaScript" language="markup">
+```
+<script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+<script>
+   // configuring Drop-in UI
+   GlobalPayments.configure({
+      accessToken: "access-token",
+      apiVersion: "2021-03-22",
+      env: "sandbox" // or "production"
+      apms: {
+         currencyCode: "EUR",
+         allowedCardNetworks: ["VISA", "MASTERCARD", "AMEX", "DISCOVER"],
+            applePay: {
+               allowedCardNetworks: ["VISA", "MASTERCARD", "AMEX"],
+               applePayVersionNumber: 3,
+               buttonLocale: "en-US",
+               buttonStyle: "black",
+               buttonType: "buy",
+               currencyCode: "USD",
+               countryCode: "US",
+               merchantName: 'GP Store',
+               merchantIdentifier: "merchant.com.gpapi.sandbox",
+               merchantCapabilities: ['supports3DS'],
+               globalPaymentsClientID: "gpapiqa1",
+               merchantSessionUrl: "https://www.example.com/validatemerchant"
+            }
+
+      }
+   });
+
+// creating an instance of the payment form
+   var cardForm = GlobalPayments.creditCard.form('#payment-form', { 
+      amount: "19.99",
+      style: "gp-default",
+      apms: ["apple-pay"] 
+   });
+
+   // method to notify that payment form has been initialized
+   cardForm.ready(() => {
+      console.log("Registration of payment form occurred");
+   });
+
+   // appending the Apple Pay token to the form as a hidden field and
+   // submitting it to the server-side
+   cardForm.on("token-success", (resp) => {
+      // add payment token to form as a hidden input
+      const token = document.createElement("input");
+      token.type = "hidden";
+      token.name = "apple-pay-token";
+      token.value = resp.paymentReference;
+
+      // add payment method provider
+      const provider = document.createElement("input");
+      provider.type = "hidden";
+      provider.name = "provider";
+      provider.value = resp.details.apmProvider;
+
+      // submit data to the integration's backend for processing
+      const form = document.getElementById("payment-form");
+      form.appendChild(token);
+      form.appendChild(provider);
+      form.submit();
+   });
+
+   cardForm.on("token-error", (resp) => {
+      // TODO: Add your error handling
+   });
+
+</script>
+```
+</Code>
+
+### JavaScript configuration (Apple Pay specific parameters)
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+
+| Name | Format | Type | Description |
+| --- | --- | --- | --- |
+| allowedCardNetworks | string | M   | Indicates the card brands the merchant accepts for Apple Pay. |
+| applePayVersionNumber | number | O   | The Apple Pay version number your website supports. |
+| buttonLocale | string | O   | The language and region used for the displayed Apple Pay button. |
+| buttonStyle | string | O   | Button color option for Apple Pay. Allowed values:  <br/>**black**: A black button with white lettering.  <br/>**white**: A white button with black lettering.  <br/>**white-outline**: A white button with black lettering and a black outline. |
+| buttonType | string | O   | Button option type for Apple Pay. Allowed values:  <br/>**add-money**  <br/>**book**  <br/>**buy**  <br/>**check-out**  <br/>**continue**  <br/>**contribute**  <br/>**donate**  <br/>**order**  <br/>**pay**  <br/>**plain**  <br/>**reload**  <br/>**rent**  <br/>**set-up**  <br/>**subscribe**  <br/>**support**  <br/>**tip**  <br/>**top-up**<br/><br/>For more information on each button type, see the [Apple Developer website](https://developer.apple.com/documentation/apple_pay_on_the_web/applepaybuttontype "Button Types on Apple Developer Site"). |
+| currencyCode | string | M   | Currency of the amount in ISO-4217 (alpha-3). |
+| countryCode | string | M   | The country in ISO-3166-1(alpha-2 code) format. |
+| merchantName | string | M   | Merchant name that appears on the Apple Pay payment sheet. |
+| merchantIdentifier | string | M   | The Apple Pay merchant ID. |
+| merchantCapabilities | string | O   | The payment capabilities that are supported. Allowed values:  <br/>**supports3DS** - Required. This value must be supplied.  <br/>**supportsCredit** - Optional. If present, only transactions that are categorized as credit cards are allowed.  <br/>**supportsDebit** - Optional. If present, only transactions that are categorized as debit cards are allowed.  <br/>**supportsEMV** - Include this value only if you support China Union Pay transactions. |
+| globalPaymentsClientID | string | M   | Your Client ID assigned by us.  <br/>If you’re unsure of your Client ID, contact your account manager. |
+| merchantSessionUrl | string | M   | An endpoint on the merchant server. This requests an Apple Pay payment session with Apple to complete the Validate Merchant step (see the [Validate merchant](#validate-merchant) section). |
+
+### Validate merchant
+Apple Pay requires a new Apple Pay payment session for each transaction. This URL sends a request to Apple Pay’s Payment Session endpoint to request a new payment session for the transaction. For more information, see Apple’s documentation for [Requesting an Apple Pay Payment Session](https://developer.apple.com/documentation/apple_pay_on_the_web/apple_pay_js_api/requesting_an_apple_pay_payment_session).
+
+When an Apple Pay transaction is initiated, the JavaScript Library will receive a `validationURL` from Apple and pass this to the Merchant Session URL, along with the Merchant Identifier, Display Name, and Initiative Context. This information, along with the Merchant Identity Certificate associated with the Apple Merchant ID, is sent in a POST request to the `validationURL`.
+
+Apple will return an Apple Pay session object as a response to the POST. You need to pass this session object to the JavaScript library to complete the Validate Merchant step.
+
+#### Sample Merchant Session URL
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+     /*
+         * this sample code is intended as a simple example and should not be treated as
+         * Production-ready code you'll need to add your own message parsing and 
+         * security in line with your application or website
+         */
+        
+        Gson gson = new Gson();
+        JsonObject requestData = 
+            gson.fromJson(input, JsonElement.class).getAsJsonObject();
+
+        JsonObject validationPayload = new JsonObject();
+        validationPayload.addProperty("merchantIdentifier", 
+		    requestData.get("merchantIdentifier").getAsString());
+        validationPayload.addProperty("displayName", 
+		    requestData.get("merchantName").getAsString());
+        validationPayload.addProperty("initiative", "web");
+        validationPayload.addProperty("initiativeContext", 
+		    requestData.get("initiative_context").getAsString());
+
+        String validateUrl = requestData.get("validation_url").getAsString();
+
+        String keystorePath = CERT_BASE_PATH + "/certificates/ApplePay.c12";
+
+        String keyStorePassword = "yourpassword";
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream(keystorePath), keyStorePassword.toCharArray());
+        
+        KeyManagerFactory keyManagerFactory = 
+		    KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+
+        SSLSocketFactoryEx sslSocketFactoryEx = new SSLSocketFactoryEx(sslContext);
+
+        HttpsURLConnection conn = 
+		    (HttpsURLConnection) new URL((validateUrl).trim()).openConnection();
+        conn.setSSLSocketFactory(sslSocketFactoryEx);
+        conn.setConnectTimeout(3000);
+        conn.setDoInput(true);
+        conn.setDoOutput(true);
+        conn.setRequestMethod("POST");
+        conn.addRequestProperty("Content-Type", "application/json");
+
+        try(DataOutputStream requestStream = 
+		    new DataOutputStream(conn.getOutputStream());
+
+        ){
+            requestStream.write(validationPayload.toString().getBytes());
+            requestStream.flush();
+            requestStream.close();
+
+            InputStream responseStream = conn.getInputStream();
+
+            String rawResponse = IOUtils.readFully(responseStream);
+
+
+            return rawResponse;
+
+        }catch(Exception exc) {
+            throw new ApiException(exc.getMessage(), exc);
+        }
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// .NET sample code 
+public class InitiateApplePayData
+    {
+        public string merchantIdentifier { get; set; }
+        public string merchantName { get; set; }
+        public string initiative_context { get; set; }
+        public string validation_url { get; set; }
+    }  
+    public class MerchantSessionUrl : IHttpHandler
+    {
+        private static string currentIP;
+        private static InitiateApplePayData requestData;
+        JsonDoc validationPayload;
+
+        public void ProcessRequest(HttpContext context)
+        {
+
+            Stream stream = context.Request.InputStream;
+            StreamReader sr = new StreamReader(stream);            
+
+            string json = sr.ReadToEnd();
+
+            requestData = JsonConvert.DeserializeObject<InitiateApplePayData>(json);
+            context.Response.ContentType = "application/json";
+            try {
+                var data = Certificate(requestData);
+                context.Response.Write(data);                
+            }
+            catch (Exception ex) {
+                context.Response.Write(ex.Message);
+            }
+            finally {
+                context.Response.Flush();
+            }
+        }        
+
+        static object Certificate(InitiateApplePayData requestData)
+        {
+            ServicePointManager.ServerCertificateValidationCallback =
+        delegate (object s, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
+
+            try
+            {
+                X509Certificate2 identifierCert = new X509Certificate2(string.Format("path/ApplePay.crt.pem"));
+                X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+                store.Open(OpenFlags.ReadOnly);               
+
+                HttpClientHandler requestHandler = new HttpClientHandler();
+                requestHandler.ClientCertificates.Add(identifierCert);
+
+                var handler = new WebRequestHandler();
+                handler.ClientCertificates.Add(identifierCert);
+               
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                using (var client = new HttpClient(requestHandler, true)) {
+                    if (!Uri.TryCreate(requestData.validation_url, UriKind.Absolute, out Uri requestUri)) {
+                        return "Error creating URI";
+                    }
+
+                    client.BaseAddress = requestUri;
+                    client.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+                    client.DefaultRequestHeaders.Add("Keep-Alive", "36000");
+                   
+                    try { 
+                        var validationPayload = new JsonDoc();
+                        validationPayload.Set("merchantIdentifier", requestData.merchantIdentifier ?? null);
+                        validationPayload.Set("displayName", requestData.merchantName ?? null);
+                        validationPayload.Set("initiative", "web");
+                        validationPayload.Set("initiativeContext", requestData.initiative_context ?? null);
+
+                        using (var content = new StringContent(validationPayload.ToString(), Encoding.UTF8, "application/json")) {
+                            using (var response = client.PostAsync(requestUri, content).Result) {
+                                var merchantSessionJson = response.Content.ReadAsStringAsync().Result;
+                                var merchantSession = JsonDoc.Parse(merchantSessionJson);
+
+                                return merchantSession;
+                            }
+                        }
+                    }
+                    catch (Exception ex) {
+                        return ex.Message;
+                    }                    
+                }
+            }
+            catch (Exception e) {
+                return e.Message;
+            }
+        }
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+$pemCrtPath = __DIR__.'/certificates/ApplePay.crt.pem';
+$pemKeyPath = __DIR__.'/certificates/ApplePay.key.pem';
+
+$requestData = json_decode(file_get_contents('php://input'));
+
+$validationPayload = [];
+$validationPayload['merchantIdentifier'] = $requestData->merchantIdentifier ?? null;
+$validationPayload['displayName'] = $requestData->merchantName ?? null;
+$validationPayload['initiative'] = 'web';
+$validationPayload['initiativeContext'] = $requestData->initiative_context ?? null;
+
+$validateUrl = $requestData->validation_url ?? null;
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $validateUrl);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_POST, 1);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($validationPayload));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
+curl_setopt($ch, CURLOPT_SSLCERT, $pemCrtPath);
+curl_setopt($ch, CURLOPT_SSLKEY, $pemKeyPath);
+
+// set this if the key is encrypted
+curl_setopt($ch, CURLOPT_KEYPASSWD, 'YOUR_KEYPASSWD');
+
+$validationResponse = curl_exec($ch);
+
+if (false == $validationResponse) {
+    return curl_error($ch);
+}
+
+curl_close($ch);
+echo $validationResponse;
+return;
+```
+</Code>
+</CodeGroup>
+
+### Apple Pay added to payment form
+
+In this example, Apple Pay is included as an option above the section to manually enter the card details. 
+
+![Apple Pay added to payment form built by Drop-In UI](/gh-assets/apple-pay_drop-in-ui.png)
+ <span style={{textAlign: "center"}}>**Apple Pay Added to Payment Form**</span>
+
+## Step 3: Charge the payment method
+To charge the payment method from Apple Pay, you need to send a Create Transaction request to our REST API. This request is the standard payment request or sale processed by us. Instead of submitting the customer’s card information in the request, you simply pass the unique identifier for the Apple Pay payment method.
+
+The transaction now proceeds to authorization as normal and may be successful or declined based on standard criteria such as sufficient funds available and so on.
+
+For more information on creating a Sale transaction with REST API, see the API Explorer for [Transactions](/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction).
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "account_name": "Transaction_Processing",
+  "type": "SALE",
+  "channel": "CNP",
+  "capture_mode": "AUTO",
+  "amount": "1999",
+  "currency": "EUR",
+  "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+  "country": "IE",
+  "payment_method": {
+    "name": "James Mason",
+    "entry_mode": "ECOM",
+    "digital_wallet": {
+      "provider": "APPLEPAY",
+      "payment_token": {"applepaytoken"}
+    }
+  }
+}
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent.getValue());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setCardHolderName("James Mason");
+card.setToken("applepaytoken");
+card.setMobileType(MobilePaymentMethodType.APPLEPAY);
+card.setReaderPresent(true);
+
+try {
+   Transaction transaction =
+           card
+                   .charge(new BigDecimal("1999"))
+                   .withCurrency("EUR")
+                   .withModifier(TransactionModifier.EncryptedMobile)
+                   .execute();
+} catch (GatewayException ex) {
+   throw ex;
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+            config.AppId = AppId;
+            config.AppKey = AppKey;
+            config.Channel = Channel.CardNotPresent;          
+
+            ServicesContainer.ConfigureService(config);
+
+            var card = new CreditCardData();
+            card.CardHolderName = "James Mason";         
+            card.Token = "applepaytoken";
+            card.MobileType = EncyptedMobileType.APPLE_PAY;
+            card.ReaderPresent = true;
+            try
+            {
+                var transaction = card.Charge(10m)
+                .WithCurrency("EUR")
+                .WithModifier(TransactionModifier.EncryptedMobile)
+                .Execute();
+            }
+            catch (GatewayException ex)
+            {
+                throw ex;
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = "APP_ID;
+$config->appKey = APP_KEY;
+$config->channel = Channel::CardNotPresent;
+$config->country = "IE";
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+// this is the Apple Pay token received from the JS library at step 2
+$card->token = 'applepaytoken'; 
+$card->mobileType = EncyptedMobileType::APPLE_PAY;
+$card->cardHolderName = "James Mason";
+try {
+    $transaction = $card->charge(10)
+        ->withCurrency("EUR")
+        ->withModifier(TransactionModifier::ENCRYPTED_MOBILE)
+        ->execute();
+} catch (GatewayException $e) {
+    //@TODO handle exception
+}
+			
+$responseCode = $transaction->responseCode; // SUCCESS	
+$transactionStatus = $transaction->responseMessage; //CAPTURED
+$transactionId = $transaction->transactionId; 
+```
+</Code>
+</CodeGroup>
+
+## Apple Pay standalone
+In addition to enabling Apple Pay on the payment form, you can also enable Apple Pay as a standalone payment method. This allows you to initialize Apple Pay at any stage of the checkout journey — for example, adding Apple Pay on the product page for a quick checkout.
+
+To set up a standalone instance of Apple Pay, we initialize the Alternative Payment Method (APM) form instead of the Card form as shown in the code sample below. Once initialized, Apple Pay will render within your specified `<div>` tag.
+
+<Code id="markup" title="JavaScript" language="markup">
+```
+<script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+
+   // creating an instance of standalone Apple Pay
+   var apmForm = GlobalPayments.apm.form('#apple-pay', { 
+      amount: "19.99",
+      style: "gp-default",
+      apms: ["apple-pay"] 
+   });
+```
+</Code>
+
+## Enhance your solution
+For the detailed API specification and a full list of features, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction" title="Create a Transaction" icon="window">
+        Use our API Explorer code playground to try it out.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/digital-wallets/decrypted-wallets" title="Decrypted Digital Wallets" icon="lock-open">
+        Set up payload decryption to preview card data.
+    </Card>
+ <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+</CardsGroup>
+   </Tab>
+</Tabs>

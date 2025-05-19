@@ -1,0 +1,370 @@
+---
+title: "In-App Authentication with 3DS Mobile SDK (Netcetera)"
+subtitle: "Authenticate customers within an app"
+tag: "xml"
+created: "01/28/2025"
+---
+<Infobox type="danger">
+This documentation is intended to be used in conjunction with the Netcetera-provided 3DS SDK. For more information on the Netcetera SDK, refer to their [Developer Documentation](https://3dss.netcetera.com/3dssdk/doc/current/).
+</Infobox>
+
+3D Secure (3DS) is an authentication protocol that aims to reduce fraud, increase cardholder security, and reduce merchant liability for chargebacks. It introduced a step in the transaction process where the customer is shown a screen hosted by or on behalf of their card issuer and is prompted to authenticate themselves, often via a password or similar information that is only known to the customer.
+
+3DS version 2 is designed with the mobile checkout experience in mind by introducing new checkout flows that better suit customers paying on mobile with new authentication methods, such as biometrics, or the option of a fully frictionless flow by using a more comprehensive data set provided by the merchant to authenticate the customer without the need for their intervention.
+
+To start using the Netcetera 3DS SDK, contact our [support team](/support/integration-support).
+
+## Step 1: Check 3DS2 enrollment
+To begin the 3D Secure authentication process, first check the version that the card supports. Global Payments maintains an up-to-date database of BIN ranges and the versions of 3D Secure they support.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.globalpay.com/3ds-protocol-versions 
+-H "Content-type: application/json"
+-H "Authorization: securehash fb2c8058ce4d03bd66e610fce8a476db722b0f9a" 
+-X POST 
+-d '{
+  "request_timestamp": "2019-04-26T10:16:10.154248",
+  "merchant_id": "myMerchantId",
+  "account_name": "ecom3ds",
+  "number": "4012001038488884",
+  "scheme": "VISA"
+}'
+```
+</Code>
+
+#### Sample response
+
+If the card is enrolled in 3D Secure 2, the version range (2.x) will be returned along with the necessary URL to facilitate the gathering of device data by the Issuer ACS (if supported). If the card is not enrolled, just the Server Transaction ID will be returned. 
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "enrolled": true,
+  "ds_start_protocol_version":"2.1.0",
+  "ds_end_protocol_version":"2.1.0",
+  "acs_start_protocol_version":"2.2.0",
+  "acs_end_protocol_version":"2.2.0",
+  "method_url": "https://www.acsurl.com/method",
+  "method_data": {
+    "three_dsmethod_notification_url": "https://www.example.com/dsNotificationUrl",
+    "three_dsserver_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+    "encoded_method_data": "eyJ0aHJlZURTTWV0aG9kTm90aWZpY2F0aW9uVVJMIjoiaHR0cHM6XC9cL3d3dy5leGFtcGxlLmNvbVwvbm90aWZpY2F0aW9uVXJsIiwidGhyZWVEU1NlcnZlclRyYW5zSUQiOiJhZjY1YzM2OS01OWI5LTRmOGQtYjJmNi03ZDdkNWY1YzY5ZDUifQ,,"
+  }
+}
+```
+</Code>
+
+### Message version logic
+
+The Netcetera 3DS Mobile SDK differs from other Global Payments SDKs in that you must specify the 3D Secure 2 message version in the createTransaction method.This means that business logic should be implemented by the merchant to ensure that the highest possible message version is used during the authentication. To do so, you will want to utilize the highest common 3D Secure 2 supported version across the Directory Server (DS) and Access Control Server (ACS).
+
+As we saw previously, the range of versions of 3D Secure 2 that are supported are returned in the Check Version response. This allows us to determine the highest supported values across both. For example, the DS may support the range of 2.1.0 through 2.3.0 and the ACS may only support 2.1.0 through 2.2.0; in this case, the message version we should use for the authentication is 2.2.0 — the highest common version across both. This will ensure that customers are able to avail of the most up-to-date version that the card issuer and card schemes support.
+
+## Step 2: Initiate 3DS2 authentication
+After calling the getAuthenticationRequestParameters method of the Netcetera 3DS Mobile SDK (provided by our partner, Netcetera), your application can now begin 3D Secure 2 authentication. 
+
+Here, we’ve provided the required and recommended data to be sent in the POST to the authentication endpoint. This includes the billing and shipping details of the customer, at least one phone number, and the transaction details (amount, currency, and so on). We’ve also included the encoded device data obtained from the Netcetera 3DS Mobile SDK in addition to other SDK information.
+
+#### Sample request (mandatory & recommended fields)
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.globalpay.com//3ds/authentications
+-H "Content-type: application/json"
+-H "Authorization: securehash cdf7f92bb0d80d20ba73034ee7ad2dada9d91825" 
+-X POST 
+-d '{
+  "request_timestamp": "2019-04-26T10:19:32.552327",
+  "authentication_source": "MOBILE_SDK",
+  "authentication_request_type": "PAYMENT_TRANSACTION",
+  "message_category": "PAYMENT_AUTHENTICATION",
+  "message_version": "2.2.0",
+  "challenge_request_indicator":"NO_PREFERENCE",
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "merchant_id": "MerchantId",
+  "account": "internet",
+  "card_detail": {
+    "number": "4012001037141112",
+    "scheme": "VISA",
+    "expiry_month": "10",
+    "expiry_year": "25",
+    "full_name": "James Mason"
+  },
+  "order": {
+    "amount": "1001",
+    "currency": "USD",
+    "id": "3400dd37-101d-4940-be15-3c963b6109b3",
+    "address_match_indicator": false,
+    "shipping_address": {
+      "line1": "Apartment 852",
+      "line2": "Complex 741",
+      "line3": "House 963",
+      "city": "Chicago",
+      "postal_code": "50001",
+      "state": "IL",
+      "country": "840"
+    }
+  },
+  "payer": {
+    "email": "james.mason@example.com",
+    "billing_address": {
+      "line1": "Flat 456",
+      "line2": "House 456",
+      "line3": "Unit 4",
+      "city": "Halifax",
+      "postal_code": "W5 9HR",
+      "country": "826"
+    },
+    "mobile_phone": {
+      "country_code": "44",
+      "subscriber_number": "7123456789"
+    }
+  },
+  "merchant_contact_url": "https://www.example.com/about",
+  "sdk_information": {
+     "application_id": "f283b3ec-27da-42a1-acea-f3f70e75bbdc",
+     "device_render_options": {
+        "sdk_interface": "BOTH",
+        "sdk_ui_type":[  
+           "TEXT",
+           "SINGLE_SELECT",
+           "MULTI_SELECT",
+           "OOB",
+           "HTML_OTHER"
+        ]
+     },
+     "ephemeral_public_key": {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "WWcpTjbOqiu_1aODllw5rYTq5oLXE_T0huCPjMIRbkI",
+        "y": "Wz_7anIeadV8SJZUfr4drwjzuWoUbOsHp5GdRZBAAiw"
+     },
+     "maximum_timeout": "05",
+     "reference_number": "3DS_LOA_SDK_PPFU_020100_00007",
+     "sdk_trans_id": "b2385523-a66c-4907-ac3c-91848e8c0067", 
+     "encoded_data": "ew0KCSJEViI6ICIxLjAiLA0KCSJERCI6IHsNCgkJIkMwMDEiOiAiQW5kcm9pZCIsDQoJCSJDMDAyIjogIkhUQyBPbmVfTTgiLA0KCQkiQzAwNCI6ICI1LjAuMSIsDQoJCSJDMDA1IjogImVuX1VTIiwNCgkJIkMwMDYiOiAiRWFzdGVybiBTdGFuZGFyZCBUaW1lIiwNCgkJIkMwMDciOiAiMDY3OTc5MDMtZmI2MS00MWVkLTk0YzItNGQyYjc0ZTI3ZDE4IiwNCgkJIkMwMDkiOiAiSm9obidzIEFuZHJvaWQgRGV2aWNlIg0KCX0sDQoJIkRQTkEiOiB7DQoJCSJDMDEwIjogIlJFMDEiLA0KCQkiQzAxMSI6ICJSRTAzIg0KCX0sDQoJIlNXIjogWyJTVzAxIiwgIlNXMDQiXQ0KfQ0K"
+   }
+}'
+```
+</Code>
+
+#### Request syntax (Netcetera 3DS Mobile SDK specific fields only)
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) — dependent on another field or regional requirement.
+
+|     |     |     |     |     |
+| --- | --- | --- | --- | --- |    
+| Element/Field | Type | Format | Max Length | Description |
+| **sdk\_information** |     |     |     |     |
+| encoded\_data | M   | String | 64,000 | Customer device data encrypted by the Netcetera 3DS Mobile SDK for the Directory Server to decrypt. |
+| application\_id |     | String | 36  | Universally unique ID created upon all installations and updates of the merchant app on a customer device. This will be newly generated and stored by the Netcetera 3DS Mobile SDK for each installation or update.  <br/>  <br/>Format: Canonical format as defined in IETF RFC 4122. “This may utilise any of the specified versions as long as the output meets specified requirements." |
+| **device\_render\_options** |     |     |     |     |
+| sdk\_interface | M   | Enum | N/A | Lists all of the Netcetera 3DS Mobile SDK interface types that the device supports for displaying specific challenge user interfaces within the 3DS SDK. Allowed values:<br/><br/>NATIVE  <br/>BROWSER  <br/>BOTH |
+| sdk\_ui\_type | M   | Enum | N/A | Lists all UI types that the device supports for displaying specific challenge user interfaces within the Netcetera 3DS Mobile SDK. Allowed values:<br/><br/>TEXT  <br/>SINGLE\_SELECT  <br/>MULTI\_SELECT  <br/>OOB  <br/>HTML\_OTHER |
+| ephemeral\_public\_key | M   | JSON Object JWK | 256 | Public key component of the ephemeral key pair generated by the Netcetera 3DS Mobile SDK and used to establish session keys between the Netcetera 3DS Mobile SDK and the Issuer ACS. |
+| maximum\_timeout | M   | String | 2   | Set in the Netcetera 3DS Mobile SDK. Indicates the maximum amount of time (in minutes) for the challenge process.  <br/>  <br/>Must be 05 or greater. |
+| reference\_number | M   | String | 32  | Identifies the vendor and version for the Netcetera 3DS Mobile SDK that is integrated in the merchant app, assigned by EMVCo when the Netcetera 3DS Mobile SDK is approved. |
+| sdk\_trans\_id | M   | String | 36  | Universally unique transaction identifier assigned by the Netcetera 3DS Mobile SDK to identify a single transaction.  <br/>  <br/>Format: Canonical format as defined in IETF RFC 4122. “This may utilise any of the specified versions as long as the output meets specified requirements." |
+
+## Step 3: Receive authentication response
+
+At this point, the Issuer will analyze the transaction. It will take into account factors such as the data your application has provided along with historical customer behavior and transaction analysis. The outcome of this process will determine whether the Issuer decides that the customer must further authenticate the transaction or not: a Challenge flow. 
+
+Alternatively, the Issuer can be satisfied that it has enough data to make a decision on whether the transaction should proceed or not and that no further authentication is required: a Frictionless flow
+
+### Frictionless flow
+In a frictionless flow, the Issuer can determine that no further authentication is required and that the transaction qualifies for Strong Customer Authentication (SCA). Or, based on the information that it has received so far, that the transaction should not proceed any further.
+
+#### Successful authentication response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+  "acs_reference_number":"3DS_LOA_ACS_PPFU_020100_00009",
+  "authentication_source": "MOBILE_SDK",
+  "authentication_type": "PAYMENT_TRANSACTION",
+  "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+  "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+  "eci": "5",
+  "message_category": "PAYMENT_AUTHENTICATION",
+  "message_version": "2.2.0",
+  "sdk_trans_id": "b2385523-a66c-4907-ac3c-91848e8c0067",
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "status": "AUTHENTICATION_SUCCESSFUL",
+  "status_reason": "MEDIUM_CONFIDENCE"
+}
+```
+</Code>
+
+#### Failed authentication response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+  "acs_reference_number":"3DS_LOA_ACS_PPFU_020100_00009",
+  "authentication_source": "MOBILE_SDK",
+  "authentication_type": "PAYMENT_TRANSACTION",
+  "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+  "cardholderResponseInfo": "Additional authentication is needed for this transaction, please contact [Issuer Name] at 123-456-7890",
+  "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+  "eci": "7",
+  "message_category": "PAYMENT_AUTHENTICATION",
+  "message_version": "2.2.0",
+  "sdk_trans_id": "b2385523-a66c-4907-ac3c-91848e8c0067",
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "status": "AUTHENTICATION_FAILED",
+  "status_reason": "CARD_AUTHENTICATION_FAILED"
+}
+```
+</Code>
+
+Depending on the outcome, your application can now either proceed to authorization or display a message to the customer telling them their transaction was unsuccessful and return them to the payment page.
+
+### Challenge flow
+
+In the challenge flow, the Issuer determines that further authentication is required for the transaction to proceed. This may be due to various reasons, including a high value transaction, unusual payment behavior for this particular customer (time of day, type of merchant, and so on) or mismatching/insufficient data was submitted for them to make a determination.
+
+In the response, we pass the required data for the Netcetera 3DS Mobile SDK to interact with the ACS to either present the challenge natively or display the relevant HTML.
+
+#### Challenge response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "acs_signed_content": "eyJhbGciOiJQUzI1NiIsIng1YyI6Ik1JSURlVENDQW1HZ0F3SUJBZ0lRYlM0QzRCU"
+  "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+  "acs_reference_number":"3DS_LOA_ACS_PPFU_020100_00009",
+  "authentication_source": "MOBILE_SDK",
+  "authentication_type": "PAYMENT_TRANSACTION",
+  "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+  "challenge_mandated": true,
+  "acs_rendering_type": {
+    "acs_interface": "NATIVE_UI",
+    "acs_ui_template": "MULTI_SELECT"
+  },
+  "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+  "message_category": "PAYMENT_AUTHENTICATION",
+  "message_version": "2.2.0",
+  "sdk_trans_id": "b2385523-a66c-4907-ac3c-91848e8c0067",
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "status": "CHALLENGE_REQUIRED"
+}
+```
+</Code>
+
+#### Response syntax (Netcetera 3DS Mobile SDK specific fields only)
+
+|     |     |     |
+| --- | --- | --- |  
+| Element/Field | Format | Description |
+| acs\_reference\_number | String | Unique identifier assigned by the EMVCo for the particular ACS. |
+| acs\_signed\_content | String | Contains the following data necessary to present the challenge to the customer:<br/><br/>ACS URL  <br/>ACS Ephemeral Public Key (QT)  <br/>SDK Ephemeral Public Key (QC) |
+| acs\_rendering\_type | Object | Identifies the ACS UI Template that the ACS will first present to the customer. |
+| acs\_interface | Enum | The ACS interface that the challenge will present to the cardholder. Possible values:<br/><br/>NATIVE  <br/>HTML |
+| acs\_ui\_template | String | Identifies the UI Template format that the ACS first presents to the customer. Possible values:<br/><br/>TEXT  <br/>SINGLE\_SELECT  <br/>MULTI\_SELECT  <br/>OOB  <br/>HTML\_OTHER |
+
+## Step 4: Present the challenge to the customer
+
+The type of challenge displayed by the Netcetera 3DS Mobile SDK to the customer will be determined by the Issuer ACS and will align with at least two elements of Strong Customer Authentication:
+
+* Possession — Something only the customer has; for example, their mobile device registered with their bank to which they will receive a code in a SMS
+* Inherence — Something only the customer is; for example, their fingerprint or other form of biometric data
+* Knowledge — Something only the customer knows; for example, a unique passphrase or answer to a personal question
+
+#### Sample ACS
+
+![An example mobile screen of an issuer's access control server](/gh-assets/ecommerce/netcetera_acs.png)
+
+With the customer on the ACS, the following outcomes may occur:
+
+* The authentication is successful <br />
+(Transaction Status = Y & Challenge Completion Indicator = Y)
+* The authentication fails and the customer is not given another chance <br />
+(Transaction Status = N & Challenge Completion Indicator = Y)
+* The authentication fails and the customer is given another chance 
+
+## Step 5: Obtain the authentication data
+
+If the transaction qualifies as authenticated (Transaction Status = Y), the final step before processing the authorization is to obtain the necessary authentication data from the Global Payments 3DS solution. This is the data the ACS passed to Global Payments when the customer completed the challenge.
+
+To do this, we call the Authentications endpoint with the relevant 3DS Server Transaction ID. For example: 
+
+<Code id="JSON" title="" language="json" active>
+```
+https://api.globalpay.com/3ds/authentications/{threeDSServerTransID}/summary
+```
+</Code>
+
+If the customer canceled during the challenge or the authentication did not proceed for another reason, the summary endpoint will also provide you with the information available so you can update your application or website accordingly. The most important information we need for the authorization is the ECI and Authentication Value.
+
+#### Sample successful authentication response
+
+<Code id="JSON" title="" language="json" active>
+```
+{
+  "acs_signed_content": "eyJhbGciOiJQUzI1NiIsIng1YyI6Ik1JSURlVENDQW1HZ0F3SUJBZ0lRYlM0QzRCU"
+  "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+  "authentication_source": "BROWSER",
+  "authentication_type": "PAYMENT_TRANSACTION",
+  "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+  "challenge_interaction_counter": 2,
+  "challenge_mandated": true,
+  "acs_rendering_type": {
+    "acs_interface": "NATIVE_UI",
+    "acs_ui_template": [
+      "TEXT"
+    ]
+  },
+  "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+  "eci": "5",
+  "message_category": "PAYMENT_AUTHENTICATION",
+  "message_version": "2.2.0",
+  "sdk_trans_id": "b2385523-a66c-4907-ac3c-91848e8c0067",
+  "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+  "status": "AUTHENTICATION_SUCCESSFUL",
+  "status_reason": "HIGH_CONFIDENCE"
+}
+```
+</Code>
+
+## Step 6: Process the authorization
+
+Now that the 3D Secure process is complete, we can proceed to authorization and include the authentication data. The transaction will be processed as normal and may be successful or declined based on standard criteria: sufficient funds, correct security code entered, and so on.
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="EUR">1000</amount>
+  <card>
+    <number>4012001037141112</number>
+    <expdate>1218</expdate>
+    <chname>Philip Marlowe</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <mpi>
+    <eci>5</eci>
+    <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+    <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+    <message_version>2.2.0</message_version>
+  </mpi>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>

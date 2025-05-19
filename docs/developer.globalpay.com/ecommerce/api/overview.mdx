@@ -1,0 +1,27 @@
+---
+title: "API Reference - Overview"
+subtitle: "See the full API specification for our solutions"
+tag: "xml"
+created: "02/13/2025"
+---
+
+The API Reference section expands on the guides. Under each solution, you'll find the full range of request types along with the values that can be submitted in each field. We also provide each response and the values your application can expect to receive.
+
+If you're not using one of the SDKs, we show you how to build and check the request and response security hashes.
+
+## Endpoints
+Once you have a Client ID, the URL endpoints to send transactions to are as follows:
+
+| Environment | URL |
+| --- | --- |
+| Production | https://api.realexpayments.com/epage-remote.cgi |
+| Sandbox | https://api.sandbox.realexpayments.com/epage-remote.cgi |
+
+For Production, we only accept transactions from IP addresses on your account's allowlist. Your account manager can assist you with setting this up.
+
+Even if your Client ID has been set to Live, you can still send transactions to the Sandbox environment — just target the Sandbox URL.
+
+## Digital signatures (hashes)
+Each request and response is signed with a hash of certain transaction elements using your unique Shared Secret. In addition, we ensure that requests originate only from IP addresses on your account's allowlist. Combined, these checks help ensure that we only accept valid requests using your Client ID.
+
+It is therefore very important to keep your Shared Secret secure and protected.

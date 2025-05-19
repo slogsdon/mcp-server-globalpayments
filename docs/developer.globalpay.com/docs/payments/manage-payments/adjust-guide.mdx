@@ -1,0 +1,227 @@
+---
+title: 'Manage Payments - Adjust'
+search_results: 'Global Payments - Manage Payments Capture'
+subtitle: 'Learn how to adjust a bill to add a tip'
+tag: 'rest'
+created: '15/08/2024'
+---
+<Infobox type="danger">
+This feature is only available for Customer Present transaction processing.
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on sending an adjustment to add a tip to a card-present transaction.
+
+## What is it?
+
+Tips, or gratuities, are common in North American restaurants and other service industries. They allow payers to add an additional amount to the transaction for excellent service provided by the merchant’s employees. 
+
+## How does it work?
+
+The main things to know about making an adjustment:
+
+* When processing adjustments, the status of the transaction, such as Pre-Authorized, does not change. 
+* You can change the same transaction data (amount and <Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip> data) during a Capture request. However, that request will change the status of the transaction — for example, moving a transaction from Pre-Authorized to Captured.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Send an adjustment
+
+<Infobox>Adjustments are available only for **card-present** transactions.</Infobox>
+  
+To successfully send the command, you need the `trn_id` from the initial transaction. Adjustments can’t be made after the transaction is funded.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --compressed -X POST "https://apis.sandbox.globalpay.com/ucp/transactions/{id}/adjustment" \
+-H "Authorization: Bearer G3FA4TuYGCBiCWs4YpzrALGCYXZJ" \
+-H "X-GP-Version: 2021-03-22" \
+-H "Content-type: application/json" \
+-H "Accept: application/json" \
+-d ‘{
+    "amount": "11099",
+    "gratuity_amount": "11099",
+    "payment_method": {
+        "card": {
+            "tag": "string"
+        }
+    }
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+try {
+    Transaction transaction =  Transaction.fromId("TRN_uhlhDZgs1P7jIXISu0AqEV0V1OoJHX");
+
+    String tagData = "9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001";
+
+    Transaction response = transaction.edit()
+            .withTagData(tagData)
+            .withAmount(new BigDecimal("11.09"))
+            .withGratuity(new BigDecimal("11.09"))
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+  <Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+            config.AppId = "AppId";
+            config.AppKey = "AppKey";
+            config.Channel = Channel.CardNotPresent;
+            config.Environment = Environment.TEST;
+            config.RequestLogger = new RequestFileLogger(@"path\logname.txt");
+
+            ServicesContainer.ConfigureService(config);
+
+            try
+            {
+                Transaction transaction = Transaction.FromId("TRN_uhlhDZgs1P7jIXISu0AqEV0V1OoJHX");
+                var tagData = "9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001";
+
+                var response = transaction.Edit()
+                    .WithAmount((decimal)10.01)
+                    .WithTagData(tagData)
+                    .WithGratuity((decimal)5.01)
+                    .Execute();
+            }
+            catch (Exception e)
+            {
+                // TODO: Add your exception handling here
+            }
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+try {
+    $transaction = Transaction::fromId('TRN_uhlhDZgs1P7jIXISu0AqEV0V1OoJHX');
+    $tagData = '9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001';
+    $response = $transaction->edit()
+        ->withTagData($tagData)
+        ->withAmount(11.09)
+        ->withGratuity(11.09)
+        ->execute();
+} catch (GatewayException $ex){
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response "id"
+$timeCreated = $response->timestamp; // API raw response "time_created"
+$status = $response->responseMessage; // API raw response "status"
+$amount = $response->balanceAmount; // API raw response "amount"
+$reference = $response->referenceNumber; // API raw response "reference"
+$batchId = $response->batchSummary->batchReference; // API raw response "batch_id"
+$authCode = $response->authorizationCode; // API raw response "payment_method.card.authcode"
+$brandReference = $response->cardBrandTransactionId; //API raw response "payment_method.card.brand_reference"
+$cardIssuerResponse = $response->cardIssuerResponse; //API raw response "payment_method.result"
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+  {
+    "id": "TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2026-05-03T21:23:39.718Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "11099",
+    "currency": "USD",
+    "country": "US",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "batch_id": "BAT_234234234",
+    "payment_method": {
+        "result": "string",
+        "message": "string",
+        "card": {
+            "authcode": "string",
+            "brand_reference": "string"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "ADJUST",
+        "time_created": "2026-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## Integration references
+
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        See the full transaction endpoint, including adjustments.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Adjustments are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

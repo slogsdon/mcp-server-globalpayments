@@ -1,0 +1,124 @@
+---
+title: 'Introduction to Payments'
+search_results: 'Global Payments - New to Payments'
+subtitle: 'Learn how the card payment process works and how we fit into it'
+tag: 'rest'
+created: '06/08/2024'
+---
+If you’re new to the payments industry, it’s good to start with a basic understanding of how the process for card payments works. In this article, we do just that by introducing you to the relevant players and walking you through two typical flows: payment and settlement. We also describe how we fit into the process and what solutions we offer to help merchants succeed.
+
+What we cover:
+
+* [Key players](#key-players) – The main participants of the card payments industry
+* [Technology partners](#technology-partners) – Companies that help merchants handle payment processing
+* [Payment flow](#payment-flow) – How all the different companies interact during a transaction
+* [Settlement flow](#settlement-flow) – How a merchant gets paid after a transaction (capture and settle)
+* [Our offerings](#our-offerings) – A listing of ways to integrate with us, core solutions we offer, and business connections we can provide
+
+<Infobox>
+ All **bolded** terms in this article are further defined in our [Payments Glossary](/docs/getting-started/new-to-payments/glossary).
+ </Infobox> 
+
+## Key players
+
+To understand the card payment process, you first need to know who the relevant players are.
+
+|     |     |     |     |
+| --- | --- | --- | --- |
+|<img alt="Card Brands Icon" src="/gh-assets/icon_card-brands.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Card Brands** <br/>Card associations like Visa or Mastercard that operates a network. |<img alt="Issuer Icon" src="/gh-assets/icon_issuer.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Issuer** <br/>Financial institution that issues cards to customers to use for payments.|
+|<img alt="Acquirer Icon" src="/gh-assets/icon_acquirer.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Acquirer** <br/>Financial institution that allows merchants to process card transactions on a card brand’s behalf. |<img alt="Merchant Icon" src="/gh-assets/icon_merchant.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Merchant**  <br/>Seller of goods or services. Can be an individual, a business, or a large enterprise. |
+|<img alt="Cardholder Icon" src="/gh-assets/icon_cardholder.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Cardholder** <br/>Customer who is issued a payment card to use for purchases. |     |     |
+
+<br/>
+Before card payments can begin, the key players need to establish business relationships with each other. First, the **card brand** assigns an **issuer** a **bank identification number (BIN)**, which gives it a license to issue cards (hence the name _issuer_) on the card brand’s behalf to customers. The issuer then assigns a card number — also known as a **primary account number (PAN)** — to a customer who, in effect, becomes a **cardholder**.
+
+The card brand also assigns a license to an **acquirer** so that the acquirer can allow a **merchant** to accept card payments on the card brand’s behalf. The acquirer then enters into a contract with a merchant and offers it a merchant account. This arrangement provides the merchant with a line of credit. Under the agreement, the acquirer exchanges funds with issuers on behalf of the merchant and pays the merchant the net balance of their daily payment-card activity — that is, gross sales minus **chargebacks/reversals** and various **fees**.
+
+So, when it comes to accepting card payments on behalf of the card brands:
+
+*   Acquirers service merchants
+*   Issuers service cardholders
+
+The following illustration shows the business relationship between the key players.
+
+![Diagram flow connecting the Card Brand to other key players.](/gh-assets/flow-key-players.png)
+<p style={{textAlign: "center"}}>**Key Players for Card Payments**</p>
+
+Once all the key players have established business relationships with each other, card payments can begin. But first, some merchants may also choose to use the services of technology partners to help with the complexity of processing card payments.
+
+## Technology partners
+
+This is where our company’s expertise comes into play (in addition to sometimes serving as an acquirer) and also where a **developer** can help. Because sending actual payments directly between a merchant and an acquirer can be complicated, the merchant can instead use a **payment gateway**, which is a technology service used to facilitate the secure transmission of transaction data. To interface with the acquirer, developers use an **application program interface (API)** or **software development kit (SDK)** to build a software solution, or integration, for the merchant to use to handle card payments. 
+
+Likewise, processing card payments — including having to facilitate **authentication** (identity checks), **authorization** (approvals), and **clearing** (transfering funds) — can also be too much for a merchant to handle. So, it’s common to enlist the support services of a **payment processor** to help for a fee.
+
+<Infobox>
+ If you want to know more about how our solutions can help merchants and developers, see the [Our offerings](#our-offerings) section.
+ </Infobox>
+
+Technology partners that can support a merchant include the following:
+
+|     |     |     |     |
+| --- | --- | --- | --- |   
+|<img alt="Payment Gateway Icon" src="/gh-assets/icon_payment-gateway.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Payment Gateway**  <br/>Technology service used by a merchant to securely transmit transaction data to the acquirer. |<img alt="Payment Processor Icon" src="/gh-assets/icon_payment-processor.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Payment Processor**  <br/>Company used by a merchant to help with tasks related to card payment processing. |
+|<img alt="Developer Icon" src="/gh-assets/icon_developer.png" width="275" height="225" style={{display: "block", margin: "0 auto"}} />| **Developer**  <br/>Person with coding experience hired to develop a software solution for accepting or processing payments. |     |     |
+
+## Payment flow
+
+In this section, we describe the interaction between the key players and their technology partners in a successful card payment flow. The flow starts when a cardholder selects an item or service to buy from the merchant either in a store or online and pays with a card. Once receiving the card information (PAN + **expiry** + **CVV**), the merchant initiates the sale and sends the transaction data (card information + sale amount) to the acquirer, either directly or via a payment gateway. (For online sales, the cardholder’s identity may need to be authenticated first, such as through **3D Secure**.) 
+
+The acquirer uses the customer’s PAN, which includes the BIN, to identify which card brand to send the transaction data to for approval. The card brand then sends the transaction to the issuer. The issuer authorizes the payment and lets the merchant know via the card brand and then back to the acquirer. Finally, the customer is notified that the transaction is complete. At close of business, the merchant begins the **clearing** and **settlement** process to get the funds from the sale into their bank account (for more information, see [Settlement flow](#settlement-flow)).
+
+The following illustration shows the high-level flow for a card payment and how the key players in the payments industry and the supporting technology partners fit in.
+
+![Diagram flow of a card payment transaction between key players and technology partners.](/gh-assets/flow-transaction.png)
+<p style={{textAlign: "center"}}>**Card Payment Flow**</p>
+
+## Settlement flow
+
+In this section, we describe the interaction between the key players and their technology partners for a settlement flow in which the merchant receives payment for the day’s credit card sales. The flow starts when a merchant sends **captured** transactions in a batch file to their acquirer who then sends it to the card brand after the clearing process is complete. The card brand then processes the transactions and sends the settlement to the acquirer, debiting the applicable issuer based on card usage. 
+
+After the issuer confirms every transaction is correct, the card brand transfers funds for sales and credit to the acquirer. The acquirer then deposits the money into the merchant’s bank account, minus any fees.
+
+The following illustration shows the high-level flow for settlement and how the key players in the payments industry fit in.
+
+![Diagram flow of settlement between key players and technology partners.](/gh-assets/flow-settlement.png)
+<p style={{textAlign: "center"}}>**Settlement Flow**</p>
+
+## Our offerings 
+
+We offer a full range of solutions for merchants, connections to key industry players, and various ways for developers to access our worldwide system. Click a link to go to that topic’s article.
+
+<Infobox>
+If you don’t see what you’re looking for or have any questions, check with an account manager (see [Sales Support](/support/sales)).
+</Infobox>
+
+##### Ways in which developers can integrate with us:
+
+* [Hosted Payment Page](/docs/payments/online/hosted-payment-page-overview) – Quickly set up a secure checkout page that we handle for you.
+* [Hosted Fields](/docs/payments/online/hosted-fields-overview) – Use tokenization to customize your payment page.
+* [API](/docs/integration-options/api) – Directly interface with our server using our resource-oriented <Tooltip content="Stands for Representational State Transfer. A type of API architecture that uses HTTP requests.">REST</Tooltip> API.
+* [SDKs & Libraries](/docs/integration-options/sdk/overview) – Add server-side or client-side code to quickly build your integration.
+* Transaction Management & Virtual Terminal – Manage all transactions in one unified portal.
+* [Point of Sale (POS)](/docs/payments/in-store/overview) – Explore our integration solutions for taking in-store payments.
+
+##### Our core solutions for merchants:
+
+* [Card Storage](/docs/payments/tokenization/card-storage-guide) – Tokenize card details to charge customers later.
+* [3D Secure](/docs/risk-management/3D-secure/overview) – Enhance security with stronger authentication for online payments.
+* [Fraud Management](/docs/risk-management/fraud-management/overview) – Assess risk and verify transactions.
+* [Pay by Link](/docs/payments/online/pay-by-link-overview) – Send customers a unique link to a payment page.
+* [Payers](/docs/payments/tokenization/payers-overview) – Store customer details for future transactions.
+* [Partner Solutions](/docs/partners/overview) – Manage payment services across a partner network.
+* [Operations & Reporting](/docs/reporting/overview) – Use transaction data to better understand your business.
+* [Digital Wallets](/docs/payments/payment-methods/digital-wallets/overview) – Give customers access to their favorite stored cards at checkout.
+* [Buy Now Pay Later](/docs/payments/payment-methods/buy-now-pay-later-overview) – Provide flexible options for customers to pay over time.
+* [Open Banking](/docs/payments/payment-methods/open-banking-overview) – Let customers pay directly with their bank account.
+
+##### Our connections to key players and other technology partners:
+
+* Acquirers – Our gateway supports Global Payments, AIB Merchant Services, American Express, CyberSource, Comercia Global Payments, First Data, Mastercard MIGS Payment Gateway, Elavon, Barclaycard, Lloyds Bank Cardnet, Diners Club International, Redsys, Fiserv, JCB, and Worldpay from FIS.
+* Credit Cards – We support Visa, Mastercard, American Express, Discover, JCB, Diners Club, Union Pay, and Union Pay Secure. 
+* Debit Cards – We support Visa (Interlink), Mastercard Debit, Bancontact, and Interac.
+* [Dynamic Currency Conversion](/docs/payments/payment-methods/dynamic-currency-conversion-guide) – Tap into the interbank exchange so traveling customers can pay in their home currency.
+* [Alternative Payment Methods](/docs/payments/payment-methods/alternative-payment-methods-guide) – In addition to cards, we also accept bank transfers, cash payment vouchers, cryptocurrency, digital wallets, direct debit, local cards, and prepaid cards & vouchers.

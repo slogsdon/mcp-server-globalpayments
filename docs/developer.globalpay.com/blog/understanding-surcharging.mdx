@@ -1,0 +1,53 @@
+---
+title: 'Understanding Surcharging: A Guide for Developers and ISVs'
+search_results: 'Blog'
+tag: 'rest'
+created: '04/24/2025'
+---
+#### [Alicia Jones](http://www.linkedin.com/in/alicia-spalding), Principal Product Manager
+
+Published 04/24/2025
+
+<br />
+
+As businesses strive to manage the rising costs of credit card processing, surcharging has become a popular solution for merchants to offset these expenses. For developers and Independent Software Vendors (ISVs), implementing surcharging functionality requires a deep understanding of compliance, technical requirements, and customer experience. Global Payments offers a robust surcharging solution that simplifies integration for ISVs while providing merchants with the flexibility they need to stay compliant and competitive.
+
+## What Is Surcharging?
+
+Surcharging is the practice of adding a fee to a transaction when a customer pays with a credit card. This fee helps merchants recover the costs associated with credit card processing. Unlike convenience fees, which are tied to alternative payment channels, surcharges are applied specifically to credit card transactions and are calculated as a percentage of the transaction amount.
+
+## Key Features of Global Payments' Surcharge Solution
+
+Global Payments' surcharge solution is designed to make implementation seamless for ISVs while offering merchants the flexibility to customize their surcharging strategy. Here are the standout features of the solution:
+
+* **Easy Integration for ISVs**: The solution is built with developers in mind, offering straightforward APIs and tools to integrate surcharging functionality into payment systems. Whether you're working with card-present (CP) or card-not-present (CNP) environments, the solution supports both scenarios.
+* **BIN Range Validation**: To ensure compliance, the solution automatically checks the BIN (Bank Identification Number) range of the card being used. This ensures that surcharges are only applied to eligible U.S.-issued credit cards and not to debit, prepaid, or gift cards. This feature reduces the risk of non-compliance and simplifies the process for merchants.
+* **Configurable Surcharge Rates**: Merchants can configure surcharge rates based on their specific needs and location. The solution ensures that the surcharge rate does not exceed the merchant's cost of acceptance or the card brand's maximum allowable rate. This flexibility allows merchants to tailor their surcharging strategy to their business model and local regulations.
+* **Merchant Location Flexibility**: For merchants operating in multiple states, the solution allows surcharges to be applied only in states where they are legally permitted. This ensures compliance with state-specific laws and regulations, such as those in Connecticut, Maine, Massachusetts, and Oklahoma, where surcharging is prohibited.
+* **Transparent Customer Experience**: The solution ensures that surcharge amounts are clearly disclosed to customers at the point of sale, on receipts, and during online checkout. This transparency helps merchants maintain trust and avoid disputes.
+
+## How It Works
+
+Global Payments' surcharge solution integrates seamlessly into existing payment systems. Here's how it works:
+
+1) **Transaction Processing**: When a customer initiates a transaction, the system performs a BIN lookup to determine whether the card is a U.S.-issued credit card. If eligible, the surcharge is calculated and added to the transaction amount.
+2) **Authorization and Settlement**: The surcharge is included in the total transaction amount during authorization and settlement, ensuring accurate reporting and compliance with card brand rules.
+3) **Reporting and Refunds**: The solution provides detailed reporting on surcharge amounts, making it easy for merchants to track their savings. In the case of refunds, the surcharge amount is automatically included, ensuring accurate calculations.
+4) **Customizable Settings**: Merchants can configure surcharge rates and enable or disable surcharging for specific locations or sales channels (e.g., CP or CNP).
+
+### Why Choose Global Payments' Surcharge Solution?
+
+Global Payments' surcharge solution is designed to address the unique needs of ISVs and merchants. Here’s why it stands out:
+
+* **Compliance First**: The solution helps merchants adhere to all card brand rules and state laws, reducing the risk of fines or penalties for merchants.
+* **Developer-Friendly**: With robust APIs and clear documentation, ISVs can integrate the solution quickly and efficiently.
+* **Enhanced Merchant Experience**: Merchants have more control over surcharge rates (up to the card brands’ limit of 3%) and configurations, ensuring flexibility and compliance.
+* **Improved Customer Experience**: Transparent disclosures and seamless integration ensure a positive experience for customers.
+
+## Conclusion
+
+Surcharging is a powerful tool for merchants to manage credit card processing costs, but its implementation requires careful attention to compliance and technical details. Global Payments' surcharge solution simplifies this process for ISVs and merchants alike, offering an easy-to-integrate, flexible, and compliant solution. By leveraging features like BIN range validation and configurable surcharge rates, ISVs can deliver value-added solutions that help merchants optimize their payment strategies.
+
+For more information on how Global Payments can support your surcharging needs, visit [Global Payments Insights](https://www.globalpayments.com/insights).
+
+<sub>*Please note that not all states permit the imposition of a surcharge, and there are limitations and policies that are state-specific. Legislation has also been introduced in various states across the country, and the information contained in this document may change over time. This document is not intended to be, nor should it be construed as, legal advice. Compliance with state surcharging laws are the responsibility of the merchant. ©2025 Global Payments Inc. All trademarks and service marks contained herein are the sole and exclusive property of their respective owners.</sub>

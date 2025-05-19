@@ -1,0 +1,166 @@
+---
+title: 'Secure Corporate Payments'
+search_results: 'Global Payments - Exemptions - Secure Corporate Payments'
+subtitle: 'Request an exemption for corporate customer transactions.'
+tag: 'rest'
+created: '20/09/2024'
+---
+This guide focuses on how to request an exemption for a Secure Corporate Payment in the authorization.
+<br/>
+
+## Exemption criteria
+Secure Corporate Payments are classified as transactions that meet the following criteria:
+* Initiated by a corporate customer using, for example, a virtual card
+* Originated in a secure corporate environment. For example, a company-wide travel and expenses system.
+
+## Authorization message
+As with a low-value exemption, a Secure Corporate Payment can only be requested in the Payment Authorization message. If the Issuer accepts the exemption request, the transaction will proceed as normal and will be successful or declined based on standard criteria (sufficient funds, correct security code entered, and so on). If the exemption request is not accepted, the Issuer might respond with a soft decline (see [Soft decline](#soft-decline) section).
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+  curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer vJCIFsAMxW9PgVBKz91MoOSMvw9p' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "25576071",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "three_ds": {
+              "exempt_status": "SECURE_CORPORATE_PAYMENT"
+            }
+        }
+    }
+}'
+  ```
+</Code>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+  {
+    "id": "TRN_p2fjfkU3mfWrRoQvSd6Omskep5SWxY_25576071",
+    "time_created": "2022-05-06T17:08:33.816Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "25576071",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "ND6ZF7rk03RaqrIJ",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1086726",
+    "action": {
+        "id": "ACT_p2fjfkU3mfWrRoQvSd6Omskep5SWxY",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-06T17:08:33.816Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+  ```
+</Code>
+
+## Soft decline
+### What is a soft decline?
+A soft decline is a response we get when a customers issuing bank are not willing to provide an SCA exemption to the transaction you're processing.
+
+By requesting a Secure Corporate Payment exemption in the authorization message, the Issuer might reject the exemption request and respond with what’s known as a *soft decline*: result code **111**. If you receive a soft decline, you can proceed with standard 3D Secure authentication and a second authorization. For more information on authentications, see our [3D Secure & SCA](/docs/risk-management/3D-secure/overview) documentation.
+
+<Infobox type="danger">
+    The examples used in this guide involve one authentication message and two authorization messages. In using this logic, you might incur additional transaction fees. For more information, contact your account manager.
+</Infobox>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "id": "TRN_aUZq8cKq57ur5RyiI9PQwQJheFxVXI_58657811",
+    "time_created": "2022-05-09T12:58:04.224Z",
+    "type": "SALE",
+    "status": "DECLINED",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "",
+    "currency": "",
+    "country": "US",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "58657811",
+    "payment_method": {
+        "result": "111",
+        "message": "[ test system ] Strong Customer Authentication Required",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX0091",
+            "authcode": "",
+            "brand_reference": "cl3De8e1TAQzttFT",
+            "brand_time_created": "",
+            "cvv_result": "NOT_MATCHED",
+            "avs_address_result": "NOT_CHECKED",
+            "avs_postal_code_result": "NOT_CHECKED",
+            "avs_action": "",
+            "provider": {
+                "result": "111",
+                "cvv_result": "N",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_aUZq8cKq57ur5RyiI9PQwQJheFxVXI",
+        "type": "PREAUTHORIZE",
+        "time_created": "2022-05-09T12:58:04.224Z",
+        "result_code": "DECLINED",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+  ```
+</Code>

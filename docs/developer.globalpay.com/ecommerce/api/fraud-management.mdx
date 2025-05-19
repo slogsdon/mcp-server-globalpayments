@@ -1,0 +1,1021 @@
+---
+title: "Fraud Management"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/18/2025"
+---
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Fraud Management, see our [Overview](/ecommerce/risk-management/fraud/overview).
+
+## Fraud Filter and data submission
+Our Fraud Filter enables merchants to automatically Pass, Hold, or Block transactions based on the result of one or more rule results. This functionality is configured via the Fraud Management section in Ecommerce Portal.
+
+<Infobox type="danger">
+It is important to note that any changes made to the Fraud Filter in Ecommerce Portal will impact the result returned in the API response. You will need to ensure that any changes don't adversely affect transaction processing in your application. For more information, see [Fraud Filter - Overview](/ecommerce/risk-management/fraud/fraud-filter).
+</Infobox>
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0519</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <!-- Begin Fraud Management Elements -->
+  <fraudfilter mode="PASSIVE"/>
+  <tssinfo>
+    <custnum>E8953893489</custnum>
+    <prodid>SID9838383</prodid>
+    <varref>Car Part HV</varref>
+    <custipaddress>123.123.123.123</custipaddress>
+    <address type="billing">
+      <code>321|456</code>
+      <country>GB</country>
+    </address>
+    <address type="shipping">
+      <code>852|369</code>
+      <country>IE</country>
+    </address>
+  </tssinfo>
+  <!-- End Fraud Management Elements -->
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Channel | string | enum | O   |     | Specify how a transaction is to be processed. Compatible with us and certain other acquirers. Allowed values:  <br/>  <br/>**ECOM** - Ecommerce  <br/>**MOTO** - Mail Order/Telephone Order |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](https://developer.globalpay.com/#!/resources/test-card-numbers). |
+| Security Code Number | string | numeric | O   | 0-4 | The 3 digit number on the reverse of the card (known as CVC for Visa and CVV2 for MasterCard). For American Express the code is 4 digits long. |
+| Presence Indicator | integer |     | C   | 0-1 | Used to specify whether the Security Code is being submitted. Allowed values:  <br/>**1** - cvn present  <br/>**2** - cvn illegible  <br/>**3** - cvn not on card  <br/>**4** - cvn not requested |
+| Fraud Filter Mode | string | enum | O   | N/A | Optional parameter used to determine to what degree Fraud Filter executes. If not submitted the Fraud Filter will behave in accordance with the Ecommerce Portal mode configuration. Allowed values:  <br/>**PASSIVE** - Execute the rules but do not execute the action detailed in the Fraud Filter overall result (for example, HOLD or BLOCK)  <br/>**OFF** - Does not execute the Fraud Filter at all for this transaction. In this case, only the mode is returned in the response.  <br/>**ACTIVE** - Execute the action detailed in the Fraud Filter overall result for OTB transactions. |
+| Customer Number | string | alphanumeric | O   | 0-50 | A unique reference for this customer for example from your CRM system.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Product Id | string | alphanumeric | O   | 0-50 | The code you assign to the product, for example the SKU.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Variable Reference | string | alphanumeric | O   | 0-50 | Any reference you also would like to assign to this transaction. Can also be used to pass the Acquirer Statement reference, where supported.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Customer IP Address | string | numeric | O   | 0-15 | The IP address of the customer's device.  <br/>Allowed characters: \[0-9:\] |
+| Address Type | string | enum | O   |     | Allowed values:  <br/>**BILLING**  <br/>**SHIPPING** |
+| Billing or Shipping Code | string | alphanumeric | O   | 0-30 | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: \[a-zA-Z0-9.-\] |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>0</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <fraudresponse mode="PASSIVE">
+    <result>PASS</result>
+    <rules>
+      <rule name="Customer IP List" id="478a55db-5430-4c2a-afca-7dde181eb9f4">
+        <action>PASS</action>
+      </rule>
+      <rule name="Card Numbers" id="cf609cf9-9e5a-4700-ac69-8aa09c119305">
+        <action>PASS</action>
+      </rule>
+    </rules>
+  </fraudresponse>
+  <sha1hash>3ebd3655d378eb32a44b015d26c32c28111e8fb0</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Response Mode | string | enum | Indicates the mode the Fraud Filter executed in. The possible values are:  <br/>**ACTIVE** - The rules were executed and the fraud result actioned.  <br/>**PASSIVE** - The rules were executed but the fraud result was actioned.  <br/>**OFF** - Fraud Filter was specifically not executed.  <br/>**ERROR** - There was an unexpected error in executing Fraud Filter |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Address Verification Service
+The Address Verification Service (AVS) verifies the cardholder's address by checking the information at the time of sale against the Issuer's records.
+
+<Infobox>
+This functionality is not supported by all Issuers and is only available for cardholders in the United States, Canada, and the United Kingdom. Global Payments supports this functionality; however, not all Acquirers do. For more information, contact our Support Team.
+</Infobox>
+
+If a transaction fails an AVS check, it will not automatically be declined. It's an advisory service and requires that the details of non-matched transactions be checked by your application. AVS data is passed in the billing code address fields and must be formatted correctly depending on the billing country of the cardholder. We've outlined the different formats below.
+
+| Country | Construction | Sample Address | Sample Billing Code |
+| --- | --- | --- | --- |
+| US or CA | Concatenate the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 123  <br/>House 456  <br/>Chicago  <br/>50001  <br/>United States | "50001\|Flat 123" |
+| UK  | Concatenate **just the digits** from the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 456  <br/>House 123  <br/>Halifax  <br/>WB3 A21  <br/>United Kingdom | "321\|456" |
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0519</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <!-- Begin AVS Elements -->
+  <tssinfo>
+    <address type="billing">
+      <code>50001|Flat 123</code>
+    </address>
+  </tssinfo>
+  <!-- End AVS Elements -->
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+
+## Hold
+This request will change the transaction status to Hold. If the transaction was successful and due to be included in the next settlement file, this will prevent its inclusion until such a time that the transaction is released. If you're using Delayed Capture, the transaction must be released and then captured before it will be included in the settlement file.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="hold" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FRAUD</reasoncode>
+  <sha1hash>86daf98b4ce6f5d463572c3a0692eceaace35740</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Reason Code | string | enum | O   |     | Used to indicate the reason for a transaction action. If no value is supplied the default reason code NOTGIVEN will be applied. Allowed values:  <br/>**FRAUD**  <br/>**OUTOFSTOCK**  <br/>**OTHER**  <br/>**NOTGIVEN** |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180903100255">
+  <merchantid>Merchant ID</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <result>00</result>
+  <message>Held Successfully</message>
+  <pasref>14612331056825417</pasref>
+  <sha1hash>f2bfcf445514381d79a7a0e86b5b4298571ba66b</sha1hash>
+</response>
+```
+</Code>
+
+#### response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Reason Code | string | enum | Used to indicate the reason for a transaction action. If no value is supplied the default reason code NOTGIVEN will be applied. Allowed values:  <br/>**FRAUD**  <br/>**OUTOFSTOCK**  <br/>**OTHER**  <br/>**NOTGIVEN** |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Release
+If a transaction is set to Hold, the release request will return the transaction to its original status. For example, if a transaction was set to Auto-Capture, then the release request will return it to the queue of transactions to be included in the next settlement file. If you're using Multi or Delayed Capture the transaction will simply return to that status until it is captured. Transactions that are held must be released before they are captured.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="release" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <pasref>14612286471949679</pasref>
+  <reasoncode>FALSEPOSITIVE</reasoncode>
+  <sha1hash>36b168a9fa577df04684b5a20baad17483b8e11c</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Reason Code | string | enum | O   |     | Used to indicate the reason for a transaction action. If no value is supplied the default reason code NOTGIVEN will be applied. Allowed values:  <br/>**FALSEPOSITIVE**  <br/>**INSTOCK**  <br/>**OTHER**  <br/>\> **NOTGIVEN** |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180903100255">
+  <merchantid>Merchant ID</merchantid>
+  <account>internet</account>
+  <orderid>dKH-d6mTSmCuciHLm_QfEg</orderid>
+  <result>00</result>
+  <batchid>319970</batchid>
+  <message>Released Successfully</message>
+  <pasref>14612357998755963</pasref>
+  <sha1hash>973e1d53a1f3f2201ed4dda349d3b6c6f2197416</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](https://developer.globalpay.com/#!/resources/messages). |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Decision Manager
+To enrich the functionality of the Fraud Filter, we've partnered with Cybersource to use their Decision Manager product. Our guide describes how your application can make use of the advanced fraud screening provided by Decision Manager along with the XML API. Use our guide along with Cybersource's Decision Manager developer guide: _Using the Simple Order API_. You can find it on [their website](https://www.cybersource.com/developers/documentation/fraud_management/).
+
+Before you set up the additional elements, you'll need to configure your Decision Manager credentials in the Client Settings section of Ecommerce Portal. The elements defined in this guide are in addition to those outlined above.
+
+#### Sample request
+The following elements, if included in the request, must appear in the sequence outlined in the sample below.
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20170414100216" type="auth">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">16400</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <type>VISA</type>
+    <chname>James Mason</chname>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>5245df9edbfc10b6dceb74ca2f616fd9e15271a3</sha1hash>
+  <tssinfo>
+    <address type="billing">
+      <street1>Flat 123</street1>
+      <street2>House 456</street2>
+      <city>Halifax</city>
+      <postalcode>W6 9HR</postalcode>
+      <state>West Yorkshire</state>
+      <country>GB</country>
+    </address>
+    <address type="shipping">
+      <firstname>Philip</firstname>
+      <lastname>Marlowe</lastname>
+      <phone>+3538547854</phone>
+      <shippingmethod>threeday</shippingmethod>
+      <street1>Flat 456</street1>
+      <street2>House 321</street2>
+      <city>Dublin</city>
+      <postalcode>6</postalcode>
+      <state>Leinster</state>
+      <country>IE</country>
+    </address>
+  </tssinfo>
+  <customer>
+    <customerid>0f357b45-9aa4-4453-a685-c69232e9024f</customerid>
+    <firstname>James</firstname>
+    <lastname>Mason</lastname>
+    <dateofbirth>01011980</dateofbirth>
+    <customerpassword>VerySecurePassword</customerpassword>
+    <email>james.mason@example.com</email>
+    <domainname>example.com</domainname>
+    <phonenumber>+3535611177</phonenumber>
+    <devicefingerprint>sessionId</devicefingerprint>
+  </customer>
+  <products>
+    <product>
+      <productid>SKU251584</productid>
+      <productname>Magazine Subscription</productname>
+      <quantity>12</quantity>
+      <unitprice>1200</unitprice>
+      <gift>true</gift>
+      <type>subscription</type>
+      <risk>low</risk>
+    </product>
+    <product>
+      <productid>SKU8884784</productid>
+      <productname>Charger</productname>
+      <quantity>10</quantity>
+      <unitprice>2000</unitprice>
+      <gift>false</gift>
+      <type>electronic_good</type>
+      <risk>high</risk>
+    </product>
+  </products>
+  <fraud>
+    <dm>
+      <billtohostname>example.com</billtohostname>
+      <billtohttpbrowsercookiesaccepted>true</billtohttpbrowsercookiesaccepted>
+      <billtohttpbrowseremail>jamesmason@example.com</billtohttpbrowseremail>
+      <billtohttpbrowsertype>Mozilla</billtohttpbrowsertype>
+      <billtoipnetworkaddress>123.123.123.123</billtoipnetworkaddress>
+      <businessrulesscorethreshold>40</businessrulesscorethreshold>
+      <billtopersonalid>741258963</billtopersonalid>
+      <invoiceheadertendertype>consumer</invoiceheadertendertype>
+      <invoiceheaderisgift>true</invoiceheaderisgift>
+      <decisionmanagerprofile>DemoProfile</decisionmanagerprofile>
+      <invoiceheaderreturnsaccepted>true</invoiceheaderreturnsaccepted>
+      <itemhosthedge>High</itemhosthedge>
+      <itemnonsensicalhedge>High</itemnonsensicalhedge>
+      <itemobscenitieshedge>High</itemobscenitieshedge>
+      <itemphonehedge>High</itemphonehedge>
+      <itemtimehedge>High</itemtimehedge>
+      <itemvelocityhedge>High</itemvelocityhedge>
+    </dm>
+  </fraud>
+  <custom>
+    <field01>fieldValue01</field01>
+    <field02>fieldValue02</field02>
+  </custom>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](https://developer.globalpay.com/#!/resources/test-card-numbers). |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Security Code Number | string | numeric | O   | 0-4 | The 3 digit number on the reverse of the card (known as CVC for Visa and CVV2 for MasterCard). For American Express the code is 4 digits long. |
+| Presence Indicator | integer |     | C   | 0-1 | Used to specify whether the Security Code is being submitted. Allowed values:  <br/>**1** - cvn present  <br/>**2** - cvn illegible  <br/>**3** - cvn not on card  <br/>**4** - cvn not requested |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| Address Type | string | enum | O   |     | Allowed values:  <br/>**BILLING**  <br/>**SHIPPING** |
+| Street 1 | string | alphanumeric | M   | 1-60 | First line of the billing address of the customer. |
+| Street 2 | string | alphanumeric | M   | 0-60 | Second line of the billing address of the customer. |
+| City | string | alphanumeric | M   | 1-50 | City of the billing address. |
+| Billing or Shipping Code Postalcode | string | alphanumeric | C   | 0-10 | Postal code of the billing address. Mandatory field if the Country field is US or CA. |
+| State | string | alphanumeric | C   | 0-2 | State or province of the customer Mandatory field if the billTo\_country field is US or CA. |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: \[a-zA-Z0-9.-\] |
+| Customer Id | string | alphanumeric | O   | 0-100 | Optional customer’s account ID, tracking number, reward number, or other unique number that you assign to the customer. |
+| First Name | string | alphanumeric | M   | 1-60 | Customer’s first name.The value should be the same as the value that appears on the card. |
+| Last Name | string | alphanumeric | M   | 1-60 | Customer’s last name. The value should be the same as the value that appears on the card. |
+| Date Of Birth | string | YYYY-MM-DD  <br/>YYYYMMDD | O   | 0-10 | Date of birth of the customer. |
+| Customer Password | string | alphanumeric | O   | 0-255 | Customer’s account password. This value is for merchant velocity use only. It is not stored, displayed, or returned. |
+| Email | string | alphanumeric | O   | 0-100 | Customer’s email address, including the full domain name. The field must be submitted in the form name@host.domain (for example, james.mason@example.com). |
+| Domain Name | string | alphanumeric | O   | 0-100 | Email domain of the customer. The domain of the email address comprises all characters that follow the @ symbol, such as mail.example.com |
+| Phone Number | string | alphanumeric | O   | 0-15 | Phone number of the customer. |
+| Device Fingerprint | string | alphanumeric | O   | 0-255 | This field should contain the session ID which forms part of the device fingerprinting scripts. |
+| Product Id | string | alphanumeric | O   | 0-255 | Merchant’s product identifier code. |
+| Product Name | string | alphanumeric | O   | 0-255 | Name of the product. |
+| Quantity | integer |     | O   | 0-10 | Quantity of the product being purchased. |
+| Unit Price | string | alphanumeric | M   | 1-15 | Per-item price of the product. |
+| Gift | string | alphanumeric | O   | 0-5 | Determines whether to assign risk to the order if the billing and shipping addresses specify different cities, states, or countries. |
+| Type | string | alphanumeric | O   | 0-255 | Type of product, such as electronic, handling, physical, service, or shipping. The default value is default. |
+| Risk | string | enum | O   | 0-6 | Indicates the level of risk for the product. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high** |
+| billtohostname | string | alphanumeric | O   | 0-60 | Host name reported by the customer’s browser to your Web server identified via the http header. |
+| billtohttpbrowsercookiesaccepted | string | alphanumeric | O   | 0-5 | Indicates whether the customer’s browser accepts cookies. Can take one of the following values: true false |
+| billtohttpbrowseremail | string | alphanumeric | O   | 0-5 | Email address set in the customer’s browser (may differ from billTo\_email). |
+| billtohttpbrowsertype | string | alphanumeric | O   | 0-40 | Customer’s browser identified from the HTTP header data. For example, Mozilla identifies the Firefox browser. |
+| billtoipnetworkaddress | string | alphanumeric | O   | 0-11 | Network IP address of the customer (for example 10.1.27) A network IP address includes up to 256 IP addresses |
+| businessrulesscorethreshold | integer |     | O   | 0-2 | Acceptable level of risk for ordering each product. |
+| billtopersonalid | string | alphanumeric | C   | 0-26 | This element is supported only for Latin American Processing. |
+| invoiceheadertendertype | string | alphanumeric | O   | 0-10 | Method of payment used for the order. For example: debit, consumer, corporate. |
+|     |
+| decisionmanagerprofile | string | alphanumeric | O   | 0-30 | Use this field only if you want to specify the name of a different profile to use to evaluate orders. |
+| invoiceheaderreturnsaccepted | string | alphanumeric | O   | 0-5 | Indicates whether returns are accepted for this order. Can take the following values:  <br/>true  <br/>false |
+| itemhosthedge | string | enum | O   | 0-6 | Importance of email and IP addresses of the customer in scoring risk. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>Off |
+| itemnonsensicalhedge | string | enum | O   | 0-6 | When scoring risk importance of the weight of the tests performed on the text content of customers’ orders. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** Off |
+| itemobscenitieshedge | string | enum | O   | 0-6 | When scoring risk importance of the weight of the tests performed on the text content of customers’ orders. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemphonehedge | string | enum | O   | 0-6 | Importance in scoring risk of the weight of the multiple tests performed on phone numbers. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemtimehedge | string | enum | O   | 0-6 | Importance of time of day of the customer order in scoring risk. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemvelocityhedge | string | enum | O   | 0-10 | Importance of the number of orders (purchase frequency) from a customer in a certain time period (the preceding 15 minutes) in scoring risk. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| customField | string | alphanumeric | O   | 0-255 | Up to 30 merchant-defined data fields that you can use to store information. |
+
+### Decision Manager Elements
+There are also a number of standard request fields that are mapped automatically to the corresponding Decision Manager elements.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](/resources/test-card-numbers). |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Customer IP Address | string | numeric | O   | 0-15 | The IP address of the customer's device.  <br/>Allowed characters: \[0-9:\] |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+
+### Decision Manager & Fraud Filter Response
+In addition to the Fraud Filter result, the response returned will include the full response data from Decision Manager. We don't store any of this information. When you configure a third party rule in Ecommerce Portal, the action will be based on the value of the decision element in the response from Decision Manager (Accept, Review, Reject, Error). 
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>412875</batchid>
+  <message>[ test system ] Authorised</message>
+  <pasref>14921661523925307</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <fraudresponse mode="ACTIVE">
+    <result>PASS</result>
+    <rules>
+      <rule name="Decision Manager Rule" id="015c449d-c146-4b9b-b4c0-77437b40de59">
+        <action>PASS</action>
+      </rule>
+    </rules>
+    <thirdpartyresponse>
+      <dm>
+        <rawresponse>
+          <!-- Full Response Here, See Sample Below -->
+        </rawresponse>
+      </dm>
+    </thirdpartyresponse>
+  </fraudresponse>
+  <sha1hash>aad1b04f623f1d3a64e7142e86d764c4cbca7fb5</sha1hash>
+</response>
+```
+</Code>
+
+### Decision Manager Full Response
+For more information on the full response returned from Decision Manager, consult the Decision Manager developer guide: [Using the Simple Order API](https://www.cybersource.com/developers/documentation/fraud_management/). The example below is provided for readability, so you can get a better idea of what values will be returned to your application.
+<Code id="markup" title="" language="markup" active>
+```
+<c:replyMessage xmlns:c="urn:schemas-cybersource-com:transaction-data-1.118">
+  <c:merchantReferenceCode>N6qsk4kYRZihmPrTXWYS6g</c:merchantReferenceCode>
+  <c:requestID>4921661527746095104010</c:requestID>
+  <c:decision>ACCEPT</c:decision>
+  <c:reasonCode>100</c:reasonCode>
+  <c:requestToken>Ahjz7wSTCs3GO2ecVEAKEQFLlcJIrX9IjhqBvAhk0ky3SA7TWIDCTCs3GO2ecVEAKAAA8g0Y</c:requestToken>
+  <c:afsReply>
+    <c:reasonCode>100</c:reasonCode>
+    <c:afsResult>99</c:afsResult>
+    <c:hostSeverity>1</c:hostSeverity>
+    <c:consumerLocalTime>11:35:52</c:consumerLocalTime>
+    <c:afsFactorCode>F^H^V^Y</c:afsFactorCode>
+    <c:addressInfoCode>MM-A^MM-C^MM-CO^MM-ST^MM-Z^UNV-ADDR</c:addressInfoCode>
+    <c:hotlistInfoCode>NEG-ASUSP^NEG-BIN^NEG-CC^NEG-EM^NEG-SA^NEG-SUSP</c:hotlistInfoCode>
+    <c:suspiciousInfoCode>MUL-EM^RISK-TS</c:suspiciousInfoCode>
+    <c:velocityInfoCode>VEL-NAME^VELI-CC^VELI-EM^VELI-SA^VELL-CC^VELL-EM^VELL-SA^VELS-CC^VELS-EM^VELS-SA^VELV-CC^VELV-EM</c:velocityInfoCode>
+    <c:scoreModelUsed>default_eu</c:scoreModelUsed>
+    <c:cardBin>426397</c:cardBin>
+  </c:afsReply>
+  <c:decisionReply>
+    <c:casePriority>3</c:casePriority>
+    <c:activeProfileReply/>
+    <c:velocityInfoCode>MVEL-R5007</c:velocityInfoCode>
+  </c:decisionReply>
+</c:replyMessage>
+```
+</Code>
+
+## Decision Manager - Device Fingerprinting
+The Device Fingerprinting service of Decision Manager gathers information about the customer devices that use your mobile app or place orders on your website. Use this unique identifier to consistently identify the location of a customer's device, despite whatever identity masking techniques they may use (for example, a VPN or proxy). For more information, see Cybersource's Device Fingerprinting Guide, which is available on [their website](https://developer.cybersource.com/).
+
+Cybersource provides SDKs for iOS and Android, along with sample scripts for web applications. In each case, the Session ID used must be passed to Global Payments in the request. This must be a unique identifier for each transaction. The examples below show the One-Pixel Image and JavaScript Code for websites.
+
+#### Sample embedded scripts
+<Code id="markup" title="" language="markup" active>
+```
+<!-- One-Pixel Image -->
+<p></p>
+<img src="https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>&m=2" alt="">
+
+<!-- JavaScript -->
+<script src="https://www.fingerprintingserver.com/fp/check.js?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>"></script>
+```
+</Code>
+
+The scripts should be embedded — for example, on the checkout page that initiates the transaction. The value you pass in the request will be the Session ID included in the scripts (it's supplied as part of the Customer fields). In our example below, we're using a random 32-character string as our Session ID.
+
+The Device Fingerprint service provides the following information in Decision Manager: Date Device First Seen, Application Type, Time on Page, True IP Address. For apps, Device Longitude and Latitude are available, as well as whether the device is Jailbroken.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20170414100216" type="auth">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">16400</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <type>VISA</type>
+    <chname>James Mason</chname>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>5245df9edbfc10b6dceb74ca2f616fd9e15271a3</sha1hash>
+  <customer>
+    <customerid>0f357b45-9aa4-4453-a685-c69232e9024f</customerid>
+    <firstname>James</firstname>
+    <lastname>Mason</lastname>
+    <email>james.mason@example.com</email>
+    <phonenumber>+3535611177</phonenumber>
+    <devicefingerprint>kyhb-hc1sa5jdf-tjbqec-uz19a-5n5b</devicefingerprint>
+  </customer>
+</request>
+```
+</Code>
+
+## Decision Manager - Travel Data
+You can use Decision Manager to screen orders that contain travel data such as details of the journey or of the main passenger. The elements defined in this article are in addition to the standard Decision Manager elements. All travel data is optional but if passenger record is included a Unit Price must be defined.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20170414100216" type="auth">
+  <merchantid>Merchant ID</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">200000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <type>VISA</type>
+    <chname>James Mason</chname>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>5245df9edbfc10b6dceb74ca2f616fd9e15271a3</sha1hash>
+  <tssinfo>
+    <address type="billing">
+      <street1>Flat 123</street1>
+      <city>Halifax</city>
+      <postalcode>W6 9HR</postalcode>
+      <country>GB</country>
+    </address>
+  </tssinfo>
+  <customer>
+    <firstname>James</firstname>
+    <lastname>Mason</lastname>
+    <email>james.mason@example.com</email>
+  </customer>
+  <products>
+    <product>
+      <unitprice>200000</unitprice>
+    </product>
+  </products>
+  <supplementarydata>
+    <item type="pnr">
+      <field15>Passenger 1</field15>
+      <field16>Standard</field16>
+      <field17>ADT</field17>
+      <field18>james.mason@example.com</field18>
+      <field19>James</field19>
+      <field20>Mason</field20>
+      <field21>+3535611177</field21>
+    </item>
+    <item type="leg">
+      <field02>LAS</field02>
+      <field03>LGW</field03>
+      <field08>231217</field08>
+      <field11>0335</field11>
+      <field14>Round Trip</field14>
+      <field15>GMT</field15>
+    </item>
+    <item type="leg">
+      <field02>LHR</field02>
+      <field03>LOS</field03>
+      <field08>241217</field08>
+      <field11>1035</field11>
+      <field14>Round Trip</field14>
+      <field15>GMT</field15>
+    </item>
+    <item type="leg">
+      <field02>LOS</field02>
+      <field03>LHR</field03>
+      <field08>170118</field08>
+      <field11>1100</field11>
+      <field14>Round Trip</field14>
+      <field15>GMT</field15>
+    </item>
+    <item type="leg">
+      <field02>LGW</field02>
+      <field03>LAS</field03>
+      <field08>180118</field08>
+      <field11>1010</field11>
+      <field14>Round Trip</field14>
+      <field15>GMT</field15>
+    </item>
+  </supplementarydata>
+</request>
+```
+</Code>
+
+#### Request Syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Unit Price | string | alphanumeric | M   | 1-15 | Per-item price of the product. |
+| **PNR** |     |     |     |     |
+| Passenger ID | string | alphanumeric | O   | 0-60 | The main passenger's ID. For example, you can use this field for the frequent flyer number. |
+| Passenger Status | string | alphanumeric | O   | 0-32 | The main passenger's Status. Your company's passenger classification, such as with a frequent flyer program. For example, standard, gold or platinum. |
+| Passenger Type | string | enum | O   | 0-32 | The main passenger's Type. You can use one of the following values:  <br/>**ADT** - Adult  <br/>**CNN** - Child  <br/>**INF** - Infant  <br/>**YTH** - Youth  <br/>**STU** - Student  <br/>**SCR** - Senior Citizen  <br/>**MIL** - Military |
+| Passenger Email | string | alphanumeric | O   | 0-255 | The main passenger's email address. |
+| Passenger First Name | string | alphanumeric | O   | 0-60 | The main passenger's first name. |
+| Passenger Last Name | string | alphanumeric | O   | 0-60 | The main passenger's last name. |
+| Passenger Last Name | string | alphanumeric | O   | 0-15 | The main passenger's phone number. |
+| **Leg** |     |     |     |     |
+| Leg Origin | string | alphanumeric | O   | 0-3 | The airport code for the origin of the leg of the trip. |
+| Leg Destination | string | alphanumeric | O   | 0-3 | The airport code for the destination of the leg of the trip. |
+| Departure Date | string | alphanumeric | O   | 0-25 | The departure date. |
+| Departure Time | string | alphanumeric | O   | 0-25 | The departure time. |
+| Journey Type | string | alphanumeric | O   | 0-32 | Type of travel, for example:  <br/>one way  <br/>round trip |
+| Departure Timezone | string | alphanumeric | O   | 0-32 | The departure timezone, for example: GMT. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Fraud Filter and data submission, Hold, or Release. 
+
+<Tabs active="fraud">  
+<Tab id="fraud" title="Fraud Filter and data submission">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="hold" title="Hold">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no card number, amount or currency in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.dKH-d6mTSmCuciHLm_QfEg..."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="release" title="Release">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no card number, amount or currency in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.dKH-d6mTSmCuciHLm_QfEg..."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulting string to the request.
+
+Check the Response hash
+Use the tabs below to follow the steps for a certain request type: Fraud Filter and data submission, Hold, or Release. After making a selection, the steps on how to check the response hash for that type are provided.
+
+<Tabs active="fraud">  
+<Tab id="fraud" title="Fraud Filter and data submission">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="hold" title="Hold">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Held Successfully.14631546336115597."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="release" title="Release">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Released Successfully.14631546336115597."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>

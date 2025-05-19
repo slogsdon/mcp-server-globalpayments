@@ -1,0 +1,31 @@
+---
+title: "Dynamic Descriptor"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/27/2025"
+---
+Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement. This additional information can help avoid unnecessary disputes.
+
+For example, if your legal merchant name is different from the DBA name you’re using for your ecommerce website, the descriptor can be the website name. That way, it will appear on the customer’s bank statement to help them recognize the charge.
+
+<Infobox>
+Dynamic Descriptor is currently only supported by acquirers Global Payments North America and Allied Irish Banks. Both the issuer and acquirer must support this functionality. Consult with your account manager or support agent before using.
+</Infobox>
+
+#### Sample request
+You can set a descriptor for an authorization, capture, or refund. Text passed through will appear in ALL CAPS on the customer's bank statement.
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<input type="hidden" name="CHARGE_DESCRIPTION" value="ALTERNATIVEDBA"> 
+```
+</Code>
+
+If you’re using this functionality and no descriptor is flagged, we’ll use your merchant name as the default. The merchant name is set when you create or update your account with us.
+
+#### Request syntax
+Type “O” indicates that the element is optional.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Charge Description | string | alphanumeric | O   | 25  | Allowed characters:  <br/>a-z A-Z 0-9 \[space\] / -  <br/>French-accented |

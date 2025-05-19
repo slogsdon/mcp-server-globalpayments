@@ -1,0 +1,37 @@
+---
+title: "Unified Payments API - January 13, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "01-13-2022"
+---
+
+<ReleaseNoteSection title="Get Transactions Resource">
+    <ReleaseNoteDetail type="changed">
+        - Payment Facilitator enhancement for ACH sales: 
+            - For ACH sale transactions that do not have split transactions, the value shown in merchant_amount is equal to the value in the Amount field
+            - The pertransfee and partner_amount fields will have an empty value
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Create/Edit Merchant Resource">
+    <ReleaseNoteDetail type="changed">
+        - Removed special characters for PAX
+        - Removed requirement for valid serial number to allow testing in the sandbox
+        - Added new field notification_email
+        - Updated format of date_of_birth field to follow date standard
+        - Updated all ENUMs to uppercase
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Transfers Resource">
+    <ReleaseNoteDetail type="changed">
+        - Transfers resource name changed from Transfers to PayOuts
+        - Transfers resource URL changed from ucp/transfers to ucp/pay-outs
+        - Transfers resource ID changed from TRF_ID to PYO_ID
+        - Update to permission name for Transfers:
+            - POST Create Transfers permission name changed from TRF_POST_CREATE to PYO_POST_CREATE for merchants
+            - POST Create Transfers permission name changed from TRF_POST to PYO_POST for partners
+        - POST Reverse Transfers permission name changed from TRF_POST_Reverse to PYO_POST_Reverse for merchants
+        - POST Reverse Transfers permission name changed from TRF_POST to PYO_POST for partners
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

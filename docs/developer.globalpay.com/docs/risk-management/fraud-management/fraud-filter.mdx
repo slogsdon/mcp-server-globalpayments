@@ -1,0 +1,533 @@
+---
+title: 'Fraud Filter'
+search_results: 'Global Payments - Fraud Management - Fraud Filter'
+subtitle: 'Run filters from customized rules to screen transactions'
+tag: 'rest'
+created: '24/09/2024'
+---
+This guide focuses on how to use Fraud Filter for both direct API integrations and for integrations via Hosted Fields and the Drop-In User Interface (UI). First, we test some configured fraud rules and view the fraud-related fields in the response. We then send a Hold request to investigate a transaction and eventually release it to its original status after determining that it’s not actually fraudulent.
+
+For more information on Fraud Management, see our [Overview](/docs/risk-management/fraud-management/overview).
+
+<br/>
+
+## Step 1: Set up the rules
+The Fraud Filter feature must be configured and enabled via the Ecommerce Portal (RealControl) under the Fraud Management section before being used via the API or Hosted Fields / Drop-In UI. For more information, see [Fraud Management FAQs](https://help.globalpay.com/products/ecommerce-help/fraud-management) for Ecommerce Help.
+
+<Infobox>
+  To access Ecommerce Portal (RealControl): <br/>
+  Test account: https://realcontrol.sandbox.realexpayments.com <br/>
+  Live account: https://realcontrol.realexpayments.com
+</Infobox>
+
+## Step 2: Process a transaction and see the response
+Once you’ve set up a few Fraud Filter rules, you can then test them and note the different fraud-related fields returned in the response. 
+
+### Transaction request
+You can set a specific rule on a per-transaction basis by using the `risk_assessment` object in the request as shown in the example below.
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Authorization: Bearer ZhMqj1a8V9VXg20P9Nj4RXJjGSZY' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+  "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+  "account_name": "transaction_processing",
+    "type": "SALE",
+  "channel": "CNP",
+  "amount": "3000",
+  "currency": "EUR",
+  "country": "IE",
+  "capture_mode": "LATER",
+  "reference": "TRANS-20180114123459878",
+  "site_reference": "",
+  "initiator": "PAYER",
+  "description": "description",
+  "ip_address": "123.123.123.123",
+  "stored_credential": {
+    "model": "SUBSCRIPTION",
+    "sequence": "FIRST",
+    "reason": "NO_SHOW"
+  },
+  "payment_method": {
+    "name": "James Mason",
+    "first_name": "James12",
+    "last_name": "Mason",
+    "entry_mode": "MOTO",
+    "narrative": "Test Transaction",
+    "card": {
+      "number": "4012001037141112",
+      "expiry_month": "04",
+      "expiry_year": "25",
+      "brand": "visa",
+      "cvv": "451",
+      "cvv_indicator": "PRESENT",
+      "avs_address": "40 Hilltop",
+      "avs_postal_code": "V94 DE7F",
+      "tag": "123",
+      "brand_reference": ""
+    }
+  },
+  "risk_assessment": [
+    {
+      "mode": "ACTIVE",
+      "rules": [
+        {
+          "reference": "5c52428c-1f73-4fdf-ae53-ff62857f89d8",
+          "mode": "ACTIVE"
+        }
+      ]
+    }
+  ]
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+    	config.setAppId(APP_ID);
+    	config.setAppKey(APP_KEY);
+    	config.setChannel(Channel.CardNotPresent);
+    	config.setRequestLogger(new RequestConsoleLogger());
+    	config.setEnableLogging(true);
+
+    	ServicesContainer.configureService(config);
+
+    	CreditCardData card = new CreditCardData();
+    	card.setNumber("4263970000005262");
+    	card.setExpMonth(DateTime.now().getMonthOfYear());
+    	card.setExpYear(DateTime.now().getYear() + 1);
+    	card.setReaderPresent(false);
+    	card.setEntryMethod(ManualEntryMethod.Moto);
+    	card.setCvn("131");
+    	card.setCardHolderName("James Mason");
+
+    	Address address = new Address();
+    	address.setStreetAddress1("123 Main St.");
+    	address.setCity("Downtown");
+    	address.setState("NJ");
+    	address.setCountry("US");
+    	address.setPostalCode("12345");
+
+    	StoredCredential credentials = new StoredCredential();
+    	credentials.setInitiator(StoredCredentialInitiator.CardHolder);
+    	credentials.setType(StoredCredentialType.Subscription);
+    	credentials.setSequence(StoredCredentialSequence.First);
+    	credentials.setReason(StoredCredentialReason.NoShow);
+
+    	FraudRuleCollection rules = new FraudRuleCollection();
+    	rules.addRule("0c93a6c9-7649-4822-b5ea-1efa356337fd", FraudFilterMode.Active);
+
+    	try {
+        	Transaction response = card.charge(98.10)
+                	.withCurrency("USD")
+                	.withAddress(address)
+                	.withStoredCredential(credentials)
+                	.execute();
+    	} catch (GatewayException ex) {
+        	// TO DO handle error
+    	}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+            config.AppId = AppId;
+            config.AppKey = AppKey;
+            config.Channel = Channel.CardNotPresent;
+            config.RequestLogger = new RequestConsoleLogger();
+            config.EnableLogging = true;
+            
+            ServicesContainer.ConfigureService(config);
+
+            CreditCardData card = new CreditCardData();            
+            card.Number = "4263970000005262";
+            card.ExpMonth = DateTime.Now.Month;
+            card.ExpYear = DateTime.Now.Year + 1;
+            card.ReaderPresent = false;
+            card.EntryMethod = ManualEntryMethod.Moto;
+            card.Cvn = "131";
+            card.CardHolderName = "James Mason";
+
+
+            Address address = new Address();
+            address.StreetAddress1 = "123 Main St.";
+            address.City = "Downtown";
+            address.State = "NJ";
+            address.Country = "US";
+            address.PostalCode = "12345";
+
+            StoredCredential credentials = new StoredCredential();
+            credentials.Initiator = StoredCredentialInitiator.CardHolder;
+            credentials.Type = StoredCredentialType.Subscription;
+            credentials.Sequence = StoredCredentialSequence.First;
+            credentials.Reason = StoredCredentialReason.NoShow;                  
+            
+            var rules = new FraudRuleCollection();            
+            rules.AddRule("0c93a6c9-7649-4822-b5ea-1efa356337fd", FraudFilterMode.ACTIVE);
+
+            try
+            {
+                var response = card.Charge(98.10m)
+                .WithCurrency(CURRENCY)
+                .WithAddress(address)
+                .WithFraudFilter(FraudFilterMode.ACTIVE, rules)
+                .WithStoredCredential(credentials)
+                .Execute();
+
+            }
+            catch (GatewayException ex)
+            {
+                // TO DO
+            }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+ $config = new GpApiConfig();
+$config->appId = 'APP-ID';
+$config->appKey = 'APP-KEY';
+$config->channel = Channel::CardNotPresent;
+$config->country = 'IE';
+
+ServicesContainer::configureService($config);
+
+$rule1 = '5c52428c-1f73-4fdf-ae53-ff62857f89d8';
+$rules = new FraudRuleCollection();
+$rules->addRule($rule1, FraudFilterMode::ACTIVE);
+
+$card = new CreditCardData();
+$card->number = "4012001037141112";
+$card->expMonth = date('m');
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cvn = "451";
+$card->cardHolderName = "James Mason";
+$card->entryMethod = ManualEntryMethod::MOTO;
+
+$address = new Address();
+$address->streetAddress1 = "40 Hilltop";
+$address->postalCode = "V94 DE7F";
+
+$storeCredentials = new StoredCredential();
+$storeCredentials->initiator = StoredCredentialInitiator::PAYER;
+$storeCredentials->type = StoredCredentialType::SUBSCRIPTION;
+$storeCredentials->sequence = StoredCredentialSequence::FIRST;
+$storeCredentials->reason = StoredCredentialReason::NO_SHOW;
+
+try {
+    /** @var \GlobalPayments\Api\Entities\Transaction $response */
+    $response = $card->authorize(30)
+        ->withCurrency('EUR')
+        ->withAddress($address)
+        ->withFraudFilter(FraudFilterMode::ACTIVE, $rules)
+        ->withStoredCredential($storeCredentials)
+        ->withDescription('description')
+        ->withCustomerIpAddress('123.123.123.123')
+        ->withClientTransactionId('TRANS-20180114123459878')
+        ->withDynamicDescriptor('Test Transaction')
+        ->withTagData('123')
+        ->execute();
+} catch (GatewayException $e) {
+    //@TODO handle error
+}
+if ($response instanceof Transaction) {
+    $responseCode = $response->responseCode; // SUCCESS
+    $trnStatus = $response->responseMessage; // CAPTURED
+    $fraudFilterMode = $response->fraudFilterResponse->fraudResponseMode; // ACTIVE
+    $fraudFilterResultFraudFilterResult = $response->fraudFilterResponse->fraudResponseResult; //PASS
+    $fraudFilterRules = $response->fraudFilterResponse->fraudResponseRules;
+
+    foreach ($fraudFilterRules as $fraudResponseRule) {
+        $ruleReference = $fraudResponseRule->key;
+        $ruleMode = $fraudResponseRule->mode;
+        $ruleDescription = $fraudResponseRule->description;
+        $ruleResult = $fraudResponseRule->result;
+    }
+}
+```
+</Code>
+</CodeGroup>
+
+#### Request fields
+The following table describes the fraud-related fields used in the request.
+| Field    | Description | Example(s) |
+| -------- | ------- | ------- |
+| risk_assessment.mode | Sets the overall transactional-level fraud mode.	 | PASSIVE/ACTIVE/OFF |
+| risk_assessment.rules.reference | Unique identifier for a rule. | 5c52428c-1f73-4fdf-ae53-ff62857f89d8 |
+| risk_assessment.rules.mode | Sets the mode at a per fraud rule level. | PASSIVE/ACTIVE/OFF |
+
+### Transaction response
+The transaction response includes a `risk_assessment` object with details of the fraud rules that were carried out on the transaction.
+
+The overall transaction mode is returned as either `PASSIVE`, `ACTIVE`, or `OFF`. The overall result is returned as either `ACCEPTED`, `REJECTED`, `NOT_EXECUTED`, or `PENDING_REVIEW`.
+
+The outcome of passing the transaction through the Fraud Filter is included in the transaction response. You can check the overall Fraud Filter result and each individual rule outcome by using the rule's unique identifier.
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_RO1H0eICPZFJt8xYffvio8miTg0tUy_114123459878",
+    "time_created": "2023-03-23T11:03:43.555Z",
+    "type": "SALE",
+    "status": "PREAUTHORIZED",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "3000",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "TRANS-20180114123459878",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] Authorised",
+        "entry_mode": "MOTO",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX1112",
+            "authcode": "12345",
+            "brand_reference": "tmKvCwKEVQhX6PWw",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "PENDING_REVIEW",
+            "rules": [
+                {
+                    "reference": "5c52428c-1f73-4fdf-ae53-ff62857f89d8",
+                    "description": "unknown rule",
+                    "mode": "ACTIVE",
+                    "result": "ERROR"
+                },
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "PENDING_REVIEW"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "",
+    "action": {
+        "id": "ACT_RO1H0eICPZFJt8xYffvio8miTg0tUy",
+        "type": "PREAUTHORIZE",
+        "time_created": "2023-03-23T11:03:43.555Z",
+        "result_code": "SUCCESS",
+        "app_id": "07V8FC6G7kZvdUBpqGYWBBgnWdQ59HOv",
+        "app_name": "Sandbox Merchant 3"
+    }
+}
+```
+</Code>
+
+#### Response fields
+The following table describes the fraud-related fields returned in the response.
+| Field    | Description | Example(s) |
+| -------- | ------- | ------- |
+| risk_assessment.mode | Returns the overall transactional-level fraud mode.	 | PASSIVE/ACTIVE/OFF |
+| risk_assessment.result | Returns the result of the overall fraud check. | ACCEPTED/REJECTED/NOT_EXECUTED/PENDING_REVIEW |
+| risk_assessment.rules.reference | Returns the rule's unique identifier. | 5c52428c-1f73-4fdf-ae53-ff62857f89d8 |
+| risk_assessment.rules.description | Returns a system-generated description of the rule. | Amount Check|CardNumber Check |
+| risk_assessment.rules.mode | Sets the mode at a per fraud rule level. | PASSIVE/ACTIVE/OFF |
+| risk_assessment.rules.result | Returns the result of the individual fraud check. | ACCEPTED/REJECTED/NOT_EXECUTED/PENDING_REVIEW |
+
+
+## Step 3: Hold a transaction
+If you suspect a transaction is fraudulent and requires further investigation, you can send a Hold request. If the transaction was already placed in the queue to be included in the next settlement file or batch, this will remove it from the queue until the transaction is released (see [Step 4](#step-4-release-a-transaction)).
+
+The following field is returned in the response.
+| Field    | Description | Example(s) |
+| -------- | ------- | ------- |
+| reason_code | The reason that the transaction is being held.	 | FRAUD/OUTOFSTOCK/OTHER/NOT_GIVEN |
+
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_P12kSMF8QxcdZM0iRieChToB4GxYfl_114123459878/hold' \
+--header 'Authorization: Bearer 6lOMhiXA8nwfgIlw563Dnkki5Vsp' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "reason_code": "FRAUD"    
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+Transaction response = new Transaction();
+    	response.setTransactionId("TRN_Tw34vgMCuBl9tUeLOV6VpnqjrSu9nj_c07882bf8f73");
+
+    	try {
+        	response = response.hold()
+                	.withReasonCode(ReasonCode.Fraud)
+                	.execute();
+    	} catch (Exception ex) {
+        	// TO DO handle error
+    	}
+
+    	String responseCode = response.getResponseCode(); // "SUCCESS"
+    	String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult(); // "HOLD_SUCCESSFULL"
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+  var response = new Transaction();
+                response.TransactionId = "TRN_Tw34vgMCuBl9tUeLOV6VpnqjrSu9nj_c07882bf8f73";
+
+                response = response.Hold()
+                  .WithReasonCode(ReasonCode.FRAUD)
+                  .Execute();
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'APP-ID';
+$config->appKey = 'APP-KEY';
+$config->channel = Channel::CardNotPresent;
+$config->country = 'IE';
+
+ServicesContainer::configureService($config);
+
+$trn = Transaction::fromId("TRN_P12kSMF8QxcdZM0iRieChToB4GxYfl_114123459878");
+try {
+    /** @var \GlobalPayments\Api\Entities\Transaction $trn */
+    $trn = $trn->hold()
+        ->withReasonCode(ReasonCode::FRAUD)
+        ->execute();
+} catch (GatewayException $e) {
+    //@TODO handle error
+}
+
+if ($trn instanceof Transaction) {
+    $responseCode = $trn->responseCode; // SUCCESS
+    $trnStatus = $trn->responseMessage; // PREAUTHORIZED
+    $fraudFilterResult = $trn->fraudFilterResponse->fraudResponseResult; //HOLD_SUCCESSFULL
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 4: Release a transaction
+If you decide that a transaction is not fraudulent or you have held one in error, you can send a Release request. This will return the transaction to its original status (awaiting settlement or in the queue for the next batch). Or, if you decide not to proceed with the transaction, you can reverse (void) it (see [Transactions](/api/transactions#/Capture%20a%20Sale/captureSaleTransaction) in the API Explorer). You don’t need to release the transaction before reversing it.
+
+The following field is returned in the response.
+| Field    | Description | Example(s) |
+| -------- | ------- | ------- |
+| reason_code | The reason that the transaction is being released.	 | FALSE_POSITIVE/IN_STOCK/OTHER/NOT_GIVEN |
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_P12kSMF8QxcdZM0iRieChToB4GxYfl_114123459878/release' \
+--header 'Authorization: Bearer 6lOMhiXA8nwfgIlw563Dnkki5Vsp' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "reason_code": "FALSEPOSITIVE"    
+}'
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+Transaction response = new Transaction();
+    	response.setTransactionId("TRN_Tw34vgMCuBl9tUeLOV6VpnqjrSu9nj_c07882bf8f73");
+
+    	try {
+        	response = response.release()
+                	.withReasonCode(ReasonCode.FalsePositive)
+                	.execute();
+    	} catch (Exception ex) {
+        	// TO DO handle error
+    	}
+
+    	String responseCode = response.getResponseCode(); // "SUCCESS"
+    	String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult(); // "RELEASE_SUCCESSFULL"
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var response = new Transaction();
+                response.TransactionId = "TRN_Tw34vgMCuBl9tUeLOV6VpnqjrSu9nj_c07882bf8f73";
+                
+                response = response.Release()
+                .WithReasonCode(ReasonCode.FALSEPOSITIVE)
+                .Execute();  
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'APP-ID';
+$config->appKey = 'APP-KEY';
+$config->channel = Channel::CardNotPresent;
+$config->country = 'IE';
+
+ServicesContainer::configureService($config);
+
+$trn = Transaction::fromId("TRN_P12kSMF8QxcdZM0iRieChToB4GxYfl_114123459878");
+try {
+    /** @var \GlobalPayments\Api\Entities\Transaction $trn */
+    $trn = $trn->release()
+            ->withReasonCode(ReasonCode::FALSE_POSITIVE)
+            ->execute();
+} catch (GatewayException $e) {
+    //@TODO handle error
+}
+
+if ($trn instanceof Transaction) {
+    $responseCode = $trn->responseCode; // SUCCESS
+    $trnStatus = $trn->responseMessage; // PREAUTHORIZED
+    $fraudFilterResult = $trn->fraudFilterResponse->fraudResponseResult; //RELEASE_SUCCESSFUL
+}
+```
+</Code>
+</CodeGroup>

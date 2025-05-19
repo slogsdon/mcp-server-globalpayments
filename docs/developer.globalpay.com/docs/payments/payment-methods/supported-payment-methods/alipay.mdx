@@ -1,0 +1,125 @@
+---
+title: 'AliPay (Online)'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/alipay.png" />
+</div>
+
+| **Payment Type**           | Digital Wallets                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Payment Method String**  | alipay                                                                                                                      |
+| **Available Countries**    | CN                                                                                                                          |
+| **Available Currencies**   | EUR, GBP, USD, AUD, HKD, CAD, SGD                                                                                           |
+| **Min Transaction Amount** | 0.1 CNY                                                                                                                     |
+| **Max Transaction Amount** | Bank card: 50,000 CNY/bank or lower; Wallet balance: 300,000 CNY/transaction; Total transaction limit in a day: 300,000 CNY |
+| **Supports Refunds**       | Full, Partial and Multiple Partial with 360 day limit                                                                       |
+| **Chargebacks**            | No                                                                                                                          |
+| **Sandbox**                | Yes (Scheme-Hosted)                                                                                                         |
+| **Timeout**                | 3 mins to 12 hours, depending on the flow                                                                                   |
+
+### Sample request
+
+<CodeGroup>
+    <Code id="html" language="markup" title="HTML POST (HPP)" active>
+    ```
+    <form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+    <input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+    <input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+    <input type="hidden" name="ACCOUNT" value ="internet">
+    <input type="hidden" name="ORDER_ID" value ="20230202204701-63dc21453cffc">
+    <input type="hidden" name="AMOUNT" value ="5100">
+    <input type="hidden" name="CURRENCY" value ="EUR">
+    <input type="hidden" name="SHA1HASH" value ="4eed4bf3758105a439eb813d089bb8063536b7c9">
+    <input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+    <input type="hidden" name="HPP_VERSION" value ="2">
+    <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="CN">
+    <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+    <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+    <input type="hidden" name="MERCHANT_RESPONSE_URL" value =https://www.example.com/statusUrl>
+    <input type="hidden" name="HPP_TX_STATUS_URL" value =https://www.example.com/statusUrl>
+    <input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+    <input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+    <input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+    <input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+    <input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+    <input type="hidden" name="HPP_LANG" value ="EN">
+    <input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+    <input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+    <input type="hidden" name="COMMENT1" value="Mobile Channel">
+    <input type="hidden" name="COMMENT2" value="Down Payment">
+    <input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+    <input type="submit" value="Click here to Purchase">
+    ```
+    </Code>
+
+    <Code id="xml" language="markup" title="XML">
+    ```
+    <?xml version='1.0' encoding='UTF-8'?>			
+    <request type='payment-set' timestamp='{{timestamp}}'>			
+        <merchantid>Merchant ID</merchantid>		
+        <account>internet</account>		
+        <amount currency='EUR'>5100</amount>		
+        <autosettle flag='1' />		
+        <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+        <paymentmethod>alipay</paymentmethod>		
+        <paymentmethoddetails>		
+            <returnurl>https://www.example.com/returnUrl</returnurl>	
+            <errorurl>https://www.example.com/errorUrl</errorurl>	
+            <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+            <descriptor>Test Transaction</descriptor>	
+            <country>CN</country>	
+            <accountholdername>James Mason</accountholdername>		
+        </paymentmethoddetails>		
+        <comments>		
+            <comment id='1'>Mobile Channel</comment>	
+            <comment id='2'>Down Payment</comment>	
+        </comments>		
+        <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+    </request>
+    ```
+    </Code>
+
+    <Code id="json" language="json" title="JSON">
+    ```
+    {
+        "account_name": "{{acc_name}}",
+        "channel": "CNP",
+        "type": "SALE",
+        "amount": "5100",
+        "currency": "EUR",
+        "reference": "{{reference}}",
+        "country": "CN",
+        "payment_method": {
+            "name": "Doe",
+            "entry_mode": "ECOM",
+            "apm": {
+                "provider": "alipay"
+            }
+        },
+        "notifications": {
+            "return_url": "<Replace with your own endpoints>",                
+            "status_url": "<Replace with your own endpoints>"  
+        },
+        "payer":{}
+    }
+    ```
+    </Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name                 | Type | Format                                                 | Length | Description                                                                                                                                                                                                                                                                                                |
+| -------------------- | ---- | ------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mobile View          | O    | \[a-zA-Z\]\*                                           | 0-3    | Set to **no** to display a QR code on Alipay’s payment page. The customer can scan the code to proceed with the payment on their mobile device.                                                                                                                                                            |
+| Hotel Name           | O    | \[a-zA-Z0-9\\s\]\*                                     | 0-100  | The name of the hotel for which the reservation was made.Mandatory in case the merchant’s business type is Hotel.                                                                                                                                                                                          |
+| Check-in Time        | O    | \[0-9\]{4}-\[0-9\]{2}-\[0-9\]{2}                       | 0-100  | The date of the check-in in GMT+8 offset.Separate multiple entries by a \|.Mandatory in case the merchant’s business type is Hotel.Example: 2019-03-23|2019-03-25.The number of entries in specin.checkintime must match the number of entries in specin.checkouttime.                                     |
+| Check-out Time       | O    | \[0-9\]{4}-\[0-9\]{2}-\[0-9\]{2}                       | 0-100  | The date of the check-in in GMT+8 offset.Separate multiple entries by a \|.Mandatory in case the merchant’s business type is Hotel.Example: 2019-03-25|2019-03-29.The number of entries in specin.checkouttime must match the number of entries in specin.checkintime.                                     |
+| Flight Number        | O    | \[A-Z\]{2}\[0-9\]{5}                                   | 0-100  | The number of the flight.Mandatory in case the merchant’s business type is Aviation.Separate multiple entries by a \|.Example: LH 2041|AZ 436.The number of entries in specin.flightnumber must match the number of entries in specin.departuretime.                                                       |
+| Departure Time       | O    | \[0-9\]{4}-\[0-9\]{2}-\[0-9\]{2} \[0-9\]{2}:\[0-9\]{2} | 0-100  | The date and time of departure of the flight in GMT+8 offset.Mandatory in case the merchant’s business type is Aviation.Separate multiple entries by a \|.Example: 2019-04-28 17:50|2019-04-29 10:30The number of entries in specin.departuretime must match the number of entries in specin.flightnumber. |
+| Admission Notice URL | O    | https?://.+\{1,248\}                                     | 0-100  | The URL of the admission notice.Mandatory in case the merchant’s business type is Overseas Education.                                                                                                                                                                                                      |
+| Goods Info           | O    | .+^\[1-9\]\[0-9\]\*                                    | 0-100  | Information about the goods being sold.Mandatory in case the merchant’s business type is Retailing.Separate multiple entries by a \|.Example: Laptop^1|Socks^12The part before the ^ is the description of the item. The part after indicates how many copies of this item are being sold.                 |

@@ -1,0 +1,303 @@
+---
+title: 'Manage Payments - Increment'
+search_results: 'Global Payments - Manage Payments Increment'
+subtitle: 'Learn how to add supplemental charges to an existing transaction'
+tag: 'rest'
+created: '23/08/2024'
+---
+<Infobox>
+Availability of this feature in production depends on your allowed live configuration. 
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on incrementing an existing authorized transaction.
+
+## What is it?
+
+Increment is an action used to add a supplemental charge to the authorized amount for an existing transaction before it is batched. This is commonly done in a lodging scenario where upcharges for extra days might be necessary. The increment action does not change the status of a transaction. If successful, it increases the amount of the existing transaction. 
+
+## How does it work?
+The main things to know about increment:
+
+* Availability in production depends on your configuration
+* Only works on transactions that have not been captured (same day or in a delayed-capture status)
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Increment an Auth
+In this step, we increment an existing authorized transaction.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --compressed -X POST "https://apis.sandbox.globalpay.com/ucp/transactions/TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d/incremental" \
+-H "Authorization: Bearer G3FA4TuYGCBiCWs4YpzrALGCYXZJ" \
+-H "X-GP-Version: 2021-03-22" \
+-H "Content-type: application/json" \
+-H "Accept: application/json" \
+-d 
+{
+    "amount": "11099",
+    "lodging": {
+        "booking_reference": "string",
+        "duration_days": "number",
+        "room_tax_amount": "string",
+        "date_checked_in": "string",
+        "date_checked_out": "string",
+        "daily_rate_amount": "string",
+        "charge_items": "array"
+    }
+}
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+LodgingData lodgingInfo = new LodgingData();
+lodgingInfo.setBookingReference("s9RpaDwXq1sPRkbP");
+lodgingInfo.setStayDuration(10);
+lodgingInfo.setCheckInDate(DateTime.now());
+lodgingInfo.setCheckOutDate(DateTime.now().plusDays(7));
+lodgingInfo.setRate(new BigDecimal("13.49"));
+
+ArrayList<LodgingItems> items = new ArrayList<>();
+items.add(
+        new LodgingItems()
+                .setTypes(LodgingItemType.NO_SHOW.toString())
+                .setReference("item1")
+                .setTotalAmount("13.49")
+                .setPaymentMethodProgramCodes(new String[]{PaymentMethodProgram.ASSURED_RESERVATION.toString()}));
+lodgingInfo.setItems(items);
+
+Transaction transaction = Transaction.fromId("TRN_jKNcGl8EyIBNkDiBIKs8EoAynLlbaw");
+
+try {
+
+    Transaction response = transaction.additionalAuth(new BigDecimal("110.99"))
+            .withCurrency("USD")
+            .withLodgingData(lodgingInfo)
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getAuthorizedAmount();
+    // capture_mode == "MULTIPLE"
+    boolean multiCapture = response.isMultiCapture();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->card->authcode"
+    String $authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String brandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+var lodgingInfo = new LodgingData
+{
+	bookingReference = "s9RpaDwXq1sPRkbP",
+	StayDuration = 10,
+	CheckInDate = DateTime.Now,
+	CheckOutDate = DateTime.Now.AddDays(7),
+	Rate = (decimal)13.49
+};
+
+var item1 = new LodgingItems
+{
+	Types = LodgingItemType.NO_SHOW.ToString(),
+	Reference = "item1",
+	paymentMethodProgramCodes = new [] { 
+		PaymentMethodProgram.ASSURED_RESERVATION.ToString() 
+	}
+};
+ 
+lodgingInfo.Items = new List<LodgingItems>() { item1 };
+
+Transaction transaction = Transaction.FromId("TRN_5rfiei5p4NLO2YeGFDS1tFp394bgt9");
+
+try
+{
+	Transaction response = transaction.AdditionalAuth(110.99m)
+		.WithCurrency("USD")
+		.WithLodgingData(lodgingInfo)
+		.Execute(); 
+	
+	// API raw response key "id"
+	var id = response.TransactionId; 
+	// API raw response key "amount"
+	var amount = response.AuthorizedAmount; 
+	// capture_mode === 'MULTIPLE'
+	var multiCapture = response.MultiCapture; 
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode;
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp;
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->brand_reference"
+	var brandReference = response.CardBrandTransactionId;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php" active>
+```php
+        $config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$lodgingInfo = new LodgingData();
+$lodgingInfo->bookingReference = 's9RpaDwXq1sPRkbP';
+$lodgingInfo->durationDays = 10;
+$lodgingInfo->checkedInDate = date('Y-m-d H:i:s');
+$lodgingInfo->checkedOutDate = date('Y-m-d H:i:s', strtotime("+7 days"));
+$lodgingInfo->dailyRateAmount = '13.49';
+$item1 = new LodgingItems();
+$item1->types = [LodgingItemType::NO_SHOW];
+$item1->reference = 'item1';
+$item1->totalAmount = '13.49';
+$item1->paymentMethodProgramCodes = [PaymentMethodProgram::ASSURED_RESERVATION];
+$lodgingInfo->items = [$item1];
+
+$transaction = Transaction::fromId('TRN_q88KwtpIeYvbHMYvi3R9ZrqcxtFcS0');
+try {
+    $response = $transaction->additionalAuth(110.99)
+        ->withCurrency('USD')
+        ->withLodgingData($lodgingInfo)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->authorizedAmount; // API raw response key "amount"
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+``` 
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2026-05-03T21:23:39.718Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "11099",
+    "currency": "USD",
+    "country": "US",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "batch_id": "BAT_234234234",
+    "payment_method": {
+        "result": "string",
+        "message": "string",
+        "card": {
+            "authcode": "string",
+            "brand_reference": "string"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "ADJUST",
+        "time_created": "2026-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## Integration references
+
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        See the full transaction endpoint, including incrementals.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Increments are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

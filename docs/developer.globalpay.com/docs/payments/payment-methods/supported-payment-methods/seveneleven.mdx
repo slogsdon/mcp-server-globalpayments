@@ -1,0 +1,60 @@
+---
+title: '7 Eleven'
+tag: 'rest'
+---
+
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/2023-03/7-eleven-logo.png" />
+</div>
+
+| **Payment Type**           | Cash Payments |
+| -------------------------- | ------------- |
+| **Payment Method String**  | seveneleven   |
+| **Available Countries**    | MY            |
+| **Available Currencies**   | MYR           |
+| **Min Transaction Amount** | MYR 1.01      |
+| **Max Transaction Amount** | MYR 2,000     |
+| **Supports Refunds**       | No            |
+| **Chargebacks**            | No            |
+| **Sandbox**                | No            |
+| **Timeout**                | 2 Hours       |
+
+### Sample request
+
+<Code title="JSON" language="json">
+```
+{			
+	"account_name": "{{acc_name}}",		
+	"type": "SALE",		
+	"channel": "CNP",		
+	"amount": "5100",		
+	"currency": "MYR",		
+	"reference": "{{reference}}",		
+	"country": "MY",		
+	"payment_method": {		
+		"entry_mode": "ECOM",	
+		"apm": {	
+			"provider": "seveneleven"
+		}	
+	},		
+	"notifications": {		
+	"return_url": "<Replace with your own endpoints>",		
+	"status_url": "<Replace with your own endpoints>"		
+	},		
+    "payer": {
+        "email":"test@test.com",
+        "landline_phone":"0987654321"
+    }		
+}
+```
+</Code>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name           | Type | Format                                                                 | Length      | Description                                                                                              |
+| -------------- | ---- | ---------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| Customer Email | M    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80        | The email address of the customer.                                                                       |
+| Phone          | M    | \[0-9\]{3}-\[0-9\]{15}                                                 | 3\|15 or 19 | The phone number provided by the cardholder. Format: _CountryCallingCode\|Number_ Example: _1|123456789_ |

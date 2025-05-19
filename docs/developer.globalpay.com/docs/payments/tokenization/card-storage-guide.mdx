@@ -1,0 +1,321 @@
+---
+title: 'Card Storage - Guide'
+search_results: 'Global Payments - Card Storage Guide'
+subtitle: 'Tokenize card details to charge customers later'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+
+<Tabs active="api">
+    <Tab id="api" title="API">
+   
+With our API, you can securely store card data with us and receive a token representation of the card. This token can be stored with no increased <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> compliance requirements. Tokens can be used for recurring billing or to enable one-click checkout. You can add, delete, and update stored cards.
+
+This guide focuses on how to store cards (tokenization) and charge them. We also show you how to enable our Payment Method Alias solution in the request.
+
+## Step 1: Store a card
+We highly recommend processing an authorization or verification against a card before storing it. This allows you to check that the card data provided is valid. For more information, see [Transactions](/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction) and [Verifications](/api/verifications#/Verify/post_verifications) in the API Explorer.
+
+In this exammple, we send a request to store a card. For more information, see [Payment Methods - Tokenization](/api/payment-methods-tokenization#/Create/post-payment-method) in the API Explorer.
+
+#### Sample request
+	    
+<Code id="JSON" title="JSON" language="JSON" active contextualLinks={{apiExplorerUrl: "/api/payment-methods-tokenization#/Create/post-payment-method"}}>
+```
+curl --location --request POST 'https: //apis.sandbox.globalpay.com/ucp/payment-methods' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer 19MKWmKalkNz241ECHPH2VTpx9Uc' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "reference": "99388961",
+    "card": {
+        "number": "4012001037141112",
+        "expiry_month": "12",
+        "expiry_year": "25"
+    }
+}'
+```
+</Code>
+
+#### Sample response
+The `id` value returned in the response is the token to use to reference the stored card when processing payments. It begins with the three letters `PMT_`.
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "id": "PMT_815adaf8-4f8b-43bd-934d-d9fd086897f2",
+    "time_created": "2021-01-18T12:06:17.227Z",
+    "status": "ACTIVE",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TKA_eba30a1b5c4a468d90ceeef2ffff7f5e",
+    "account_name": "Tokenization",
+    "reference": "99388961",
+    "card": {
+        "masked_number_last4": "XXXXXXXXXXXX1112",
+        "brand": "VISA",
+        "expiry_month": "12",
+        "expiry_year": "25"
+    },
+    "action": {
+        "id": "ACT_KfF9omT2vg3bl8s8uqFsimo2416yv5",
+        "type": "PAYMENT_METHOD_CREATE",
+        "time_created": "2021-01-18T12:06:17.227Z",
+        "result_code": "SUCCESS",
+        "app_id": "jrYHwMdYRBDGmFwwAVmi5WufYzxuQIQj",
+        "app_name": "cathal_sandbox"
+    }
+}
+```
+</Code>
+	    
+## Step 2: Create a transaction
+Creating a transaction from a stored card works the same as a standard authorization, except instead of collecting card data you simply send the `id` in the `payment_method` object in the request. We obtain the securely stored card data and build the authorization message. 
+
+Under PCI DSS compliance rules, the security code (CVN, CVV) cannot be stored. However, if in your application you let the customer use a card they previously saved, you can prompt them for their security code again. Then include the code in the request.
+
+#### Sample request
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl --location --request POST 'https: //apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer 19MKWmKalkNz241ECHPH2VTpx9Uc' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "4500",
+    "currency": "USD",
+    "reference": "56938151",
+    "country": "US",
+    "payment_method": {
+        "id": "PMT_815adaf8-4f8b-43bd-934d-d9fd086897f2",
+        "entry_mode": "ECOM"
+    }
+}'
+```
+</Code>
+
+## [Optional] Payment Method Alias
+With Payment Method Alias, you can link customer data among various payment-processing channels. We provide a unique reference that helps you recognize a customer’s payment interactions no matter where they occur, without exposing sensitive information. 
+
+To enable this solution, add the following field to the `payment_method` object in the sample request for [Step 2](#step-2-create-a-transaction).
+	    
+For more information, see [Payment Method Alias](/docs/payments/tokenization/payment-method-alias-guide).
+	    
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl --location --request POST 'https: //apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer 19MKWmKalkNz241ECHPH2VTpx9Uc' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "4500",
+    "currency": "USD",
+    "reference": "56938151",
+    "country": "US",
+    "payment_method": {
+        "id": "PMT_815adaf8-4f8b-43bd-934d-d9fd086897f2",
+        "entry_mode": "ECOM",
+	"fingerprint_mode": "ALWAYS"
+    }
+}'
+```
+</Code>
+
+   </Tab>
+    <Tab id="hpp" title="HPP">      
+   
+Our Card Storage solution is designed to enhance your customers’ experience while alleviating your <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> compliance requirements. We store all of the sensitive cardholder data, whereas your application or website can simply store the customer references. You can then call on the Hosted Payment Page (HPP) to allow your customer to pay with one of their saved cards. They can also update and delete their cards. It’s also possible to raise payments against stored cards using our API.
+	    
+This guide builds on our main [HPP Guide](/docs/payments/online/hosted-payment-page-guide) and focuses on how to create a payer and store a card using the Create HPP Link request. We also show you how to display stored cards to the customer in future transactions. You'll also find field definitions for additional request fields related to this process.
+
+<Infobox>
+Card Storage is a chargeable service. If you want to add it, contact your account manager.
+</Infobox>
+Card Storage uses a dual-token system. Each customer is assigned a unique token reference called a *payer*. Each card saved is assigned a Payment Method reference. These references are automatically generated by us.
+ 
+## Create a payer and store a card
+To enable Card Storage on the HPP, we simply add three fields in the Create HPP Link request. We can also choose to provide the option to the customer to save their card or save it automatically.
+
+* `payer.status` = NEW
+* `payer.id` = ID created from the Payers resource
+* `order.payment_method_configuration.storage_mode` = PROMPT
+
+To learn how to create a payer, see the [Payers - Guide](/docs/payments/tokenization/payers-guide).
+
+#### Sample request
+<CodeGroup>
+    <Code id="JSON" title="JSON" language="JSON" active>
+	```
+curl 'https://apis.sandbox.globalpay.com/ucp/links' \
+--header 'Connection: keep-alive' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'x-gp-version: 2021-03-22' \
+--header 'Authorization:  Bearer bBj5Bv4RoOz4xTJ7V5XtjLBHLN1h' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "type": "HOSTED_PAYMENT_PAGE",
+   "name": "Bill Payment",
+   "description": "February and March Invoice",
+   "reference": "82c2dbd5-549d-4967-aeea-51b3f320046a",
+   "payer": {
+      "status": "NEW",
+      "id": "PYR_a488356f29ac4e4c9a89977652a3215e",
+      "name": "James Mason",
+      "language": "en",
+      "email": "jamesmason@example.com",
+      "mobile_phone": {
+         "country_code": "44",
+         "subsriber_number": "1801555888"
+      },
+      "billing_address": {
+         "line_1": "Flat 456",
+         "line_2": "House 456",
+         "line_3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "44",
+         "country": "GB"
+      }
+   },
+   "order": {
+      "amount": "1000",
+      "currency": "EUR",
+      "reference": "order-645",
+      "transaction_configuration": {
+         "channel": "CNP",
+         "country": "GB",
+         "capture_mode": "AUTO",
+         "allowed_payment_methods": [
+            "CARD"
+         ]
+      },
+      "payment_method_configuration": {
+         "authentications": {
+            "preference": "CHALLENGE_PREFERRED"
+         },
+         "storage_mode": "PROMPT"
+      }
+   },
+   "notifications": {
+      "return_url": "https://www.example.com/return_url",
+      "status_url": "https://www.example.com/status_url"
+   }
+}'
+```
+  </Code>
+	    </CodeGroup>
+
+#### Example – Store a new card
+<img src="/gh-assets/card-storage_store card.png" style={{display: "block", margin: "0 auto"}} />    
+**<p style={{textAlign: "center"}}>Store New Card Example</p>**
+
+
+## Display stored cards to the customer
+With our payer created and a card stored, we can now use this Payer ID in future transactions to present all of the stored cards to the customer. To do this, we pass the same three fields but with different values:
+
+* `payer.status` = ACTIVE
+* `payer.id` = the ID of our payer
+* `order.payment_method_configuration.storage_mode` = PROMPT
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="JSON" active>
+```
+curl 'https://apis.sandbox.globalpay.com/ucp/links' \
+--header 'Connection: keep-alive' \
+--header 'Accept: application/json' \
+--header 'Content-Type: application/json' \
+--header 'x-gp-version: 2021-03-22' \
+--header 'Authorization:  Bearer bBj5Bv4RoOz4xTJ7V5XtjLBHLN1h' \
+--data-raw '{
+   "account_name": "transaction_processing",
+   "type": "HOSTED_PAYMENT_PAGE",
+   "name": "Bill Payment",
+   "description": "February and March Invoice",
+   "reference": "82c2dbd5-549d-4967-aeea-51b3f320046a",
+   "payer": {
+      "status": "ACTIVE",
+      "id": "PYR_a488356f29ac4e4c9a89977652a3215e",
+      "name": "James Mason",
+      "language": "en",
+      "email": "jamesmason@example.com",
+      "mobile_phone": {
+         "country_code": "44",
+         "subsriber_number": "1801555888"
+      },
+      "billing_address": {
+         "line_1": "Flat 456",
+         "line_2": "House 456",
+         "line_3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "44",
+         "country": "GB"
+      }
+   },
+   "order": {
+      "amount": "1000",
+      "currency": "EUR",
+      "reference": "order-645",
+      "transaction_configuration": {
+         "channel": "CNP",
+         "country": "GB",
+         "capture_mode": "AUTO",
+         "allowed_payment_methods": [
+            "CARD"
+         ]
+      },
+      "payment_method_configuration": {
+         "authentications": {
+            "preference": "CHALLENGE_PREFERRED"
+         },
+         "storage_mode": "PROMPT"
+      }
+   },
+   "notifications": {
+      "return_url": "https://www.example.com/return_url",
+      "status_url": "https://www.example.com/status_url"
+   }
+}'
+```
+  </Code>
+  </CodeGroup>
+#### Example – Display cards
+<img src="/gh-assets/card-storage_display card.png" style={{display: "block", margin: "0 auto"}} />    
+**<p style={{textAlign: "center"}}>Display Stored Card(s) Example</p>**
+
+## Additional request fields
+| Element/Field    | Category | Format | Type | Length | Description |
+| -------- | ------- | ------- | ------- | ------- | ------- |
+| payer.status | string | enum | O | | Indicates whether the payer is new or existing (active).<br />**NEW** - Payer is newly created. Customer can store the card on the HPP, which is associated with the Payer ID.<br />**ACTIVE** - Payer was created previously, and any payment methods stored with this payer are displayed on the HPP. |
+| payer.id | string | alphanumeric | O | 1-50 | Unique ID generated by us to reference a payer in our system. To learn how to create a payer, see the [Payers - Guide](/docs/payments/tokenization/payers-guide). |
+| order.payment_<br />method_configuration.<br />storage_mode | string | enum | O | | Indicates whether to store the card as part of a transaction. Allowed values:<br />**ALWAYS** - Card information is always stored irrespective of whether the payment method authorization was successful.<br />**PROMPT** - Displays a checkbox on the HPP to confirm with the payer to store their card. |
+
+## Enhance your integration
+Below are value-added services you can enable for the HPP.
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/docs/payments/recurring/overview" title="Recurring Payments" icon="arrows-repeat">
+        Make subsequent payments easier for your customers.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide#hpp" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+	<Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide" title="Dynamic Currency Conversion" icon="euro-sign">
+        Let international customers pay in their home currency.
+    </Card>
+	
+</CardsGroup>
+	
+	</Tab>
+</Tabs>

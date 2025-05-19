@@ -1,0 +1,54 @@
+---
+title: "Payment Decline Reason Code"
+subtitle: "Get details and instructions for declined payments"
+tag: "xml"
+created: "02/11/2025"
+---
+The Payment Decline Reason Code (PDRC) service provides more detailed information on what action can be taken on a declined transaction. This information ensures better authorization rates and compliance with card scheme rules.
+
+When a card is declined by the bank during payment processing, it’s not always clear why it was declined or if you can resubmit. Merchants typically receive a standard decline from the bank, such as 101 - Decline (for a complete list, see [Messages & Error Codes](/ecommerce/resources/messages)).
+
+<Infobox>
+The PDRC service is currently only available for Visa and Mastercard transactions. <br/>
+
+This service is available only for certain acquirers. To check if your acquirer is supported, contact a member of our support team.
+</Infobox>
+
+With the PDRC service enabled, when we receive a declined reason code, the standard 101,102, and 103 decline responses are replaced with one of four values, as shown in the table below. Each value represents the bank’s instructions and the allowed action on that transaction.
+
+| Decline Category | Expected Response with PDRC Service Enabled | Instructions |
+| --- | --- | --- |
+| 1 - Action required before reattempt. | 130 | Wrong data sent. Action required before reattempt. |
+| 2 - Cannot approve at this time. | 131 | Could not approve. Further attempts permitted. |
+| 3 - Declined. Further attempts NOT allowed. | 132 | Declined. Further attempts NOT allowed. |
+| 4 - Declined. Do not retry. | 133 | Declined. Do not retry. |
+
+#### Sample response (PDRC enabled)
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>130</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>Wrong data sent. Action required before reattempt.</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>

@@ -1,0 +1,88 @@
+---
+title: 'Resources & Actions'
+search_results: 'API Definitions - Resources & Actions'
+subtitle: 'Understand our API resources and their associated actions'
+tag: 'rest'
+created: '16/09/2024'
+---
+The API is structured around resources and their associated actions. Resources are created, edited, and reported on by executing actions using the API. For example, a _/transactions_ resource is created by authorizing a card for a specific amount. It is edited by subsequently reversing it. 
+
+This table outlines some example resources and their associated actions.
+
+| Example Resource | Definition | Associated Action(s) | 
+| --- | --- | --- |
+| [/transactions](/api/transactions) | The transfer or attempt to transfer funds between a merchant and a payer using a payment method. | Authorize, Capture, Adjust, Reverse, Refund, Report |
+| [/disputes](/api/disputes) | Questions or objections from a payer relating to a previous transaction.| Challenge, Accept, Reporting | 
+| [/deposits](/api/deposits) | The debiting or crediting of funds to a merchant's bank account. | Reporting | 
+
+### Resource IDs
+For every instance of a resource, we create an ID that uniquely identifies that instance. These IDs are important as they are used to reference an instance of a resource when actioning in.
+
+IDs are structured using the first three characters to represent the type of resource the instance refers to, followed by an underscore and then a unique string. For example, _TRN_C0kt6GatzZLsC0kt6GatzZLsmyhvBX_ is an unique ID for a transaction. 
+
+IDs are created when the instance of the resource is created. 
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X POST https://apis.globalpay.com/ucp/transactions 
+    -H "Content-type: application/json" 
+    -H "X-GP-Version: 2021-03-22" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+    -d '
+{
+    "account_name": "transaction_processing",
+    "channel": "CP",
+    "type": "SALE",
+    "amount": "20045",
+    "currency": "CAD",
+    "reference": "my-trans-ref",
+    "payment_method": {
+        "name": "Jane Doe",
+        "entry_mode": "MANUAL",
+        "card": {        
+            "number": "4242424242424242",
+            "expiry_month": "12",
+            "expiry_year": "20" 
+        }
+    }
+}'
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_udnMIdFzIcLC0kt6GatzZLsmyhvBXj",
+    "time_created": "2021-03-20T23:31:33.878Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    ....
+}
+```
+</Code>
+<br />
+<br />
+
+The following table describes the API resources and gives an example ID for each.
+
+| Resource | Description |  Example ID | 
+| --- | --- | --- |
+| Merchant | Represents a configured business entity that has an account configured to access a payment-processing capability. | MER_8096479c606f4deb93dfab49e7bfea28 | 
+| Account | Umbrella term for all configured accounts of all account types. Each account has a type and represents a payment-processing capability. | ACC_345lmaslhvj7sdfnlsdfh8asdfnsldknfas2 | 
+| Transaction Account | Represents a configured capability to create, edit, and report on transactions. Transactions represent the attempt or the actual movement of funds between a payer and a merchant. | TRA_0b1fcc7cceea48dea38d044bae4295c2 | 
+| Data Services Account | Represents a configured capability to access Settlement Reporting to retrieve settlement info related to deposits, transactions, and disputes. | DAA_dea38d044bae4295c20b1fcc7cceea48 | 
+| Tokenization Account | Represents a configured capability to store, edit, and report on payment methods stored on our system. | TKA_nsldknfas2345lmaslhvj7sdfnlsdf | 
+| Action | Represents information about the requests and corresponding responses sent to the API. | ACT_udnMIdFzIcLC0kt6GatzZLsmyhvBXj | 
+| Transaction | Represents the transfer or the attempt to transfer funds between a payer and a merchant using a specific payment method. A Sale transaction represents movement of funds from payer to merchant and a refund from merchant to payer. | TRN_C0kt6GatzZLsC0kt6GatzZLsmyhvBX | 
+| Dispute |An act, initiated by a payer or payer’s bank, to query or challenge the previous transfer of funds between that payer and the merchant. | DIS_2SDFC0kt6GatzZLsC0kt6GatzZLscc | 
+| Deposit | Represents the initiation of a debit or a credit to a merchant's bank account that relates to processed transactions and disputes or fees charged to the merchant. | DEP_2VCssdf2SDFC0kt6GatzZLsC0kt6Ga | 
+| Verification | Represents the validation of a payment method to ensure it can be used in the creation of a transaction. | VER_k35345dfgdwRWCVfZFSDFsdfsdfsd | 
+| Payment Methods | Stored by us and represented by an identifier, commonly referred to as a _token_. Can be used to create sale and refund transactions, in place of real card details. | PMT_ZFSDFsdfsdfsdudnMIdFzIcLC0kt6G | 
+| Authentications | Represents an authentication process to prove the payer executing a sale transaction is the owner of the payment method being used. This includes the SCA/3DS process. | AUT_FsdfsdfsdudnMIdFzIcLC0dea38d044 | 
+| Batch | Represents a group of sale and refund transactions that start the funding process in the same collection. | BAT_35wdfsdfsdfsdf32VCssdf2SDF2SDFv | 
+| Currency Conversion Services | Represents an instance of payment currency service provided by us, such as DCC rate lookup, Multi-currency Pricing, or FX rate file retrieval. | CCS_dfsdfsdf32VCssdf2SDatzZLsC0kt6Gat | 
+| Device | Represents the requests to manage and configure devices. | DEV_6GatzZLsC0kt6GatzZdfsdfsdf32VCs3c | 

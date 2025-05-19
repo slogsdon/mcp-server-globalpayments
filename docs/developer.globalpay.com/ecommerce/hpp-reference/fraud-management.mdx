@@ -1,0 +1,515 @@
+---
+title: "Fraud Management"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/26/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Fraud Management, see our [Overview](/ecommerce/risk-management/fraud/overview).
+
+## Fraud Filter and data submission
+
+With Fraud Filter, you can supply additional information in the request that you can set rules against. This includes the customer's IP address, billing and shipping details, and specific product codes. For HPP requests, it’s also possible to change the Fraud Filter Mode in the request. This will change the mode used for the current transaction only.
+
+For information on individual rule setting for Fraud Filter, see our [Overview](/ecommerce/risk-management/fraud/fraud-filter).
+
+#### Sample request
+In the HPP request, you can change the Fraud Filter Mode via the optional request element Fraud Filter Mode. Additionally, you can set a Fraud Filter Mode on any individual fraud rule you choose by using the Rule ID value displayed in Ecommerce Portal. Provided the mode is set to Active in the Fraud Management section of Ecommerce Portal, it can be changed to Passive or Off in the request.
+
+You can also supply additional information in the request that you can set rules against, such as customer billing and shipping details or specific product codes. The HPP automatically detects the customer's IP address, which can also be included.
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- Begin Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="HPP_FRAUDFILTER_MODE" value="PASSIVE">
+  <input type="hidden" name="HPP_FRAUDFILTER_MODE_e5964ac0-ace0-477a-98ef-f467772d6a76" value="OFF">
+  <input type="hidden" name="CUST_NUM" value="6e027928-c477-4689-a45f-4e138a1f208a">
+  <input type="hidden" name="VAR_REF" value="Acme Corporation">
+  <input type="hidden" name="PROD_ID" value="SKU1000054">
+  <input type="hidden" name="BILLING_CODE" value="59|123">
+  <input type="hidden" name="BILLING_CO" value="GB">
+  <input type="hidden" name="SHIPPING_CODE" value="50001|Apartment 852">
+  <input type="hidden" name="SHIPPING_CO" value="US">
+  <!-- End Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Request fields syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Fraud Filter Mode | string | enum | O   | N/A | Optional parameter used to determine to what degree Fraud Filter executes. If not submitted the Fraud Filter will behave in accordance with the Ecommerce Portal mode configuration. Allowed values:  <br/>**PASSIVE** - Execute the rules but do not execute the action detailed in the Fraud Filter overall result (for example, HOLD or BLOCK)  <br/>**OFF** - Does not execute the Fraud Filter at all for this transaction. In this case, only the mode is returned in the response.  <br/>**ACTIVE** - Execute the action detailed in the Fraud Filter overall result for OTB transactions. |
+| Customer Number | string | alphanumeric | O   | 0-50 | A unique reference for this customer for example from your CRM system.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Variable Reference | string | alphanumeric | O   | 0-50 | Any reference you also would like to assign to this transaction. Can also be used to pass the Acquirer Statement reference, where supported.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Product Id | string | alphanumeric | O   | 0-50 | The code you assign to the product, for example the SKU.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Billing or Shipping Code | string | alphanumeric | O   | 0-30 | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: \[a-zA-Z0-9.-\] |
+
+#### Sample response
+The following extra fields will be returned in the response POST.
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[HPP_FRAUDFILTER_MODE=PASSIVE,
+ HPP_FRAUDFILTER_RESULT=BLOCK,
+ HPP_FRAUDFILTER_RULE_478a55db-5430-4c2a-afca-7dde181eb9f4=BLOCK,
+ HPP_FRAUDFILTER_RULE_NAME=Customer IP List]
+ HPP_FRAUDFILTER_RULE_MODE_e5964ac0-ace0-477a-98ef-f467772d6a76=OFF]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Response Mode | string | enum | Indicates the mode the Fraud Filter executed in. The possible values are:  <br/>**ACTIVE** - The rules were executed and the fraud result actioned.  <br/>**PASSIVE** - The rules were executed but the fraud result was actioned.  <br/>**OFF** - Fraud Filter was specifically not executed.  <br/>**ERROR** - There was an unexpected error in executing Fraud Filter |
+
+## Address Verification Service
+The Address Verification Service (AVS) verifies the cardholder's address by checking the information at the time of sale against the issuer's records.
+
+<Infobox>
+This functionality is not supported by all issuers and is only available for cardholders in the United States, Canada, and the United Kingdom. 
+
+We support this functionality; however, not all acquirers do. For more information, contact our support team. 
+</Infobox>
+
+If a transaction fails an AVS check, it will not automatically be declined. It's an advisory service and requires that the details of non-matched transactions be checked by your application. AVS data is passed in the Billing Code field and and must be formatted correctly depending on the billing country of the cardholder. We've outlined the different formats below.
+
+| Country | Format | Sample Address | Sample Billing Code |
+| --- | --- | --- | --- |
+| US or CA | Concatenate the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 123  <br/>House 456  <br/>Chicago  <br/>50001  <br/>United States | "50001\|Flat 123" |
+| UK  | Concatenate **just the digits** from the postcode and first line of the customer's billing address with a '\|' in the middle. | Flat 456  <br/>House 123  <br/>Halifax  <br/>WB3 A21  <br/>United Kingdom | "321\|456" |
+
+#### Sample request
+To submit AVS data, add the following field to the request POST. In our example, the billing country is the United States.
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Begin AVS Field -->
+  <input type="hidden" name="BILLING_CODE" value="50001|Flat 123">
+  <!-- End AVS Field -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Sample response
+The following additional fields will be returned in the HPP response. They indicate the outcome of the AVS check.
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+
+## Decision Manager
+To enrich the functionality of the Fraud Filter, we've partnered with Cybersource to use their Decision Manager product. Our guide should be used along with Cybersource's Decision Manager developer guide: Using the Simple Order API. You can find it on [their website](https://www.cybersource.com/developers/documentation/fraud_management/).
+
+Before you set up the additional fields, you'll need to configure your Decision Manager credentials in the Client Settings section of Ecommerce Portal. The fields defined here are in addition to those outlined in our [Fraud Filter guide](/ecommerce/risk-management/fraud/fraud-filter-guide). The data is structured into these parent groupings:
+
+* Billing Address
+* Shipping Address
+* Customer
+* Product
+* Decision Manager Specific Fields
+* Custom Fields
+
+#### Sample request
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20181018091531">
+  <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="16400">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="3ee9c9e0e35b8cd95f7dc9bca43e024e1074c3dc">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="CHANNEL" value="ECOM">
+  <input type="hidden" name="COMMENT1" value="Mobile Channel">
+  <input type="hidden" name="COMMENT2" value="Down Payment">
+  <input type="hidden" name="SHIPPING_CODE" value="E77|4QJ">
+  <input type="hidden" name="BILLING_CODE" value="R90|ZQ7">
+  <input type="hidden" name="CUST_NUM" value="332a85b">
+  <input type="hidden" name="VAR_REF" value="Invoice 7564a">
+  <input type="hidden" name="PROD_ID" value="SKU1000054">
+  <input type="hidden" name="HPP_LANG" value="GB">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+  <!-- Begin Decision Manager Fields -->
+  <!-- Billing Address -->
+  <input type="hidden" name="HPP_BILLING_STREET1" value="Flat 123">
+  <input type="hidden" name="HPP_BILLING_STREET2" value="House 456">
+  <input type="hidden" name="HPP_BILLING_CITY" value="Halifax">
+  <input type="hidden" name="HPP_BILLING_POSTALCODE" value="W6 9HR">
+  <input type="hidden" name="HPP_BILLING_STATE" value="West Yorkshire">
+  <input type="hidden" name="BILLING_CO" value="GB">
+  <!-- Shipping Address -->
+  <input type="hidden" name="HPP_SHIPPING_FIRSTNAME" value="Philip">
+  <input type="hidden" name="HPP_SHIPPING_LASTNAME" value="Marlowe">
+  <input type="hidden" name="HPP_SHIPPING_PHONE" value="+3538547854">
+  <input type="hidden" name="HPP_SHIPPING_SHIPPINGMETHOD" value="Courier">
+  <input type="hidden" name="HPP_SHIPPING_STREET1" value="Flat 456">
+  <input type="hidden" name="HPP_SHIPPING_STREET2" value="House 321">
+  <input type="hidden" name="HPP_SHIPPING_CITY" value="Dublin">
+  <input type="hidden" name="HPP_SHIPPING_POSTALCODE" value="6">
+  <input type="hidden" name="HPP_SHIPPING_STATE" value="Leinster">
+  <input type="hidden" name="SHIPPING_CO" value="IE">
+  <!-- Customer -->
+  <input type="hidden" name="HPP_CUSTOMER_ID" value="0f357b45-9aa4-4453-a685-c69232e9024f">
+  <input type="hidden" name="HPP_CUSTOMER_PASSWORD" value="VerySecurePassword">
+  <input type="hidden" name="HPP_CUSTOMER_DATEOFBIRTH" value="01011980">
+  <input type="hidden" name="HPP_CUSTOMER_DOMAINNAME" value="example.com">
+  <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="james.mason@example.com">
+  <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+  <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+  <input type="hidden" name="HPP_CUSTOMER_PHONENUMBER" value="+3535611177">
+  <input type="hidden" name="HPP_CUSTOMER_DEVICEFINGERPRINT" value="sessionId">
+  <!-- Product -->
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTID_1" value="SKU251584">
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTNAME_1" value="Magazine Subscription">
+  <input type="hidden" name="HPP_PRODUCTS_RISK_1" value="low">
+  <input type="hidden" name="HPP_PRODUCTS_QUANTITY_1" value="12">
+  <input type="hidden" name="HPP_PRODUCTS_UNITPRICE_1" value="1200">
+  <input type="hidden" name="HPP_PRODUCTS_GIFT_1" value="true">
+  <input type="hidden" name="HPP_PRODUCTS_TYPE_1" value="subscription">
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTID_2" value="SKU8884784">
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTNAME_2" value="Charger">
+  <input type="hidden" name="HPP_PRODUCTS_RISK_2" value="high">
+  <input type="hidden" name="HPP_PRODUCTS_QUANTITY_2" value="1">
+  <input type="hidden" name="HPP_PRODUCTS_UNITPRICE_2" value="2000">
+  <input type="hidden" name="HPP_PRODUCTS_GIFT_2" value="false">
+  <input type="hidden" name="HPP_PRODUCTS_TYPE_2" value="electronic_good">
+  <!-- Decision Manager Specific Fields -->
+  <input type="hidden" name="HPP_FRAUD_DM_BILLHOSTNAME" value="example.com">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLHTTPBROWSERCOOKIESACCEPTED" value="true">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOHTTPBROWSEREMAIL" value="jamesmason@example.com">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOHTTPBROWSERTYPE" value="Mozilla">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOIPNETWORKADDRESS" value="123.123.123.123">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOPERSONALID" value="741258963">
+  <input type="hidden" name="HPP_FRAUD_DM_DECISIONMANAGERPROFILE" value="DemoProfile">
+  <input type="hidden" name="HPP_FRAUD_DM_INVOICEHEADERRETURNSACCEPTED" value="true">
+  <input type="hidden" name="HPP_FRAUD_DM_INVOICEHEADERTENDERTYPE" value="consumer">
+  <input type="hidden" name="HPP_FRAUD_DM_INVOICEHEADERISGIFT" value="true">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMHOSTHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMNONSENSICALHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMOBSCENITIESHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMPHONEHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMTIMEHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMVELOCITYHEDGE" value="High">
+  <input type="hidden" name="HPP_FRAUD_DM_BUSINESSRULESSCORETHRESHOLD" value="40">
+  <!-- Custom Field -->
+  <input type="hidden" name="HPP_MY_CUSTOM_FIELD" value="My Custom Field Value">
+  <!-- End Decision Manager Fields -->
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Decision Manager request syntax
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Street 1 | string | alphanumeric | M   | 1-60 | First line of the billing address of the customer. |
+| Street 2 | string | alphanumeric | M   | 0-60 | Second line of the billing address of the customer. |
+| City | string | alphanumeric | M   | 1-50 | City of the billing address. |
+| Billing or Shipping Code Postalcode | string | alphanumeric | C   | 0-10 | Postal code of the billing address. Mandatory field if the Country field is US or CA. |
+| State | string | alphanumeric | C   | 0-2 | State or province of the customer Mandatory field if the billTo\_country field is US or CA. |
+|     |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: \[a-zA-Z0-9.-\] |
+| First Name | string | alphanumeric | O   | 0-60 | First name of the person receiving the shipment. |
+| Last Name | string | alphanumeric | O   | 0-60 | Last name of the person receiving the shipment. |
+| Phone Number | string | alphanumeric | O   | 0-15 | Phone number for the shipping address. |
+| Shipping Method | string | enum | O   |     | Shipping method for the product. Please refer to the Decision Manager documentation for example values. |
+| Customer Id | string | alphanumeric | O   | 0-100 | Optional customer’s account ID, tracking number, reward number, or other unique number that you assign to the customer. |
+| Customer Password | string | alphanumeric | O   | 0-255 | Customer’s account password. This value is for merchant velocity use only. It is not stored, displayed, or returned. |
+| Date Of Birth | string | YYYY-MM-DD  <br/>YYYYMMDD | O   | 0-10 | Date of birth of the customer. |
+| Domain Name | string | alphanumeric | O   | 0-100 | Email domain of the customer. The domain of the email address comprises all characters that follow the @ symbol, such as mail.example.com |
+| Email | string | alphanumeric | O   | 0-100 | Customer’s email address, including the full domain name. The field must be submitted in the form name@host.domain (for example, james.mason@example.com). |
+| First Name | string | alphanumeric | M   | 1-60 | Customer’s first name.The value should be the same as the value that appears on the card. |
+| Last Name | string | alphanumeric | M   | 1-60 | Customer’s last name. The value should be the same as the value that appears on the card. |
+| Phone Number | string | alphanumeric | O   | 0-15 | Phone number of the customer. |
+| Device Fingerprint | string | alphanumeric | O   | 0-255 | This field should contain the session ID which forms part of the device fingerprinting scripts. |
+| Product Id | string | alphanumeric | O   | 0-255 | Merchant’s product identifier code. |
+| Product Name | string | alphanumeric | O   | 0-255 | Name of the product. |
+| Risk | string | enum | O   | 0-6 | Indicates the level of risk for the product. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high** |
+| Quantity | integer |     | O   | 0-10 | Quantity of the product being purchased. |
+| Unit Price | string | alphanumeric | M   | 1-15 | Per-item price of the product. |
+| Gift | string | alphanumeric | O   | 0-5 | Determines whether to assign risk to the order if the billing and shipping addresses specify different cities, states, or countries. |
+| Type | string | alphanumeric | O   | 0-255 | Type of product, such as electronic, handling, physical, service, or shipping. The default value is default. |
+| billtohostname | string | alphanumeric | O   | 0-60 | Host name reported by the customer’s browser to your Web server identified via the http header. |
+| billtohttpbrowsercookiesaccepted | string | alphanumeric | O   | 0-5 | Indicates whether the customer’s browser accepts cookies. Can take one of the following values: true false |
+| billtohttpbrowseremail | string | alphanumeric | O   | 0-5 | Email address set in the customer’s browser (may differ from billTo\_email). |
+| billtohttpbrowsertype | string | alphanumeric | O   | 0-40 | Customer’s browser identified from the HTTP header data. For example, Mozilla identifies the Firefox browser. |
+| billtoipnetworkaddress | string | alphanumeric | O   | 0-11 | Network IP address of the customer (for example 10.1.27) A network IP address includes up to 256 IP addresses |
+| billtopersonalid | string | alphanumeric | C   | 0-26 | This element is supported only for Latin American Processing. |
+| decisionmanagerprofile | string | alphanumeric | O   | 0-30 | Use this field only if you want to specify the name of a different profile to use to evaluate orders. |
+| invoiceheaderreturnsaccepted | string | alphanumeric | O   | 0-5 | Indicates whether returns are accepted for this order. Can take the following values:  <br/>true  <br/>false |
+| invoiceheadertendertype | string | alphanumeric | O   | 0-10 | Method of payment used for the order. For example: debit, consumer, corporate. |
+| itemgiftcategory | string | alphanumeric | O   | 0-15 | Indicates whether the customer requested gift wrapping for this purchase. Can take one of the following values:  <br/>true  <br/>false |
+| itemnonsensicalhedge | string | enum | O   | 0-6 | When scoring risk importance of the weight of the tests performed on the text content of customers’ orders. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** **Off** |
+| itemobscenitieshedge | string | enum | O   | 0-6 | When scoring risk importance of the weight of the tests performed on the text content of customers’ orders. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemphonehedge | string | enum | O   | 0-6 | Importance in scoring risk of the weight of the multiple tests performed on phone numbers. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemtimehedge | string | enum | O   | 0-6 | Importance of time of day of the customer order in scoring risk. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| itemvelocityhedge | string | enum | O   | 0-10 | Importance of the number of orders (purchase frequency) from a customer in a certain time period (the preceding 15 minutes) in scoring risk. Allowed values:  <br/>**low**  <br/>**normal**  <br/>**high**  <br/>**off** |
+| businessrulesscorethreshold | integer |     | O   | 0-2 | Acceptable level of risk for ordering each product. |
+| customField | string | alphanumeric | O   | 0-255 | Up to 30 merchant-defined data fields that you can use to store information. |
+
+#### Standard request fields
+A number of existing HPP fields are mapped to Decision Manager. Some data is sent in the request POST, and some is entered by the cardholder on the HPP. Once your account is configured to communicate with Decision Manager, we will map the data to the correct Decision Manager fields.
+
+| HPP Field | Syntax | Description |
+| --- | --- | --- |
+| Card Number | string | The full Primary Account Number (PAN) of the card. |
+| Card Type | string | Please see the list of supported [Card Type Strings](https://developer.globalpay.com/#!/resources/test-card-numbers). |
+| Expiry Date | string | The expiry date of the card. |
+| Customer IP Address | string | The IP address of the customer's device.  <br/>Allowed characters: \[0-9:\] |
+| Order Id | string | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| Amount | integer | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Comment | string | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+
+#### Sample response
+In addition to the Fraud Filter result, the data returned will include the full response from Decision Manager. We don't store any of this information. When you configure a third-party rule in Ecommerce Portal, the action will be based on the value of the decision element in the response from Decision Manager (that is, Accept, Review, Reject, Error).
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+[RESULT=00,
+ AUTHCODE=12345,
+ MESSAGE=[ test system ] Authorised,
+ PASREF=14631546336115597,
+ AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M,
+ CVNRESULT=M,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20180613113227,
+ AMOUNT=1001,
+ CARD_PAYMENT_BUTTON=Pay Now,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ SHIPPING_CODE=R90|ZQ7,
+ SHIPPING_CO=GB,
+ BILLING_CODE=E77|4QJ,
+ BILLING_CO=GB,
+ COMMENT1=Mobile Channel,
+ COMMENT2=Down Payment,
+ ECI=5
+ AUTHENTICATION_VALUE=ODQzNjgwNjU0ZjM3N2JmYTg0NTM=,
+ DS_TRANS_ID=c272b04f-6e7b-43a2-bb78-90f4fb94aa25,
+ MESSAGE_VERSION=2.1.0,
+ SRD=MMC0F00YE4000000715,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61
+ HPP_FRAUDFILTER_MODE=PASSIVE,
+ HPP_FRAUDFILTER_RESULT=PASS,
+ HPP_FRAUDFILTER_RULE_478a55db-5430-4c2a-afca-7dde181eb9f4=PASS,
+ HPP_FRAUDFILTER_RULE_NAME=Decision Manager Rule,
+ HPP_DM_RAW_RESPONSE=<!-- Full Response Here, See Sample Below -->]
+```
+</Code>
+
+### Decision Manager full response
+For more information on the full response returned from Decision Manager, refer to Cybersource’s Decision Manager developer guide: Using the Simple Order API. You can find it on [their website](https://www.cybersource.com/developers/documentation/fraud_management/).
+
+The example below shows what values will be returned to your application.
+
+<Code id="markup" title="" language="markup" active>
+```
+<c:replyMessage xmlns:c="urn:schemas-cybersource-com:transaction-data-1.118">
+  <c:merchantReferenceCode>N6qsk4kYRZihmPrTXWYS6g</c:merchantReferenceCode>
+  <c:requestID>4921661527746095104010</c:requestID>
+  <c:decision>ACCEPT</c:decision>
+  <c:reasonCode>100</c:reasonCode>
+  <c:requestToken>Ahjz7wSTCs3GO2ecVEAKEQFLlcJIrX9IjhqBvAhk0ky3SA7TWIDCTCs3GO2ecVEAKAAA8g0Y</c:requestToken>
+  <c:afsReply>
+    <c:reasonCode>100</c:reasonCode>
+    <c:afsResult>99</c:afsResult>
+    <c:hostSeverity>1</c:hostSeverity>
+    <c:consumerLocalTime>11:35:52</c:consumerLocalTime>
+    <c:afsFactorCode>F^H^V^Y</c:afsFactorCode>
+    <c:addressInfoCode>MM-A^MM-C^MM-CO^MM-ST^MM-Z^UNV-ADDR</c:addressInfoCode>
+    <c:hotlistInfoCode>NEG-ASUSP^NEG-BIN^NEG-CC^NEG-EM^NEG-SA^NEG-SUSP</c:hotlistInfoCode>
+    <c:suspiciousInfoCode>MUL-EM^RISK-TS</c:suspiciousInfoCode>
+    <c:velocityInfoCode>VEL-NAME^VELI-CC^VELI-EM^VELI-SA^VELL-CC^VELL-EM^VELL-SA^VELS-CC^VELS-EM^VELS-SA^VELV-CC^VELV-EM</c:velocityInfoCode>
+    <c:scoreModelUsed>default_eu</c:scoreModelUsed>
+    <c:cardBin>426397</c:cardBin>
+  </c:afsReply>
+  <c:decisionReply>
+    <c:casePriority>3</c:casePriority>
+    <c:activeProfileReply/>
+    <c:velocityInfoCode>MVEL-R5007</c:velocityInfoCode>
+  </c:decisionReply>
+</c:replyMessage>
+```
+</Code>
+
+## Decision Manager - Device Fingerprinting
+The Device Fingerprinting service of Decision Manager gathers information about the customer devices that use your mobile app or place orders on your website. Use this unique identifier to consistently identify the location of a customer’s device, despite whatever identity masking techniques they may use (for example, a VPN or proxy).
+
+The examples below show the One-Pixel Image and JavaScript Code for websites. This functionality is also available for Android and iOS apps.
+
+#### Sample embedded scripts
+
+<Code id="markup" title="" language="markup" active>
+```
+<!-- One-Pixel Image -->
+<p></p>
+<img src="https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>&m=2" alt="">
+
+<!-- JavaScript -->
+<script src="https://www.fingerprintingserver.com/fp/check.js?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>"></script>
+```
+</Code>
+
+The scripts should be embedded — for example, on the checkout page that initiates the transaction. The value you pass in the POST request will be the Session ID included in the scripts (it's supplied as part of the Customer fields). In our example below, we're using a random 32-character string.
+
+The Device Fingerprint service provides the following information in Decision Manager: Date Device First Seen, Application Type, Time on Page, and True IP Address. For apps, Device Longitude and Latitude are available, as well as whether the device is Jailbroken.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180913154639">
+  <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="16400">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="3ee9c9e0e35b8cd95f7dc9bca43e024e1074c3dc">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Device Fingerprint Session Id -->
+  <input type="hidden" name="HPP_CUSTOMER_DEVICEFINGERPRINT" value="kyhb-hc1sa5jdf-tjbqec-uz19a-5n5b">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulting string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Build the request hash for the Fraud Filter and data submission request type.
+
+1. Using the SHA-1 algorithm, hash a string made up of the request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.fraud_filter_mode"
+```
+</Code>
+
+If you're also using Card Storage, the blueprint becomes:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.payer.paymentref.fraudfiltermode"
+```
+</Code>
+
+Based on the POST example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205184615.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.PASSIVE"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulting string to the request.
+
+### Check the response hash
+Check the response hash for the Fraud Filter and data submission request type. 
+
+1. Using the SHA-1 algorithm, hash a string made up of some of the response values
+The blueprint of the hash for the response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205184615.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After Step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string and check the output against what was returned in the XML response
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

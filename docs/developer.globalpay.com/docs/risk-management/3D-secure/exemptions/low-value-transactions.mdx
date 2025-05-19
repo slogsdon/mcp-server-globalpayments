@@ -1,0 +1,113 @@
+---
+title: 'Low-Value Transactions'
+search_results: 'Global Payments - Exemptions - Low Value Transactions'
+subtitle: 'Avoid authentications for transactions under a certain amount.'
+tag: 'rest'
+created: '20/09/2024'
+---
+This guide focuses on how to request an exemption for a low-value transaction in the authorization.
+
+<br/>
+
+## Exemption criteria
+Transactions up to 30 EUR (or converted equivalent) can be exempted from Strong Customer Authentication (SCA), dependent on the following criteria:
+* Up to a maximum of five (5) consecutive transactions
+* OR, up to a cumulative limit of 100 EUR (or converted equivalent)
+
+
+## Authorization message
+The low-value transaction exemption can only be requested in the Payment Authorization message. If the Issuer accepts the exemption request, the transaction will proceed as normal and will be successful or declined based on standard criteria (sufficient funds, correct security code entered, and so on). If the exemption request is not accepted, the Issuer might respond with a soft decline (see [Soft decline](#soft-decline) section).
+
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer vJCIFsAMxW9PgVBKz91MoOSMvw9p' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "25576071",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "three_ds":{
+                "exempt_status": "LOW_VALUE"
+            }
+        }
+    }
+}'
+  ```
+</Code>
+
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "id": "TRN_p2fjfkU3mfWrRoQvSd6Omskep5SWxY_25576071",
+    "time_created": "2022-05-06T17:08:33.816Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "25576071",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "ND6ZF7rk03RaqrIJ",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1086726",
+    "action": {
+        "id": "ACT_p2fjfkU3mfWrRoQvSd6Omskep5SWxY",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-06T17:08:33.816Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+  ```
+</Code>
+
+## Soft decline
+### What is a soft decline?
+A soft decline is a response we get when a customers issuing bank are not willing to provide an SCA exemption to the transaction you're processing.
+
+By requesting a low-value exemption in the authorization message, the Issuer might reject the exemption request and respond with what’s known as a *soft decline*: result code **111**. If you receive a soft decline, you can then proceed with standard 3D Secure authentication and a second authorization. For more information on authentications, see our [3D Secure 2](/docs/risk-management/3D-secure/overview) documentation.

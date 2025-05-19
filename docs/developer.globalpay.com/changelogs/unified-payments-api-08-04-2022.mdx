@@ -1,0 +1,21 @@
+---
+title: "Unified Payments API - August 4, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "08-04-2022"
+---
+
+<ReleaseNoteSection title="Hosted Payment Page">
+    <ReleaseNoteDetail type="added">
+        * New Hosted Solution to capture card details all through a redirect or embedded integration
+        * Hosted Payment Page supports 3DS2, Dynamic Currency Conversion, Card Storage, PayPal, and other payment methods
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancements to Transactions Resource">
+    <ReleaseNoteDetail type="added">
+        * New risk_assessment object in the Create a Sale or Refund method; this object contains the details of the rules which the transactions will be assessed against
+        * New Hold method to allow merchants to prevent a transaction’s inclusion in the settlement file until the transaction is released
+        * New Release method to allow held transactions to be included in the next settlement file
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

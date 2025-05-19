@@ -1,0 +1,80 @@
+---
+title: 'Hosted Payment Page - Overview'
+search_results: 'Global Payments - Hosted Payment Page Overview'
+subtitle: 'Quickly set up a secure checkout page.'
+tag: 'rest'
+created: '06/08/2024'
+---
+The Hosted Payment Page (HPP) is our <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip>–compliant hosted solution, allowing merchants to capture addresses for customer billing and shipping, contact information, and card details all through one simple redirect or embedded integration.
+
+Using the HPP along with our SDKs and libraries means that you can set up a secure payment form in your application or website in minutes. The library handles the opening, display, and response of the HPP on a desktop, tablet, mobile device (both iOS and Android apps), or in-app, with minimal configuration required.
+
+For merchants, the benefits of the HPP include:
+* Prebuilt forms for your payment pages
+* Simplest level of PCI DSS compliance: <Tooltip content="Self-Assessment Questionnaire A is for merchants who outsource card data responsibility to a third party.">SAQ A</Tooltip>
+* Secure address forms to collect other customer details
+* Built-in input validation of payment fields
+* Seamless integration with desktop, tablet, mobile, or in-app
+* Cross-channel secure payment acceptance and customer identification
+
+Here's an example of the standard HPP Payment Details form added to a fictitious merchant’s payment page. 
+
+![An example of a payment form for Henley Park University built using the HPP.](/gh-assets/hpp_example.png)
+<p style={{textAlign: "center"}}>**Example - HPP Payment Details Form**</p>
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our HPP solution. Keep in mind that this section doesn’t cover all of the use cases.
+
+##### Use case #1: Secure
+An online bakery has just launched and wants to ensure that they are processing their transactions in a secure environment that is also PCI DSS compliant. Integrating with HPP means that sensitive card information is captured directly by us instead of their own website.
+
+##### Use case #2: Convenient
+A personal trainer has just gone live with their online training program. They’re working with a small team currently, so they can’t commit to any integration that requires too much maintenance. The HPP allows them to quickly set up with just a single request before they can start processing transactions.
+
+##### Use case #3: Flexible
+An online bike shop wants to allow their customers to pay using various payment methods. Integrating with the HPP will allow this merchant to accept card payments, digital wallets, alternative payment methods (APMs), and more.
+
+## Product information
+##### What you get with the HPP
+* Payment Page
+* 3D Secure
+* PCI DSS (SAQ A)
+* APMs
+
+##### What you can add to the HPP
+* Card Storage
+* Payer Storage
+* Digital Wallets
+* Dynamic Currency Conversion
+
+##### Integration options
+* JavaScript Library
+* SDK or API
+
+##### Regions where you can use the HPP
+* Europe
+* Middle East
+* North America
+* Latin America
+* Africa
+* Asia-Pacific (*Coming Soon*)
+
+
+## How does it work?
+If you're using our other solutions through the HPP — like 3D Secure, APMs, or Fraud Management — the information gathered through the HPP will be used to populate the associated required fields. In other words, you don’t have to provide that additional information in the HPP request.
+
+At a high level, HPP works like this:
+
+![Diagram flow of how the Hosted Payment Page works at a high level.](/gh-assets/hpp_flow.png)
+<p style={{textAlign: "center"}}>**HPP Typical Flow**</p>
+
+#### 3D Secure
+The HPP handles the entire 3D Secure authentication flow, including determining which version of 3D Secure to use, gathering the necessary device information, and presenting the challenge to the customer if required. The HPP then processes the authorization and passes the additional authentication information to the card issuer.
+
+
+## Next steps
+To try the HPP, follow the steps and code samples in our [guide](/docs/payments/online/hosted-payment-page-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

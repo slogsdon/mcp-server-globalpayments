@@ -1,0 +1,91 @@
+---
+title: "Installments - Overview"
+subtitle: "Allow Visa customers to pay for their purchases over time"
+tag: "xml"
+created: "02/11/2025"
+---
+<Infobox>
+Installment Service is only available to merchants in Canada who use us as their acquirer and those in the UK using a GPUK connection. <br/>
+
+To see if your acquirer can support Installment Service, contact a member of our support team.
+</Infobox>
+
+With our Installment Service solution, you can offer Visa customers the flexibility to pay over time for the items and services they want now. The purchase amount is divided into smaller, equal installment payments (installments) over a defined time period. This arrangement helps drive customer acquisition and retention, as well as a potential increase in sales volume.
+
+Our solution integrates with the Visa Installment Transaction Service, which enables merchants to offer issuer-defined installment plans to customers at the point of sale, online, or in-store. Installment plans are available for eligible Visa cardholders and require the participation of issuers, acquirers, and merchants. 
+
+## Installment plan types
+The following table describes the various types of installment plans offered by Visa.
+
+  
+| Plan Type | Funded By | Description |
+| --- | --- | --- |
+| Market  <br/>(merchant funded) | Seller | Applies a Market Rate Installment Plan.  <br/>Standardized seller-funded installment plans recommended by Visa for defined tenures that issuers may choose to provide to eligible cardholders by opting into market plans.  <br/>The installment funding fee payable as dictated by the _fundedBy_ value for a market plan may vary by country and may be revised at Visa’s discretion. |
+| Issuer Default (consumer funded) | Consumer | Applies an Installment Funding Fee applicable to the Consumer-Funded Plans.  <br/>Available to all merchant participants to display to eligible cardholders. |
+| Issuer Promotion (consumer funded) | Consumer | Applies a promotional rate as an Installment Funding Fee applicable to the Consumer-Funded Installment Plan.  <br/>Must have an explicit expiration date. Available to all merchant participants to display to eligible cardholders. |
+| Bi-Lateral  <br/>(consumer funded, merchant funded or hybrid) | Merchant Participant,Seller, Consumer, Hybrid Arrangement where two parties are involved | Applies an Installment Funding Fee (different from Market Rate Installment Funding Fee).  <br/>This fee is agreed to between an issuer and a merchant participant pursuant to a written agreement between them. Available only to specific merchant participants who have a bi-lateral plan with the issuer pursuant to an agreement with the issuer. |
+| Issuer Hybrid  <br/>(merchant and consumer funded) | Merchant and Consumer | Applies an Installment Funding Fee applicable to the Hybrid Funded Plans.  <br/>A new category where the funding responsibility is shared between the merchant and the consumer. Available to all merchant participants to display to eligible cardholders. |
+
+## Use case exceptions
+These use cases are currently **not supported** by our Installment Service due to existing limitation in the Visa Installment solution: 
+
+* Transactions using estimated and incremental authorizations, such as in hotels and vehicle rentals
+* Multiple installment plans in a single transaction
+* Cross-border transactions
+* Mail Order Telephone Order (MOTO) transactions
+* Settle, multi-settle, and rebate transactions with a higher amount than 100% of the original authorization amount
+* Re-settle a multi-settle authorization that was partially settled then voided
+* Void rebate request processed on the same day
+* Refunds done on installment payments older than 6 months (existing implementation)
+
+## Terminology clarification
+
+In the user interface (UI) for this solution, such as on the Payments Details screen, the name varies in spelling due to regional differences. 
+
+* The term ***Installments***(with a double 'l') is used for installment payments processed in Canada.  
+* The term **Instalments** (with a single 'l') is used for installment payments processed in the United Kingdom (UK).
+
+In our developer portal documentation, this spelling distinction is only made where the solution is shown — that is, in UI screenshots and the steps that go with them.
+
+## How does it work?
+To retrieve available installment plans for cardholders, the `GetEligiblePlans` request is used, along with merchant hash authentication (for more information, see the API Reference for [Installment Service](/ecommerce/api/installment-service)). The request retrieves eligible installment plan information from all participating issuers.
+
+The plans are then offered to a cardholder during checkout based on a set of criteria. This can include checking the eligibility of the payment transaction and checking the issuer’s conditions for eligibility.
+
+The following retrieval results can occur:
+
+* When successful, one or more eligible installment plans are presented as options. 
+* If there are no active plans matching the given set of criteria, an empty array is returned in the response. 
+* Any plans that are expired or are expiring in the next 24 hours will not be returned in the response.
+
+At a high level, Installment Service works like this if you integrate through **direct API**:
+
+![Installment Service Typical Flow for direct API integration.](/gh-assets/ecommerce/installments_api-flow.png)
+ <p style={{textAlign: "center"}}>**Installment Service Typical Flow - API**</p>
+
+At a high level, Installment Service works like this if you use the **Hosted Payment Page (HPP)**:
+
+![Installment Service Typical Flow for HPP integration.](/gh-assets/ecommerce/installments_hpp-flow.png)
+ <p style={{textAlign: "center"}}>**Installment Service Typical Flow - HPP**</p>
+
+### Common payment scenarios
+The following table describes some common Installment Service scenarios for online payments.
+
+| Scenario | Description |
+| --- | --- |
+| Single authorization with single clearing | Only one authorization and one clearing transaction happen despite the customer paying in multiple installments. |
+| Single authorization with multiple clearings | Cardholder completes a purchase with multiple items in the cart. Single purchase is fulfilled with multiple shipments. Merchants submit multiple clearing transactions in connection with a single authorization request. All clearing transactions must occur within 30 days of the authorization. |
+| Partial shipment | Cardholder completes a card-not-present purchase with multiple items in the cart and then they or the merchant cancels part of the order prior to shipment. The clearing and authorization amounts will not match because part of the order was never shipped. To keep an optimal cardholder experience, we will accept the transaction even if it falls below the plan minimum, because the installment transaction was eligible at the time of checkout. |
+| Split Shipment | A single order is fulfilled with multiple shipments. This can be addressed using multiple clearings. |
+
+### Refunds and reversals
+The process for a refund or reversal of the underlying transaction remains unchanged under Visa’s existing rules. Required logic implemented in our Installment Service will call Visa’s API to provide refund information and to request cancellation of the installment plan.
+
+Upon receiving a cancellation request for a plan due to a refund, Visa will inform the issuer of the cancellation details. The issuer is responsible for determining cardholder policies for canceled installment plans and ensuring compliance with laws and regulations.
+
+## Ready to get started?
+To get started with Installment Service, see our [guide](/ecommerce/expand-your-integration/installments-guide).
+
+<Infobox>
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

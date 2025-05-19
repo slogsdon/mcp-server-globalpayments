@@ -1,0 +1,315 @@
+---
+title: 'Test Cards'
+search_results: 'Test credit cards or banks to try different scenarios'
+subtitle: 'Use our simulated credit cards or banks to try different scenarios'
+tag: 'xml'
+created: '03/21/2025'
+---
+When testing your integration, you should never use real card details or banking information. That’s why we provide simulated payment methods such as test card numbers, test banks (for Open Banking), and even test installment plans (for Visa Installment Service). Use these resources to test different scenarios for your application or website.
+
+## Card type strings
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+{
+    "Visa": "VISA",
+    "MasterCard": "MC",
+    "American Express": "AMEX",
+    "Diners": "DINERS",
+    "Discover": "DISCOVER",
+    "JCB": "JCB",
+    "UATP": "UATP"
+}
+```
+</Code>
+
+<Infobox>
+When using the cards, either through the API or Hosted Payment Page, you can enter any cardholder name, security code, and future-dated expiry.
+</Infobox>
+
+## Successful
+| Card Number | Card Type | Result | Code | Description |
+| -------- | -------- | -------- | -------- | -------- |
+| 4263970000005262 | Visa | Successful | 00 | Successful transaction |
+| 5425230000004415 | Mastercard | Successful | 00 | Successful transaction |
+| 374101000000608 | American Express | Successful | 00 | Successful transaction |
+| 36256000000725 | Diners Club | Successful | 00 | Successful transaction |
+| 6011000000000087 | Discover | Successful | 00 | Successful transaction |
+| 3566000000000000 | JCB | Successful | 00 | Successful transaction |
+| 135400000007187 | UATP | Successful | 00 | Successful transaction |
+
+## Declined
+| Card Number | Card Type | Result | Code | Description |
+| -------- | -------- | -------- | -------- | -------- |
+4000120000001154 | Visa | Declined | 101 | Declined by the bank |
+4000130000001724 | Visa | Declined | 102 | Referral B |
+4000160000004147 | Visa | Declined | 103 | Referral A - Card reported lost/stolen |
+4009830000001985 | Visa | Declined | 200 | Communication Error |
+4242420000000091 | Visa | Declined | 111 | Strong Customer Authentication Required |
+5114610000004778 | Mastercard | Declined | 101 | Declined by the bank |
+5114630000009791 | Mastercard | Declined | 102 | Referral B |
+5121220000006921 | Mastercard | Declined | 103 | Referral A - Card reported lost/stolen |
+5135020000005871 | Mastercard | Declined | 200 | Communication Error |
+5100000000000131 | Mastercard | Declined | 111 | Strong Customer Authentication Required |
+376525000000010 | American Express | Declined | 101 | Declined by the bank |
+375425000000907 | American Express | Declined | 102 | Referral B |
+343452000000306 | American Express | Declined | 103 | Referral A - Card reported lost/stolen |
+372349000000852 | American Express | Declined | 200 | Communication Error |
+374205502001004 | American Express | Declined | 111 | Strong Customer Authentication Required |
+36256000000998 | Diners Club | Declined | 101 | Declined by the bank |
+36256000000634 | Diners Club | Declined | 102 | Referral B |
+38865000000705 | Diners Club | Declined | 103 | Referral A - Card reported lost/stolen |
+30450000000985 | Diners Club | Declined | 200 | Communication Error |
+6011000000001010 | Discover | Declined | 101 | Declined by the bank |
+6011000000001028 | Discover | Declined | 102 | Referral B |
+6011000000001036 | Discover | Declined | 103 | Referral A - Card reported lost/stolen |
+6011000000002000 | Discover | Declined | 200 | Communication Error |
+3566000000001016 | JCB | Declined | 101 | Declined by the bank |
+3566000000001024 | JCB | Declined | 102 | Referral B |
+3566000000001032 | JCB | Declined | 103 | Referral A - Card reported lost/stolen |
+3566000000002006 | JCB | Declined | 200 | Communication Error |
+135400000009712 | UATP | Declined | 101 | Declined by the bank |
+135400000007633 | UATP | Declined | 102 | Referral B |
+135400000000281 | UATP | Declined | 103 | Referral A - Card reported lost/stolen |
+135400000005637 | UATP | Declined | 205 | Communication Error |
+
+## DCC
+### Without 3D Secure authentication
+Use the following cards to test Dynamic Currency Conversion (DCC) **without** 3D Secure authentication.
+
+| Card Number | Card Type | Result | Code | Description | Currency |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 4006097467207025 | DCC | Successful | 00 | Successful transaction | AUD |
+| 4002933640008365 | DCC | Successful | 00 | Successful transaction | EUR |
+
+### With 3D Secure authentication
+Use the following cards to test DCC **with** 3D Secure authentication.
+
+| Card Number | Card Type | Result | Code | Description | Currency |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 4222000001227408 | DCC | Challenge_Required | N/A | Challenged Trx | USD |
+| 4263970000005262 | DCC | Authentication_Successful | 00 | Successful Trx | EUR |
+
+## 3D Secure 2
+We provide a Simulator issuer access control server (ACS) that allows you to test different 3D Secure scenarios for Visa or Mastercard.
+
+### Visa
+#### Visa Message Version 2.1
+| Card Number | Flow Type | Transaction Result | ECI<sup>†</sup> |
+| -------- | -------- | -------- | -------- |
+| 4263970000005262 | Frictionless | AUTHENTICATION_SUCCESSFUL | 05 |
+| 4222000006724235 | Frictionless | AUTHENTICATION_SUCCESSFUL - No Method URL | 05 |
+| 4012001037167778 | Frictionless | AUTHENTICATION_ATTEMPTED_BUT_NOT_SUCCESSFUL | 06 |
+| 4012001037461114 | Frictionless | AUTHENTICATION_FAILED | 07 |
+| 4012001038443335 | Frictionless | AUTHENTICATION_ISSUER_REJECTED | 07 |
+| 4012001037484447 | Frictionless | AUTHENTICATION_COULD_NOT_BE_PERFORMED | 07 |
+| 4012001038488884 | Challenge | CHALLENGE_REQUIRED | N/A |
+
+#### Visa Message Version 2.2<sup>††</sup>
+| Card Number | Flow Type | Transaction Result | ECI<sup>†</sup> |
+| -------- | -------- | -------- | -------- |
+| 4222000006285344 | Frictionless | AUTHENTICATION_SUCCESSFUL | 05 |
+| 4222000009719489 | Frictionless | AUTHENTICATION_SUCCESSFUL - No Method URL | 05 |
+| 4222000005218627 | Frictionless | AUTHENTICATION_ATTEMPTED_BUT_NOT_SUCCESSFUL | 06<sup>†††</sup> |
+| 4222000002144131 | Frictionless | AUTHENTICATION_FAILED | 07 |
+| 4222000007275799 | Frictionless | AUTHENTICATION_ISSUER_REJECTED | 07 |
+| 4222000008880910 | Frictionless | AUTHENTICATION_COULD_NOT_BE_PERFORMED | 07 |
+| 4222000001227408 | Challenge | CHALLENGE_REQUIRED | N/A |
+
+<sup>†</sup> The expected ECI value associated with the corresponding transaction status. <br /> ++Note++: Values may vary depending on the card issuer; however, the ECI will always indicate if there is a liability shift in favor of the merchant or not and can be used as a guide on whether to proceed to authorization.
+
+<sup>††</sup> X-GP-VERSION: 2.2.0 is required to allow the use of the new message version 2.2 fields and values.
+
+<sup>†††</sup> Transaction was attempted but not successful; however, the bank is still willing to offer chargeback protection, so the transaction proceeds. Success is expected in this scenario.
+
+### Mastercard
+#### Mastercard Message Version 2.1
+| Card Number | Flow Type | Transaction Result | ECI<sup>†</sup> |
+| -------- | -------- | -------- | -------- |
+| 5588519923864639 | Frictionless | AUTHENTICATION_SUCCESSFUL | 02 |
+| 5561468645935163 | Frictionless | AUTHENTICATION_SUCCESSFUL - No Method URL | 02 |
+| 5121220000006921 | Frictionless | AUTHENTICATION_ATTEMPTED_BUT_NOT_SUCCESSFUL | 01 |
+| 5558852879074366 | Frictionless | AUTHENTICATION_FAILED | 00 |
+| 5577626715363051 | Frictionless | AUTHENTICATION_ISSUER_REJECTED | 00 |
+| 5557399029551225 | Frictionless | AUTHENTICATION_COULD_NOT_BE_PERFORMED | 00 |
+| 5556510812513567 | Challenge | CHALLENGE_REQUIRED | N/A |
+
+#### Mastercard Message Version 2.2<sup>††</sup>
+| Card Number | Flow Type | Transaction Result | ECI<sup>†</sup> |
+| -------- | -------- | -------- | -------- |
+| 5354560000000004 | Frictionless | AUTHENTICATION_SUCCESSFUL | 02 |
+| 5571596304025153 | Frictionless | AUTHENTICATION_SUCCESSFUL - No Method URL | 02 |
+| 5580364874958322 | Frictionless | AUTHENTICATION_ATTEMPTED_BUT_NOT_SUCCESSFUL | 01 |
+| 5540010585397800 | Frictionless | AUTHENTICATION_FAILED | 00 |
+| 5588312194362669 | Frictionless | AUTHENTICATION_ISSUER_REJECTED | 00 |
+| 5520680211891022 | Frictionless | AUTHENTICATION_COULD_NOT_BE_PERFORMED | 00 |
+| 5506874496684651 | Challenge | CHALLENGE_REQUIRED | N/A |
+
+<sup>†</sup> The expected ECI value associated with the corresponding transaction status. <br /> ++Note++: Values may vary depending on the card issuer; however, the ECI will always indicate if there is a liability shift in favor of the merchant or not and can be used as a guide on whether to proceed to authorization.
+
+<sup>††</sup> X-GP-VERSION: 2.2.0 is required to allow the use of the new message version 2.2 fields and values.
+
+## Apple Pay
+Based on the amount specified in the token, the Sandbox environment maps the tokenized data in the transaction to one of our test cards. Any card details can be used in the token — they won't be logged, stored, or used for transaction processing. The table below lists the amount to specify in your Apple Pay token to test Visa and Mastercard (MC) and result scenarios. 
+
+### Standard testing
+| Amount in Token | Card Type | Result Code | Message | AVS Postcode Result | AVS Address Result |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 10.00 | VISA | 00 | Successful | | |  
+| 11.01 | VISA | 101 | Declined | | |
+| 11.02 | VISA | 102 | Referral B | | |
+| 11.03 | VISA | 103 | Referral A | | |  
+| 12.05 | VISA | 200 | Comms Error | | |
+| 20.00 | MC | 00 | Successful | | | 
+| 21.01 | MC | 101 | Declined | | | 
+| 21.02 | MC | 102 | Referral B | | | 
+| 21.03 | MC | 103 | Referral A | | | 
+| 22.05 | MC | 200 | Comms Error | | |  
+
+
+### AVS/CVN-specific testing
+| Amount in Token | Card Type | Result Code | Message | AVS Postcode Result | AVS Address Result |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 43.00 | VISA | 101 | Declined | U | U |
+| 43.01 | VISA | 101 | Declined | I | I |
+| 43.02 | VISA | 101 | Declined | P | P |
+| 43.03 | VISA | 101 | Declined | M | M |
+| 43.04 | VISA | 101 | Declined | M | N |
+| 43.05 | VISA | 101 | Declined | N | M | 
+| 43.06 | VISA | 101 | Declined | N | N |
+| 53.00 | MC | 00 | Successful | U | U |
+| 53.01 | MC | 00 | Successful | I | I |
+| 53.02 | MC | 00 | Successful | P | P |
+| 53.03 | MC | 00 | Successful | M | M |
+| 53.04 | MC | 00 | Successful | M | N |
+| 53.05 | MC | 00 | Successful | N | M |
+| 53.06 | MC | 00 | Successful | N | N |
+
+### Error
+| Amount in Token | Card Type | Result Code |
+| -------- | -------- | -------- |
+| Any other amount | 108 | Using test system. Please use predefined Apple Pay test amounts only. See documentation. |
+
+## Google Pay
+Based on the amount specified in the token, the Sandbox environment maps the tokenized data in the transaction to one of our test cards. Any card details can be used in the token — they won't be logged, stored, or used for transaction processing. The table below lists the amount to specify in the request to test Visa and Mastercard (MC) and result scenarios. 
+
+### Standard testing
+| Amount in Token | Card Type | Result Code | Message | AVS Postcode Result | AVS Address Result |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 10.00 | VISA | 00 | Successful | | |  
+| 11.01 | VISA | 101 | Declined | | |
+| 11.02 | VISA | 102 | Referral B | | |
+| 11.03 | VISA | 103 | Referral A | | |  
+| 12.05 | VISA | 200 | Comms Error | | |
+| 20.00 | MC | 00 | Successful | | | 
+| 21.01 | MC | 101 | Declined | | | 
+| 21.02 | MC | 102 | Referral B | | | 
+| 21.03 | MC | 103 | Referral A | | | 
+| 22.05 | MC | 200 | Comms Error | | |  
+
+
+### AVS/CVN-specific testing
+| Amount in Token | Card Type | Result Code | Message | AVS Postcode Result | AVS Address Result |
+| -------- | -------- | -------- | -------- | -------- | -------- |
+| 43.00 | VISA | 101 | Declined | U | U |
+| 43.01 | VISA | 101 | Declined | I | I |
+| 43.02 | VISA | 101 | Declined | P | P |
+| 43.03 | VISA | 101 | Declined | M | M |
+| 43.04 | VISA | 101 | Declined | M | N |
+| 43.05 | VISA | 101 | Declined | N | M | 
+| 43.06 | VISA | 101 | Declined | N | N |
+| 53.00 | MC | 00 | Successful | U | U |
+| 53.01 | MC | 00 | Successful | I | I |
+| 53.02 | MC | 00 | Successful | P | P |
+| 53.03 | MC | 00 | Successful | M | M |
+| 53.04 | MC | 00 | Successful | M | N |
+| 53.05 | MC | 00 | Successful | N | M |
+| 53.06 | MC | 00 | Successful | N | N |
+
+### Error
+| Amount in Token | Card Type | Result Code |
+| -------- | -------- | -------- |
+| Any other amount | 108 | Using test system. Please use predefined Google Pay test amounts only. See documentation. |
+
+## Open Banking & Bank Payment
+
+Our infrastructure partner, Token.io, provides a mock bank to use for testing Bank Payment. For steps on using this mock bank, see the Testing Bank Payment section of our [guide](/ecommerce/expand-your-integration/open-banking-guide).
+  
+| Payment Amount | Scenario | Description |
+| --- | --- | --- |
+| £101 | Transfer status = SUCCESS  <br/>Transitions through PROCESSING | Reproduces successful payment initiation. |
+| £103 | Transfer status = FAILURE\_GENERIC  <br/>Transitions through PROCESSING | Reproduces FAILURE\_GENERIC transfer status. This status usually indicates a technical failure. Possibly, a failure callback was received from the bank, with no transaction status and no further information. |
+| £104 | Transfer status = FAILURE\_PERMISSION\_DENIED  <br/>Transitions through PROCESSING | Reproduces FAILURE\_PERMISSION\_DENIED transfer status. This status indicates that the user was denied authorization at the bank. This status is only relevant for two-step payment flows. |
+| £105 | Transfer status = PROCESSING | Reproduces transfer status PROCESSING. The transaction will not reach a final status, and it will automatically transition to INITIATED after 30 days. |
+| £106 | Transfer status = FAILURE\_CANCELED  <br/>Transitions through PROCESSING | Reproduces FAILURE\_CANCELED transfer status. This status indicates that the payment initiation was canceled before execution. |
+| £108 | Transfer status = FAILURE\_INSUFFICENT\_FUNDS  <br/>Transitions through PROCESSING | Reproduces FAILURE\_INSUFFICENT\_FUNDS transfer status. |
+| £110 | Transfer status = INITIATED  <br/>Transitions through PROCESSING | Reproduces INITIATED transfer status. The transaction was initiated, but the result is unknown. This is the final status and will not get updated later. |
+| £112 | Transfer status = FAILURE\_DECLINED  <br/>Transitions through PROCESSING | Reproduces FAILURE\_DECLINED transfer status. This status indicates that the payment initiation was rejected by the bank. |
+| £116 | Request status = REJECTED  <br/>_StatusReasonInformation_ = Insufficient funds in selected accounts to make requested payment. | Reproduces the scenario when no transfer is created, but the bank has rejected the payment due to insufficient funds. Error messages can vary from bank to bank; this is only an example. |
+| £117 | Request status = REJECTED   <br/>StatusReasonInformation = PERMISSION\_DENIED:  <br/>Forbidden `{"error":"FORBIDDEN","error\_code":"TEST36",  <br/>"error\_description":"Customer profile does not permit this action."}` | Reproduces the scenario when no transfer is created and the bank rejects the payment initiation call because of permission denied. Error messages can vary from bank to bank; this is only an example. |
+| £118 | Transfer status = FAILURE\_DECLINED  <br/>StatusReasonInformation = CUST Transitions  <br/>through PROCESSING | Reproduces the scenario when transfer status is FAILURE\_DECLINED and the decline reason populated in the _statusReasonInformation_ field is the ISO20022 decline reason CUST. Decline reasons can vary from bank to bank; this is only an example. |
+| £119 | Transfer status = FAILURE\_DECLINED  <br/>StatusReasonInformation = The order was not executed.  <br/>Order leads to exceeding the agreed daily limit.  <br/>Transitions through PROCESSING | Reproduces the scenario when transfer status is FAILURE\_DECLINED and the decline reason populated in the _statusReasonInformation_ field contains a decline description pointing to daily limit exceeded. Decline reasons can vary from bank to bank; this is only an example. |
+
+For Bank Payment, we provide "test banks" instead of test cards. Each test bank provides a different result, as shown in the table below.
+| Test Bank | Currency | Result | Webhook | Notes |
+| -------- | -------- | -------- | -------- | -------- |
+| Natwest | £ | Pending or  Decline | Yes | Declines if the transaction amount is above the balance. |
+| Lloyds | £ | Pending Only | No | |
+| Ozone Modelo | £ | Success and Pending | No | Each “debtor account” provides a different outcome. |
+| Commerzbank | € | Success Only | No | Select “Germany” first to see this bank option. |
+| Deutsche Bank | € | Payment Not Complete | No | Select “Germany” first to see this bank option. |
+
+The following table provides the login information for each test bank.
+
+| Test Bank | Username | Password | IBAN |
+| -------- | -------- | -------- | -------- |
+| Natwest | 123456789012 | 5-7-2-4-3-6 | N/A |
+| Lloyds | llr001 | Password123 | N/A |
+| Ozone Modelo | mits | mits | N/A |
+| Commerzbank | N/A | N/A | FR5191497531710377217771433 |
+| | Branch | Account | |
+| Deutsche Bank | 648 | 1094846 | FR5191497531710377217771433 |
+
+
+## Card Blocking
+Use these test cards for the Enhanced Card ID service.
+| Card Number | Brand  | Type  | Response Code  | Response Text  | CVV Response  | AVS Postcode  | AVS Address |
+| -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- |
+| 4400000000000008 | VISA | Standard Debit | 00 | Authorized | M | M | M |
+| 4095790000000004 | VISA | Standard Credit | 00  | Authorized  | M  | M  | M |
+| 5200000000000007  | MC  | Standard Debit | 00  | Authorized  | M  | M  | M |
+| 5275000000000007  | MC  | Commercial Credit | 00  | Authorized  | M  | M  | M |
+| 5348500000000009 | MC  | Commercial Credit | 00  | Authorized  | M  | M  | M |
+
+## Installments
+### Visa - eight plans
+The following Get Eligible Plans API use case has eight installment plans available for the Visa test card. Use a different `transaction_amount` to return different results.
+
+| #   | Installment Plan | Plan Type | Plan Tenure | Funding Source | Transaction Amount |
+| --- | --- | --- | --- | --- | --- |
+| 1   | plan6CwithAPR | ISSUER\_DEFAULT | 6 months | Customer | Get Eligible Plans API use cases:  <br/>For amount = 100000 return all 8 plans (response request available).  <br/>For amount = 150000 / 250000 (credit limit) return no plans.  <br/>For amount = 50000 return plan 1,3, & 4. |
+| 2   | plan12CwithAPR | ISSUER\_DEFAULT | 12 months | Customer |
+| 3   | plan12CPwithAPR | ISSUER\_PROMOTION | 12 months | Customer |
+| 4   | plan12MnoAPR | MARKET | 12 months | Merchant |
+| 5   | plan6MnoAPR | MARKET | 6 months | Merchant |
+| 6   | plan3MnoAPR | MARKET | 3 months | Merchant |
+| 7   | plan6HwithAPR | ISSUER_HYBRID | 6 months | Customer, Merchant |
+| 8   | plan6BLwithAPR | BI_LATERAL | 6 months | Customer, Merchant |
+
+### Visa - two plans
+The following Get Eligible Plans API use case has two installment plans available for the Visa test card. Use a different `transaction_amount` to return different results.
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| #   | Installment Plan | Plan Type | Plan Tenure | Funding Source | Transaction Amount |
+| 1   | plan24CwithAPR | ISSUER\_DEFAULT | 24 months | Customer | Get Eligible Plans API use cases:  <br/>For amount = 200000 return both plans (response request available).  <br/>For amount = 250000 (credit limit) return no plans.  <br/>For amount = 160000 return plan 1 only. |
+| 2   | plan6CwithAPR | MARKET | 6 months | Merchant |
+
+## Network tokens - CSS
+The following cards can be used for testing network tokens as part of our Card Storage Service (CSS).
+
+| Card Number | Expiry (mmyy) | Result |
+| --- | --- | --- |
+| 4622943127052828 | 1225 | Network token returned in response. |
+| 5186151950000055 | 1225 | Network token returned in response. |
+| 370295069663597 | 1225 | Network token returned in response. |

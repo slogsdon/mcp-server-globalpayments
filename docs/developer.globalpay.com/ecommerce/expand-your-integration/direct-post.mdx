@@ -1,0 +1,194 @@
+---
+title: "Direct POST"
+subtitle: "Capture card data in the customer's browser"
+tag: "xml"
+created: "02/07/2025"
+---
+Direct POST allows merchants to capture card data in the customer's browser using their own card form. The data is then passed from the browser as a JSON string to the Hosted Payment Page (HPP), which can be loaded in a hidden iFrame. If the card details are valid, the transaction will be automatically processed and the response returned to the parent frame. If invalid data is submitted (for example, the card number fails the luhn check), the HPP will return the validation error messages.
+
+## PCI compliance questionnaire
+Merchants using the HPP Direct POST can attest to their PCI Compliance by completing the PCI DSS Self-Assessment Questionnaire (SAQ) A-EP. In this implementation, card data is not transmitted from the merchant's server, it is passed from the browser to the HPP. While this does not qualify as SAQ A, since the card data fields are provided by the merchant's application, it also avoids the more onerous compliance requirements of SAQ D. For more information, see the [PCI Security Standards Council website](https://www.pcisecuritystandards.org/merchants/).
+
+<Infobox>
+HPP Direct POST currently supports only basic card processing. It is not compatible with 3D Secure, non-card payment methods, or Dynamic Currency Conversion. It can, however, be used alongside Card Storage, Fraud Management, and OTB.
+</Infobox>
+
+## Step 1: Set up your card form
+Below is the sample code for capturing card data using a very simple HTML form. You can modify this example to fit your solution.
+
+<Infobox>
+In addition to the validation provided by the HPP, we also recommend performing input validation on your own card form before submitting any data.
+</Infobox>
+
+#### Sample card form
+
+<Code id="markup" title="HTML" language="markup" active>
+```
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Basic Card Form Example</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Available at https://github.com/realexpayments -->
+        <script src="rxp-js.js"></script>
+        <!-- Basic form styling given as an example -->
+        <style type="text/css">
+            label{display:block; font-size:12px; font-family:arial;}
+            input{width:200px;}
+            input.small{width:50px;}
+            .clearAll{clear:both;}
+        </style>
+    </head>
+    <body>
+        <!-- Basic HTML form given as an example -->
+        <form name="cardDataForm" id="cardDataForm" method="POST" autocomplete="off">
+        <label for="cardNumber">Card Number</label>
+        <input type="tel" id="cardNumber" name="cardNumber" /><br><br>
+        <label for="cardholderName">Cardholder Name</label>
+        <input type="text" id="cardholderName" name="cardholderName" /><br><br>
+        <label>Expiry Date</label>
+        <input type="tel" id="expiryDate" name="expiryDate" placeholder="MMYY" class="small" /><br><br>
+        <label for="cvn">Security Code</label>
+        <input type="tel" id="cvn" name="cvn" class="small" />
+        <p class="clearAll">
+        <button type="button" name="cardDataSubmit" onclick="submitToHpp();">Pay Now</button>
+        </form>
+        <iframe id="hiddeniFrame" name="hiddeniFrame"></iframe>
+    </body>
+</html>
+```
+</Code>
+
+## Step 2: Open the HPP in a hidden iFrame
+
+The format of the POST to the HPP is the same as an embedded or lightbox iFrame. In order to trigger the Direct POST functionality we need to include the `HPP_LISTENER_URL` field, the value of which must be your application's domain. In this example we're also going to use the `HPP_POST_RESPONSE` field so that the HPP will return the final transaction response to the parent frame. We could also use `MERCHANT_RESPONSE_URL`. The target of our form request POST is going to be our hidden iFrame.
+
+Depending on how your application is configured you can trigger the auto-submission of the POST to HPP before the customer has entered their card data in your form, or once they have clicked the Pay Now button. When opening the HPP in your iFrame you'll also have to attach an event listener in order to be able to receive the responses from HPP.
+
+#### Sample HTML POST
+
+<Code id="markup" title="" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="hiddeniFrame">
+  <input type="hidden" name="TIMESTAMP" value="20181004174516">
+  <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="HPP_LISTENER_URL" value="https://www.example.com">
+  <input type="hidden" name="HPP_POST_RESPONSE" value="https://www.example.com">
+</form>
+```
+</Code>
+
+#### Additional request fields syntax
+_Type_ indicates whether the field is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+| Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Listener URL | string | Standard URL | O   | 0-255 | This field must contain the domain of the application hosting the iFrame or WebView. This will tell the HPP to wait for card data to be posted to it as a JSON message. |
+
+### Listener loaded successfully
+If the HPP successfully loads and the Direct POST functionality is enabled, the following JSON string will be returned. The HPP is now listening for the card data to be submitted to it.
+
+
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "action":"hpp-listener-loaded",
+    "payload":true
+}
+ ```
+</Code>   
+
+## Step 3: Send the card data to the HPP
+HPP Direct POST will accept the cardholder data as a JSON string in the format outlined below. Once submitted, the HPP will process the transaction normally and return the response to your application. In our example, because we are using `HPP_POST_RESPONSE`, the response will be returned as a JSON name/value pair string with the values Base64 encoded. If invalid data is submitted an event will be triggered which will return the error code to your application as a JSON string; please refer to the examples below - Responses to the Parent Page.
+
+#### Direct POST format
+
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "action":"populate-form-fields",
+    "payload":{
+        "pas_ccnum":"4263970000005262",
+        "pas_ccmonth":"10",
+        "pas_ccyear":"25",
+        "pas_cccvc":"222"
+        "pas_ccname":"James Mason",
+    }
+}
+     ```
+</Code> 
+
+### Sample code to submit the data to the HPP
+Here is a simple example of a function to grab the entered cardholder data from your own card form, create the JSON string, and send it to the HPP loaded in the hidden iFrame.
+
+<Code id="json" title="JSON" language="json" active>
+```
+function submitToHpp() {
+  // target the HPP loaded in the hidden iFrame
+  var targetiFrame = document.getElementById("hiddeniFrame").contentWindow;
+  // create a variable with the values of the cardholder data
+  var cardDataForm = document.getElementById("cardDataForm")
+  // construct the HPP Direct POST message
+  var cardData = {
+    action: "populate-form-fields",
+    payload: {
+      pas_ccnum: cardDataForm.elements["cardNumber"].value,
+      pas_ccmonth: cardDataForm.elements["expiryDate"].value.substring(0, 2),
+      pas_ccyear: cardDataForm.elements["expiryDate"].value.substring(2, 4),
+      pas_cccvc: cardDataForm.elements["cvn"].value,
+      pas_ccname: cardDataForm.elements["cardholderName"].value
+    }
+  }
+  // convert to JSON
+  cardData = JSON.stringify(cardData);
+  // send the JSON string to the hidden HPP
+  targetiFrame.postMessage(cardData, "https://pay.sandbox.realexpayments.com/pay")
+  return true;
+}
+     ```
+</Code> 
+
+### Responses to the parent page
+If invalid data is submitted, the HPP will return JSON string(s) indicating any issues with each field.
+
+<Code id="json" title="JSON" language="json" active>
+```
+HPP Loaded Successfully:
+{"action":"hpp-listener-loaded","payload":true}
+
+Invalid Action:
+{"action":"action-error","payload":"Action not recognised"}
+
+Invalid Card Number:
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_CARDNUMBER","errorMessage":"The Card Number is not valid","field":"pas_ccnum"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_CARDNUMBER","errorMessage":"The Card Number must consist of at least 12 digits","field":"pas_ccnum"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_CARDNUMBER","errorMessage":"The Card Number must consist of no more than 19 digits","field":"pas_ccnum"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_CARDNUMBER","errorMessage":"Cannot process this card type, please use another Card","field":"pas_ccnum"}]}
+[{"errorCode":"INVALID_CARDNUMBER","errorMessage":"A Card Number is required","field":"pas_ccnum"}]}
+
+Invalid Expiry Date:
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_EXPIRY_DATE","errorMessage":"The year is not valid","field":"pas_expiry"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_EXPIRY_DATE","errorMessage":"The month is not valid","field":"pas_expiry"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_EXPIRY_DATE","errorMessage":"Please enter a valid month/year","field":"pas_expiry"}]}
+
+
+Invalid Security Code:
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_SECURITY_CODE","errorMessage":"Security Code is too short","field":"pas_cccvc"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_SECURITY_CODE","errorMessage":"The Security Code is not valid","field":"pas_cccvc"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_SECURITY_CODE","errorMessage":"Security Code is too long","field":"pas_cccvc"}]}
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_SECURITY_CODE","errorMessage":"The Security Code is not valid","field":"pas_cccvc"}]}
+
+Invalid Cardholder Name:
+{"action":"form-field-errors","payload":[{"errorCode":"INVALID_CARDHOLDER_NAME","errorMessage":"The Card Name is not valid","field":"pas_ccname"}]}
+
+API Timeout:
+{"action":"hpp-api-timeout-error","payload":"Could not identify card type"}
+     ```
+</Code> 

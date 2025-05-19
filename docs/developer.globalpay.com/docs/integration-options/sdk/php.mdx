@@ -1,0 +1,58 @@
+---
+title: 'PHP'
+search_results: 'PHP SDK'
+subtitle: 'Integrate our PHP SDK into your project'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+## Requirements
+For security and support, we highly recommend you use PHP 8+.
+* PHP >= 8.0.0
+
+## Installation
+Installing the SDK into your solution is usually done using [Composer/Packagist](https://packagist.org/packages/globalpayments/php-sdk).
+
+### Composer
+Add the following to your composer.json file:
+
+<Code>
+```
+{
+    "require": {
+        "globalpayments/php-sdk": "2.0.0"
+    }
+}
+```  
+</Code>
+
+<br />
+Inside the application directory, run composer (from the command line):
+<Code>
+```
+composer update OR (depending on your server configuration) php composer.phar update
+```
+</Code>
+
+<br />
+Add a reference to the autoloader class anywhere you need to use the SDK:
+
+<Code>
+```
+require_once ('vendor/autoload.php');
+```
+</Code>
+
+## GitHub
+Download the the latest release of the SDK from [GitHub](https://github.com/globalpayments/php-sdk).
+
+## Start integrating
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/online/api-guide" title="Online">
+       Take payments securely online while meeting PCI DSS requirements.
+    </Card>  
+  
+    <Card type="with_icon" link="/docs/integration-options/sdk/sdk-reference/overview" title="SDK Reference">
+        References to help you with your SDK integration.
+    </Card>
+</CardsGroup>

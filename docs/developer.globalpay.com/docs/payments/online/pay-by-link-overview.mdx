@@ -1,0 +1,78 @@
+---
+title: 'Pay by Link - Overview'
+search_results: 'Global Payments - Pay by Link'
+subtitle: 'Allow customers to pay with a unique payment link.'
+tag: 'rest'
+created: '06/08/2024'
+---
+Pay by Link gives merchants the ability to automatically generate a unique payment link for their customers without needing a website. When a customer uses the link, they are redirected to a payment page to enter their payment details. This unique link can be set for single use or multiple use, depending on the business case.
+
+You can provide the link to your customers in several ways. For example, the link can be embedded in a QR code for customers to scan with their phone or it can be included in a promotional post on a social media platform such as Facebook or Instagram. You can also send the link directly to a customer via an email or text message (SMS) — for example, if you want to remind them to pay their bill. 
+
+With Pay by Link, you can also:
+
+* Align your Customer Relationship Management (CRM) system to enhance your payment capabilities.
+* Automate the payment of a Pay by Link into your fulfillment systems.
+* Track each individual payment link and see if it leads to a payment.
+
+![Screenshot of a payment link created successfully and the payment page associated with the link.](/gh-assets/pay-link_example.png)
+<p style={{textAlign: "center"}}>**Pay by Link Example**</p>
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our Pay by Link solution. Keep in mind that this section doesn’t cover all of the use cases.
+
+##### Use case #1: Reminder texts
+A medical insurer wants to send reminders to its customers to pay their bill. It uses the API to create payment links, which are then sent via its CRM system as text messages to customers. Customers click the link in the text message, which opens up a payment page on their phone for them to pay their insurance bill. 
+
+##### Use case #2: Social media posts
+A large multinational corporation uses the APIs to create payment links, which it feeds into its social media platform to push products directly to its Facebook, Twitter, and Instagram accounts. Customers can see the posts and click the payment link to purchase the products directly. 
+
+##### Use case #3: QR codes on checks
+A restaurant point-of-sale (POS) software provider enables pay-at-the-table functionality by leveraging the API. The POS software calculates the final bill and then calls the API to generate a payment link. Using a third-party library, the POS software embeds the link into a QR code and prints the QR code onto the check provided to the restaurant’s customer. The customer then scans the code using their phone and is taken to the payment page where they enter the payment details.
+
+##### Use case #4: Telephone orders
+An online retailer selling high-end products allows customers calling in for product advice to also complete a purchase over the phone using a credit card. The merchant previously used a virtual terminal to input the card number, but since this raised serious data protection and security concerns, their CRM system now sends a payment link to the customer’s phone instead. The customer then completes the purchase on a personalized payment page for the merchant.
+
+## Product information
+##### What you get with Pay by Link
+* Create, manage and share payment links
+* Dashboard UI to complement our API 
+* Configure what information to capture on payment form (for example, billing info)
+
+##### What you can add to Pay by Link
+* 3D Secure
+* Digital Wallets (_Coming Soon_) 
+* Open Banking (_Coming Soon_)
+
+##### Integration options
+* JavaScript Library
+* API via the Links resource
+
+##### Regions where you can use Pay by Link
+* United States
+* Asia-Pacific
+* Canada
+* Europe
+
+## How it works
+You can easily integrate with our API to use Pay by Link and automate the sharing of payment requests to your customers by embedding the link into the customer journey of your existing system. A payment link is created when you send a request to the Unified Payments API server (_/ucp/links_) to create a new link URL. 
+
+There are many ways to configure a payment link in the Create Link API request. For example, you can specify if the link can only be paid once or multiple times, as well as set an expiry date. For multiple-use payment links, you can set a maximum number of times that it can be used.
+
+Once the request is received, our API then generates a unique id to represent the link (`LNK_ID`). You can send this link to the customer via email or text/SMS. After the customer clicks the link, they are redirected to the hosted page of our technology partner, Truust. The customer then enters their card details to complete the purchase. Truust then sends the transaction to our API. After getting a response, Truust will send a webhook to the API and then redirect the customer back to the Return URL you included in the request. 
+
+All link and transactional data are available for you to access via the API. For example, you can query how many times the link was viewed or paid.
+
+At a high level, Pay by Link works like this:
+
+![Diagram flow show how Pay by Link works at a high level.](/gh-assets/pay-link_flow.png)
+<p style={{textAlign: "center"}}>**Pay by Link Typical Flow**</p>
+
+## Next steps
+To try Pay by Link, follow the steps and code samples in our [guide](/docs/payments/online/pay-by-link-guide).
+
+<Infobox>
+  
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+
+</Infobox>

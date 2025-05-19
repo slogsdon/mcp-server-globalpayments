@@ -1,0 +1,118 @@
+---
+title: 'WeChat Pay (Online)'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/wechat.png" />
+</div>
+
+| **Payment Type**           | Digital Wallets                                                                                                                                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Payment Method String**  | wechatpay                                                                                                                                                                                                       |
+| **Available Countries**    | AE, AG, AU, AZ, BD, BN, CA, CN, FR, PF, GE, DE, HK, HU, IE, ID, IT, JP, KZ, KE, KR, KG, LU, MG, MO, MV, MY, MX, MN, NL, NP, NZ, PH, SC, SG, SR, TJ, TZ, TH, US, VN                                              |
+| **Available Currencies**   | EUR, USD, GBP                                                                                                                                                                                                   |
+| **Min Transaction Amount** | CNY 0.01 (or equivalent)                                                                                                                                                                                        |
+| **Max Transaction Amount** | CNY 10,000 to 50,000 per transaction or per day if the funds go from a bank card. Some banks may allow higher limits. \| CNY 50,000 (or equivalent) per transaction per day if the funds go from wallet balance |
+| **Supports Refunds**       | Full and Partial up to 365 days                                                                                                                                                                                 |
+| **Chargebacks**            | No                                                                                                                                                                                                              |
+| **Sandbox**                | No                                                                                                                                                                                                              |
+| **Timeout**                | 2 Hours                                                                                                                                                                                                         |
+
+**Note**: WeChat Pay is available in the country of the WeChat shopper's wallet. Available for Chinese citizens only.
+
+### Sample request
+<CodeGroup>
+	<Code id="html" title="HTTP POST (HPP)" language="markup" active>
+	```
+	<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+	<input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+	<input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+	<input type="hidden" name="ACCOUNT" value ="internet">
+	<input type="hidden" name="ORDER_ID" value ="20230203111526-63dcecce59144">
+	<input type="hidden" name="AMOUNT" value ="3800">
+	<input type="hidden" name="CURRENCY" value ="USD">
+	<input type="hidden" name="SHA1HASH" value ="d0e4d81c30856e22808e53f2d0a7c45accf52beb">
+	<input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+	<input type="hidden" name="HPP_VERSION" value ="2">
+	<input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="CN">
+	<input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+	<input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+	<input type="hidden" name="MERCHANT_RESPONSE_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_TX_STATUS_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+	<input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+	<input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+	<input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+	<input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+	<input type="hidden" name="HPP_LANG" value ="EN">
+	<input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+	<input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+	<input type="hidden" name="COMMENT1" value="Mobile Channel">
+	<input type="hidden" name="COMMENT2" value="Down Payment">
+	<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+	<input type="submit" value="Click here to Purchase">
+	</form>
+	```
+	</Code>
+
+	<Code id="xml" title="XML" language="markup">
+	```
+	<?xml version='1.0' encoding='UTF-8'?>			
+	<request type='payment-set' timestamp='{{timestamp}}'>			
+		<merchantid>Merchant ID</merchantid>		
+		<account>internet</account>		
+		<amount currency='USD'>3800</amount>		
+		<autosettle flag='1' />		
+		<orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+		<paymentmethod>wechatpay</paymentmethod>		
+		<paymentmethoddetails>		
+			<returnurl>https://www.example.com/returnUrl</returnurl>	
+			<errorurl>https://www.example.com/errorUrl</errorurl>	
+			<statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+			<descriptor>Test Transaction</descriptor>	
+			<country>CN</country>	
+			<accountholdername>James Mason</accountholdername>		
+		</paymentmethoddetails>		
+		<comments>		
+			<comment id='1'>Mobile Channel</comment>	
+			<comment id='2'>Down Payment</comment>	
+		</comments>		
+		<sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+	</request>		
+	```
+	</Code>
+	<Code id="json" title="JSON" language="json">
+	```
+	{                        
+			"account_name": "{{acc_name}}",                
+			"type": "SALE",                
+			"channel": "CNP",                
+			"amount": "3800",                
+			"currency": "USD",                
+			"reference": "{{reference}}",                
+			"country": "CN",                
+			"payment_method": {                
+					"entry_mode": "ECOM",        
+					"apm": {        
+							"provider": "wechatpay"
+					}        
+			},                
+			"notifications": {                
+			"return_url": "<Replace with your own endpoints>",                
+			"status_url": "<Replace with your own endpoints>"                
+			},                
+			"payer": {}                
+	}
+	```
+	</Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name   | Type | Format                  | Length | Description                                                                                                                                                                                                                                               |
+| ------ | ---- | ----------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Locale | O    | (\[a-z\]+)\\\_(\[A-Z\]) | 5      | Locale identifiers for the payment page, specified as Language\_Region tags.The following values are supported:zh\_CN, zh-CN (Simplified Chinese)zh\_TW, zh-TW (Traditional Chinese)en\_US, en-US (English)ja\_JP, ja-JP (Japanese)ko\_KR, ko-KR (Korean) |

@@ -1,0 +1,39 @@
+---
+title: 'Disputes Management - Overview'
+search_results: 'Global Payments - Disputes & Chargeback Management Overview'
+subtitle: 'Automate the reporting and management of transaction disputes'
+tag: 'rest'
+created: '06/08/2024'
+---
+Using our Disputes API allows you to automate the reporting and management of transaction disputes. This includes the ability to accept or challenge disputes along with the reporting available across multiple channels and regions from a single source.
+
+With the help of our tools such as Fraud Management, Invoicing, and Dynamic Narrative, as well as our best practice guidelines, you can prevent disputes before they happen.
+
+<Infobox>
+  Disputes Management is only available to merchants who use us as an acquirer.
+  </Infobox>
+  
+## What is a dispute?
+A _dispute_ occurs when a transaction’s validity is questioned and can be raised by the cardholder or the issuer. In either scenario, the issuer sends the dispute to the acquirer to resolve. We either resolve the dispute or forward it to the merchant to provide evidence that the transaction is legitimate.
+
+When a merchant receives the dispute, they can accept it or they can choose to challenge it by sending evidence to prove the transaction is legitimate. We review the evidence to ensure it meets the necessary requirements before sending it to the issuer. The issuer then reviews the evidence provided and makes a decision on the outcome of the dispute. The customer and the merchant are then notified of the case decision.
+
+## Dispute types and stages
+Before we cover how to use the Disputes API, it’s useful to gain an understanding of the different types of disputes, the relevant terminology and their meanings. If you want to skip right to the code, see our [guide](/docs/operations/disputes-management-guide).
+
+|     |     |
+| --- | --- |
+| **Dispute Term** | **Description** |
+| Retrieval | A request for proof that a transaction was valid. To respond, you might provide a copy of the sales draft for the transaction. Funds are not exchanged during retrieval request cases, but if you do not respond successfully, you could be held responsible (liable) for any chargeback cases that result. Retrieval requests are sometimes simply referred to as retrievals. |
+| Chargeback | When the cardholder or issuer is formally disputing a transaction. As soon as a chargeback case is initiated, the disputed funds are usually transferred from the merchant’s account to the Issuer. With a chargeback you can choose to:<br />–Acknowledge it and accept liability<br />–Challenge it with supporting documentation |
+| Arbitration / PreArbitration | Can be created when a case is not resolved at the chargeback stage. For this case type, we work with the issuer to try to resolve the dispute and avoid arbitration.You would typically try to avoid arbitration because of the added fees, time lost and potential penalties if you lose the arbitration case. Arbitration, when necessary, is performed by the card brands like Visa and Mastercard. |
+| Compliance / PreCompliance | A type of case that is based on a violation of the rules that are defined by the relevant card brand. These violations include:<br />–The customer agreed to be charged at least once, but the merchant billed for multiple key-entered transactions without the cardholder’s authority (card-present environment).<br />–A merchant or acquirer ignored a retrieval request issued for legal proceedings or law enforcement investigations. |
+| Good Faith Collection | A request for you to accept liability for a case on a good faith basis, even though the final deadline for resolving the case has passed. Acceptance of an incoming good faith collection case is completely at your discretion. |
+| Exception Case | Includes both the incoming and outgoing versions of the following case types: PreArbitration, Arbitration, PreCompliance, Compliance, and Good Faith Collection. |
+
+## Next steps
+To get familiar with how Disputes Management works, follow the steps and code samples in our [guide](/docs/operations/disputes-management-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+  </Infobox>

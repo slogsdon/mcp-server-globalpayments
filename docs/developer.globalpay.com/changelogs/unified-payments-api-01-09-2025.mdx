@@ -1,0 +1,24 @@
+---
+title: "REST API - January 09, 2025"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "01-09-2025"
+---
+
+<ReleaseNoteSection title="Bank Transfer Returns">
+    <ReleaseNoteDetail type="added">
+        * Added functionality for embedded partners to retrieve a list of their bank transfer returns by performing a GET.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Device Commands">
+    <ReleaseNoteDetail type="changed">
+        * Bills paid by cash are returned successfully without a card number.
+        * Transactions cancelled at the terminal are returned successfully.
+        * GPAPI ID prefixes (`DVC_` and `TRN_`) are strictly enforced on all transactions.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Added ability to "authorize and capture" digital wallet transactions for embedded partners. Previously, only full sale transactions were possible.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

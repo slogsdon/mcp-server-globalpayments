@@ -1,0 +1,18 @@
+---
+title: "Unified Payments API - May 11, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "05-11-2023"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Updated accepted ENUMs for "payment_method.digital_wallet.provider" field.
+            * APPLE_PAY
+            * GOOGLE_PAY
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * The "payer_amount" and "exhange_rate" fields now return the values in the response for a Capture a Sale request. Previously, these were returning empty strings.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

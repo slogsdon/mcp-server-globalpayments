@@ -1,0 +1,225 @@
+---
+title: "Digital Wallets SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Apple Pay
+
+<Infobox>
+We support Apple Pay, but it's not supported by all acquirers and is not enabled by default on your account. For more information, contact a member of our support team. <br />
+Supports 2-exponent amounts e.g. GBP £10.00. Currencies with a different exponent such as exponent 0 (e.g. 10 JPY) or exponent 3 (e.g. 10.000 BHD) are currently not supported. <br />
+A shortened version of the Apple Pay token has been used throughout this section.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setToken("{\"version\":\"EC_v1\",\"data\":\"dvMNzlcy6WNB\",\"header\":{\"ephemeralPublicKey\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E\","
++ "\"transactionId\":\"fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3\",\"publicKeyHash\":\"h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk\"}}");
+card.setMobileType(MobilePaymentMethodType.APPLEPAY);
+
+try {
+   // process an auto-capture authorization
+   Transaction response =
+                   card
+                       .charge(new BigDecimal("19.99"))
+                       .withCurrency("EUR")
+                       .execute();
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the token object
+var token = new CreditCardData
+{
+   Token = "{\"version\":\"EC_v1\",\"data\":\"dvMNzlcy6WNB\",\"header\":{\"ephemeralPublicKey\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E\","
+   + "\"transactionId\":\"fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3\",\"publicKeyHash\":\"h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk\"}}",
+   MobileType = MobilePaymentMethodType.APPLEPAY
+};
+
+try
+{
+   // process an auto-capture apple pay authorization
+   Transaction response = token.Charge(19.99m)
+		.WithCurrency("EUR")
+		.Execute();
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->token = '{"version":"EC_v1","data":"dvMNzlcy6WNB","header":{"ephemeralPublicKey":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E",'
+  .'transactionId":"fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3","publicKeyHash":"h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk"}}';
+$card->mobileType = EncyptedMobileType::APPLE_PAY;
+
+$response = new Transaction();
+
+try {
+   // process an auto-capture authorization
+   $response = $card->charge(19.99)
+      ->withModifier(TransactionModifier::ENCRYPTED_MOBILE)
+      ->withCurrency('EUR')
+      ->execute(); 
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+## Google Pay
+
+<Infobox>
+We support Apple Pay, but it's not supported by all acquirers and is not enabled by default on your account. For more information, contact a member of our support team. <br />
+Supports 2-exponent amounts e.g. GBP £10.00. Currencies with a different exponent such as exponent 0 (e.g. 10 JPY) or exponent 3 (e.g. 10.000 BHD) are not supported. <br />
+A shortened version of the Google Pay token has been used throughout this section.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setToken("{\"signature\":\"MEUCIQDapDDJyf9lH3ztEWksgAjNe...AXjW+ZM+Ut2BWoTExppDDPc1a9Z7U\\u003d\",\"protocolVersion\":\"ECv1\","
++ "\"signedMessage\":\"{\"encryptedMessage\":\"VkqwkFuMdXp...TZQxVMnkTeJjwyc4\\u003d\",\"ephemeralPublicKey\":\"BMglUoKZWxgB...YCiBNkLaMTD9G4sec\\u003d\","
++ "\"tag\":\"4VYypqW2Q5FN7UP87QNDGsLgc48vAe5+AcjR+BxQ2Zo\\u003d\"}\"}");
+card.setMobileType(MobilePaymentMethodType.GOOGLEPAY);
+
+try {
+   // process an auto-capture authorization
+   Transaction response = card.charge(new BigDecimal("19.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the token object
+var token = new CreditCardData
+{
+   Token = "{\"signature\":\"MEUCIQDapDDJyf9lH3ztEWksgAjNe...AXjW+ZM+Ut2BWoTExppDDPc1a9Z7U\\u003d\",\"protocolVersion\":\"ECv1\","
+   + "\"signedMessage\":\"{\"encryptedMessage\":\"VkqwkFuMdXp...TZQxVMnkTeJjwyc4\\u003d\",\"ephemeralPublicKey\":\"BMglUoKZWxgB...YCiBNkLaMTD9G4sec\\u003d\","
+   + "\"tag\":\"4VYypqW2Q5FN7UP87QNDGsLgc48vAe5+AcjR+BxQ2Zo\\u003d\"}\"}",
+   MobileType = MobilePaymentMethodType.GOOGLEPAY
+};
+
+try
+{
+   // process an auto-capture google pay authorization
+   Transaction response = token.Charge(10.00m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->token = '{"signature":"MEUCIQDapDDJyf9lH3ztEWksgAjNe...AXjW+ZM+Ut2BWoTExppDDPc1a9Z7U\u003d",'
+  .'"protocolVersion":"ECv1","signedMessage":"{\"encryptedMessage\":\"VkqwkFuMdXp...TZQxVMnkTeJjwyc4\\u003d\",'
+  .'\"ephemeralPublicKey\":\"BMglUoKZWxgB...YCiBNkLaMTD9G4sec\\u003d\",\"tag\":\"4VYypqW2Q5FN7UP87QNDGsLgc48vAe5+AcjR+BxQ2Zo\\u003d\"}"}';
+$card->mobileType = EncyptedMobileType::GOOGLE_PAY;
+
+$response = new Transaction();
+
+try {
+   // process an auto-settle authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->withModifier(TransactionModifier::ENCRYPTED_MOBILE)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+

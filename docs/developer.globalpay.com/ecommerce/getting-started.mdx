@@ -1,0 +1,71 @@
+---
+title: "Getting Started"
+subtitle: "Start testing payments so you can go live with your integration"
+tag: "xml"
+created: "11/14/2024"
+---
+Using an XML framework, our API provides a full suite of capabilities for processing card-not-present transactions across any channel: website, in-app, or over the phone. With it, you can control the complete lifecycle of your transactions while managing your customer and reporting data.
+
+Developers can integrate in several ways: 
+
+* Direct API integration (server-to-server XML messages)
+* Server- and client-side [SDKs and libraries](/ecommerce/payments/sdk/overview) 
+* Many popular [plugins and shopping carts](/ecommerce/payments/integrations)
+* [Hosted Payment Page](/ecommerce/payments/hosted-solution/overview) (<Tooltip content="Payment Card Industry Data Security Standard"> PCI DSS </Tooltip> compliant)
+
+As a starting point, we provide a secure way for registered users to test their integrations (Sandbox) and sample the full range of payment-processing capabilities our API offers, such as Card Payments, Digital Wallets, and Fraud Rules. Simulated transactions follow the normal Production lifecycle, such as waiting for settlement, batching, and so on. This allows you to test captures, refunds, and other functionality. 
+
+Once you create an app to get an API key for the Sandbox endpoint, you can then use our test cards to simulate various transaction outcomes as you prepare to go live to Production. Sandbox keys can be used to process transactions using either direct API integration or the Hosted Payment Page.
+
+## Step 1: Get registered
+To use our free Sandbox test environment, you must be a registered user of our developer portal. Once registered, you can test your integration before going live, save your favorite pages to pick up where you left off, and join our [Research Community](/GP-Research-Community) to preview new features.
+
+<Infobox>
+If you already have an account on our Reporting or Disputes tools for merchants, you can use the same login for our developer portal. You just need to add your company name and region.
+    </Infobox>
+
+To get registered, click **Log In | Register** in the top-right corner of any page or click below.
+
+<index-button type="anchor" href="/user/b2c-login">Get Registered Now</index-button>
+
+## Step 2: Create an app (test credentials)
+Before you can start testing your integration, you’ll need to request the test credentials needed to access our Sandbox. This includes a Shared Secret and a Refund Credit Password. 
+
+<Infobox>
+You only need to create one app for our XML API. After you send your initial request to generate test credentials, you won’t be able to create any more apps. 
+</Infobox>
+
+To create an app:
+
+1) From any Developer Portal page, click the Profile icon, and select **My Account**. <br />
+_You must be logged in to access this menu item._
+2) In the **My Sandbox Credentials** section of your account page, click the **Create a New App** down arrow, and select **XML API**. <br />
+3) Your request was sent. We’ll email you when your test credentials are ready (usually within 24 hours). You'll also receive a separate email to register for our Reporting and Virtual Terminal tool: Ecommerce Portal.
+4) When ready, the new app will appear in the My Sandbox Credentials table of your account page. The app name will also be your merchant ID. To view your test credentials, click the **View Credentials** button for the app.
+
+## Step 3: Access our Sandbox
+Once you’ve created a test app and received your credentials, you’re now ready to send API requests to our Sandbox endpoint to simulate payment processing.
+
+<Infobox>
+The endpoint for our Sandbox: <br />
+**https://apis.sandbox.globalpay.com**
+</Infobox>
+
+## Step 4: Use our test cards
+When testing your integration, you should never use real card details or banking information. That’s why we provide simulated payment methods such as test card numbers and test banks (for Open Banking) — even test installment plans (for Visa Installment Service). Use these resources to test different scenarios for your application or website to handle. 
+
+For more information and the full list of test card numbers, see [Test Cards](/resources/test-cards).
+
+<CreditCardGroup>
+    <CreditCard type="Visa" number="4263970000005262" />
+    <CreditCard type="Visa" number="4000120000001154" success={false} />
+    <CreditCard type="Mastercard" number="5425230000004415"  />
+    <CreditCard type="Mastercard" number="5114610000004778" success={false} />
+</CreditCardGroup>
+
+## Technical support
+For technical support, email us at [ecomsupport@globalpay.com](mailto:ecomsupport@globalpay.com) or contact your account manager directly.
+
+For more information on the capabilities of the XML API, see the [API Reference](/ecommerce/api/overview) section of this portal.
+
+For any integration questions you might have, you can use [Stack Overflow](https://stackoverflow.com/questions/tagged/global-payments-api) or [GitHub](https://github.com/globalpayments) to find an answer or ask a new question.

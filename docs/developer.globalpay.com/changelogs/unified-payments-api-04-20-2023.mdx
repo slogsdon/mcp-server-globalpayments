@@ -1,0 +1,23 @@
+---
+title: "Unified Payments API - April 20, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "04-20-2023"
+---
+
+<ReleaseNoteSection title="Installments">
+    <ReleaseNoteDetail type="changed">
+        * Updated response fields for Query Available Plans, List Installments and Get an Installment
+            * "url" field updated to "terms_and_conditions_url"
+            * "image_url" field updated to "provider_image_url"
+            * "terms.count" field updated to "terms.total_time_unit_count"
+            * "terms.amount" field updated to "terms.total_unit_amount"
+            * "terms.url" field updated to "terms.terms_and_conditions_url"
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="changed">
+        * Updated the max length for "payment_method.first_name" and "payment_method.last_name" fields to 25 characters for Create a Sale request for Card Not Present transactions (Asia Pacific only)
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

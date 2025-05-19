@@ -1,0 +1,375 @@
+---
+title: "Digital Wallets"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/17/2025"
+---
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Digital Wallets, see our [Overview](/ecommerce/expand-your-integration/digital-wallets).
+
+## Apple Pay
+Apple Pay provides a highly secure, instant payment experience. It allows users to securely store their card details on a Secure Element built into their Apple product and to use those card details to make payments. It can be used in-app to provide payment for real-world goods and services.
+
+It's possible to test Apple Pay in our Sandbox environment. The amount specified in the request will map the tokenized data in the transaction to one of our test cards. For example, an amount of 10.00 will map to the successful Visa test card. For more information, see the [Apple Pay](/resources/test-card-numbers#card-apple-pay) section of our Test Cards article.
+
+<Infobox>
+Apple Pay is not supported by all acquirers. For more information, contact our support team. <br/>
+We support 2-exponent amounts (e.g., GBP £10.00). However, currencies with a different exponent such as exponent 0 (e.g., 10 JPY) or exponent 3 (e.g., 10.000 BHD) are currently not supported. <br/>
+A shortened version of the Apple Pay token was used in this section.
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20180614095601" type="auth-mobile">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <mobile>apple-pay</mobile>
+  <amount currency="EUR">1999</amount>
+  <token>{"version":"EC_v1","data":"Ft+dvMNzlcy6WNB+zerKtkh/RWW4RWW4yXIRgmM3WC/FYEC6Z+OJEzir2sDyzDkjIUJ0TFCQd/QAAAAAAAA==","header":{"ephemeralPublicKey":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E/lxriM46MR1FUrn7SHugprkaeFmWKZPgGpWgZ+telY/G1+YSoaCbR5YSoaCbR57bdGA==","transactionId":"fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3","publicKeyHash":"h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk="}}</token>
+  <autosettle flag="1"/>
+  <sha1hash>3231aebe4b60fe23fda3c0ad1b26f03b3ea081e2</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Mobile | string | enum | O   |     | Used to specify the token or wallet type. Allowed values:  <br/>**apple-pay**  <br/>**pay-with-google** |
+| Token | string | alphanumeric | O   | 0-1000 | The obtained token from the user's account.  <br/>Allowed special characters: \\\[{}",+/=\] |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Google Pay
+Google Pay enables customers to use the cards they have stored with their Google account to make quick, easy purchases on merchant websites or in-app. Customers can make use of details they have stored with numerous Google applications including the Play Store, YouTube and saved in their Chrome browser.
+
+It's possible to test Google Pay in our Sandbox environment. The amount specified in the request will map the tokenized data in the transaction to one of our test cards. For example, an amount of 10.00 will map to the successful Visa test card. For more information, see the [Google Pay](/resources/test-card-numbers#card-google-pay) section of our Test Cards article.
+
+<Infobox>
+Google Pay is not supported by all acquirers. For more information, contact our support team. <br/>
+We support 2-exponent amounts (e.g., GBP £10.00). However, currencies with a different exponent such as exponent 0 (e.g., 10 JPY) or exponent 3 (e.g., 10.000 BHD) are not supported. <br/>
+A shortened version of the Google Pay token was used in this section.
+</Infobox>
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20180614095601" type="auth-mobile">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1999;</amount>
+  <mobile>pay-with-google</mobile>
+  <token>{"signature":"MEUCIQDapDDJyf9lH3ztEWksgAjNe...AXjW+ZM+Ut2BWoTExppDDPc1a9Z7U\u003d","protocolVersion":"ECv1","signedMessage":"{\"encryptedMessage\":\"VkqwkFuMdXp...TZQxVMnkTeJjwyc4\\u003d\",\"ephemeralPublicKey\":\"BMglUoKZWxgB...YCiBNkLaMTD9G4sec\\u003d\",\"tag\":\"4VYypqW2Q5FN7UP87QNDGsLgc48vAe5+AcjR+BxQ2Zo\\u003d\"}"}</token>
+  <autosettle flag="1"/>
+  <sha1hash>3231aebe4b60fe23fda3c0ad1b26f03b3ea081e2</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Mobile | string | enum | O   |     | Used to specify the token or wallet type. Allowed values:  <br/>**apple-pay**  <br/>**pay-with-google** |
+| Token | string | alphanumeric | O   | 0-1000 | The obtained token from the user's account.  <br/>Allowed special characters: \\\[{}",+/=\] |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Apple Pay or Google Pay. 
+
+<Tabs active="apple">  
+<Tab id="auth" title="Apple Pay">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.token"
+```
+</Code>
+
+Since the amount and currency are contained in the token, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g...{'version':'EC_v1','data':'Ft+dvMNzlcy6WNB+zerKtkh/RWW4RWW4yXIRgmM3WC/FYEC6Z+OJEzir2sDyzDkjIUJ0TFCQd/QAAAAAAAA==','header':{'ephemeralPublicKey':'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E/lxriM46MR1FUrn7SHugprkaeFmWKZPgGpWgZ+telY/G1+YSoaCbR5YSoaCbR57bdGA==','transactionId':'fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3','publicKeyHash':'h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk='}}"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="google" title="Google Pay">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.token"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1999.EUR.{'version':'EC_v1','data':'Ft+dvMNzlcy6WNB+zerKtkh/RWW4RWW4yXIRgmM3WC/FYEC6Z+OJEzir2sDyzDkjIUJ0TFCQd/QAAAAAAAA==','header':{'ephemeralPublicKey':'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWdNhNAHy9kO2Kol33kIh7k6wh6E/lxriM46MR1FUrn7SHugprkaeFmWKZPgGpWgZ+telY/G1+YSoaCbR5YSoaCbR57bdGA==','transactionId':'fd88874954acdb299c285f95a3202ad1f330d3fd4ebc22a864398684198644c3','publicKeyHash':'h7WnNVz2gmpTSkHqETOWsskFPLSj31e3sPTS2cBxgrk='}}"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+Use the tabs below to follow the steps for a certain request type: Apple Pay or Google Pay. 
+
+<Tabs active="apple">  
+<Tab id="auth" title="Apple Pay">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the XML sample above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] AUTHORISED.14610544313177922.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="google" title="Google Pay">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] AUTHORISED.14610544313177922.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>

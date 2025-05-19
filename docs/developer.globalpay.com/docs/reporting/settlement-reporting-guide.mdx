@@ -1,0 +1,1473 @@
+---
+title: 'Settlement Reporting - Guide'
+search_results: 'Global Payments - Settlement Reporting Guide'
+subtitle: 'Learn how to get a customized list of deposit data'
+tag: 'rest'
+created: '06/08/2024'
+---
+In this guide, you’ll learn how to use our Deposits, Transactions, and Disputes capabilities so you can understand how a daily transfer of funds to you works. Our examples provide a way to get more details for a particular deposit, but keep in mind that we offer maximum flexibility for how to pull deposit data, whether it’s by timeframe, status, bank account number, and so on. 
+
+For information on managing transactions, see [Manage Payments](/docs/payments/manage-payments/overview).
+
+For more information on Settlement Reporting, see our [Overview](/docs/reporting/settlement-reporting-overview).
+
+<Infobox>
+  Settlement Reporting is available only to merchants who use us as their acquirer.
+ </Infobox>
+ 
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+ 
+## Step 1: Get a list of deposits
+In this step, we pull a list of deposits. For this initial request, you must submit an Account Name or Account ID and the desired timeframe. You can filter the returned data by:
+
+* Amount
+* Bank account number (last 4 digits)
+* Status (for example, whether a deposit is funded or reserved)
+* ID - (to search for a particular deposit)
+
+You can sort the returned data by time created, status, or deposit in ascending or descending order. The page size can also be specified.
+
+In our example, we're not using any filters as we want to return all of the deposits in the timeframe specified. To make things simple, we're only going to return two deposits per page.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/settlement/deposits?account_name=Settlement%20Reporting&from_time_created=2024-01-01&to_time_created=2024-01-01' \
+--header 'Authorization: Bearer 8iZjQyEQeriGfqtA1V5wVDagEMAI' \
+--header 'X-GP-Version: 2021-03-22'
+    ```
+    </Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+Date startDate = DateTime.now().minusMonths(1).toDate();
+Date enddate = DateTime.now().toDate();
+
+try {
+    DepositSummaryPaged response = ReportingService.findDepositsPaged(1, 10)
+            .orderBy(DepositSortProperty.TimeCreated, SortDirection.Descending)
+            .where(SearchCriteria.StartDate, startDate)
+            .and(SearchCriteria.EndDate, enddate)
+            .execute();
+
+    List<DepositSummary> depositList = response.getResults();
+    DepositSummary firstDeposit = depositList.get(0);
+    // API raw response key "deposits[0]->id"
+    String id = firstDeposit.getDepositId();
+    // API raw response key "deposits[0]->amount"
+    BigDecimal amount = firstDeposit.getAmount();
+    // API raw response key "deposits[0]->time_created"
+    Date timeCreated = firstDeposit.getDepositDate();
+    // API raw response key "deposits[0]->status"
+    String status = firstDeposit.getStatus();
+    // API raw response key "deposits[0]->funding_type"
+    String type = firstDeposit.getType();
+    // API raw response key "deposits[0]->currency"
+    String currency = firstDeposit.getCurrency();
+    // API raw response key "deposits[0]->system->mid"
+    String mid = firstDeposit.getMerchantNumber();
+    // API raw response key "deposits[0]->system->hierarchy"
+    String hierarchy = firstDeposit.getMerchantHierarchy();
+    // API raw response key "deposits[0]->system->name"
+    String mName = firstDeposit.getMerchantName();
+    // API raw response key "deposits[0]->system->dba"
+    String dba = firstDeposit.getMerchantDbaName();
+    // API raw response key "deposits[0]->sales->count"
+    int salesTotalCount = firstDeposit.getSalesTotalCount();
+    // API raw response key "deposits[0]->sales->amount"
+    BigDecimal saleTotalAmount = firstDeposit.getSalesTotalAmount();
+    // API raw response key "deposits[0]->refunds->count"
+    int refundsTotalCount = firstDeposit.getRefundsTotalCount();
+    // API raw response key "deposits[0]->refunds->amount"
+    BigDecimal refundsTotalAmount = firstDeposit.getRefundsTotalAmount();
+    // API raw response key "deposits[0]->disputes->chargebacks->count"
+    int chargebackTotalCount = firstDeposit.getChargebackTotalCount();
+    // API raw response key "deposits[0]->disputes->chargebacks->amount"
+    BigDecimal chargebackTotalAmount = firstDeposit.getChargebackTotalAmount();
+    // API raw response key "deposits[0]->disputes->reversals->count"
+    int adjustmentTotalCount = firstDeposit.getAdjustmentTotalCount();
+    // API raw response key "deposits[0]->disputes->reversals->amount"
+    BigDecimal adjustmentTotalAmount = firstDeposit.getAdjustmentTotalAmount();
+    // API raw response key "deposits[0]->fees->amount"
+    BigDecimal feesTotalAmount = firstDeposit.getFeesTotalAmount();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+DateTime StartDate = DateTime.UtcNow.AddYears(-1);
+DateTime EndDate = DateTime.UtcNow;
+
+try
+{
+	PagedResult<DepositSummary> result = ReportingService.FindDepositsPaged(1, 10)
+		.OrderBy(DepositSortProperty.TimeCreated, SortDirection.Descending)
+		.Where(SearchCriteria.StartDate, StartDate)
+		.And(SearchCriteria.EndDate, EndDate)
+		.Execute();
+
+	var depositList = result.Results;
+	DepositSummary firstDeposit = depositList.First();
+	// API raw response key "deposits[0]->id"
+	var id = firstDeposit.DepositId;
+	// API raw response key "deposits[0]->amount"
+	var amount = firstDeposit.Amount;
+	// API raw response key "deposits[0]->time_created"
+	var timeCreated = firstDeposit.DepositDate;
+	// API raw response key "deposits[0]->status"
+	var status = firstDeposit.Status;
+	// API raw response key "deposits[0]->funding_type"
+	var type = firstDeposit.Type;
+	// API raw response key "deposits[0]->currency"
+	var currency = firstDeposit.Currency;
+	// API raw response key "deposits[0]->system->mid"
+	var mid = firstDeposit.MerchantNumber;
+	// API raw response key "deposits[0]->system->hierarchy"
+	var hierarchy = firstDeposit.MerchantHierarchy;
+	// API raw response key "deposits[0]->system->name"
+	var mName = firstDeposit.MerchantName;
+	// API raw response key "deposits[0]->system->dba"
+	var dba = firstDeposit.MerchantDbaName;
+	// API raw response key "deposits[0]->sales->count"
+	var salesTotalCount = firstDeposit.SalesTotalCount;
+	// API raw response key "deposits[0]->sales->amount"
+	var saleTotalAmount = firstDeposit.SalesTotalAmount;
+	// API raw response key "deposits[0]->refunds->count"
+	var refundsTotalCount = firstDeposit.RefundsTotalCount;
+	// API raw response key "deposits[0]->refunds->amount"
+	var refundsTotalAmount = firstDeposit.RefundsTotalAmount;
+	// API raw response key "deposits[0]->disputes->chargebacks->count"
+	var chargebackTotalCount = firstDeposit.ChargebackTotalCount;
+	// API raw response key "deposits[0]->disputes->chargebacks->amount"
+	var chargebackTotalAmount = firstDeposit.ChargebackTotalAmount;
+	// API raw response key "deposits[0]->disputes->reversals->count"
+	var adjustmentTotalCount = firstDeposit.AdjustmentTotalCount;
+	// API raw response key "deposits[0]->disputes->reversals->amount"
+	var adjustmentTotalAmount = firstDeposit.AdjustmentTotalAmount;
+	// API raw response key "deposits[0]->fees->amount"
+	var feesTotalAmount = firstDeposit.FeesTotalAmount;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$startDate = (new DateTime('2024-01-01'))->setTime(0, 0, 0);
+$endDate = (new DateTime('2024-01-01'))->setTime(23, 59, 59);
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $response */
+    $response = ReportingService::findDepositsPaged(1, 10)
+        ->orderBy(DepositSortProperty::TIME_CREATED, SortDirection::DESC)
+        ->where(SearchCriteria::START_DATE, $startDate)
+        ->andWith(SearchCriteria::END_DATE, $endDate)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$depositList = $response->result;
+/** @var \GlobalPayments\Api\Entities\Reporting\DepositSummary $firstDeposit */
+$firstDeposit = reset($depositList);
+// API raw response key "deposits[0]->id"
+$id = $firstDeposit->depositId;
+// API raw response key "deposits[0]->amount"
+$amount = $firstDeposit->amount;
+// API raw response key "deposits[0]->time_created"
+$timeCreated = $firstDeposit->depositDate;
+// API raw response key "deposits[0]->status"
+$status = $firstDeposit->status;
+// API raw response key "deposits[0]->funding_type"
+$type = $firstDeposit->type;
+// API raw response key "deposits[0]->currency"
+$currency = $firstDeposit->currency;
+// API raw response key "deposits[0]->system->mid"
+$mid = $firstDeposit->merchantId;
+// API raw response key "deposits[0]->system->hierarchy"
+$mHierarchy = $firstDeposit->merchantHierarchy;
+// API raw response key "deposits[0]->system->name"
+$mName = $firstDeposit->merchantName;
+// API raw response key "deposits[0]->system->dba"
+$dba = $firstDeposit->merchantDbaName;
+// API raw response key "deposits[0]->sales->count"
+$salesTotalCount = $firstDeposit->salesTotalCount; 
+// API raw response key "deposits[0]->sales->amount"
+$salesTotalAmount = $firstDeposit->salesTotalAmount; 
+// API raw response key "deposits[0]->refunds->count"
+$refundsTotalCount = $firstDeposit->refundsTotalCount; 
+// API raw response key "deposits[0]->refunds->amount"
+$refundsTotalAmount = $firstDeposit->refundsTotalAmount; 
+// API raw response key "deposits[0]->tax->count"
+$taxTotalCount = $firstDeposit->taxTotalCount; 
+// API raw response key "deposits[0]->tax->amount"
+$taxTotalAmount = $firstDeposit->taxTotalAmount; 
+// API raw response key "deposits[0]->disputes->chargebacks->count"
+$chargebackTotalCount = $firstDeposit->chargebackTotalCount;
+// API raw response key "deposits[0]->disputes->chargebacks->amount"
+$chargebackTotalAmount = $firstDeposit->chargebackTotalAmount;
+// API raw response key "deposits[0]->disputes->reversals->count"
+$adjustmentTotalCount = $firstDeposit->adjustmentTotalCount; 
+// API raw response key "deposits[0]->disputes->reversals->amount"
+$adjustmentTotalAmount = $firstDeposit->adjustmentTotalAmount;
+// API raw response key "deposits[0]->fees->amount"
+$feesTotalAmount = $firstDeposit->feesTotalAmount;
+```
+</Code>
+</CodeGroup>
+
+### Deposit response
+The response data contains all of the deposits to your bank account within the specified timeframe. For each deposit, a summary object is returned outlining the number of sales, refunds, and disputes included in the deposit, along with any fees applied or discounts. The deposit’s unique ID is also returned, which we can use in Step 2 to get more details on this particular deposit.
+
+#### Sample response
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+    {
+    "total_record_count": 21,
+    "current_page_size": 5,
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "DAA_5763583e72ca4181bee088a25482bf06",
+    "account_name": "Settlement Reporting",
+    "filter": {
+        "from_time_created": "2024-01-01",
+        "to_time_created": "2024-01-01"
+    },
+    "paging": {
+        "page_size": 5,
+        "page": 1,
+        "order": "ASC",
+        "order_by": "TIME_CREATED"
+    },
+    "deposits": [
+        {
+            "id": "DEP_2342423423",
+            "time_created": "2021-03-07",
+            "status": "FUNDED",
+            "funding_type": "CREDIT",
+            "amount": "11400",
+            "currency": "USD",
+            "aggregation_model": "H-By Date",
+            "bank_transfer": {
+                "masked_account_number_last4": "XXXXXX9999",
+                "bank": {
+                    "code": "XXXXX0001"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            },
+            "sales": {
+                "count": 4,
+                "amount": "12400"
+            },
+            "refunds": {
+                "count": 1,
+                "amount": "-1000"
+            },
+            "discounts": {
+                "count": 0,
+                "amount": ""
+            },
+            "tax": {
+                "count": 0,
+                "amount": ""
+            },
+            "disputes": {
+                "chargebacks": {
+                    "count": 0,
+                    "amount": ""
+                },
+                "reversals": {
+                    "count": 0,
+                    "amount": ""
+                }
+            },
+            "fees": {
+                "amount": ""
+            }
+        },
+        {
+            "id": "DEP_2342423424",
+            "time_created": "2021-03-07",
+            "status": "FUNDED",
+            "funding_type": "CREDIT",
+            "amount": "11000",
+            "currency": "USD",
+            "aggregation_model": "5-Consolidate",
+            "bank_transfer": {
+                "masked_account_number_last4": "XXXXXX9999",
+                "bank": {
+                    "code": "XXXXX0001"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            },
+            "sales": {
+                "count": 4,
+                "amount": "12500"
+            },
+            "refunds": {
+                "count": 1,
+                "amount": "-1500"
+            },
+            "discounts": {
+                "count": 0,
+                "amount": ""
+            },
+            "tax": {
+                "count": 0,
+                "amount": ""
+            },
+            "disputes": {
+                "chargebacks": {
+                    "count": 0,
+                    "amount": ""
+                },
+                "reversals": {
+                    "count": 0,
+                    "amount": ""
+                }
+            },
+            "fees": {
+                "amount": ""
+            }
+        },
+        {
+            "id": "DEP_2342423425",
+            "time_created": "2021-03-07",
+            "status": "FUNDED",
+            "funding_type": "CREDIT",
+            "amount": "12600",
+            "currency": "USD",
+            "aggregation_model": "3-No Summary",
+            "bank_transfer": {
+                "masked_account_number_last4": "XXXXXX9999",
+                "bank": {
+                    "code": "XXXXX0001"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            },
+            "sales": {
+                "count": 5,
+                "amount": "12600"
+            },
+            "refunds": {
+                "count": 0,
+                "amount": ""
+            },
+            "discounts": {
+                "count": 0,
+                "amount": ""
+            },
+            "tax": {
+                "count": 0,
+                "amount": ""
+            },
+            "disputes": {
+                "chargebacks": {
+                    "count": 0,
+                    "amount": ""
+                },
+                "reversals": {
+                    "count": 0,
+                    "amount": ""
+                }
+            },
+            "fees": {
+                "amount": ""
+            }
+        },
+        {
+            "id": "DEP_2342423426",
+            "time_created": "2021-03-07",
+            "status": "DELAYED",
+            "funding_type": "CREDIT",
+            "amount": "12700",
+            "currency": "",
+            "aggregation_model": "4-No Summary",
+            "bank_transfer": {
+                "masked_account_number_last4": "XXXXXX9999",
+                "bank": {
+                    "code": "XXXXX0001"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            },
+            "sales": {
+                "count": 5,
+                "amount": "12700"
+            },
+            "refunds": {
+                "count": 0,
+                "amount": ""
+            },
+            "discounts": {
+                "count": 0,
+                "amount": ""
+            },
+            "tax": {
+                "count": 0,
+                "amount": ""
+            },
+            "disputes": {
+                "chargebacks": {
+                    "count": 0,
+                    "amount": ""
+                },
+                "reversals": {
+                    "count": 0,
+                    "amount": ""
+                }
+            },
+            "fees": {
+                "amount": ""
+            }
+        },
+        {
+            "id": "DEP_2342423427",
+            "time_created": "2021-03-07",
+            "status": "DELAYED",
+            "funding_type": "CREDIT",
+            "amount": "12800",
+            "currency": "",
+            "aggregation_model": "F-No Summary",
+            "bank_transfer": {
+                "masked_account_number_last4": "XXXXXX9999",
+                "bank": {
+                    "code": "XXXXX0001"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            },
+            "sales": {
+                "count": 5,
+                "amount": "12800"
+            },
+            "refunds": {
+                "count": 0,
+                "amount": ""
+            },
+            "discounts": {
+                "count": 0,
+                "amount": ""
+            },
+            "tax": {
+                "count": 0,
+                "amount": ""
+            },
+            "disputes": {
+                "chargebacks": {
+                    "count": 0,
+                    "amount": ""
+                },
+                "reversals": {
+                    "count": 0,
+                    "amount": ""
+                }
+            },
+            "fees": {
+                "amount": ""
+            }
+        }
+    ],
+    "action": {
+        "id": "ACT_xUhHvNxUHbT0b2ZdJnDVYThxDkbX1w",
+        "type": "DEPOSIT_LIST",
+        "time_created": "2021-03-10T15:21:42.749Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+    ```
+    </Code>
+</CodeGroup>
+
+## Step 2: Get a list of deposit transactions
+Now that we have our deposit ID, we can call the transaction’s endpoint to pull the data of each individual sale or refund that makes up the deposit. It can also include disputes, which we cover in Step 3. The status of the transactions can be either funded or rejected.
+
+To search for a particular transaction in a deposit (or a particular timeframe), add the following data points to your request:
+
+* First six or last four digits of the card number used
+* Card brand (such as Visa or Mastercard)
+* Acquirer reference number (ARN)
+* Authorization code or unique merchant reference
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/settlement/transactions?account_name=Settlement%20Reporting&page_size=2&order_by=TIME_CREATED&order=DESC&deposit_id=DEP_2342423427' \
+--header 'X-Gp-Version: 2021-03-22' \
+--header 'Accept: application/json' \
+--header 'Accept-Encoding: gzip' \
+--header 'Authorization: Bearer 8iZjQyEQeriGfqtA1V5wVDagEMAI'
+    ```
+    </Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+try {
+    PagedResult<TransactionSummary> response = ReportingService.findSettlementTransactionsPaged(1, 15)
+            .orderBy(DepositSortProperty.TimeCreated, SortDirection.Descending)
+            .where(DataServiceCriteria.DepositReference, "DEP_2342423427")
+            .execute();
+
+    // API raw response key "total_record_count"
+    int totalRecordCount = response.getTotalRecordCount();
+    List<TransactionSummary> trnList = response.getResults();
+    TransactionSummary transaction = trnList.get(0);
+    // API raw response "transactions[0]->id"
+    String id = transaction.getTransactionId();
+    // API raw response "transactions[0]->type"
+    String type = transaction.getTransactionType();
+    // API raw response "transactions[0]->status"
+    String status = transaction.getTransactionStatus();
+    // API raw response "transactions[0]->time_created"
+    DateTime transactionDate = transaction.getTransactionDate();
+    // API raw response "transactions[0]->amount"
+    BigDecimal amount = transaction.getAmount();
+    // API raw response "transactions[0]->currency"
+    String currency = transaction.getCurrency();
+    // API raw response "transactions[0]->cashback_amount"
+    BigDecimal cashBackAmount = transaction.getCashBackAmount();
+    // API raw response "transactions[0]->discount_amount"
+    BigDecimal gratuityAmount = transaction.getGratuityAmount();
+    // API raw response "transactions[0]->tax_amount"
+    BigDecimal taxAmount = transaction.getTaxAmount();
+    // API raw response "transactions[0]->reference"
+    String reference = transaction.getReferenceNumber();
+    // API raw response "transactions[0]->time_created_reference"
+    DateTime timeCreatedReference = transaction.getTransactionLocalDate();
+    // API raw response "transactions[0]->deposit_id"
+    String depositId = transaction.getDepositReference();
+    // API raw response "transactions[0]->deposit_time_created"
+    Date depositDate = transaction.getDepositDate();
+    // API raw response "transactions[0]->deposit_amount"
+    BigDecimal depositAmount = transaction.getDepositAmount();
+    // API raw response "transactions[0]->batch_id"
+    String batchId = transaction.getBatchId();
+    // API raw response "transactions[0]->batch_time_created"
+    DateTime batchCloseDate = transaction.getBatchCloseDate();
+    // API raw response "transactions[0]->payment_method->card->brand"
+    String cardType = transaction.getCardType();
+    // API raw response "transactions[0]->payment_method->card->brand_reference"
+    String brandReference = transaction.getBrandReference();
+    // API raw response "transactions[0]->payment_method->card->authcode"
+    String authCode = transaction.getAuthCode();
+    // API raw response "transactions[0]->payment_method->card->arn"
+    String arn = transaction.getAcquirerReferenceNumber();
+    // API raw response "transactions[0]->order->reference"
+    String orderId = transaction.getOrderId();
+    // API raw response "transactions[0]->system->mid"
+    String mid = transaction.getMerchantId();
+    // API raw response "transactions[0]->system->hierarchy"
+    String merchantHierarchy = transaction.getMerchantHierarchy();
+    // API raw response "transactions[0]->system->name"
+    String systemName = transaction.getMerchantName();
+    // API raw response "transactions[0]->system->dba"
+    String dba = transaction.getMerchantDbaName();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+try
+{
+	PagedResult<TransactionSummary> result = ReportingService.FindSettlementTransactionsPaged(1, 15)
+		.OrderBy(TransactionSortProperty.TimeCreated, SortDirection.Descending)
+		.Where(DataServiceCriteria.DepositReference, "DEP_2342423427")
+		.Execute();
+	
+	// API raw response key "total_record_count"
+	var totalRecordCount = result.TotalRecordCount;
+	var trnList = result.Results;
+	TransactionSummary transaction = trnList.First();
+	//API raw response "transactions[0]->id"
+	var id = transaction.TransactionId;
+	//API raw response "transactions[0]->type"
+	var type = transaction.TransactionType;
+	//API raw response "transactions[0]->status"
+	var status = transaction.TransactionStatus;
+	//API raw response "transactions[0]->time_created"
+	var transactionDate = transaction.TransactionDate;
+	//API raw response "transactions[0]->amount"
+	var amount = transaction.Amount;
+	//API raw response "transactions[0]->currency"
+	var currency = transaction.Currency;
+	//API raw response "transactions[0]->cashback_amount"
+	var cashBackAmount = transaction.CashBackAmount;
+	//API raw response "transactions[0]->discount_amount"
+	var gratuityAmount = transaction.GratuityAmount;
+	//API raw response "transactions[0]->tax_amount"
+	var taxAmount = transaction.TaxAmount;
+	//API raw response "transactions[0]->reference"
+	var reference = transaction.ReferenceNumber;
+	//API raw response "transactions[0]->time_created_reference"
+	var timeCreatedReference = transaction.TransactionLocalDate;
+	//API raw response "transactions[0]->deposit_id"
+	var depositId = transaction.DepositReference;
+	//API raw response "transactions[0]->deposit_time_created"
+	var depositDate = transaction.DepositDate;
+	//API raw response "transactions[0]->deposit_amount"
+	var depositAmount = transaction.DepositAmount;
+	//API raw response "transactions[0]->batch_id"
+	var batchId = transaction.BatchId;
+	//API raw response "transactions[0]->batch_time_created"
+	var batchCloseDate = transaction.BatchCloseDate;
+	//API raw response "transactions[0]->payment_method->card->brand"
+	var cardType = transaction.CardType;
+	//API raw response "transactions[0]->payment_method->card->brand_reference"
+	var brandReference = transaction.BrandReference;
+	//API raw response "transactions[0]->payment_method->card->authcode"
+	var authCode = transaction.AuthCode;
+	//API raw response "transactions[0]->payment_method->card->arn"
+	var arn = transaction.AquirerReferenceNumber;
+	//API raw response "transactions[0]->order->reference"
+	var orderId = transaction.OrderId;
+	//API raw response "transactions[0]->system->mid"
+	var mid = transaction.MerchantId;
+	//API raw response "transactions[0]->system->hierarchy"
+	var merchantHierarchy = transaction.MerchantHierarchy;
+	//API raw response "transactions[0]->system->name"
+	var systemName = transaction.MerchantName;
+	//API raw response "transactions[0]->system->dba"
+	var dba = transaction.MerchantDbaName;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $response */
+    $response = ReportingService::findSettlementTransactionsPaged(1, 15)
+        ->orderBy(TransactionSortProperty::TIME_CREATED, SortDirection::DESC)
+        ->where(SearchCriteria::DEPOSIT_ID, 'DEP_2342423427')
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$trnList = $response->result;
+/** @var \GlobalPayments\Api\Entities\Reporting\TransactionSummary $transaction */
+$transaction = reset($trnList);
+// "transactions[0]->id"
+$id = $transaction->transactionId;
+// "transactions[0]->type"
+$type = $transaction->transactionType;
+// "transactions[0]->status"
+$transactionStatus = $transaction->transactionStatus;
+// "transactions[0]->time_created"
+$transactionDate = $transaction->transactionDate;
+// "transactions[0]->amount"
+$amount = $transaction->amount;
+// "transactions[0]->currency"
+$currency = $transaction->currency;
+// "transactions[0]->cashback_amount"
+$cashBackAmount = $transaction->cashBackAmount;
+// "transactions[0]->merchant_amount"
+$merchantAmount = $transaction->merchantAmount;
+// "transactions[0]->merchant_currency"
+$merchantCurrency = $transaction->merchantCurrency;
+// "transactions[0]->discount_amount"
+$gratuityAmount = $transaction->gratuityAmount;
+// "transactions[0]->tax_amount"
+$taxAmount = $transaction->taxAmount;
+// "transactions[0]->reference"
+$referenceNumber = $transaction->referenceNumber;
+// "transactions[0]->time_created_reference"
+$timeCreatedReference = $transaction->transactionLocalDate;
+// "transactions[0]->deposit_id"
+$depositId = $transaction->depositReference;
+// "transactions[0]->deposit_time_created"
+$depositTimeCreated = $transaction->depositTimeCreated;
+// "transactions[0]->deposit_status"
+$depositStatus = $transaction->depositStatus;
+// "transactions[0]->deposit_amount"
+$depositAmount = $transaction->settlementAmount;
+// "transactions[0]->batch_id"
+$batchId = $transaction->batchSequenceNumber;
+// "transactions[0]->batch_time_created"
+$batchCloseDate = $transaction->batchCloseDate;
+// "transactions[0]->payment_method->entry_mode"
+$entryMode = $transaction->entryMode;
+// "transactions[0]->payment_method->card->brand"
+$cardType = $transaction->cardDetails->brand;
+// "transactions[0]->payment_method->card->brand_reference"
+$brandReference  = $transaction->cardDetails->brandReference;
+// "transactions[0]->payment_method->card->authcode"
+$authcode = $transaction->authCode;
+// "transactions[0]->payment_method->card->arn"
+$arn = $transaction->aquirerReferenceNumber;
+// "transactions[0]->order->reference"
+$orderId = $transaction->orderId;
+// "transactions[0]->system->mid"
+$mid = $transaction->merchantId;
+// "transactions[0]->system->hierarchy"
+$systemHierarchy = $transaction->merchantHierarchy;
+// "transactions[0]->system->name"
+$systemName = $transaction->merchantName;
+// "transactions[0]->system->dba"
+$dba = $transaction->merchantDbaName;
+```
+</Code>
+</CodeGroup>
+
+### Deposit transactions response
+For each of the deposit’s transactions, the response data contains funding status, time created, time batched, and the payment method the customer used. Also returned is the transaction’s unique merchant and acquirer references, which you can use to programatically reconcile the sales and refunds from your ecommerce or point-of-sale solutions with the transactions funded into your bank account.
+
+#### Sample response
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+{
+    "total_record_count": 5,
+    "current_page_size": 2,
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "DAA_5763583e72ca4181bee088a25482bf06",
+    "account_name": "Settlement Reporting",
+    "filter": {
+        "from_deposit_time_created": "2024-01-08",
+        "to_deposit_time_created": "2024-01-10",
+        "deposit_id": "DEP_2342423427"
+    },
+    "paging": {
+        "page_size": 2,
+        "page": 1,
+        "order": "DESC",
+        "order_by": "TIME_CREATED"
+    },
+    "transactions": [
+        {
+            "time_created": "2021-03-05T15:31:56",
+            "status": "FUNDED",
+            "type": "SALE",
+            "amount": "2500",
+            "currency": "USD",
+            "cashback_amount": "",
+            "merchant_amount": "2500",
+            "merchant_currency": "USD",
+            "discount_amount": "",
+            "merchant_discount_amount": "",
+            "tax_in_merchant_amount": true,
+            "tax_amount": "",
+            "merchant_tax_amount": "",
+            "reference": "28012076eb6M",
+            "time_created_reference": "2021-03-05T17:31:56",
+            "deposit_id": "DEP_2342423427",
+            "deposit_time_created": "2021-03-07",
+            "deposit_status": "DELAYED",
+            "batch_id": "",
+            "batch_time_created": "2021-03-06T15:31:56.508Z",
+            "payment_method": {
+                "entry_mode": "MOTO",
+                "card": {
+                    "brand": "AMEX",
+                    "authcode": "129623",
+                    "brand_reference": "MWE1P0JG80110",
+                    "masked_number_first6last4": "379132XXXXX1007",
+                    "arn": "71400011203688701393903"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "tid": "",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            }
+        },
+        {
+            "time_created": "2021-03-05T15:31:56",
+            "status": "FUNDED",
+            "type": "SALE",
+            "amount": "2620",
+            "currency": "USD",
+            "cashback_amount": "",
+            "merchant_amount": "2620",
+            "merchant_currency": "USD",
+            "discount_amount": "",
+            "merchant_discount_amount": "",
+            "tax_in_merchant_amount": true,
+            "tax_amount": "",
+            "merchant_tax_amount": "",
+            "reference": "280120767b6M",
+            "time_created_reference": "2021-03-05T17:31:56",
+            "deposit_id": "DEP_2342423427",
+            "deposit_time_created": "2021-03-07",
+            "deposit_status": "DELAYED",
+            "batch_id": "",
+            "batch_time_created": "2021-03-06T15:31:56.576Z",
+            "payment_method": {
+                "entry_mode": "CP",
+                "card": {
+                    "brand": "VISA",
+                    "authcode": "10557",
+                    "brand_reference": "MDJ1Q6CG80110",
+                    "masked_number_first6last4": "419132XXXXXX1007",
+                    "arn": "71406011129179730359011"
+                }
+            },
+            "system": {
+                "mid": "101023947262",
+                "tid": "",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD.",
+                "dba": "XYZ Group"
+            }
+        }
+    ],
+    "action": {
+        "id": "ACT_LIFYysI3OtcaS0CrbJeUOHdkrxI5cN",
+        "type": "TRANSACTION_LIST",
+        "time_created": "2021-03-10T15:31:56.642Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+    ```
+    </Code>
+</CodeGroup>
+
+## Step 3: Get a list of deposit disputes
+Our final step is to pull the list of disputes that make up the deposit. To do this, we call the Disputes endpoint using the deposit ID.
+
+#### Sample request
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+curl --location --request GET 'https://apis.sandbox.globalpay.com/ucp/settlement/disputes?from_deposit_time_created=2024-01-01&account_name=Settlement%20Reporting' \
+--header 'Authorization: Bearer 8iZjQyEQeriGfqtA1V5wVDagEMAI' \
+--header 'X-GP-Version: 2023-01-22'
+    ```
+    </Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("AppId");
+config.setAppKey("AppKey");
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+Date startDate = DateTime.now().minusYears(1).toDate();
+
+try {
+    DisputeSummaryPaged response = ReportingService.findSettlementDisputesPaged(1, 10)
+            .where(DataServiceCriteria.StartDepositDate, startDate)
+            .execute();
+
+    List<DisputeSummary> disputeList = response.getResults();
+    val dispute = disputeList.get(0);
+    // API raw response disputes[0]->id
+    String disputeId = dispute.getCaseId();
+    // API raw response disputes[0]->status
+    String status = dispute.getCaseStatus();
+    // API raw response disputes[0]->stage_time_created
+    DateTime stageTime = dispute.getCaseStageTime();
+    // API raw response disputes[0]->stage
+    String stage = dispute.getCaseStage();
+    // API raw response disputes[0]->amount
+    BigDecimal amount = dispute.getCaseAmount();
+    // API raw response disputes[0]->currency
+    String currency = dispute.getCaseCurrency();
+    // API raw response disputes[0]->reason_code
+    String reasonCode = dispute.getReasonCode();
+    // API raw response disputes[0]->reason_description
+    String reason = dispute.getReason();
+    // API raw response disputes[0]->time_to_respond_by
+    DateTime respondByDate = dispute.getRespondByDate();
+    // API raw response disputes[0]->result
+    String result = dispute.getResult();
+    // API raw response disputes[0]->deposit_time_created
+    Date depositDate = dispute.getDepositDate();
+    // API raw response disputes[0]->deposit_id
+    String depositId = dispute.getDepositReference();
+    // API raw response disputes[0]->last_adjustment_amount
+    BigDecimal lastAdjustmentAmount = dispute.getLastAdjustmentAmount();
+    // API raw response disputes[0]->last_adjustment_currency
+    String lastAdjustmentCurrency = dispute.getLastAdjustmentCurrency();
+    // API raw response disputes[0]->last_adjustment_funding
+    String lastAdjustmentFunding = dispute.getLastAdjustmentFunding();
+    // API raw response disputes[0]->system->mid
+    String mid = dispute.getCaseMerchantId();
+    // API raw response disputes[0]->system->hierarchy
+    String merchantHierarchy = dispute.getMerchantHierarchy();
+    // API raw response disputes[0]->system->name
+    String systemName = dispute.getMerchantName();
+    // API raw response disputes[0]->transaction->time_created
+    DateTime transactionTime = dispute.getTransactionTime();
+    // API raw response disputes[0]->transaction->type
+    String transactionType = dispute.getTransactionType();
+    // API raw response disputes[0]->transaction->amount
+    BigDecimal transactionAmount = dispute.getTransactionAmount();
+    // API raw response disputes[0]->transaction->currency
+    String transactionCurrency = dispute.getTransactionCurrency();
+    // API raw response disputes[0]->transaction->reference
+    String transactionReference = dispute.getTransactionReferenceNumber();
+    // API raw response disputes[0]->transaction->payment_method->card->masked_number_first6last4
+    String transactionMaskedCardNumber = dispute.getTransactionMaskedCardNumber();
+    // API raw response disputes[0]->transaction->payment_method->card->arn
+    String transactionArn = dispute.getTransactionARN();
+    // API raw response disputes[0]->transaction->payment_method->card->brand_reference
+    String transactionBrandReference = dispute.getTransactionBrandReference();
+    // API raw response disputes[0]->transaction->payment_method->card->authcode
+    String transactionAuthCode = dispute.getTransactionAuthCode();
+    // API raw response disputes[0]->transaction->payment_method->card->brand
+    String transactionCardType = dispute.getTransactionCardType();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+DateTime StartDate = DateTime.UtcNow.AddYears(-1);
+            
+try
+{
+    PagedResult<DisputeSummary> response = ReportingService.FindSettlementDisputesPaged(1, 10)
+		.Where(DataServiceCriteria.StartDepositDate, StartDate)
+		.Execute();
+	
+    var disputeList = response.Results;
+    DisputeSummary dispute = disputeList.First();
+    // API raw response disputes[0]->id
+    var disputeId = dispute.CaseId;
+    // API raw response disputes[0]->status
+    var status = dispute.CaseStatus;
+    // API raw response disputes[0]->stage_time_created
+    var stageTime = dispute.CaseStageTime;
+    // API raw response disputes[0]->stage
+    var stage = dispute.CaseStage;
+    // API raw response disputes[0]->amount
+    var amount = dispute.CaseAmount;
+    // API raw response disputes[0]->currency
+    var currency = dispute.CaseCurrency;
+    // API raw response disputes[0]->reason_code
+    var reasonCode = dispute.ReasonCode;
+    // API raw response disputes[0]->reason_description
+    var reason = dispute.Reason;
+    // API raw response disputes[0]->time_to_respond_by
+    var respondByDate = dispute.RespondByDate;
+    // API raw response disputes[0]->result
+    var result = dispute.Result;
+    // API raw response disputes[0]->deposit_time_created
+    var depositDate = dispute.DepositDate;
+    // API raw response disputes[0]->deposit_id
+    var depositId = dispute.DepositReference;
+    // API raw response disputes[0]->last_adjustment_amount
+    var lastAdjustmentAmount = dispute.LastAdjustmentAmount;
+    // API raw response disputes[0]->last_adjustment_currency
+    var lastAdjustmentCurrency = dispute.LastAdjustmentCurrency;
+    // API raw response disputes[0]->last_adjustment_funding
+    var lastAdjustmentFunding = dispute.LastAdjustmentFunding;
+    // API raw response disputes[0]->system->mid
+    var mid = dispute.CaseMerchantId;
+    // API raw response disputes[0]->system->hierarchy
+    var merchantHierarchy = dispute.MerchantHierarchy;
+    // API raw response disputes[0]->system->name
+    var systemName = dispute.MerchantName;
+    // API raw response disputes[0]->transaction->time_created
+    var transactionTime = dispute.TransactionTime;
+    // API raw response disputes[0]->transaction->type
+    var transactionType = dispute.TransactionType;
+    // API raw response disputes[0]->transaction->amount
+    var transactionAmount = dispute.TransactionAmount;
+    // API raw response disputes[0]->transaction->currency
+    var transactionCurrency = dispute.TransactionCurrency;
+    // API raw response disputes[0]->transaction->reference
+    var transactionReference = dispute.TransactionReferenceNumber;
+  // API raw response disputes[0]->transaction->payment_method->card->masked_number_first6last4
+    var transactionMaskedCardNumber = dispute.TransactionMaskedCardNumber;
+    // API raw response disputes[0]->transaction->payment_method->card->arn
+    var transactionArn = dispute.TransactionARN;
+    // API raw response disputes[0]->transaction->payment_method->card->brand_reference
+    var transactionBrandReference = dispute.TransactionBrandReference;
+    // API raw response disputes[0]->transaction->payment_method->card->authcode
+    var transactionAuthCode = dispute.TransactionAuthCode;
+    // API raw response disputes[0]->transaction->payment_method->card->brand
+    var transactionCardType = dispute.TransactionCardType;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+/* 
+Config set at the start of your integration.
+Not required each time a method is called from the SDK
+*/
+
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+// End of config
+
+$startDate = (new DateTime('2024-01-01'))->setTime(0, 0, 0);
+
+try {
+    /** @var \GlobalPayments\Api\Entities\GpApi\PagedResult $response */
+    $response = ReportingService::findSettlementDisputesPaged(1, 10)
+        ->where(DataServiceCriteria::START_DEPOSIT_DATE, $startDate)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$disputeList = $response->result;
+/** @var \GlobalPayments\Api\Entities\Reporting\DisputeSummary $dispute */
+$dispute = reset($disputeList);
+$disputeId = $dispute->caseId; // API raw response disputes[0]->id
+$status = $dispute->caseStatus; // API raw response disputes[0]->status
+$stageTime = $dispute->disputeStageTime; //  API raw response "disputes[0]->stage_time_created"
+$stage = $dispute->caseStage; // API raw response "disputes[0]->stage"
+$amount = $dispute->caseAmount; // API raw response "disputes[0]->amount"
+$currency = $dispute->caseCurrency; //API raw response "disputes[0]->currency"
+$reasonCode = $dispute->reasonCode; // API raw response "disputes[0]->reason_code"
+$reason = $dispute->reason; // API raw response "disputes[0]->reason_description"
+$respondByDate = $dispute->respondByDate; // API raw response "disputes[0]->time_to_respond_by"
+$result = $dispute->result;// API raw response "disputes[0]->result"
+$fundingType = $dispute->fundingType; // API raw response "disputes[0]->funding_type"
+$depositDate = $dispute->depositDate; // API raw response "disputes[0]->deposit_time_created"
+$depositId = $dispute->depositReference;// API raw response "disputes[0]->deposit_id"
+// API raw response "disputes[0]->last_adjustment_amount"
+$lastAdjustmentAmount = $dispute->lastAdjustmentAmount;
+// API raw response "disputes[0]->last_adjustment_currency"
+$lastAdjustmentCurrency = $dispute->lastAdjustmentCurrency;
+// API raw response "disputes[0]->last_adjustment_funding"
+$lastAdjustmentFunding = $dispute->lastAdjustmentFunding;
+// API raw response "disputes[0]->last_adjustment_time_created"
+$lastAdjustmentTimeCreated = $dispute->lastAdjustmentTimeCreated;
+$mid = $dispute->caseMerchantId; // API raw response "disputes[0]->system->mid"
+$merchantName = $dispute->merchantName; // API raw response "disputes[0]->system->name"
+$hierarchy = $dispute->merchantHierarchy; // API raw response "disputes[0]->system->hierarchy"
+// API raw response "disputes[0]->transaction->time_created"
+$transactionTime = $dispute->transactionTime; 
+// API raw response "disputes[0]->transaction->type"
+$transactionType = $dispute->transactionType; 
+// API raw response "disputes[0]->transaction->amount"
+$transactionAmount = $dispute->transactionAmount; 
+// API raw response "disputes[0]->transaction->currency"
+$transactionCurrency = $dispute->transactionCurrency; 
+// API raw response "disputes[0]->transaction->reference"
+$transactionReferenceNumber = $dispute->transactionReferenceNumber; 
+// API raw response "disputes[0]->transaction->payment_method->card->masked_number_first6last4"
+$transactionMaskedCardNumber = $dispute->transactionMaskedCardNumber;
+// API raw response "disputes[0]->transaction->payment_method->card->arn"
+$transactionARN = $dispute->transactionARN;
+// API raw response "disputes[0]->transaction->payment_method->card->brand_reference"
+$transactionBrandReference = $dispute->transactionBrandReference;
+// API raw response "disputes[0]->transaction->payment_method->card->authcode"
+$transactionAuthCode = $dispute->transactionAuthCode;
+// API raw response "disputes[0]->transaction->payment_method->card->brand"
+$transactionCardType = $dispute->transactionCardType;
+```
+</Code>
+</CodeGroup>
+
+### Deposit disputes response
+For each of the deposit’s disputes, the response data contains the reason, date created, and the last adjustment, which indicates whether the funds were debited or credited to your account. You also receive data on the dispute’s status and what stage of the process it’s in. For more information on disputes, see [Disputes Management](/docs/operations/disputes-management-overview).
+
+<CodeGroup>
+  <Code id="JSON" title="JSON" language="json" active>
+    ```
+{
+    "current_page_size": 5,
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "DAA_5763583e72ca4181bee088a25482bf06",
+    "account_name": "Settlement Reporting",
+    "filter": {
+        "status": "FUNDED",
+        "from_deposit_time_created": "2024-01-01",
+        "to_deposit_time_created": "2024-03-10"
+    },
+    "paging": {
+        "page_size": 5,
+        "page": 1,
+        "order": "ASC",
+        "order_by": "FROM_STAGE_TIME_CREATED"
+    },
+    "disputes": [
+        {
+            "id": "DIS_792",
+            "status": "FUNDED",
+            "stage": "CHARGEBACK",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "PHP",
+            "reason_code": "53",
+            "reason_description": "Not As Described/Defective Merchandise",
+            "time_to_respond_by": "2021-03-20T15:41:33",
+            "result": "LOST",
+            "funding_type": "DEBIT",
+            "deposit_time_created": "2021-03-07",
+            "deposit_id": "DEP_2342423443",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": "",
+            "last_adjustment_time_created": "",
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD."
+            },
+            "transaction": {
+                "time_created": "2021-02-08T15:41:33",
+                "merchant_time_created": "2021-02-08T17:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "PHP",
+                "reference": "28012075cffM",
+                "payment_method": {
+                    "card": {
+                        "masked_number_first6last4": "516075XXXXXX4234",
+                        "arn": "74500010037624410827759",
+                        "brand": "MASTERCARD",
+                        "authcode": "28010",
+                        "brand_reference": "130"
+                    }
+                }
+            }
+        },
+        {
+            "id": "DIS_793",
+            "status": "FUNDED",
+            "stage": "REVERSAL",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "PHP",
+            "reason_code": "77",
+            "reason_description": "Non-Matching Account Number",
+            "time_to_respond_by": "2021-03-20T15:41:33",
+            "result": "WON",
+            "funding_type": "CREDIT",
+            "deposit_time_created": "2021-03-07",
+            "deposit_id": "DEP_2342423443",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": "",
+            "last_adjustment_time_created": "",
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD."
+            },
+            "transaction": {
+                "time_created": "2021-02-08T15:41:33",
+                "merchant_time_created": "2021-02-08T17:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "PHP",
+                "reference": "28012076405M",
+                "payment_method": {
+                    "card": {
+                        "masked_number_first6last4": "543458XXXXXX7652",
+                        "arn": "55504430037039389318875",
+                        "brand": "MASTERCARD",
+                        "authcode": "28656",
+                        "brand_reference": "MCF1CZ5ME5405"
+                    }
+                }
+            }
+        },
+        {
+            "id": "DIS_794",
+            "status": "FUNDED",
+            "stage": "REVERSAL",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "PHP",
+            "reason_code": "81",
+            "reason_description": "Fraudulent Transaction-Card-Present Environment",
+            "time_to_respond_by": "2021-03-20T15:41:33",
+            "result": "WON",
+            "funding_type": "CREIT",
+            "deposit_time_created": "2021-03-07",
+            "deposit_id": "DEP_2342423443",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": "",
+            "last_adjustment_time_created": "",
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD."
+            },
+            "transaction": {
+                "time_created": "2021-02-08T15:41:33",
+                "merchant_time_created": "2021-02-08T17:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "PHP",
+                "reference": "28012076eb6M",
+                "payment_method": {
+                    "card": {
+                        "masked_number_first6last4": "414720XXXXXX9274",
+                        "arn": "55181360037672410181238",
+                        "brand": "VISA",
+                        "authcode": "8481",
+                        "brand_reference": "MCS18V1EG3201"
+                    }
+                }
+            }
+        },
+        {
+            "id": "DIS_795",
+            "status": "FUNDED",
+            "stage": "CHARGEBACK",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "PHP",
+            "reason_code": "62",
+            "reason_description": "Counterfeit Transaction",
+            "time_to_respond_by": "2021-03-20T15:41:33",
+            "result": "LOST",
+            "funding_type": "DEBIT",
+            "deposit_time_created": "2021-03-07",
+            "deposit_id": "DEP_2342423443",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": "",
+            "last_adjustment_time_created": "",
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD."
+            },
+            "transaction": {
+                "time_created": "2021-02-08T15:41:33",
+                "merchant_time_created": "2021-02-08T17:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "PHP",
+                "reference": "280120767b6M",
+                "payment_method": {
+                    "card": {
+                        "masked_number_first6last4": "414720XXXXXX3564",
+                        "arn": "24137550037630153798573",
+                        "brand": "VISA",
+                        "authcode": "05075A",
+                        "brand_reference": "MCW1A7LHA1320"
+                    }
+                }
+            }
+        },
+        {
+            "id": "DIS_796",
+            "status": "FUNDED",
+            "stage": "REVERSAL",
+            "stage_time_created": "2021-03-03T15:41:33",
+            "amount": "200",
+            "currency": "PHP",
+            "reason_code": "A02",
+            "reason_description": "No Valid Authorization",
+            "time_to_respond_by": "2021-03-20T15:41:33",
+            "result": "WON",
+            "funding_type": "CREDIT",
+            "deposit_time_created": "2021-03-07",
+            "deposit_id": "DEP_2342423443",
+            "last_adjustment_amount": "",
+            "last_adjustment_currency": "",
+            "last_adjustment_funding": "",
+            "last_adjustment_time_created": "",
+            "system": {
+                "mid": "101023947262",
+                "hierarchy": "055-70-024-011-019",
+                "name": "XYZ LTD."
+            },
+            "transaction": {
+                "time_created": "2021-02-08T15:41:33",
+                "merchant_time_created": "2021-02-08T17:41:33",
+                "type": "SALE",
+                "amount": "200",
+                "currency": "PHP",
+                "reference": "2801207a017M",
+                "payment_method": {
+                    "card": {
+                        "masked_number_first6last4": "452088XXXXXX7639",
+                        "arn": "24388940037630154188364",
+                        "brand": "VISA",
+                        "authcode": "00375J",
+                        "brand_reference": "MCSUYX1FY1977"
+                    }
+                }
+            }
+        }
+    ],
+    "action": {
+        "id": "ACT_Xo6RjwmmPwO12wA1cRUr5hqV1SnA2k",
+        "type": "DISPUTE_LIST",
+        "time_created": "2021-03-10T15:41:33.961Z",
+        "result_code": "SUCCESS",
+        "app_id": "i9R0byBBor6RqTQNj3g4MuVBwH5rd7yR",
+        "app_name": "demo_app"
+    }
+}
+    ```
+    </Code>
+</CodeGroup>
+
+## Testing
+Our Settlement Reporting solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Integration references
+To get a deeper understanding of Settlement Reporting, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/api/825" title="API Settlement Reporting" icon="window">
+        API Guide to using the Settlement Reporting Functionality.
+    </Card>
+	
+	<Card type="with_icon" link="/docs/payments/manage-payments/overview" title="Manage Payments" icon="money-check-pen">
+        Explore all of the payment actions that are available for our API.
+    </Card>
+     
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for Real-Time Data Reporting.
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/docs/reporting/real-time-reporting-guide" title="Real-Time Data Reporting" icon="file-chart-column">
+       Simplify reconciliation and get customized daily deposit data.
+    </Card>
+	
+	 <Card type="with_icon" link="/docs/operations/disputes-management-overview" title="Disputes Management" icon="comment-exclamation">
+        Automate the reporting and management of transaction disputes.
+    </Card>
+	
+  <Card type="with_icon" link="/docs/operations/file-processing-overview" title="File Processing" icon="file-arrow-up">
+        Process large volumes of transactions in one file.
+    </Card>
+  </CardsGroup>
+

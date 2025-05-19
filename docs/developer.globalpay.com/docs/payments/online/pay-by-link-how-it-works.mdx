@@ -1,0 +1,38 @@
+---
+title: 'How Pay by Link Works'
+search_results: 'Global Payments - Pay by Link How it works'
+subtitle: 'Allow customers to pay with a unique payment link.'
+tag: 'rest'
+created: '06/08/2024'
+---
+You can easily integrate with our API to use Pay by Link and automate the sharing of payment requests to your customers by embedding the link into the customer journey of your existing system. A payment link is created when you send a request to the Unified Payments API server (/ucp/links) to create a new link URL. 
+
+There are many ways to configure a payment link in the Create Link API request. For example, you can specify if the link can only be paid once or multiple times, as well as set an expiry date. For multiple-use payment links, you can set a maximum number of times that it can be used.
+
+Once the request is received, our API then generates a unique id to represent the link (LNK_ID). You can send this link to the customer via email or text/SMS. After the customer clicks the link, they are redirected to the hosted page of our technology partner, Truust. The customer then enters their card details to complete the purchase. Truust then sends the transaction to our API. After getting a response, Truust will send a webhook to the API and then redirect the customer back to the Return URL you included in the request. 
+
+All link and transactional data are available for you to access via the API. For example, you can query how many times the link was viewed or paid.
+
+At a high level, Pay by Link works like this:
+
+![Image](/sites/default/files/2023-11/PaybyLink-flow.png)
+
+## [Optional] Online Dashboard
+<Infobox>
+To start using the Pay by Link online dashboard, contact your account manager.
+</Infobox>
+
+Pay by Link is also available as a full-featured online dashboard, which allows you to create, manage, and send links, as well as track payments made—all from within a single application.
+
+![Image](/sites/default/files/2024-05/PayByLink-Dashboard_cropped.png)
+
+The online dashboard supports many of the features available with the API, but without the need to build a more complex integration. It’s ideal for merchants who want to start offering ecommerce payment options but don't want to run a full ecommerce website. Setup is easy, so you can quickly start creating and delivering payment links to your customers.
+
+In addition to the [use cases](/docs/payments/online/pay-by-link-overview) in the overview page, you can use the online dashboard for: 
+
+* Creating specific product links and setting them to multiple-use with a future expiry date. 
+* Printing QR codes on posters, printouts, and banners that you can display anywhere. Customers then scan the code and are redirected to a secure payment page where they can pay for goods, services, or make donations.
+* Sending links to promotional information via email, SMS text messages, or via WhatsApp where you can offer discount campaigns, early access signups, promotional pricing on certain items, and more.
+
+## Ready to start integrating?
+To get started with Pay by Link, see our [step by step guide](/docs/payments/online/pay-by-link-guide)

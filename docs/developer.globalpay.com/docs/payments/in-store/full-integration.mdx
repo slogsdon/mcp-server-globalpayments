@@ -1,0 +1,456 @@
+---
+title: 'Full Integration'
+search_results: 'Global Payments - In-Store Full Integration'
+subtitle: 'Learn how to complete a sale in your application'
+tag: 'rest'
+created: '06/08/2024'
+---
+This guide assumes that you’re integrating directly to our <Tooltip content="Stands for Representational State Transfer. A type of API architecture that uses HTTP requests.">REST</Tooltip> API from within your own already-built terminal application. We focus on showing you how to send commands to our API from your terminal application rather than how to develop one from the ground up. 
+
+Our steps show you how to process and capture a transaction with POST commands for a chip-insert debit transaction scenario. We also provide information on other types of scenarios as well as how to handle end-of-day procedures like batch and settlement.
+
+<Infobox>
+For information on application development, we recommend that you consult your terminal manufacturer’s reference materials.
+</Infobox>
+  
+Our API also supports [standalone](/docs/payments/in-store/standalone), [semi-](/docs/payments/in-store/semi-integration), and [cloud](/docs/payments/in-store/cloud) integrations for card-present transactions. However, the JSON code samples in this guide are for connecting to the API directly with a payment terminal attached to your application to handle the associated payment card data.
+
+## What is full integration?
+Full integration is the most demanding method of connecting to our API, but it also provides the most flexibility. You have full control over the payer experience and workflows. This type of integration requires a certification to our processing platform followed by <Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip> certifications in each processing region. In addition, you would be coding directly to a payment device to retrieve card/EMV data to send us for transaction processing.
+
+To compare full integration with our other types like standalone, semi-, and cloud, see [In-Store Payments - Overview](/docs/payments/in-store/overview).
+
+## Full-integration considerations
+This section covers some considerations and resources to keep in mind when choosing a full integration:
+* [Code directly to our API or use an SDK](#code-directly-to-our-api-or-use-an-sdk) (required)
+* [Single versus multiple TIDs](#single-versus-multiple-tids)
+* [Testing and certification](#testing-and-certification)
+
+### Code directly to our API or use an SDK
+
+For full integrations, you need to code directly to our API or use one of our SDKs (see [SDK & Libraries](/docs/integration-options/sdk/overview)). Alternatively, you can bypass our SDKs and incorporate our code directly into your terminal application. 
+
+Coding directly to our API for card-present transactions requires a basic understanding of how our API works, from authentication to transaction processing. For more information, see [API Explorer](/api/overview) or [API Definitions](/api-definitions-overview).
+
+We provide the following resources to help:
+
+* Our source code is publically available on [GitHub](https://github.com/globalpayments). You also can find this GitHub link in the footer of our portal pages under Connect.
+
+* We provide use cases and sample API requests and responses on Postman. For more information, see [Postman Collection](/api/postman-collection/overview).
+
+### Single versus multiple TIDs
+Terminal ID number (TID) management should also be considered as it could impact how your software functions when processing secondary transactions. Consult with your account manager to ensure that there are no regional nuances with this approach. Our devices can be configured to have a single TID per location as long as the lane is identified in the transaction (for example, Front Desk, Bar, and so on). 
+
+Cloud servers or local “fat” software installed on a computer can act as a controller for all lanes, sending transactions, receiving responses, and routing them to the originating device or lane. The advantage is that secondary transactions are no longer tied to the device or lane that processed the original transaction. Secondary transactions can be performed at any lane, thereby improving the customer and server experience. Consult with your account manager to ensure that there are no regional nuances with this approach.
+
+### Testing and certification
+Fully integrated solutions must be certified to our platform. A certification analyst will collect details — such as your terminal application; EMV kernel, <Tooltip content="Payment Card Industry">PCI</Tooltip> <Tooltip content="PIN Transaction Security">PTS</Tooltip>, and <Tooltip content="Payment Application Data Security Standard">PA-DSS</Tooltip> approvals; supported industries and transaction types, and so forth — and configure a certification script tailored to your solution. The typical approach is to certify mag-stripe transactions first. Once that is successfully completed, we begin the EMV certification.
+
+EMV certification requires you to purchase the <Tooltip content="Brand Test Tool for the company UL Solutions.">UL BTT</Tooltip> software, which simulates the various issuers’ EMV chip card profiles for contact and contactless EMV test cases, as well as digital wallets.
+
+## Available terminals
+Any compliant terminal (With the above requirements for EMV kernel, PCI PTS, and PA-DSS approvals) that supports custom applications can be used to code an integration to our API. That said, if a terminal is required, we are able to provide a variety of terminal models for your use as well. For available models, please contact your account manager.
+
+## Transaction overview
+Payment devices need to have keys injected into the device to properly function. End-to-end encryption (E2EE) takes clear <Tooltip content="Stands for Primary Account Number. The PAN identifies the intended card issuer and account for the transaction.">PAN</Tooltip> data found on track 1 and track 2 of the mag stripe or in the chip data and encrypts it using cryptographic keys, which are securely injected into the card reader/terminal. 
+
+The keys are used to transform the clear track data into a unique data string before it’s transmitted. This is usually done within a secure hardware module on a PCI PTS certified terminal, ensuring it can’t be read and decoded during transmission. The string of data is then transmitted to us, where we securely decrypt it and send to the card issuer for processing.
+
+To avoid sending full PAN or PIN data over the internet, a form of end-to-end encryption called <Tooltip content="Triple Data Encryption Standard Derived Unique Key Per Transaction">TDES DUKPT</Tooltip> is standard. For a transaction on a successfully injected terminal to include this, the key serial number (KSN) must be included on the transaction request, as shown in the code sample below.
+
+<Infobox>
+Our API identifies the physical device using only the _account_name_ parameter, rather than by using a serial number, TID, or other fields common in other environments.
+</Infobox>
+
+### Sample request
+In this example, we use a swipe entry mode and end-to-end encryption.
+
+<CodeGroup>
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+data {
+  "account_name": "{{acc_name}}",
+  "channel": "CP",
+  "type": "SALE",
+  "capture_mode": "AUTO",
+  "amount": "10000",
+  "currency": "CAD",
+  "reference": "{{reference}}",
+  "country": "CA",
+  "payment_method": {
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "entry_mode": "SWIPE",
+    "encryption": {
+        "method": "KSN",
+        "version": "05",
+        "info": "//89P4IADOAD4A=="
+    },
+    "card": {
+        "track_number": "2",
+        "track": "iaQbFN0EqXK3x8YHgh2ogmylKCG5J11v9BcOaOyCSVQ="
+    }
+  }
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->country = 'CA';
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$debitCard = new DebitTrackData();
+$debitCard->value = 'iaQbFN0EqXK3x8YHgh2ogmylKCG5J11v9BcOaOyCSVQ=';
+$debitCard->entryMethod = EntryMethod::SWIPE;
+$encryptionData = new EncryptionData();
+$encryptionData->version = '05';
+$encryptionData->ksn = '//89P4IADOAD4A==';
+$debitCard->encryptionData = $encryptionData;
+
+try {
+    $response = $debitCard->charge(100)
+        ->withCurrency("CAD")
+        ->withClientTransactionId("26851101")
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+
+```
+</Code>
+</CodeGroup>
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/api/access-token)
+
+## Step 1: Process a transaction
+The first step is to create an authorization. This creates the transaction, assigns it a transaction ID, and processes the authorization. A sale transaction can be flagged for automatic capture using the `capture_mode` flag or flagged as requiring a separate capture action later. By default, it will automatically attempt capture.
+
+Partial authorizations are possible by setting the `authorization_mode` to `partial`. This allows your application to be notified if only part of the transaction was approved and a second form of payment will be required to complete the balance (for example, on a $100 sale, only $85 was approved, leaving a remaining balance of $15 that requires a secondary form of payment to complete). If the `authorization_mode` flag is not set, transactions will instead decline.
+
+In a card-present environment, many types of transactions are possible, including chip insert (dipped), tapped (contactless), swiped, or keyed (depending upon your region). The below example is of a chip-insert debit transaction. The type of transaction is indicated by the `entry_mode` flag on the request.
+
+### Sample request 
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction"}}>
+```  
+{
+    "account_name": "Transaction_Processing",
+    "type": "SALE",
+    "channel": "CP",
+    "capture_mode": "AUTO",
+    "amount": "1999",
+    "currency": "USD",
+    "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+    "country": "US",
+    "ip_address": "123.123.123.123",
+    "site_reference": "Site-1324",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "CHIP",
+        "card": {
+            "track": "%B4012002000060016^VI TEST CREDIT^251210118039000000000396?;4012002000060016=25121011803939600000?",
+            "tag": "9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001",
+            "funding": "DEBIT",
+            "chip_condition": "",
+            "pin_block": "",
+            "brand_reference": ""
+        }
+    }
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$debitCard = new DebitTrackData();
+$debitCard->setTrackData('%B4012002000060016^VI TEST CREDIT^251210118039000000000396?;4012002000060016=25121011803939600000?');
+$tagData = '9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001';
+
+try {
+    $response = $debitCard->charge(19.99)
+        ->withCurrency("USD")
+        ->withCustomerIpAddress("123.123.123.123")
+        ->withTagData($tagData)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+//API raw response key "payment_method->card->brand_reference"
+$cardBrandReference = $response->cardBrandTransactionId;
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+// API raw response key "payment_method->card->tag_response"
+$tagResponse = $response->cardDetails->tagResponse;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->avs_result"
+$cardIssuerAvsResult = $response->cardIssuerResponse->avsResult;
+```
+</Code>
+</CodeGroup>
+
+### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+  "id": "TRN_ewFfZZmrdQ6jGaObwu2FbyRonAerwG",
+  "time_created": "2024-02-28T21:35:06.077Z",
+  "type": "SALE",
+  "status": "CAPTURED",
+  "channel": "CP",
+  "capture_mode": "AUTO",
+  "amount": "1999",
+  "currency": "USD",
+  "country": "US",
+  "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+  "merchant_name": "Sandbox_merchant_2",
+  "account_id": "TRA_6716058969854a48b33347043ff8225f",
+  "account_name": "Transaction_Processing",
+  "reference": "93459c78-f3f9-427c-84df-ca0584bb55bf",
+  "payment_method": {
+      "result": "00",
+      "message": "APPROVED        000APPROVED O00999",
+      "entry_mode": "CHIP",
+      "card": {
+          "funding": "DEBIT",
+          "brand": "INTERAC",
+          "masked_number_last4": "XXXXXXXXXXXX0016",
+          "authcode": "",
+          "brand_reference": "",
+          "brand_time_created": "2024-02-28T16:35:07.000Z",
+          "tag_response": "910A11111111111111111111",
+          "provider": {
+              "result": "00"
+          }
+      }
+  },
+  "batch_id": "BAT_943493-494",
+  "action": {
+      "id": "ACT_ewFfZZmrdQ6jGaObwu2FbyRonAerwG",
+      "type": "AUTHORIZE",
+      "time_created": "2024-02-28T21:35:06.077Z",
+      "result_code": "SUCCESS",
+      "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name": "dev_portal_demo"
+  }
+}
+```
+</Code>
+
+## Step 2: Capture a transaction
+If the `capture_mode` flag is not set to `AUTO`, the transaction must be captured at a later date. This is frequently done in scenarios where you want to finalize the purchase price later. This is also known as a _pre-authorization_ and is frequently used in hospitality and lodging scenarios.
+
+To capture a transaction, you must use the original ID returned in the authorization response in the query URL. You can capture a transaction for any amount up to 115% of the original value. If you don't include an amount in your request, by default the full amount will be captured.
+
+### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/transactions#/Capture%20a%20Sale/captureSaleTransactionn"}}>
+```
+https://apis.sandbox.globalpay.com/ucp/transactions/TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d/capture
+  
+{
+  "amount": "11099",
+  "gratuity_amount": "1999",
+  "capture_sequence": "FIRST",
+  "total_capture_count": "integer",
+  "lodging": {
+      "booking_reference": "797ebe05bf34dd4b6a8ec4fa",
+      "duration_days": "4",
+      "room_tax_amount": "10555",
+      "date_checked_in": "2022-07-04",
+      "date_checked_out": "2022-07-08",
+      "daily_rate_amount": "35050",
+      "charge_items": "array"
+  },
+  "payment_method": {
+      "card": {
+          "tag": "string"
+      }
+  }
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$trn = Transaction::fromId('TRN_PlrobvEXlPsA9JIJDwXaIYc1K0TihU');
+$tagData = '9F4005F000F0A0019F02060000000025009F03060000000000009F2608D90A06501B48564E82027C005F3401019F360200029F0702FF009F0802008C9F0902008C9F34030403029F2701809F0D05F0400088009F0E0508000000009F0F05F0400098005F280208409F390105FFC605DC4000A800FFC7050010000000FFC805DC4004F8009F3303E0B8C89F1A0208409F350122950500000080005F2A0208409A031409109B02E8009F21030811539C01009F37045EED3A8E4F07A00000000310109F0607A00000000310108407A00000000310109F100706010A03A400029F410400000001';
+
+$lodgingInfo = new LodgingData();
+$lodgingInfo->bookingReference = '797ebe05bf34dd4b6a8ec4fa';
+$lodgingInfo->durationDays = 4;
+$lodgingInfo->checkedInDate = date('Y-m-d H:i:s');
+$lodgingInfo->checkedOutDate = date('Y-m-d H:i:s', strtotime("+7 days"));
+$lodgingInfo->dailyRateAmount = '350.5';
+$item1 = new LodgingItems();
+$item1->types = [LodgingItemType::NO_SHOW];
+$item1->reference = 'item1';
+$item1->totalAmount = '350.5';
+$item1->paymentMethodProgramCodes = [PaymentMethodProgram::ASSURED_RESERVATION];
+$lodgingInfo->items = [$item1];
+
+try {
+    $response = $trn->capture(110.99)
+        ->withGratuity(19.99)
+        ->withTagData($tagData)
+        ->withMultiCapture(RecurringSequence::FIRST, 2)
+        ->withLodgingData($lodgingInfo)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+//API raw response key "payment_method->card->brand_reference"
+$cardBrandReference = $response->cardBrandTransactionId;
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+```
+</Code>
+</CodeGroup>
+
+### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+  "id": "TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+  "time_created": "2021-05-03T21:23:39.718Z",
+  "type": "SALE",
+  "status": "INITIATED",
+  "amount": "11099",
+  "currency": "USD",
+  "country": "US",
+  "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+  "batch_id": "BAT_234234234",
+  "payment_method": {
+      "result": "00",
+      "message": "Successful",
+      "card": {
+          "authcode": "string",
+          "brand_reference": "string"
+      }
+  },
+  "action": {
+      "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+      "type": "string",
+      "time_created": "2021-05-03T21:23:39.718Z",
+      "result_code": "SUCCESS",
+      "app_id": "U1lRHKomEn7DN907RCDPxVhyMfiMLcfy",
+      "app_name": "demo_app"
+  }
+}
+```
+</Code>
+
+## Step 3: Additional transaction functionality
+Our API supports many other card-present functions you may want to implement. This includes voids, returns, refunds, and adjustments, among others. The most common of these is an adjustment, also known as a _tip_ or _gratuity_. 
+
+Tips are a common way for customers to reward staff for good service in North America and other markets, and are an additional amount added to a transaction either during the sale (prompted on the physical device) or after the sale (signed on a receipt and later adjusted by staff).
+
+##### Related articles:
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/manage-payments/adjust-guide" title="Adjust">
+        Add tips using our Adjust capability.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/manage-payments/increment-guide" title="Increment">
+        Add supplemental charges using our Increment capability.
+    </Card>
+</CardsGroup>
+
+## Step 4: Batch / settlement / end-of-day procedures
+<Infobox>
+Before implementing batches, check with your account manager for any specific market or platform requirements.  
+</Infobox>
+
+Card-present transactions are managed in batches. Typically, a batch of transactions is an entire business day for a merchant. A batch must be closed for transactions to be settled and funded. 
+Depending upon your region, our platform may automatically batch your daily transactions for you. In some regions, you may be required to batch your transactions yourself on your application.
+
+##### Related articles:
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/manage-payments/batches-guide" title="Batches">
+        Settle and fund transactions via our Batches capability.
+    </Card>
+    <Card type="with_icon" link="/docs/payments/manage-payments/capture-guide" title="Captures">
+        Capture pre-authorized transactions and open checks using our Capture capability.
+    </Card>
+</CardsGroup>

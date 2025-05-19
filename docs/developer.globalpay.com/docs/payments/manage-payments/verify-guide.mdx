@@ -1,0 +1,326 @@
+---
+title: 'Manage Payments - Verify'
+search_results: 'Global Payments - Manage Payments Verify'
+subtitle: 'Learn how to check the validity and balance of a card before a sale'
+tag: 'rest'
+created: '23/08/2024'
+---
+<Infobox>
+Availability of this feature in production depends on your allowed live configuration. 
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on verifying a customer’s payment card and checking the balance of an EBT debit card (US only) before a sale. 
+
+## What is it?
+In some cases, you may want to confirm a payment method can be used in the creation of a transaction. The verify function allows you to query a card and determine if it's available for payment.
+
+## How does it work?
+
+The main thing to know about verify:
+
+* The verify function does not authorize a transaction. A secondary request must be sent to complete an authorization.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Verify a card
+In this step, we verify a card to confirm that it can be used in a transaction.
+
+#### Sample request
+
+<CodeGroup>
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --compressed -X POST "https://apis.sandbox.globalpay.com/ucp/verifications" \
+-H "Authorization: Bearer G3FA4TuYGCBiCWs4YpzrALGCYXZJ" \
+-H "X-GP-Version: 2021-03-22" \
+-H "Content-type: application/json" \
+-H "Accept: application/json" \
+-d 
+“{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "currency": "USD",
+    "reference": "MY_TRANS_REF_12345",
+    "country": "US",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "05",
+            "expiry_year": "25"
+        }
+    }
+}”
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+CreditCardData card = new CreditCardData {
+	Number = "4263970000005262",
+	ExpMonth = DateTime.Now.Month,
+	ExpYear = DateTime.Now.Year + 1,
+	Cvn = "852",
+	CardHolderName = "James Mason"
+};
+
+try
+{
+	Transaction response = card.Verify()
+		.WithCurrency("USD")
+		.WithClientTransactionId("MY_TRANS_REF_12345")
+		.Execute();
+	
+	// API raw response key "id"
+	var id = response.TransactionId; 
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	// API raw response key "payment_method->card->cvv_result"
+	var cvnResponseMessage = response.CvnResponseMessage;
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage; 
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber;
+	// API raw response key "action->result_code"    
+	var responseCode = response.ResponseCode;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->brand_reference"
+	var brandReference = response.CardBrandTransactionId;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php" active>
+```php
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = date('m');
+$card->expYear = date('Y', strtotime('+1 year'));
+$card->cvn = "852";
+$card->cardHolderName = "James Mason";
+
+try {
+    $response = $card->verify()
+        ->withCurrency('USD')
+        ->withClientTransactionId('MY_TRANS_REF_12345')
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$id = $response->transactionId; // API raw response key "id"
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+$type = $response->originalTransactionType; // API raw response key "type"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+    ```
+    </Code>
+    
+    </CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "VER_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "status": "VERIFIED",
+    "channel": "CP",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_86920f927028745yt34d077d88beb29b",
+    "account_name": "transaction_processing",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "payment_method": {
+        "id": "PMT_31087d9c-e68c-4389-9f13-39378e166ea5",
+        "result": "string",
+        "message": "string",
+        "entry_mode": "MOTO",
+        "fingerprint_presence_indicator": "EXISTS",
+        "fingerprint": "string",
+        "card": {
+            "masked_number_last4": "XXXXXXXXXXXX7025",
+            "brand": "VISA",
+            "brand_reference": "string",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "PROMPT"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "VERIFY",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## EBT balance inquiry
+<Infobox> Because the EBT card type is only available in the United States, this function is only possible in a US card-present, in-store environment. </Infobox>
+
+By adding the funding and `pin_block` parameters to the request, the verification will return the `available_balance` field in the response — underneath the card object. This allows you to query an EBT card for its current balance.
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --compressed -X POST "https://apis.sandbox.globalpay.com/ucp/verifications" \
+-H "Authorization: Bearer G3FA4TuYGCBiCWs4YpzrALGCYXZJ" \
+-H "X-GP-Version: 2021-03-22" \
+-H "Content-type: application/json" \
+-H "Accept: application/json" \
+-d 
+“{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "currency": "USD",
+    "reference": "MY_TRANS_REF_12345",
+    "country": "US",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "05",
+            "expiry_year": "25"
+            "funding": "CASH_BENEFITS",
+            "pin_block": "{{test card PIN block}}"
+        }
+    }
+}”
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "VER_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "status": "VERIFIED",
+    "channel": "CP",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_86920f927028745yt34d077d88beb29b",
+    "account_name": "transaction_processing",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "payment_method": {
+        "id": "PMT_31087d9c-e68c-4389-9f13-39378e166ea5",
+        "result": "string",
+        "message": "string",
+        "entry_mode": "MOTO",
+        "fingerprint_presence_indicator": "EXISTS",
+        "fingerprint": "string",
+        "card": {
+            "masked_number_last4": "XXXXXXXXXXXX7025",
+            "available_balance": "1600",
+            "brand": "EBT",
+            "brand_reference": "string",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "PROMPT"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "VERIFY",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>
+
+## Integration references
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/verifications" title="/verifications - API Explorer" icon="window">
+        See the verifications endpoint used for all verify functions.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Verifications are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

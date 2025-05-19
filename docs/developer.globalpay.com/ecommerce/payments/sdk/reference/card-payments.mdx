@@ -1,0 +1,403 @@
+---
+title: "Card Payments SDK"
+subtitle: ""
+tag: "xml"
+created: "01/24/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Authorization
+
+<Infobox>
+We highly recommend sanitizing the cardholder data before sending it in the request. For example, check if the card number is valid and the expiry date is in the future. Our JavaScript Library on [GitHub](https://github.com/globalpayments/rxp-js) contains a handy set of functions to help you do this.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+try {
+   // process an auto-settle authorization
+   Transaction response = card.charge(new BigDecimal("19.99"))
+                           .withCurrency("EUR")
+                           .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+try
+{
+   // process an auto-capture authorization
+   Transaction response = card.Charge(129.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+try {
+   // process an auto-capture authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+## Validate (Open To Buy)
+
+It is possible to set the Fraud Filter mode to ACTIVE for OTB transactions. This can be configured by setting the Fraud Filter Mode as ACTIVE. This field is available in the API Reference for [Fraud Management](/ecommerce/api/fraud-management).
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+try {
+   // check that a card is valid and active without charging an amount
+   Transaction response = card.verify()
+      .execute();
+
+   // get the response details to update the DB
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+   // TODO: save the card to Card Stroage
+} 
+
+catch (ApiException exce) {
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+try
+{
+   // check that a card is valid and active without charging an amount
+   Transaction response = card.Verify()
+      .Execute();
+
+   // get the response details to update the DB
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+   // TODO: save the card to Card Stroage
+}
+
+catch (ApiException exce)
+{
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+$response = new Transaction();
+
+try {
+   // check that a card is valid and active without charging an amount
+   $response = $card->verify()
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+   // TODO: save the card to Card Storage
+}
+```
+</Code>
+</CodeGroup>
+
+## Credit
+
+<Infobox type="danger">
+For security reasons, this request type is not enabled by default. It must be requested by one of the listed contacts on your account with us.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCardHolderName("James Mason");
+
+try {
+   // process a refund to the card
+   Transaction response = card.refund(new BigDecimal("129.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   // get the response details to update the DB
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // REFUND ACCEPTED
+
+} catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+try
+{
+   // process a refund to the card
+   Transaction response = card.Refund(129.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   // get the response details to update the DB
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // REFUND ACCEPTED
+}
+
+catch (ApiException exce)
+{
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object, security code not required for Refunds
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cardHolderName = "James Mason";
+
+$response = new Transaction();
+
+try {
+   // process a refund to the card
+   $response = $card->refund(19.99)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+}
+```
+</Code>
+</CodeGroup>
+
+## Supplementary data (HPP)
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCardHolderName("James Mason");
+
+try {
+   Transaction response =
+           card
+                   .charge(new BigDecimal("10.99"))
+                   .withCurrency("EUR")
+                   .withSupplementaryData("taxInfo", "VATREF", "763637283332")
+                   .withSupplementaryData("indentityInfo", "Passport", "PPS736353")
+                   .execute();
+
+   // get the response details
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // (00)[ test system ] AUTHORISED
+} catch (ApiException exc) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+ //Card object
+ CreditCardData card = new CreditCardData();
+ card.Number = "4111111111111111";
+ card.ExpMonth = 12;
+ card.ExpYear = 2025;
+ card.Cvn = "123";
+ card.CardHolderName = "Joe Smith";
+ try {
+     var response = card.Authorize(10m)
+              .WithCurrency("GBP")
+              .WithSupplementaryData("leg", "value1", "value2", "value3")
+              .WithSupplementaryData("leg", "value1", "value2", "value3")
+              .Execute();
+
+      //get the response detail
+       string resultCode = response.ResponseCode;
+       string resultMessage = response.ResponseMessage;                
+  }
+  catch (ApiException ex)
+  {
+      // TODO: add your error handling here
+  }
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = '4263970000005262';
+$card->expMonth = 12;
+$card->expYear = TestCards::validCardExpYear();
+$card->cardHolderName = 'Joe Smith';
+
+try {
+	$response  = $card->authorize(10.99)
+		->withCurrency('EUR')
+		->withSupplementaryData(["taxInfo" => ["VATREF", "763637283332"]])
+		->withSupplementaryData(["indentityInfo"=> ["Passport", "PPS736353"]])
+		->execute();
+
+	// get the response details
+	$result = $response->responseCode; // 00 == Success
+	$message  = $response->responseMessage; // (00)[ test system ] AUTHORISED
+} catch (ApiException $exc) {
+	// TODO: add your error handling here
+}
+```
+</Code>
+</CodeGroup>

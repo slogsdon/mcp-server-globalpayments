@@ -1,0 +1,48 @@
+---
+title: "Hosted Payment Page - Overview"
+subtitle: "Quickly set up a secure checkout page"
+tag: "xml"
+created: "11/14/2024"
+---
+The Hosted Payment Page (HPP) is our <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> compliant hosted solution, allowing merchants to [capture addresses](/ecommerce/payments/hosted-solution/address-capture) for customer billing and shipping, contact information, and card details all through one simple redirect or embedded integration. 
+
+Using the HPP along with our SDKs and libraries means that you can set up a secure payment form in your application or website in minutes. The library handles the opening, display, and response of the HPP on desktop, tablet, mobile (both iOS and Android apps), or in-app, with minimal configuration required.
+
+HPP offers:
+
+* Prebuilt payment pages for your checkout flow
+* Simplest level of PCI DSS compliance: <Tooltip content="Self-Assessment Questionnaire A is for merchants who outsource card data responsibility to a third party."> SAQ A</Tooltip>
+* Secure address forms to collect other customer details
+* Built-in input validation of payment fields
+* Seamless integration with desktop, table, mobile, or in-app
+* Cross-channel secure payment acceptance and customer identification
+
+## How does it work?
+If you're using other solutions through the HPP — like 3D Secure 2, Alternative Payment Methods, or Fraud Management — the information gathered through the HPP will be used to populate the associated required fields. In other words, you don’t have to provide that additional information in the HPP request.
+
+Out of the box, the HPP offers the following real-time form validation:
+
+* **Card Number** – Card type detection and LUHN check
+* **Expiry** – Input validation and future date check
+* **Security Code** – Length check based on card type (4 digits for American Express, 3 for other card types)
+* **Cardholder Name** – Invalid characters (for example, script tags < /> )
+* **Input Optimized** – For example, the card number field will not accept non-numeric characters.
+* **Mobile Optimized** – On mobile and tablet, only the relevant keyboard type will be displayed to the customer.
+
+The HPP can be used on both a desktop and mobile device.
+
+![Example of the HPP on a desktop computer screen](/gh-assets/ecommerce/hpp_desktop.png)
+ <p style={{textAlign: "center"}}>**HPP Desktop Example**</p>
+
+![Example of the HPP on a mobile device screen](/gh-assets/ecommerce/hpp_mobile.png)
+ <p style={{textAlign: "center"}}>**HPP Mobile Device Example**</p>
+
+## 3D Secure
+The HPP handles the entire 3D Secure authentication flow, including determining which version of 3D Secure to use, gathering the necessary device information, and presenting the challenge to the customer if required. The HPP then processes the authorization and passes the additional authentication information to the card issuer.
+
+## Next steps
+To get familiar with how our HPP works, see our [guide](/ecommerce/payments/hosted-solution/guide).
+
+<Infobox>
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

@@ -1,0 +1,501 @@
+---
+title: "Card Payments"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/24/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, along with examples of request and response values. For more information on the HPP, see our [Overview](/ecommerce/payments/hosted-solution/overview).
+
+## Authorization
+Once you're ready to process a payment in your application or website, send an HTTP POST with the transaction details to our Hosted Payment Page. You can load the HPP in an iFrame to seamlessly integrate it with your customer journey. Alternatively, if you choose a full redirect, use our template system to maintain the style of your application or website. The HPP will render according to the device the customer is using: desktop, tablet, or mobile.
+
+Once complete, we'll return the transaction response to a nominated URL that can be supplied in the POST, or it can be sent to the parent frame/window. The response will contain a hashed string (`SHA1HASH`) made up of key transaction variables, including the Order ID, Result Code and Timestamp. The SDK will automatically check the hash for you and throw an exception if there is an issue. If you are not using the SDK please see the How to Check the Response Hash documentation for each request type.
+
+The Timestamp returned in the response will be identical to the one sent in the request POST. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables, for example the Amount, against what was stored in your application at the time the request was sent.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737"> 
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="COMMENT1" value="Mobile Channel">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="HPP_CHANNEL" value="ECOM">
+  <input type="hidden" name="HPP_LANG" value="en">
+  <!-- Begin 3D Secure 2 Mandatory and Recommended Fields -->
+  <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="test@example.com">
+  <input type="hidden" name="HPP_CUSTOMER_PHONENUMBER_MOBILE" value="44|789456123">
+  <input type="hidden" name="HPP_BILLING_STREET1" value="Flat 123">
+  <input type="hidden" name="HPP_BILLING_STREET2" value="House 456">
+  <input type="hidden" name="HPP_BILLING_STREET3" value="Unit 4">
+  <input type="hidden" name="HPP_BILLING_CITY" value="Halifax">
+  <input type="hidden" name="HPP_BILLING_POSTALCODE" value="W5 9HR">
+  <input type="hidden" name="HPP_BILLING_COUNTRY" value="826">
+  <input type="hidden" name="HPP_SHIPPING_STREET1" value="Apartment 852">
+  <input type="hidden" name="HPP_SHIPPING_STREET2" value="Complex 741">
+  <input type="hidden" name="HPP_SHIPPING_STREET3" value="House 963">
+  <input type="hidden" name="HPP_SHIPPING_CITY" value="Chicago">
+  <input type="hidden" name="HPP_SHIPPING_STATE" value="IL">
+  <input type="hidden" name="HPP_SHIPPING_POSTALCODE" value="50001">
+  <input type="hidden" name="HPP_SHIPPING_COUNTRY" value="840">
+  <input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value="FALSE">
+  <input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value="NO_PREFERENCE">
+  <!-- End 3D Secure 2 Mandatory and Recommended Fields -->
+  <!-- Begin Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="BILLING_CODE" value="59|123">
+  <input type="hidden" name="BILLING_CO" value="GB">
+  <input type="hidden" name="SHIPPING_CODE" value="50001|Apartment 852">
+  <input type="hidden" name="SHIPPING_CO" value="US">
+  <input type="hidden" name="CUST_NUM" value="6e027928-c477-4689-a45f-4e138a1f208a">
+  <input type="hidden" name="VAR_REF" value="Acme Corporation">
+  <input type="hidden" name="PROD_ID" value="SKU1000054">
+  <!-- End Fraud Management and Reconciliation Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Invoice">
+  <input type="hidden" name="CUSTOM_FIELD_NAME" value="Custom Field Data">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| HPP Lang | string | enum | O   | 5   | Used to set what language HPP is displayed in. If the field is not sent, the default language set on your account will be displayed. This can be configured by your account manager. Please see the list of [HPP Language Codes](https://developer.globalpay.com/#!/resources/hpp-supported-languages). |
+| HPP Version | integer |     | M   | 1   | This must be set to 2. |
+| Channel | string | enum | O   | N/A | Used to specify the type of transaction. Allowed values:  <br/>  <br/>**ECOM** - E-commerce transaction  <br/>**MOTO** - Mail Order/Telephone Order transaction  <br/>  <br/>Compatible with us and certain other acquirers. |
+| Payer Email Address | string | alphanumeric | M | 1-254 | Customer’s email address, including the full domain name. The field must be submitted in the form name@host.domain (for example, james.mason@example.com). The domain can be between 2-24 characters.  <br/>Allowed characters: [a-zA-Z0-9_-.]@[a-zA-Z0-9_-.].[a-zA-Z]  <br/>European merchants: mandatory for SCA.  <br/>  <br/>Not mandatory if Customer Phone Number is being sent. |
+| Home Phone Number | string | numeric | C   | 3\|15 or 19 | The home phone number provided by the Cardholder. Should be in format: of 'CountryCallingCode\|Number' for example, '1\|123456789'.  <br/>  <br/>European merchants: mandatory for SCA if captured by your application or website. We recommend that you send at least one phone number (Mobile, Home or Work). |
+| Billing Address Line 1 | string | alphanumeric | M   | 1-50 | First line of the customer's billing address.  <br/>Allowed characters for API: <br/> `^\^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Line 2 | string | alphanumeric | M   | 1-50 | Second line of the customer's billing address. Can be submitted as blank if not relevant for the particular customer.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Line 3 | string | alphanumeric | M   | 1-50 | Third line of the customer's billing address. Can be submitted as blank if not relevant for the particular customer.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address City | string | alphanumeric | M   | 1-40 | The city of the customer's billing address.  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address State | string | ISO 3166-2 | C   | 0-3 | The state of the customer's billing address. Should be the country subdivision code defined in ISO 3166-2 minus the country code itself. For example, Illinois = IL. Applicable for US and CA addresses.  <br/>  <br/>For each country’s ISO 3166-2 codes, see the [ISO Online Browsing Platform](https://www.iso.org/obp/ui/#search). See codes for [Ireland](https://www.iso.org/obp/ui/#iso:code:3166:IE) or [Great Britain](https://www.iso.org/obp/ui/#iso:code:3166:GB).  <br/>European merchants: if state applicable for the billing address country, required for SCA. |
+| Billing Address Postal Code | string | alphanumeric | M   | 1-16 | ZIP or other postal code customer's billing address.  <br/>Allowed characters: [a-zA-Z0-9-␣]  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Country | string | ISO 3166-1 | M   | 3   | The country of the customer's billing address. ISO 3166-1 numeric three-digit country code. For example, US = 840.  <br/>  <br/>European merchants: mandatory for SCA. |
+| Shipping Address Line 1 | string | alphanumeric | O   | 0-50 | First line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^\^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Line 2 | string | alphanumeric | O   | 0-50 | Second line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Line 3 | string | alphanumeric | 0   | 0-50 | Third line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address City | string | alphanumeric | O   | 0-50 | The city of the customer's shipping address.  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address State | string | ISO 3166-2 | O   | 0-3 | The state of the customer's shipping address. Should be the country subdivision code defined in ISO 3166-2 minus the country code itself. For example: Illinois = IL. Applicable for US and CA addresses.  <br/>  <br/>For each country’s ISO 3166-2 codes, see the [ISO Online Browsing Platform](https://www.iso.org/obp/ui/#search). See codes for [Ireland](https://www.iso.org/obp/ui/#iso:code:3166:IE) or [Great Britain](https://www.iso.org/obp/ui/#iso:code:3166:GB).  <br/>European merchants: if state applicable for the billing address country, required for SCA. |
+| Shipping Address Postal Code | string | alphanumeric | O   | 0-16 | ZIP or other postal code customer's shipping address.  <br/>Allowed characters: [a-zA-Z0-9-␣]  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Country | string | ISO 3166-1 | O   | 0-3 | The country of the customer's shipping address. Numeric three-digit country code. For example, US = 840.  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Match Indicator | Boolean | N/A | O   | N/A | Indicates whether the shipping address matches the billing address.  <br/>  <br/>European merchants: optional for SCA. |
+| Challenge Request Indicator | string | enum | O   | N/A | Indicates whether a challenge is requested for this transaction. The Issuer may override whatever preference is specified in this field. Allowed values:  <br/>  <br/>**NO\_PREFERENCE** - No preference as to whether the customer is challenged  <br/>**NO\_CHALLENGE\_REQUESTED** - Preference is for the customer not to be challenged.  <br/>**CHALLENGE\_PREFERRED** - Preference is for the customer to be challenged.  <br/>**CHALLENGE\_MANDATED** - A challenge is required for the transaction to be authorized due to local/regional mandates or other variables.  <br/>**NO\_CHALLENGE\_REQUESTED\_TRANSACTION\_RISK\_ANALYSIS\_PERFORMED**  <br/>**NO\_CHALLENGE\_REQUESTED\_DATA\_SHARE\_ONLY**  <br/>**NO\_CHALLENGE\_REQUESTED\_SCA\_ALREADY\_PERFORMED**  <br/>**NO\_CHALLENGE\_REQUESTED\_WHITELIST**  <br/>**CHALLENGE\_REQUESTED\_PROMPT\_FOR\_WHITELIST**  <br/>  <br/>European merchants: optional for SCA. |
+| Billing or Shipping Code | string | alphanumeric | O   | 0-30 | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Billing or Shipping Country | string | alphanumeric | O   | 0-50 | The country of the billing or shipping address.  <br/>Allowed characters: [a-zA-Z0-9.-] |
+| Customer Number | string | alphanumeric | O   | 0-50 | A unique reference for this customer for example from your CRM system.  <br/>Allowed special characters: [-.,+@_␣] |
+| Variable Reference | string | alphanumeric | O   | 0-50 | Any reference you also would like to assign to this transaction. Can also be used to pass the Acquirer Statement reference, where supported.  <br/>Allowed special characters: [-.,+@_␣] |
+| Product Id | string | alphanumeric | O   | 0-50 | The code you assign to the product, for example the SKU.  <br/>Allowed special characters: [-.,+@_␣] |
+| Merchant Response URL | string | Standard URL Format | O   | 0-255 | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| Card Payment Button | string | alphanumeric | O   | 0-25 | Used to set what text is displayed on the payment button for card transactions. If this field is not sent in, “Pay Now” is displayed on the button by default. |
+| Supplementary Data | string | alphanumeric | O   | 0-255 | Any additional data you wish to send in the transaction can be sent as a name:value pair. This data will also be returned in the response (not for PayPal transactions). |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+#### Sample response
+Once the customer has completed their transaction, HPP will return the response to the parent frame or nominated URL. At this point you can redirect the customer to the appropriate success or failure page in your application/website, update your database and send an email to your customer based on the outcome of the transaction.
+
+<Infobox>
+To return the customer to HPP after an unsuccessful transaction, you must ensure that a unique Order ID is used. Any Order ID that has been processed previously will generate an error (501 result code).
+</Infobox>
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+[RESULT=00,
+ AUTHCODE=12345, 
+ MESSAGE=[ test system ] Authorised,
+ PASREF=14631546336115597,
+ AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M,
+ CVNRESULT=M,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20180613113227,
+ AMOUNT=1001,
+ BATCHID=691175,
+ CARD_PAYMENT_BUTTON=Pay Invoice,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ BILLING_CODE=59|123,
+ BILLING_CO=GB,
+ SHIPPING_CODE=50001|Apartment 852,
+ SHIPPING_CO=US,
+ COMMENT1=Mobile Channel,
+ ECI=5
+ AUTHENTICATION_VALUE=ODQzNjgwNjU0ZjM3N2JmYTg0NTM=,
+ DS_TRANS_ID=c272b04f-6e7b-43a2-bb78-90f4fb94aa25,
+ MESSAGE_VERSION=2.1.0,
+ SRD=MMC0F00YE4000000715,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61] 
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Amount | integer |     | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Card Payment Button | string | alphanumeric | Used to set what text is displayed on the payment button for card transactions. If this field is not sent in, “Pay Now” is displayed on the button by default. |
+| Merchant Response URL | string | Standard URL Format | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| HPP Lang | string | enum | Used to set what language HPP is displayed in. If the field is not sent, the default language set on your account will be displayed. This can be configured by your account manager. Please see the list of [HPP Language Codes](/ecommerce/hpp-reference/language-codes). |
+| Billing or Shipping Code | string | alphanumeric | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Billing or Shipping Country | string | alphanumeric | The country of the billing or shipping address.  <br/>Allowed characters: [a-zA-Z0-9.-] |
+| Comment | string | alphanumeric | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Eci | string | alphanumeric | The E-Commerce Indicator indicates whether chargeback protection is available for the transaction or not. |
+| Cavv | string | alphanumeric | Cardholder Authentication Verification Value: a unique value confirming the customer’s authentication status.  <br/>Allowed characters: [a-zA-Z0-9+/=] |
+| Xid | string | alphanumeric | The unique eXchange identifier for the 3D Secure transaction.  <br/>Allowed characters: [a-zA-Z0-9+/=] |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+## Open to Buy (OTB)
+Open to Buy (OTB) allows you to check that a card is still valid and active without actually processing a payment against it. This is an alternative to charging the card a small amount (for example, 10c) to obtain the same result. The Security Code (CVN) and Address Verification Service (AVS) checks will also be performed against it.
+
+The amount in the request must be submitted as **0**.
+
+<Infobox>
+It is possible to set the Fraud Filter mode to ACTIVE for OTB transactions. This can be configured by setting the Fraud Filter Mode as ACTIVE. This field is available in the HPP Reference for [Fraud Management](/hpp-reference/fraud-management).
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737"> 
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="0">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- OTB Field -->
+  <input type="hidden" name="VALIDATE_CARD_ONLY" value="1">
+  <!-- End OTB Field -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory ( M), Optional ( O), or Conditional ( C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Validate Card Only | integer |     | O   | 1   | The most common usage:  <br/>1: The card will be checked and the result will be sent back on the response  <br/>Other usage:  <br/>0: Can be used to store a card without first validating or processing a payment against it. May suit specific use case scenarios. |
+
+#### Sample response
+
+In addition to the standard HPP response, the following fields will also be included:
+
+<Code id="markup" title="" language="markup" active>
+```
+[VALIDATE_CARD_ONLY=1]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category/Field | Format | Description |
+| --- | --- | --- | --- |
+| Validate Card Only | integer |     | The most common usage:  <br/>1: The card will be checked and the result will be sent back on the response  <br/>Other usage:  <br/>0: Can be used to store a card without first validating or processing a payment against it. May suit specific use case scenarios. |
+
+## iFrame/WebView optimization
+When loading the HPP in an iFrame/WebView, it's useful to know what the current height and width of the payment form is and when this changes. Various events on HPP, including the display of input warning messages or the DCC choice, can significantly alter the size of the form and your iFrame/WebView may have to resize to account for this. If you're using our Libraries and SDKs they'll take care of these fields for you.
+
+Similarly, instead of relying on a HTTP POST to a nominated URL in your application to receive the transaction response, you may wish to have it returned, instead, to your iFrame/WebView. Two additional fields in the request POST will tell HPP to post this information back to the parent frame or window.
+
+### HPP embedded
+A simple example of embedding the HPP into a checkout using an iFrame:
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613104233"> 
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- iFrame Optimization Fields -->
+  <input type="hidden" name="HPP_POST_DIMENSIONS" value="https://www.example.com">
+  <input type="hidden" name="HPP_POST_RESPONSE" value="https://www.example.com">
+  <!-- End iFrame Optimization Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="submit" value="Click here to Purchase">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the field is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| HPP Post Dimensions | string | Standard URL Format | O   | 0-255 | This field must contain the domain of the application hosting the iFrame or WebView. This will tell the HPP to post back the height and width any time it changes, for example if an input warning is displayed. |
+| HPP Post Response | string | Standard URL Format | O   | 0-255 | This field must contain the domain of the application hosting the iFrame or WebView. This will tell the HPP to post back the transaction response to the parent frame or window. The response is posted back as a name/value pair JSON string with the values Base64 encoded (example below). |
+
+### Data returned
+
+#### HPP_POST_DIMENSIONS
+Each time the height or width of the HPP changes, the new values will be returned to the parent frame or window. You can add an event listener to your parent frame to receive this data. The value will be posted back as a JSON string.
+
+<Code id="markup" title="" language="markup" active>
+```
+"{ "iframe":{ "height":"552px", "width":"800px" } }"
+```
+</Code>
+
+You can now parse the JSON string and adapt the size of the parent frame if required.
+
+#### HPP_POST_RESPONSE
+Once the transaction is complete, this field tells HPP to post the response back to the parent frame or window, instead of to a nominated URL in your application. Your event listener will receive the following JSON name/value pair string, with the values Base64 encoded.
+
+Once parsed and the result decoded, you can choose to close the HPP frame to display a success/failure message or continue with your customer journey.
+
+<Code id="json" title="JSON" language="json" active>
+```
+{ 
+    "BILLING_CODE": "MzY3fDM5MQ==",
+    "BATCHID": "MzM0NDQ3",
+    "HPP_FRAUDFILTER_RULE_cf609cf9-9e5a-4700-ac69-8aa09c119305": "UEFTUw==",
+    "HPP_FRAUDFILTER_RULE_NAME": "TmFtZSBMaXN0",
+    "HPP_FRAUDFILTER_RESULT": "UEFTUw==" "AUTHCODE": "MTIzNDU=",
+    "AMOUNT": "MjUwMA==",
+    "ACCOUNT": "aW50ZXJuZXQ=",
+    "CVNRESULT": "TQ==", "MESSAGE": "WyB0ZXN0IHN5c3RlbSBdIEFVVEhPUklTRUQ=",
+    "ORDER_ID": "MjAxNjA2MTcwODE1MDktNDQ4",
+    "RESULT": "MDA=",
+    "PASREF": "MTQ2NjE1MTMxNzcyODk0MDE=",
+    "SHA1HASH": "NDAyYjIzYzMzODMwNGVkMzM1MTc4YTdlNjg2YTYzZmI2ZjcwNjI1ZA==",
+    "TIMESTAMP": "MjAxNjA2MTcwODE1MDk=",
+    "MERCHANT_ID": "c2Vhbm1hY2RvbWhuYWxsdGVzdA==",
+}
+```
+</Code>
+
+<Infobox>
+To return the customer to HPP after an unsuccessful transaction, you must ensure that a unique Order ID is used. Any Order ID that has been processed previously will generate an error (501 result code).
+</Infobox>
+
+Your application can now send this link to your customer, for example via email or SMS. Once clicked, they will be redirected to the HPP to complete payment. The HPP can be customized using our template system to maintain the look and feel of your brand and customer experience.
+
+Once payment is complete, HPP will return the transaction response to a nominated URL that can be supplied in the POST (see example above). Please refer to the Authorization article above on how to handle the response from HPP.
+
+### Error handling
+If invalid data is submitted the HPP will return JSON string(s) indicating any issues with each fields.
+
+#### Invalid JSON Object
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "errors": [
+        {
+            "resultCode": 508,
+            "internalErrorCode": 61755,
+            "errorMessage": "Parsing Failure due to Invalid JSON."
+        }
+    ]
+}
+```
+</Code>
+
+Invalid data submitted (e.g. the name sent in the ACCOUNT field does not exist)
+
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "errors": [
+        {
+            "resultCode": 506,
+            "internalErrorCode": 61201,
+            "errorMessage": "Invalid MERCHANT_ID or ACCOUNT. Please contact the merchant."
+        }
+    ]
+}
+```
+</Code>
+
+<br/>
+Invalid data submitted (e.g. the amount sent in the AMOUNT field contained a comma)
+
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "errors": [
+        {
+            "resultCode": 508,
+            "internalErrorCode": 61015,
+            "errorMessage": "Invalid characters in AMOUNT field. Please contact the merchant."
+        }
+    ]
+}
+```
+</Code>
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Authorization or Open to Buy (OTB). 
+
+<Tabs active="auth">  
+<Tab id="auth" title="Authorization">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency"
+```
+</Code>
+
+Based on the example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200324121120.MerchantID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab> 
+  <Tab id="otb" title="Open to Buy (OTB)"> 
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency"
+```
+</Code>
+
+Based on the POST example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.MerchantID.N6qsk4kYRZihmPrTXWYS6g.0.EUR"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab> 
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields, and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+The Timestamp returned in the response will be identical to the one sent in the request POST. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables, for example the Amount, against what was stored in your application at the time the request POST was sent.
+
+The steps below apply to both Authorization and Open to Buy (OTB).
+
+##### Step 1: Using the SHA-1 algorithm, hash a string made up of some of the response values
+
+The blueprint of the hash for the response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### Step 2: Concatenate the hashed string with your Shared Secret
+
+After Step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your **Shared Secret**:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### Step 3: SHA-1 hash the concatenated string and check the output against what was returned in the HPP response
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

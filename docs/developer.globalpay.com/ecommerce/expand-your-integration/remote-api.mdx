@@ -1,0 +1,346 @@
+---
+title: "Remote API"
+subtitle: "Process captured data through our API"
+tag: "xml"
+created: "02/10/2025"
+---
+If you're capturing data in your application or website, you can send it to our API in an Authorization request to be processed. You can also manage the full transaction lifecycle using the API, from initial payment through to settlement and additional actions like refunds.
+
+Merchants processing captured card data through the API can attest to their PCI compliance by completing the <Tooltip content="Payment Card Industry Data Security Standard">PCI DSS</Tooltip> Self-Assessment Questionnaire (SAQ) D.
+
+<Infobox>
+To test using the API, first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>
+
+## Step 1: Set up your client
+
+Select the applicable validation resource you need by using the tabs below.
+
+<Tabs>  
+<Tab id="html" title="HTML/JS">
+
+We provide a simple [JavaScript library](/ecommerce/payments/client-side-libraries/javascript) that you can tailor to fit your solution. The latest release is available on [GitHub](https://github.com/globalpayments/rxp-js).
+
+#### Form example
+
+<Code id="markup" title="HTML" language="markup" active>
+```
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Basic Validation Example</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="rxp-js.js"></script> <!-- Available at https://github.com/realexpayments -->
+        <!-- Basic form styling given as an example -->
+        <style type="text/css">
+            label{display:block; font-size:12px; font-family:arial;}
+            input{width:200px;}
+            input.small{width:50px;}
+            .twoColumn{float:left;margin:0 30px 20px 0;}
+            .clearAll{clear:both;}
+        </style>
+    </head>
+    <body><!-- Basic HTML form given as an example -->
+        <form name="myForm" method="POST" autocomplete="off" action="https://serverSdkEndpoint">
+        <label for="cardNumber">Card Number</label>
+        <input type="tel" id="cardNumber" name="card-number" /><br><br>
+        <label for="cardholderName">Cardholder Name</label>
+        <input type="text" id="cardholderName" name="cardholder-name" /><br><br>
+        <p class="twoColumn">
+        <label>Expiry Date</label>
+        <input type="tel" id="expiryDateMM" name="expiry-date-mm" placeholder="MM" class="small" />
+        <input type="tel" id="expiryDateYY" name="expiry-date-yy" placeholder="YY" class="small"  /></p>
+        <p class="twoColumn">
+        <label for="cvn">Security Code</label>
+        <input type="tel" id="cvn" name="cvn" class="small" /></p>
+        <p class="clearAll">
+        <input value="Pay Now" type="submit" name="submit" onclick="validate();" /></p>
+        </form>
+    </body>
+</html>
+```
+</Code>
+
+#### Validation example
+
+<Code id="markup" title="JavaScript" language="markup" active>
+```
+function validate() { // Basic form validation using the JS Library given as an example
+  var cardNumberCheck = RealexRemote.validateCardNumber(document.getElementById('cardNumber').value);
+  var cardHolderNameCheck = RealexRemote.validateCardHolderName(document.getElementById('cardholderName').value);
+  var expiryDate = document.getElementById('expiryDateMM').value.concat(document.getElementById('expiryDateYY').value);
+  var expiryDateFormatCheck = RealexRemote.validateExpiryDateFormat(expiryDate);
+  var expiryDatePastCheck = RealexRemote.validateExpiryDateNotInPast(expiryDate);
+  if (document.getElementById('cardNumber').value.charAt(0) == "3") {
+    cvnCheck = RealexRemote.validateAmexCvn(document.getElementById('cvn').value);
+  } else {
+    cvnCheck = RealexRemote.validateCvn(document.getElementById('cvn').value);
+  }
+  if (cardNumberCheck == false || cardHolderNameCheck == false || expiryDateFormatCheck == false || expiryDatePastCheck == false || cvnCheck == false) {
+    // code here to inform the cardholder of an input error and prevent the form submitting
+    return false;
+  } else {
+    return true;
+  }
+}
+```
+</Code>
+
+#### Validation syntax
+The library contains the following methods.
+
+|     |     |
+| --- | --- | 
+| Element/Field | Description |
+| validateCardNumber | Validates card number format and performs a Luhn check. |
+| validateCardHolderName | Validates cardholder name according to ISO/IEC 8859-1:1998. |
+| validateCvn | Validates non-Amex CVN. |
+| validateAmexCvn | Validates Amex CVN. |
+| validateExpiryDateFormat | Validates expiry date format. |
+| validateExpiryDateNotInPast | Checks that the expiry date is not in the past. |
+
+   </Tab> 
+   <Tab id="android" title="Android">
+
+To integrate from end-to-end with our API SDK, you can capture the card data in your application and send it to the server-side SDK.
+
+We provide a simple [Android validation library](/ecommerce/payments/client-side-libraries/android) that you can tailor to fit your solution. You can install it using Gradle or Maven. The latest release is available on [GitHub](https://github.com/realexpayments/rxp-android).
+
+#### Validation syntax
+The library contains the following methods.
+
+|     |     |
+| --- | --- | 
+| Element/Field | Description |
+| validateCardNumber | Validates card number format and performs a Luhn check. |
+| validateCardHolderName | Validates cardholder name according to ISO/IEC 8859-1:1998. |
+| validateCvn | Validates non-Amex CVN. |
+| validateAmexCvn | Validates Amex CVN. |
+| validateExpiryDateFormat | Validates expiry date format. |
+| validateExpiryDateNotInPast | Checks that the expiry date is not in the past. |
+
+
+
+
+   </Tab>
+    <Tab id="ios" title="iOS">
+
+To integrate from end-to-end with our API SDK, you can capture the card data in app and send it to the server-side SDK.
+
+We provide a simple [iOS (Swift) validation library](/ecommerce/payments/client-side-libraries/ios) that you can tailor to fit your solution. You can install it using Cocoapods. The latest release is available on [GitHub](https://github.com/realexpayments/rxp-ios). 
+
+#### Validation syntax
+The library contains the following methods.
+
+|     |     |
+| --- | --- | 
+| Element/Field | Description |
+| validateCardNumber | Validates card number format and performs a Luhn check. |
+| validateCardHolderName | Validates cardholder name according to ISO/IEC 8859-1:1998. |
+| validateCvn | Validates non-Amex CVN. |
+| validateAmexCvn | Validates Amex CVN. |
+| validateExpiryDateFormat | Validates expiry date format. |
+| validateExpiryDateNotInPast | Checks that the expiry date is not in the past. |
+
+   </Tab>
+</Tabs>
+
+## Step 2: Set up your server
+An Authorization is a standard payment request or charge processed by Global Payments. First, create a card object with your captured cardholder data and add this to your request. The SDK handles generating the secure hash, transmission of data and creation of the response object. Using the response object methods you can obtain all the data you need from the outcome of the transaction.
+
+<Infobox>
+Always keep your shared secret on the server-side to avoid exposing it to the public.
+</Infobox>
+
+#### Sample request
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="java" title="Java" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+try {
+   // process an auto-settle authorization
+   Transaction response = card.charge(new BigDecimal("19.99"))
+                           .withCurrency("EUR")
+                           .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+try
+{
+   // process an auto-capture authorization
+   Transaction response = card.Charge(129.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\PaymentMethods\CreditCardData;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+try {
+   // process an auto-capture authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+
+## Testing
+Testing is available in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-card-numbers" title="Test Cards" >
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/resources/messages" title="Messages and Error Codes" >
+       View what messages can be returned for both hosted and API integrations.
+    </Card>
+</CardsGroup>
+
+## Enhance your solution
+For the detailed API specification and a full list of features, see the [API Reference](/ecommerce/api/overview) section.
+
+<CardsGroup type="with_icon">
+<Card type="with_icon" link="/ecommerce/api/card-payments" title="Card Payments - API Reference" icon="window">
+        See the full API specification for Card Payments.
+    </Card>
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>

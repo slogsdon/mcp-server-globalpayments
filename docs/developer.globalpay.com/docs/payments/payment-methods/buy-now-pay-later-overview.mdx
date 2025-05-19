@@ -1,0 +1,37 @@
+---
+title: 'Buy Now Pay Later - Overview'
+search_results: 'Buy Now Pay Later Overview'
+subtitle: 'Allow customers to repay the cost of their purchase over time'
+tag: 'rest'
+created: '06/08/2024'
+---
+The Buy Now Pay Later (BNPL) payment method allows customers to repay the cost of their purchase over time instead of all at once. This payment flexibility typically leads to better conversion rates as well as higher cart values.
+
+Using our API, you can offer your customers a range of BNPL payment options using a single integration. We support several BNPL providers in multiple markets, such as Klarna, Affirm, Sezzle, and ZIP. With our flexible API, your integration will automatically support any new BNPL providers that we add over time. You just need to pass the new provider name in the request.
+
+Our BNPL solution offers:
+* Choice of multiple BNPLs providers in a number of markets
+* Single point of integration to process all supported BNPL providers
+* Ability to offer different BNPL providers to target specific global markets
+* Consolidated reporting via our API and Reporting tool 
+
+## How does it work?
+With BNPL, you receive your funds directly from the BNPL provider the customer selects. Although the customer pays for their purchase over time, you receive the full funds up front, minus incurred fees. All transaction data, including authorization and settlement data, is available from us using our APIs and Merchant Portal reporting tool.
+
+With most BNPL providers, the payment process works like this:
+1. Initiate the payment.
+2. Redirect the customer to their payment method of choice.
+3. Receive the initial response while the customer is redirected back to your app or website.
+4. Verify the final status update from the payment method.
+
+At a high level, Buy Now Pay Later works like this using our API:
+
+![Diagram flow showing interaction between the merchant website, our API, and the BNPL Provider to pay with Buy Now Pay Later.](/gh-assets/bnpl_flow.png)
+ <p style={{textAlign: "center"}}>**Buy Now Pay Later Typical Flow**</p>
+
+## Next steps
+To get familiar with how BNPL works, see our [guide](/docs/payments/payment-methods/buy-now-pay-later-guide).
+
+<Infobox>
+  Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+  </Infobox>

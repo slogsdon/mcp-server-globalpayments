@@ -1,0 +1,48 @@
+---
+title: "Incremental Authorization"
+subtitle: "Increase authorized funds before the final capture"
+tag: "xml"
+created: "02/11/2025"
+---
+<Infobox>
+If you use an acquirer other than us, contact us to check if this service is available to you.
+</Infobox>
+
+Our Incremental Authorization solution automatically handles the increase of funds if the total amount to be captured differs from what you originally estimated during pre-authorization and reserved on the customer’s account. This can occur if the total price fluctuates or if a customer has added more items to their purchase. 
+
+To reflect this new balance on the customer’s account, additional messages must be sent and are handled by us. The process is seamless to the customer, as the total captured amount appears as just one entry on their account. And since our managed service is compliant and interchange optimized, you’ll also benefit from a better interchange qualification. 
+
+When using our Incremental Authorization solution, keep in mind:
+
+* You can use it only for settling delayed authorizations; it’s not supported for multi-settle authorizations.
+* The capture limit of 115% of the originally authorized amount does not apply to incremental authorizations. 
+* Only one incremental authorization can be sent when the amount is higher than what was originally authorized.
+
+## How does it work?
+To use this functionality, you first need to request the ability to capture increments of the payment in the Initial Authorization request. To do this, include the following:
+
+* request type="auth"
+* autosettle flag="0"
+
+Once you’ve confirmed eligibility in the response, you can then perform an Incremental Authorization request.
+
+3D Secure (3DS) data is not sent with the Incremental Authorization request. However, once it’s approved, you can include the 3DS data from the Initial Authorization request in the Settle request.
+
+If the incremental authorization fails (101 Declined), no settlement will go to the Acquirer and the response from incremental authorization will be sent to you as the Settle response. We can still capture the previous authorization but only at the originally authorized amount. 
+
+If incremental authorization is successful, it generates a new authorization code. We handle sending the incremental messaging. You can then send a Settle request to capture the final amount.
+
+## Testing
+Testing is available in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-card-numbers" title="Test Cards" >
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/resources/messages" title="Messages and Error Codes" >
+       View what messages can be returned for both hosted and API integrations.
+    </Card>
+</CardsGroup>
+
+## Ready to get started?
+To get started with our Incremental Authorization solution, contact your account manager.

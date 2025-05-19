@@ -1,0 +1,259 @@
+---
+title: 'Manage Payments - ReAuth'
+search_results: 'Global Payments - Manage Payments ReAuth'
+subtitle: 'Learn how to get a new authcode for a stale transaction'
+tag: 'rest'
+created: '23/08/2024'
+---
+<Infobox>
+Availability of this feature in production depends on your allowed live configuration. 
+Please contact Global Payments before coding this feature to confirm it will be available to you when you go live.
+</Infobox>
+This guide focuses on sending a Re-Authorization (ReAuth) request to receive a more recent authcode. 
+
+## What is it?
+
+This action is used to refresh the authorization associated with a transaction when too much time has passed since the transaction was authorized. The card issuer might return the withheld funds to the cardholder if the payment is not captured within a certain amount of time. Therefore, the transaction needs to get a more recent authcode. 
+
+Additionally, you can use a Re-Authorization request in cases where the amount you want to deduct from the customer's card is less than the originally authorized amount or if you need to reauthorize a transaction that was reversed in error.  
+
+## How does it work?
+The main things to know about ReAuth:
+
+* The amount submitted in a Re-Authorization request must be less than that of the original authorization
+* Availability in production depends on your live configuration
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## ReAuth a transaction
+In this step, we reauthorize a transaction to receive a more recent authcode.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+    <Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -L -X POST 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d/reauthorization' \
+-H 'Authorization:  Bearer WVLzMsuEQzSEFfXX9D8tDl8t6YSG' \
+-H 'X-GP-Version:  2021-03-22' \
+-H 'Accept:  application/json' \
+-H 'Content-type:  application/json' \
+-H 'Accept-Encoding:  gzip' \
+-d '{
+    "amount": "11099"
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+Transaction transaction = Transaction.fromId("TRN_Txdt3Drc2N4HU8X8JWov4P3bNL1w3q");
+
+try {
+    Transaction response = transaction.reauthorize(new BigDecimal("11.99"))
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key  "batch_id"
+    String batchReference = response.getBatchSummary().getBatchReference();
+    // API raw response key "payment_method->card->brand";
+    String cardType = response.getCardDetails().getBrand();
+    // API raw response key "payment_method->card->masked_number_last4"
+    String maskedNumberLast4 = response.getCardDetails().getMaskedNumberLast4();
+    // capture_mode === 'MULTIPLE'
+    boolean multiCapture = response.isMultiCapture();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->card->authcode"
+    String authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String brandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+} 
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+var config = new GpApiConfig();
+config.AppId = "AppId";
+config.AppKey = "AppKey";
+config.Channel = Channel.CardNotPresent;
+config.Environment = Entities.Environment.TEST;
+ServicesContainer.ConfigureService(config);
+
+Transaction transaction = Transaction.FromId("TRN_Txdt3Drc2N4HU8X8JWov4P3bNL1w3q"); 
+            
+try
+{
+	Transaction response = transaction.Reauthorize(11.99m)
+		.Execute();
+	
+	// API raw response key "id"
+	var id = response.TransactionId; 
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	// API raw response key "batch_id"
+	var batchReference = response.BatchSummary.BatchReference;
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage; 
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	// capture_mode === 'MULTIPLE'
+	var multiCapture = response.MultiCapture; 
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode; 
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->brand_reference"
+	var brandReference = response.CardBrandTransactionId;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```php
+        $config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$transaction = Transaction::fromId('TRN_Txdt3Drc2N4HU8X8JWov4P3bNL1w3q');
+try {
+    $response = $transaction->reauthorized(11.99)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+$batchReference = $response->batchSummary->batchReference; // API raw response key  "batch_id"
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+    
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+    "time_created": "2026-05-03T21:23:39.718Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "11099",
+    "currency": "USD",
+    "country": "US",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "batch_id": "BAT_234234234",
+    "payment_method": {
+        "result": "string",
+        "message": "string",
+        "card": {
+            "authcode": "string",
+            "brand_reference": "string"
+        }
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "ADJUST",
+        "time_created": "2026-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+  </Code>  
+    
+    
+## Integration references
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview).
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        See the full transaction endpoint, including reauths.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs - Libraries JAVA,.NET,PHP" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+ReAuths are available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

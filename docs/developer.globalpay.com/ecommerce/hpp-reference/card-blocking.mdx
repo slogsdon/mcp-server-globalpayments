@@ -1,0 +1,147 @@
+---
+title: "Card Blocking"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/25/2025"
+---
+Card Blocking allows you to choose which card types can be accepted for payment or stored for future-dated payments.
+
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Card Blocking, see our [main article](/ecommerce/expand-your-integration/card-blocking).
+
+## Payment request
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+<input type="hidden" name="TIMESTAMP" value="20160513162110">
+<input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+<input type="hidden" name="ACCOUNT" value="internet">
+<input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+<input type="hidden" name="AMOUNT" value="10000">
+
+
+<!-- Begin Card Block Fields -->
+<input type="hidden" name="BLOCK_CARD_TYPE" value="commercialdebit|commercialcredit">
+<!-- End Card Block Fields -->
+
+
+<input type="hidden" name="CURRENCY" value="EUR">
+<input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+<input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+<input type="hidden" name="HPP_VERSION" value="2">
+<input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Complete Payment">
+<input type="submit" value="Click here to Purchase">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the field is Mandatory (M), Optional (O), or Conditional (C) - depending on another optional field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| BLOCK\_CARD\_TYPE | string | alphanumeric | O   | 13-61 | Specifies the card type to be blocked.  Allowable values:  <br/>**consumercredit**  <br/>**consumerdebit**  <br/>**commercialdebit**  <br/>**commercialcredit**  <br/>When using multiple card types, each card type must be pipe separated - \| |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the Request hash
+1. Using the SHA-1 algorithm, hash a string made up of the request values
+The blueprint of the hash for an HPP request using Card Blocking is shown below. Each block option passed in the payment request must be pipe separated when creating the hash:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.block_card_type|block_card_type"
+```
+</Code>
+
+Based on the above example, our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20160513162110.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.10000.EUR.commercialdebit|commercialcredit"
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+
+After step 1, you'll have a string like:
+
+<Code id="markup" title="" language="markup" active>
+```
+“28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882”
+```
+</Code>
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Shared Secret"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm of your concatenated string. For example:
+
+<Code id="markup" title="" language="markup" active>
+```
+“947903969e7aaf996164c680a6669805fe405269”
+```
+</Code>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields, and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+1. Using the SHA-1 algorithm, hash a string made up of the response values
+The blueprint of the hash for the response is shown below:
+
+<Code id="markup" title="" language="markup" active>
+```
+timestamp.merchantid.orderid.amount.currency
+```
+</Code>
+
+So, based on the above example, our initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+20160513162110.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.10000.EUR
+```
+</Code>
+
+2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like:
+
+<Code id="markup" title="" language="markup" active>
+```
+28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+```
+</Code>
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Shared Secret"
+```
+</Code>
+
+3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm of your concatenated string. For example:
+
+<Code id="markup" title="" language="markup" active>
+```
+“947903969e7aaf996164c680a6669805fe405269”
+```
+</Code>
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

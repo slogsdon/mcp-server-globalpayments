@@ -1,0 +1,588 @@
+---
+title: "Transaction Management"
+subtitle: "Capture, refund, or void transactions from your application"
+tag: "xml"
+created: "02/11/2025"
+---
+Our API gives you full control over the status of your transactions allowing you to capture, refund, or void them quickly and easily from your application. This guide goes through the potential lifecycle of a transaction and provides sample code for each request type.
+
+## Step 1: Process an authorization
+For our first example, we process a Delayed Capture authorization. This will authorize the funds on the customer's card, but the transaction won't be placed in the settlement file until we capture it. The amount of time the funds can remain <Tooltip content="A protective measure used to insulate funds for a designated purpose.">ring-fenced</Tooltip>
+ on the customer's card may vary between different Issuers and Acquirers. The card schemes (Visa, Mastercard, and so on) also have their own rules around how long transactions can wait to be captured.
+
+#### Sample request
+
+<Infobox>
+Funds may be lost if transactions are not captured in time. For information on capture limits, contact your account manager (or your acquirer).
+</Infobox>
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="0"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+  // configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+try {
+   // create the delayed capture authorization
+   Transaction response = card.authorize(new BigDecimal("99.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+try
+{
+   // create the delayed capture authorization
+   Transaction response = card.Authorize(99.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\PaymentMethods\CreditCardData;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+
+ServicesContainer::configureService($config);
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "121";
+$card->cardHolderName = "James Mason";
+
+try {
+   // create the delayed capture authorization
+   $response = $card->authorize(19.99)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Capture the transaction
+If successfully authorized, the funds will now be ring-fenced on the customer's account. When you want to include the transaction in the next settlement file (also known as a _batch_) you can simply send a Capture (Settle) request. When the transaction is captured with the Acquirer, the funds are deducted from the customer's account and settled into the merchant's account.
+
+To capture a transaction, you must provide the original Order ID and Payments Reference (`pasref`).You can capture a transaction for any amount up to 115% of the original value. However, in order to avail of the chargeback protection provided by 3D Secure, you must capture for the full amount. If you don't include an amount in your request, by default the full amount will be captured.
+
+#### Sample request
+<Infobox>
+The amount of time it takes for the funds to settle into the merchant's account varies between different acquirers. It can be anything from 3-5 days and may also depend on the risk profile of the merchant. 
+</Infobox>
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="settle" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <pasref>14611471047824414</pasref>
+  <!-- Optional - supply the amount to settle for
+  <amount>599</amount> 
+  -->
+  <sha1hash>31ee74dfac4e3f40c8e568d416f543fc495f9b4e</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+  config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a capture request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the capture transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the capture request, we must specify the amount and currency
+   Transaction response = transaction.capture(new BigDecimal("99.99"))
+                           .withCurrency("EUR")
+                           .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Settled Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a capture request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the capture transaction object
+var capture = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the capture request, we must specify the amount and currency
+   Transaction response = capture.Capture(99.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Settled Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a settle request requires the original order id
+$orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the settle transaction object
+$settle = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the settle request, we must specify the amount and currency
+   $response = $settle->capture(15.00)
+      ->withCurrency("EUR")
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 3: Refund a captured transaction
+Once a transaction is captured and the funds deducted from the customer's account, it is possible to refund the full or partial amount back to them without the need to obtain their card details again.
+
+Merchants can process a refund for any amount up to 115% of the original transaction value. The Rebate Password must be hashed with the SHA-1 algorithm and added to the request before executing the transaction. Unlike Capture requests, the amount and currency must be specified in this request.
+
+Sample request
+<Infobox>
+Refunds can only be processed for a fixed amount of time after the original authorization. Different acquirers have different limits and this can range from 6 to 13 months. For information, contact your account manager (or your acquirer).
+</Infobox>
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="rebate" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <amount currency="EUR">1999</amount>
+  <pasref>14609958221624162</pasref>
+  <authcode>12345</authcode>
+  <refundhash>fb528c20a04fb494f796591392ede2d36140b471</refundhash>
+  <sha1hash>946435842f5602b9db2a78c1fc983e2960b79c13</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setRebatePassword("rebate");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+
+ServicesContainer.configureService(config);
+
+// a refund request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// and the auth code transaction response
+String authCode = "12345";
+
+// create the refund transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+transaction.setAuthorizationCode(authCode);
+
+try {
+   // send the refund request, we must specify the amount and currency
+   Transaction response = transaction.refund(new BigDecimal("99.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Rebated Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   RebatePassword = "rebate",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a refund request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the transaction response
+var paymentsReference = "15113583374071921";
+// and the auth code transaction response
+var authCode = "12345";
+
+// create the refund transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+transaction.AuthorizationCode = authCode;
+
+try
+{
+   // send the refund request, we must specify the amount and currency
+   Transaction response = transaction.Refund(99.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Rebated Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a settle request requires the original order id
+$orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// and the auth code transaction response
+$authCode = "12345";
+
+// create the rebate transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+$transaction->authorizationCode = $authCode;
+
+try {
+   // send the settle request, we must specify the amount and currency
+   $response = $transaction->refund(14.99)
+      ->withCurrency("EUR")
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 4: Cancel a transaction
+Before a transaction is captured, it is possible to Void an Authorization, Manual, Offline, Capture, Refund, or Credit request. If the transaction was already placed in the next settlement file (or batch), this will remove it. If using Delayed Capture, this will cancel the initial authorization. If the transaction was settled or batched, then it cannot be voided. This request requires the Order ID and payments reference (`pasref`) from the original transaction.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="void" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <pasref>14611495995965048</pasref>
+  <sha1hash>6b4b2d2002c308bf85324ec2404d14cf7ae957f3</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// configure client & request settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://api.sandbox.realexpayments.com/epage-remote.cgi");
+ServicesContainer.configureService(config);
+
+// a void request requires the original order id
+String orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+String paymentsReference = "15113573969816936";
+// create the void transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the void request
+   Transaction response = transaction.voidTransaction()
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Voided Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client & request settings
+ServicesContainer.ConfigureService(new GpEcomConfig
+{
+   MerchantId = "MerchantId",
+   AccountId = "internet",
+   SharedSecret = "secret",
+   ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi"
+});
+
+// a void request requires the original order id
+var orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+var paymentsReference = "15113573969816936";
+// create the void transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the void request
+   Transaction response = transaction.Void()
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Voided Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\ServicesContainer;
+use GlobalPayments\Api\Entities\Transaction;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+// a void request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the transaction response
+$paymentsReference = "15113573969816936";
+// create the void transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+    // send the void request
+    $response = $transaction->void()
+            ->execute();
+
+    $result = $response->responseCode; // 00 == Success
+    $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+

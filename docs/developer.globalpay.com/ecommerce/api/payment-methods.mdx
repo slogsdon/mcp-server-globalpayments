@@ -1,0 +1,734 @@
+---
+title: "Payment Methods"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/17/2025"
+---
+Our API allows merchants to process and manage transactions for alternative payment methods (PMs). 
+
+To browse all the alternative PMs we support, see [Supported Payment Methods](/payment-methods-list?2).  
+
+For more information on alternative payment methods, see our [main article](/ecommerce/expand-your-integration/payment-methods).
+
+## Initiate
+This is a mandatory request used to initiate a alternative PM transaction. It’s used to advise the payment method of the details of a new transaction and to retrieve the necessary information required to facilitate authentication. 
+
+The request must contain the following URLs, which need to be set up in your application or website:
+
+* **Return URL** - The endpoint to which the customer should be redirected after a payment was attempted or successfully completed on the payment method's site.
+* **Status URL** - The endpoint that receives payment-status messages. This includes the result of the transaction or any updates to the transaction status. For certain asynchronous PMs, these notifications may come hours or days after the initial authorization.
+
+The other standard integration elements for alternative PMs are:
+
+* Payment Method
+* Descriptor
+* Country Code
+* Account Holder Name
+
+<Infobox type="danger">
+All elements, if included in the request, must appear in the exact sequence as shown in the provided code samples.
+</Infobox>
+
+First, we set up a SOFORT transaction. The response will contain the URL the customer must be redirected to in order to authenticate and authorize the transaction.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-set" timestamp="20180613173251">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <autosettle flag="1"/>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <paymentmethod>sofort</paymentmethod>
+  <paymentmethoddetails>
+    <returnurl>https://www.example.com/returnUrl</returnurl>
+    <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+    <descriptor>Test Transaction</descriptor>
+    <country>DE</country>
+    <accountholdername>James Mason</accountholdername>
+  </paymentmethoddetails>
+  <comments>
+     <comment id="1">comment one</comment>
+     <comment id="2">comment two</comment>
+  </comments>
+ <accountholdername>James Mason</accountholdername>
+  <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Return URL | string | URL | M   | 1-2083 | The endpoint to which the customer should be redirected after a payment has been attempted or successfully completed on the payment method's site. |
+| Status Update URL | string | URL | M   | 1-2083 | The endpoint which will receive payment status messages. This will include the result of the transaction or any updates to the transaction status. For certain asynchronous payment methods these notifications may come minutes, hours or days after the initial authorization. |
+| Descriptor | string | alphanumeric | See Code Sample | 0-255 | Enables dynamic values to be sent for each transaction. |
+| Country | string | ISO 3166-1 alpha-2 | See Code Sample | 0-255 | 2 character country code. |
+| Account Holder Name | string | alphanumeric | See Code Sample | 3-100 | The name of the account holder. |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731152924">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <pasref>14963290674458276</pasref>
+  <paymentmethod>sofort</paymentmethod>
+  <result>01</result>
+  <message>PENDING</message>
+  <paymentmethoddetails>
+    <bankaccount/>
+    <accountholdername>James Mason</accountholdername>
+    <country>DE</country>
+    <redirecturl>https://www.paymentMethod.com/pay</redirecturl>
+    <statusupdateurl>https://www.example.com/statusUr</statusupdateurl>
+    <paymentpurpose>37TC6LD Test Transaction</paymentpurpose>
+  </paymentmethoddetails>
+  <sha1hash>878fb286d966c70655494fa40558cdd9fc80ce4b</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Status Update URL | string | URL | The endpoint which will receive payment status messages. This will include the result of the transaction or any updates to the transaction status. For certain asynchronous payment methods these notifications may come minutes, hours or days after the initial authorization. |
+| Result | string | numeric | Code response from the gateway, Acquirer, Issuer, or payment method. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Error Message | string | alphanumeric | Error message if present. |
+| Account Holder Name | string | alphanumeric | The name of the account holder. |
+| Country | string | ISO 3166-1 alpha-2 | 2 character country code. |
+| Return URL | string | URL | The endpoint to which the customer should be redirected after a payment has been attempted or successfully completed on the payment method's site. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - what the customer will see on the proof of payment. For example, on their bank statement. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Redirect to Alternative PM
+Following a successful Initiate request, the next step is to redirect the customer to the alternative PM for authentication and authorization. This can be achieved, for example, using a simple JavaScript redirect.
+
+Next, we redirect the customer to the value returned in the Redirect URL element of the Initiate response with JavaScript.
+
+<Infobox>
+The sample code below is a simple example. You’ll need to modify it to suit your particular application or website.
+</Infobox>
+
+#### Sample redirect code
+<Code id="markup" title="XML" language="markup" active>
+```
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Sample Alternative PM Redirect</title>
+      <meta charset="UTF-8">
+   </head>
+   <body>
+      <script>
+         window.location = "https://www.paymentMethod.com/pay";
+      </script>
+   </body>
+</html>
+```
+</Code>
+
+## Redirect back to your app
+
+Once the customer completes their transaction with the alternative PM, they are redirected to the URL provided in the Return URL part of the Initiate request. The current status of the transaction is also returned. The transaction variables will be URL-encoded, and the message is limited to 2,048 characters. Once the character limit is reached, no more values are included. That means your application won’t receive any truncated transaction variables.
+
+Depending on the PM used, the message sent to the Return URL might not indicate the final status of the transaction. In the example below, the current result message is PENDING, and the fund status is WAITING. The final transaction status will be sent to the Status URL provided in the Initiate request. In the case of some PMs, this message to the Status URL is sent at almost exactly the same time that the customer is redirected to your Return URL.
+
+In the case of asynchronous payment methods, the Return URL should be treated as an interim step. Your application might put the customer on hold for a few seconds while it checks to see if the Status URL was sent a final update. You can then redirect the customer to a final success or failure page. In the event of the Status URL not receiving the final status update within your determined time limit, you can display a message to the customer informing them that their order will be processed when the final status is received.
+
+#### Sample return URL parameters
+The response will contain a hashed string (`sha1hash`) made up of key transaction variables, including the Order ID, Result Code, and Timestamp. Your application must construct and check this to ensure the response wasn’t tampered with. For more information, see the [Check the Response hash](#check-the-response-hash) section.
+
+Before you update your application, check that the Order ID and other transaction variables can be definitively linked with the original transaction request and order created in your application.
+
+<Code id="markup" title="HTTP" language="markup" active>
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20181016103012&
+merchantid=Merchant ID&
+account=internet&
+merchanttransactionid=f48856d1c7e4492eb7594e68e2fc682c&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=01&
+Amount=100&
+message=PENDING&
+paymentpurpose=37TC6LD Test Transaction&
+paymentmethod=sofort&
+fundstatus=WAITING&
+pasref=14627849160897986&
+country=DE
+```
+</Code>
+
+#### Return URL parameters syntax
+
+   
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret.  <br/>Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS. If the timestamp is more than a day (86,400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | Processing account details provided by us during your account setup. |
+| Merchant  <br/>TransactionId | string | alphanumeric | Merchant Transaction ID. Unique identifier assigned by us for a transaction. Requires either start-end Date either MerchantTransactionId. |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction.  <br/>00 - Transaction completed successfully and finalized.  <br/>101 - Transaction did not complete successfully. No further status will be communicated.  <br/>01 - Transaction outcome is pending. The final status will be sent to the Status Update URL provided. |
+| Amount | string | numeric | Transacting amount. |
+| Message | string | alphanumeric | Text of the response from the gateway, Acquirer, Issuer, or payment method. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - What the customer will see on the proof of payment. For example, on their bank statement. |
+| Payment  <br/>Method | string | enum | Specifies the payment method for this transaction. |
+| Fund Status | string | enum | Funds status of the transaction. Possible values:  <br/>NOT\_EXPECTED WAITING RECEIVED MISSING |
+| Payments Reference | string | alphanumeric | A unique reference we assign for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Country | string | ISO 3166-1 alpha-2 | Two-character country code. |
+
+## Status update
+As we mentioned previously, depending on the payment method being used, the Return URL provided in the payment-set request might not receive the final transaction status.
+
+The Status URL receives the final status. The format of the message is the same as the Return URL. Again, depending on the PM used, this can happen at the same time as the customer is redirected to your Return URL, moments after — or, potentially, the final status update might come days later. So, the Return URL acts as an interim processing page, waiting for the final update.
+
+For payment methods in which you expect the final status update to come days later, your Status URL will need to accept the message sent by us, find the correct order in your application, and update the status accordingly. You may want to inform the customer at this point that their payment was finally accepted. You can also initiate the dispatch of items.
+
+In summary, the Status URL needs to be an endpoint in your application capable of accepting an HTTP message. This will inform your application of the final status of a transaction. Upon receipt, you can validate the response, check the details against what your application has stored, and update accordingly.
+
+#### Sample Status URL parameters
+<Infobox>
+The response message will contain a hashed string (`sha1hash`) made up of key transaction variables, including the Order ID, Result Code, and Timestamp. Your application must construct and check this to ensure the response wasn’t tampered with. For more information,  see the [Check the Response hash](#check-the-response-hash) section. <br/>
+
+Before you update your application, check that the Order ID and other transaction variables can be definitively linked with the original transaction request and order created in your application.
+</Infobox>
+
+<Code id="markup" title="HTTP" language="markup" active>
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20181016103012&
+merchantid=Merchant ID&
+account=internet&
+merchanttransactionid=f48856d1c7e4492eb7594e68e2fc682c&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=01&
+Amount=100&
+message=PENDING&
+paymentpurpose=37TC6LD Test Transaction&
+paymentmethod=sofort&
+fundstatus=WAITING&
+pasref=14627849160897986&
+country=DE
+```
+</Code>
+
+#### Return URL parameters syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS. If the timestamp is more than a day (86,400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | Processing account details provided by us during account setup. |
+| merchantTransactionID | string | alphanumeric | Unique identifier assigned by us for a transaction. Requires either start-end date to get the transaction details. |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction.  <br/>00 - Transaction completed successfully and finalized.  <br/>101 - Transaction did not complete successfully. No further status will be communicated.  <br/>01 - Transaction outcome is pending. The final status will be sent to the Status Update URL provided. |
+| Amount | string | numeric | Transacting amount. |
+| Message | string | alphanumeric | Text of the response from the gateway, Acquirer, Issuer, or payment method. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - What the customer will see on the proof of payment. For example, on their bank statement. |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Fund Status | string | enum | Funds status of the transaction. Possible values:  <br/>NOT\_EXPECTED WAITING RECEIVED MISSING |
+| Payments Reference | string | alphanumeric | Unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Country | string | ISO 3166-1 alpha-2 | Two-character country code. |
+
+## Refunds
+This request allows you to fully or partially refund a successful transaction. You must use the same Order ID as the original initiate request in addition to the following elements:
+
+* Payments Reference — Must be the one returned in the Initiate response.
+* Refund Password — Hashed with the SHA-1 algorithm and included in the Refund element.
+
+#### Sample request
+<Code id="markup" title="HTTP" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-credit" timestamp="20160103174525">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1999</amount>
+  <orderid>wZLVqHNnbZKBJhbeiW</orderid>
+  <pasref>95427846660897986</pasref>
+  <paymentmethod>sofort</paymentmethod>
+  <paymentmethoddetails>
+    <returnurl>https://www.example.com/returnUrl</returnurl>
+    <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+    <country>DE</country>
+  </paymentmethoddetails>
+  <comments>
+     <comment id="1">comment one</comment>
+     <comment id="2">comment two</comment>
+  </comments>
+  <refundhash>8347589234572387502457230459827345</refundhash>
+</request>
+```
+</Code>
+
+#### Request syntax
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86,400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency.  <br/>For example: 2000 = €20.00 |
+| AutoSettle/  <br/>AutoCapture  <br/>Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>0 - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>1 - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>MULTI - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Return URL | string | URL | M   | 1-2083 | The endpoint to which the customer should be redirected after a payment has been attempted or successfully completed on the payment method's site. |
+| Status Update URL | string | URL | M   | 1-2083 | The endpoint which will receive payment status messages. This will include the result of the transaction or any updates to the transaction status. For certain asynchronous payment methods these notifications may come minutes, hours or days after the initial authorization. |
+| Country | string | ISO 3166-1 alpha-2 | See Code Sample | 0-255 | Two-character country code. |
+| Account  <br/>Holder Name | string | alphanumeric | See Code Sample | 3-100 | The name of the account holder. |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Refund Hash | string | alphanumeric | M   | 40  | The additional signature for this request derived from the Rebate or Refund Password.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="HTTP" language="markup" active>
+```
+<response timestamp="20180731180503">
+  <merchantid>realexsandbox</merchantid>
+  <account>internet</account>
+  <orderid>wZLVqHNnbZKBJhbeiW</orderid>
+  <pasref>18634718560685523</pasref>
+  <paymentmethod>sofort</paymentmethod>
+<paymentmethoddetails>
+    <returnurl>https://www.example.com/returnUrl</returnurl>
+    <country>DE</country>
+    <accountholdername>James Mason</accountholdername>
+    <paymentpurpose>Testing purposes</paymentpurpose>
+    <Account>Testing purposes</paymentpurpose>
+  </paymentmethoddetails>  
+<result>00</result>
+  <message>SUCCESS</message>
+  <!-- Error Message if present <errmsg></errmsg> -->
+  <sha1hash>4c513cabeaaee5fa0714f304ca9a40da350747b5</sha1hash>
+  <merchantrefundid>f48856d1c7e4492eb7594e68e2fc682c</merchantrefundid>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS. If the timestamp is more than a day (86,400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique Global Payments assigned reference for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Result | string | numeric | Code response from the gateway, Acquirer, Issuer, or payment method. |
+| Message | string | alphanumeric | Text of the response from the gateway, Acquirer, Issuer, or payment method. |
+| Error Message | string | alphanumeric | Error message if present. |
+| Account  <br/>Holder Name | string | alphanumeric | The name of the account holder. |
+| Country | string | ISO 3166-1 alpha-2 | Two-character country code. |
+| Return URL | string | URL | The endpoint to which the customer should be redirected after a payment has been attempted or successfully completed on the payment method's site. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - What the customer will see on the proof of payment. For example, on their bank statement. |
+| merchantrefundid | string | alphanumeric | Unique identifier assigned by us for a transaction. Requires either start-end date to get the transaction details. |
+
+## Test Pay
+To test your integration, we provide a simple simulator application to test redirecting the customer to a particular payment method along with your Return and Status Update URLs. By setting the payment method as `testpay` in the Initiate request, your application can then redirect the customer to the simulator.
+
+#### Sample request
+<Code id="markup" title="HTTP" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-set" timestamp="20180613173251">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <autosettle flag="1"/>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <paymentmethod>testpay</paymentmethod>
+  <paymentmethoddetails>
+    <returnurl>https://www.example.com/returnUrl</returnurl>
+    <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+    <descriptor>Test Transaction</descriptor>
+    <country>DE</country>
+    <accountholdername>James Mason</accountholdername>
+  </paymentmethoddetails>
+  <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>
+</request>
+```
+</Code>
+
+## Simulator page
+
+The Simulator page provides a range of messages to send to the Return and Status URLs. The delay selection determines when the Status URL receives the final status update. You can test PMs in which  the final status is sent moments, hours, or even days after the transaction is completed by the customer. 
+
+![Test Pay Simulator Page](/gh-assets/ecommerce/apm_simulator-page.jpg)
+
+The final status might also be sent at the same time as the redirection and message to the Return URL (No Delay). The responses returned by the simulator will be the same format of those outlined in the other steps in this guide.
+
+The response and delay selections are outlined below.
+
+| Response Selection | Delay Selection |
+| --- | --- |
+| Succeeded | No delay |
+| Pending | 30s after submit |
+| Failed UserAbort | 1m after submit |
+| Failed InputData | 5m after submit |
+| Failed LocalDecline | 15m after submit |
+| Failed RemoteDecline | 1h after submit |
+| Failed Timeout |     |
+| Failed LocalError |     |
+| Failed RemoteError |     |
+| Failed Unknown |     |
+
+## GET Payments endpoint
+The GET /payments endpoint can also be used for querying payment reports based on the parameters below. The required fields are `merchantTransactionID` and/or `startDateTime` and `endDateTime`; if absent, a BAD-REQUEST response (400) is returned.
+
+Other fields, such as `accountId` or `transactionState` are used to add more filters to the result list. If you send `merchantTransactionID`, you will get back a list of one transaction. You can also pass in other optional fields as search query parameters to fetch a list of transactions meeting that search criteria. As an example, you could pass in `startDateTime` and `endDateTime` to fetch a list of transactions within a date range.
+
+#### GET request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| timestamp | timestamp | numeric | M   | 14  | Timestamp of the request. Can only be between yesterday and tomorrow.  <br/>Format: YYYYMMDDHHMMSS |
+| merchantId | string | alphanumeric | M   | 1-50 | Client ID assigned by us. |
+| accountId | string | alphanumeric | O   | 1-50 | The sub-account for the request to be processed through. |
+| startDateTime | timestamp | numeric | C   | 14  | Used to search between a date range (maximum range is 30 days). Format:YYYYMMDDHHMMSS requires either start-end Date either MerchantTransactionId |
+| endDateTime | timestamp | numeric | C   | 14  | Used to search between a date range (maximum range is 30 days). Format:YYYYMMDDHHMMSS requires either start-end Date either MerchantTransactionId |
+| returnPii | boolean | True or False | O   | NA  | Indicates if sensitive information such as destination account number, IBAN, account name, or sort code should be sent back in the response (when set to TRUE). They will not be sent back if set to FALSE. |
+| Merchant  <br/>TransactionId | string | alphanumeric | C   | 32  | Unique identifier assigned by us for a transaction. Requires either start-end Date or MerchantTransactionId. |
+| transaction  <br/>State | enum | enum | O   | NA  | Enum with the following acceptable values for various transaction statuses:  <br/>SUCCEEDED  <br/>PENDING  <br/>FAILED  <br/>INITIATED  <br/>DECLINED  <br/>AUTHORISED  <br/>INDOUBT |
+| pageSize | string | numeric | O   | 1-100 | Used to control the number of records per page. Useful for query parameters that result in a large list of transactions. If not provided, the value defaults to 100. |
+| pageNumber | string | numeric | O   | 1-1000000 | Indicates the starting page number of the report. Useful for query parameters that result in a large list of transactions. If not provided, the value defaults to 100. |
+
+#### Response syntax - GET call successfully executed 
+   
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| pageNumber | string | numeric | Indicates the starting page number of the report. |
+| record\_count | string | numeric | Indicates the number of records on a page. |
+| max\_page\_size | string | numeric | Indicates the maximum number of records on a page. |
+| total\_number  <br/>\_of\_records | string | numeric | Indicates the total number of records in the full report. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction.  <br/>00 - Transaction completed successfully and finalized.  <br/>101 - Transaction did not complete successfully. No further status will be communicated.  <br/>01 - Transaction outcome is pending. The final status will be sent to the Status Update URL provided. |
+| Message | string | alphanumeric | Text of the response from the gateway, Acquirer, Issuer, or payment method. |
+| txid | string | alphanumeric | Unique identifier assigned by the third party provider for a transaction. |
+| merchant  <br/>TransactionID | string | alphanumeric | Unique identifier assigned by us for a transaction. |
+| Payments Reference | string | alphanumeric | Unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Payment Purpose | string | alphanumeric | Payment descriptor - What the customer will see on the proof of payment. For example, on their bank statement. |
+| Wait For Notification | boolean |     | A value of 1 indicates that the transaction will most likely remain in status PENDING for a number of hours or even days until the Status Update URL is notified of the final outcome. |
+| Fund Status | string | enum | Funds status of the transaction. Possible values:  <br/>NOT\_EXPECTED WAITING RECEIVED MISSING |
+| Country | string | ISO 3166-1 alpha-2 | Two-character country code. |
+| Account  <br/>Holder Name | string | alphanumeric | Name of the account holder. |
+| Account  <br/>Number | string | alphanumeric | The customer’s account number. Brazil - Must be at least 4 digits. Mexico - 18 digit CLABE. Germany - Digits only, no leading zeros Allowed characters: \[a-zA-Z0-9\] |
+| IBAN | string | alphanumeric | Code that identifies the customer's bank, account number itself, and the country of origin.  <br/>Allowed characters: \[A-Z0-9\] |
+| Bank Code | string | alphanumeric | Bank code of the customer’s account.  <br/>Allowed characters: \[a-zA-Z0-9\] |
+| BIC | string | alphanumeric | Customer bank code. Must be a valid BIC.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Bank Name | string | alphanumeric | Customer bank name. |
+
+#### Response syntax - payment initiation failed
+
+| Element/Field | Format | Description |
+| --- | --- | --- |
+| code | numeric | Three-digit error code. |
+| message | string | Error code and description of the error. The following error codes can be received:  <br/>401 - Merchant is not enabled for APM.  <br/>401 - UNAUTHORIZED: Please check your code and the Developers Documentation(hash mismatch error).  <br/>400 - `<<descriptive message about specific error in the request fields>>` (usually mandatory fields are missing or invalid combination of fields)  <br/>500 - INTERNAL SERVER ERROR |
+
+## Refunds endpoint
+This endpoint can also be used to retrieve a list of refunds based on search criteria. It accepts search criteria as query parameters. The table below contains request fields that can be used for a search. You must use `merchantRefundID` or `OrderId` or the `startDateTime` and `endDateTime` for the query.
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+     
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| timestamp | timestamp | numeric | M   | 14  | The timestamp of the request.This could only be between yesterday and tomorrow. Format: YYYYMMDDHHMMSS |
+| merchantId | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us. |
+| accountId | string | alphanumeric | O   | 1-50 | The sub-account for this request to be processed through. It can accept comma-separated lists of accounts as well. |
+| startDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (max. range is 30 days). Format:YYYYMMDDHHMMSS |
+| endDateTime | timestamp | numeric | O   | 14  | Used to search between a date range (max. range is 30 days). Format:YYYYMMDDHHMMSS |
+| orderId | string | alphanumeric | M   | 50  | A merchant supplied reference to identify this transaction. Must be unique for each attempt. |
+| Merchant  <br/>TransactionId | string | alphanumeric | O   | 32  | Unique identifier assigned by us for a transaction. Requires either start-end Date or MerchantTransactionId. |
+| transaction  <br/>State | enum | enum | O   | NA  | Enum with below acceptable values for various transaction statuses:  <br/>INITIATION\_PENDING  <br/>INITIATION\_COMPLETED  <br/>INITIATION\_REJECTED  <br/>INITIATION\_FAILED  <br/>INITIATION\_PROCESSING |
+| pageSize | string | numeric | O   | 1-100 | Number of records provided per page. Used where the list of transactions for the query parameters is large. If not provided, default value is 100. |
+| pageNumber | string | numeric | O   | 1-1000000 | Page number of the records to start at. Used where the list of transactions for the query parameters is large. If not provided, the default value is 100. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Initiate or Refund. 
+
+<Tabs active="Initiate">  
+<Tab id="auth" title="Initiate">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="refund" title="Refund">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+#### Check the Response hash
+Use the tabs below to follow the steps for a certain request type: Initiate, Refund, Redirect to APM, or Status Update. 
+
+<Tabs active="Initiate">  
+<Tab id="auth" title="Initiate">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.01.PENDING.14963290674458276.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="refund" title="Refund">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.01.PENDING.14963290674458276.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="redirect" title="Redirect to APM">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200128132417.MerchantId.N6qsk4kYRZihmPrTXWYS6g.00.SUCCEEDED.14963290674458276.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="status" title="Status Update">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200128132417.MerchantId.N6qsk4kYRZihmPrTXWYS6g.00.SUCCEEDED.14963290674458276.sofort"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>
+
+## Postman collection
+Our Postman collection for alternative payment methods is available for downloading. You can use this collection to test transactions for all of our alternative and local [supported payment methods](/payment-methods-list?2) via the XML API.
+
+The zip file below contains the following files:
+
+* LPM Postman Collection — A JSON file that contains Hosted Payment Page (HPP), XML, and JSON calls
+* LPM Environment — A JSON file for use with the HPP and JSON calls
+
+To download the collection (.zip file), click the button below: <br/><br/>
+<index-button type="anchor" href="/gh-assets/files/ecommerce/apm_postman_05-2023_api.zip">Download File</index-button>

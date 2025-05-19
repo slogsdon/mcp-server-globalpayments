@@ -1,0 +1,35 @@
+---
+title: 'Semi-Integration'
+search_results: 'Global Payments - In-Store Semi Integration'
+subtitle: 'Code to our payment app for terminals to save time'
+tag: 'rest'
+created: '06/08/2024'
+---
+Semi-integration is our preferred integration method as it gives you some flexibility by allowing you to connect your own point-of-sale (POS) application that you use for business operational tasks. This requires some development work but is usually quick and easy.
+
+For this type of integration, you need to use a compatible standalone terminal purchased from us or one of our sales partners, which comes with our Unified Payment Application (UPA) pre-installed. UPA directly connects to our API, so there’s no need for us to provide steps or code samples here.
+
+To compare semi-integration with our other types of integration like standalone, cloud, and full, see our [In-Store Payments - Overview](/docs/payments/in-store/overview) article.
+
+For information on connecting your POS system to one of our terminals, see the [How to connect to UPA](#how-to-connect-to-upa) section.
+ 
+## What is semi-integration?
+Semi-integration allows developers to deploy an integration with less time spent troubleshooting code. It also prevents spending time and money on lengthy, expensive <Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip> certifications as the payment application on the terminal is already integrated to our API.
+
+<Infobox>
+Semi-integrated solutions don’t require host or EMV certification; however, we do recommend testing and validating all of your POS application workflows.
+</Infobox>
+ 
+The only development necessary is to connect the POS application that you typically use for inventory management, menus, staffing, and other day-to-day business operational tasks to the terminal you purchase from us or one of our partners. This gives you the added flexibility that a standalone integration does not, with only a small amount of development work. That is why it’s our preferred integration.
+
+If you want even more flexibility, such as a customized payment flow or new functionality, and don’t mind more coding, our API also supports [full integration](/docs/payments/in-store/full-integration).
+ 
+## What is UPA?
+UPA is our proprietary payment application for standalone terminals. It can be loaded on a variety of compatible terminals for direct access to our API. For a list of what’s available, see the next section. At present, only UPA terminals are capable of attaching to our API service, bringing the power and features of the Unified Payments API to your business.
+
+## Available terminals
+
+<Infobox>UPA availability is region-specific. In order to determine whether a UPA terminal is available in your region, please contact your account manager for further details.</Infobox>
+
+## How to connect to UPA
+For information on connecting your POS system to one of our terminals, it’s best to contact your account manager. This contact can give you access to the full UPA specification and guide you through the appropriate channels to access our development information for a UPA device.

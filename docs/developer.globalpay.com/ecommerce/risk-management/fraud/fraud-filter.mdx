@@ -1,0 +1,83 @@
+---
+title: "Fraud Filter - Overview"
+subtitle: "Run filters from customized rules to screen transactions"
+tag: "xml"
+created: "02/03/2025"
+---
+<Infobox>
+Fraud Filter is not available for multi-capture transactions.
+</Infobox>
+
+Fraud Filter enables merchants to automatically Hold, Block, or Pass transactions based on the result of one or more rule results. You can set the Fraud Filter Mode for individual fraud rules for a given transaction. There’s also an option to turn off one or more rules while maintaining the others, which can be done using the Passive or Off setting.
+
+* **Passive** means that although the fraud rules will run and will get the appropriate response values, the resulting action (for example, Hold or Block) will not execute. This is a good way to test new rules and see what their outcome will be before setting them live. 
+* **Off** means that the fraud rule will not run at all. Setting an individual fraud rule to Off disables the rule for a particular transaction, while still running all other rules.
+
+It is important to note that any changes made to the Fraud Filter in Ecommerce Portal will impact the result returned in the API response. You will need to ensure that any changes don't adversely affect transaction processing in your application. For example:
+
+* If the Fraud Filter is turned off in Ecommerce Portal, the data will not be returned in the transaction response. If the mode is changed between Active and Passive, then this change will be reflected in the transaction response.
+* If a new rule is added, an additional element will be returned in the response. Similarly if a rule is deleted, the result will be removed from the response.
+* If a rule name is edited, the name will change to the new value in the response; the rule ID will remain the same.
+
+## How does it work?
+With Fraud Filter, you can supply additional information in the request that you can set rules against. This includes the customer's IP address, billing and shipping details, and specific product codes.
+
+For Authorization and Validate (OTB) requests, you can change the Fraud Filter Mode in the request. This will change the mode used for the current transaction only.
+
+### Individual rule setting
+You can change the Fraud Filter Mode for an individual rule, based on the rule ID. This will change the mode used for an individual rule, for the current transaction only. All other rules will use the Fraud Filter Mode set in Ecommerce Portal or at the request level.
+
+The Fraud Filter Mode works in a hierarchical manner. The value configured in Ecommerce Portal sets the highest level of activity that can be applied. For example, if the mode in Ecommerce Portal is set to Active, at a request or rule level it can be set to Active, Passive, or Off. However, if the mode in Ecommerce Portal is set to Passive, at a request or rule level it can only be set to Passive or Off.
+
+The table below shows each level that the mode can be set and the corresponding outcome when Ecommerce Portal is set to **Active**.
+
+|     |     |     |
+| --- | --- | --- |  
+| Ecommerce Portal Setting: ACTIVE |     |     |
+| Request | Individual Rule | Individual Rule Outcome |
+| ACTIVE | ACTIVE | ACTIVE |
+| \-  | PASSIVE | PASSIVE |
+| \-  | OFF | OFF |
+| PASSIVE | ACTIVE | PASSIVE |
+| \-  | PASSIVE | PASSIVE |
+| \-  | OFF | OFF |
+| OFF | ACTIVE | OFF |
+| \-  | PASSIVE | OFF |
+| \-  | OFF | OFF |
+
+The table below shows each level that the mode can be set and the corresponding outcome when Ecommerce Portal is set to **Passive**.
+
+| Ecommerce Portal Setting: PASSIVE |     |     |
+| --- | --- | --- |
+| Mode set in Request | Mode set for Individual Rule | Outcome for Individual Rule |
+| ACTIVE | ACTIVE | PASSIVE |
+| \-  | PASSIVE | PASSIVE |
+| \-  | OFF | OFF |
+| PASSIVE | ACTIVE | PASSIVE |
+| \-  | PASSIVE | PASSIVE |
+| \-  | OFF | OFF |
+| OFF | ACTIVE | OFF |
+| \-  | PASSIVE | OFF |
+| \-  | OFF | OFF |
+
+The table below shows each level that the mode can be set and the corresponding outcome when Ecommerce Portal is set to **Off**.
+
+| Ecommerce Portal Setting: OFF |     |     |
+| --- | --- | --- |
+| Mode set in Request | Mode set for Individual Rule | Outcome for Individual Rule |
+| ACTIVE | ACTIVE | OFF |
+| \-  | PASSIVE | OFF |
+| \-  | OFF | OFF |
+| PASSIVE | ACTIVE | OFF |
+| \-  | PASSIVE | OFF |
+| \-  | OFF | OFF |
+| OFF | ACTIVE | OFF |
+| \-  | PASSIVE | OFF |
+| \-  | OFF | OFF |
+
+## Ready to get started?
+To get familiar with how Fraud Filter works, see our [guide](/ecommerce/risk-management/fraud/fraud-filter-guide).
+
+<Infobox>
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

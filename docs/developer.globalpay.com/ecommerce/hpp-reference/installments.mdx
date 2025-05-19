@@ -1,0 +1,84 @@
+---
+title: "Installment Service"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/26/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Installment Service, see our [Overview](/ecommerce/expand-your-integration/installments).
+
+## Display confirmation details
+<Infobox>
+When displaying plan details, you must comply with the messaging options in our Installments Enabled by Visa UX Guide. To download it, see the "Display installment plan details" section of our [guide](/ecommerce/expand-your-integration/installments).
+</Infobox>
+
+#### Sample response
+
+The HPP response includes the following plan details. You can display this information on the confirmation page after the purchase is complete. 
+
+* `INS_number_of_installments`
+* `INS_installment_frequency`
+* `INS_instalment_payment_amount`
+* `INS_first_installment_fee`
+* `INS_total_fees`
+* `INS_annual_percentage_rate`
+* `INS_total_plan_cost`
+* `INS_currency`
+* `INS_terms_and_conditions_text`
+* `INS_terms_and_conditions_url`
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| INS\_number\_of\_installments | integer | 1-4 | Maximum number of installments that can be in the plan acceptance created from this plan. |
+| INS\_installment\_frequency | string | enum | Supported tenure types for a plan:  <br/>**WEEKLY** (not currently supported)  <br/>**BIWEEKLY** (not currently supported)  <br/>**MONTHLY**  <br/>**BIMONTHLY** (not currently supported) |
+| INS\_instalment\_payment\_amount | integer |     | Sum of _cost\_info.first\_instalment.upfront\_fee_ +  <br/>_cost\_info.first\_instalment.instalment\_fee_ + _cost\_info.first\_instalment.amount_  <br/>  <br/>This amount should be in the smallest unit of the required currency (e.g., 2,000 = €20.00). |
+| INS\_first\_installment_fee | integer |  | Cost details (fee and principal) for the first instalment. The amount is a numerical value represented in the minor units of the currency (e.g. £6.48 = 648). |
+| INS\_total\_fees | integer | 1-15 | Total fees charged calculated as _totalUpfrontFees_ + _totalRecurringFees_. |
+| INS\_annual\_percentage\_rate | Number | 1-5 | Annual percentage rate (APR) as configured by the Issuer during plan creation. Not used for calculations; used only for display purposes. Interest-fee rate in percentage applied on installment payment. Percentage rate is a non-negative value.  Percentage value is represented with two implicit decimals (e.g., 13.99%). |
+| INS\_total\_plan\_cost | integer | 1-15 | Calculated as _totalFees_ + (_numberOfInstallments_ \* _installmentAmount_). |
+| INS\_currency | string | ISO 4217 | The processing currency of the transaction.  <br/>See list of [Currency Codes](/resources/currency-codes). Example: CAD |
+| INS\_terms\_and\_conditions\_text | string | 1-2000 | Text of the terms and conditions (T&Cs) for the installment plan. |
+| INS\_terms\_and\_conditions\_url | string |     | T&Cs HTTPS URL hosted by the Issuer for displaying to the cardholder for acceptance when initiating a plan acceptance for this plan. Must not invoke an executable script and must point to an HTML page containing T&C text in a displayable manner. When provided during onboarding, the URL is checked for validity.  <br/>Pattern:  <br/> ^(http)(s?)\\:\\/\\/\[0-9a-zA-Z\](\[-.\\w\]\*\[0-9a-zA-Z\])\*(:(0-9)\*)\*(\\/?)(\[a-zA-Z0-9\\-\\.\\?\\,\\'\\/\\\\\\+&amp;%\\$#\_=\]\*)?$  <br/>Example: http://www.myurl.com |
+
+## Filter installment plans
+You can filter installment plans by sending the following filter parameters in the request:
+
+* `HPP_PLAN_TYPE`
+* `HPP_MAX_TERM_MONTHS_MERCHANT_FUNDED`
+* `HPP_AMOUNT_THRESHOLD`
+
+If available, up to two installment plans will be displayed on the HPP.
+
+In the following example, both plans are `CONSUMER_FUNDED` on the HPP if available for a specific user.
+
+#### Sample request (payload)
+
+<Code id="json" title="JSON" language="json" lineHighlight="8-10" active>
+```
+{
+"TIMESTAMP": "20240311160300",
+"MERCHANT_ID": "vayuvisa",
+"ACCOUNT": "installment",
+"CURRENCY": "CAD",
+"AMOUNT": "45000",
+"ORDER_ID": "853f6574-b02c-4cae-8e14-26506ab69809",
+"AUTO_SETTLE_FLAG":"0",
+"HPP_PLAN_TYPE":"CONSUMER_FUNDED",
+"HPP_MAX_TERM_MONTHS_MERCHANT_FUNDED":"",
+"HPP_AMOUNT_THRESHOLD":"",
+"SHA1HASH": "7c5be41124b37c40f3b8851ad2dd1bc11a70a972"
+}
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Type | Description |
+| --- | --- | --- |
+| HPP\_PLAN\_TYPE | O   | Used to filter installment plans based on plan type.  <br/>Allowed values:  <br/>**MERCHANT\_FUNDED** (if sent, will return merchant funded plans only)  <br/>**CONSUMER\_FUNDED** (if sent, will return consumer funded plans only) <br/> **HYBRID_FUNDED** (if sent, will return both merchant and consumer funded plans) <br/> **BILATERAL** (if sent, will return BILATERAL plans only) <br/>**ANY** (if sent, will return all available plans) (default)  <br/>++Note++: If not present, request will be sent with default value. |
+| HPP\_MAX\_TERM\_  <br/>MONTHS\_MERCHANT\_FUNDED | O   | Used to retrieve installment plans with specific tenure. Applicable to merchant-funded plans only. Should accept numbers only; max length is 4 digits.  <br/>For example:  <br/>_max\_term\_months\_merchant\_funded = 12_  <br/>A value of 12 sent means that:  <br/>–Only plans with tenure ≤ 12 months are retrieved.  <br/>–Merchant-funded plans with tenure > 12 months are not returned.  <br/>Default: 1,000  <br/>++Note++: If not present, request will be sent with default value. |
+| HPP\_AMOUNT\_  <br/>THRESHOLD | O   | Used to determine whether to return the longest or shortest tenure/duration plans depending on the amount sent. Should accept numbers only; max length is 15 digits. The amount should be sent in the smallest unit of the required currency (e.g., 2,000 = €20.00).<br/><br/>For example, a 50,000 value sent means that:  <br/>–For transactions ≤  €500.00, plans with the shortest tenure are displayed first.  <br/>–For transactions > €500.00, plans with the longest tenure are displayed first.  <br/>++Note++: If not present, requests will be sent with default value: plans with the longest tenure. |

@@ -1,0 +1,613 @@
+---
+title: 'Trusted Beneficiary'
+search_results: 'Global Payments - Exemptions - Trusted Beneficiary'
+subtitle: 'Use a trusted merchant list to avoid unnecessary authentications.'
+tag: 'rest'
+created: '20/09/2024'
+---
+Customers can add a merchant to a list of “trusted beneficiaries” held by the Issuer. Subsequent payments to trusted merchants can then be exempted from Strong Customer Authentication (SCA). In this article, we cover two high-level use cases:
+<br/>
+<br/>
+**Use Case 1: The merchant is not on the customer’s trusted list**
+* 3D Secure 2 authentication with the Prompt For Trusted List flag
+* Customer adds the merchant to their list
+* Authorization with Trusted Merchant exemption flag
+
+**Use Case 2: The merchant is already on the customer’s trusted list**
+* Request the exemption in the Authentication and Authorization messages
+* Request the exemption in the Authorization message only
+
+## Add to trusted merchant list
+In this example, the customer has not previously added the merchant to their trusted list. In order to request them to do so, we process a 3D Secure 2 authentication with the Prompt For Trusted List flag enabled.
+
+### Authentication message
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/authentications/AUT_bd7160df-58ee-4b39-9193-514ebfc9cdbb/initiate' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "three_ds": {
+        "source": "BROWSER",
+        "preference": "CHALLENGE_REQUESTED_PROMPT_FOR_WHITELIST"
+    },
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "country": "IE",
+    "method_url_completion_status": "YES",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        }
+    },
+    "order": {
+        "time_created_reference": "2019-04-26T10:19:32.552327Z",
+        "amount": "1001",
+        "currency": "EUR",
+        "reference": "3400dd37-101d-4940-be15-3c963b6109b3",
+        "address_match_indicator": "false",
+        "shipping_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        }
+    },
+    "payer": {
+        "billing_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        },
+        "mobile_phone": {
+            "country_code": "44",
+            "subscriber_number": "123456789"
+        }
+    },
+    "browser_data": {
+        "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "color_depth": "TWENTY_FOUR_BITS",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "challenge_window_size": "FULL_SCREEN",
+        "timezone": "0",
+        "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+    },
+    "merchant_contact_url": "https://www.example.com/about"
+}'
+```
+</Code>
+  
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "AUT_d0614650-3453-491b-8f03-c0db6b2b1beb",
+    "time_created": "2022-05-06T16:48:26.202Z",
+    "time_last_updated": "2022-05-06T16:48:22.147Z",
+    "transaction_type": "SALE",
+    "status": "SUCCESS_AUTHENTICATED",
+    "channel": "CNP",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "source": "BROWSER",
+    "three_ds": {
+        "server_trans_ref": "d0614650-3453-491b-8f03-c0db6b2b1beb",
+        "acs_trans_ref": "59485280-cd5c-41ec-8be7-28ab04e64b15",
+        "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+        "ds_trans_ref": "97aef3fd-2818-4f1d-964d-f3c558857972",
+        "eci": "07",
+        "liability_shift": "NO",
+        "status": "AUTHENTICATION_SUCCESSFUL",
+        "status_reason": "",
+        "authentication_source": "BROWSER",
+        "message_version": "2.1.0",
+        "authentication_value": "AJkBAYKIUwAAAAPpl4EmdAAAAAA=",
+        "cardholder_response_info": "",
+        "message_category": "PAYMENT_AUTHENTICATION",
+        "redirect_url": "",
+        "acs_challenge_request_url": "",
+        "challenge_status": "",
+        "challenge_model": "",
+        "session_data_field_name": "threeDSSessionData",
+        "message_type": "creq",
+        "challenge_value": ""
+    },
+    "notifications": {
+        "challenge_return_url": "https://www.example.com/challengeReturnUrl"
+    },
+    "action": {
+        "id": "ACT_r4P5qFmvJPdC8D70zbx3rzG2hjJjt1",
+        "type": "INITIATE",
+        "time_created": "2022-05-06T16:48:26.202Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+  
+### Authorization message
+Now that the merchant is added to the customer’s trusted merchants list, we can proceed to authorization. We include the authentication data in the message, along with the relevant exemption.
+  
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "id": "AUT_f3425c1a-4a92-46f3-80ca-ce30f3180e69",
+            "three_ds": {
+                "exempt_status": "TRUSTED_MERCHANT"
+            }
+        }
+    }
+}'
+```
+</Code>
+  
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj_a2f43fbba740",
+    "time_created": "2022-05-09T17:07:59.104Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "Ms1FC3QU53XvoWF4",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1087449",
+    "action": {
+        "id": "ACT_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-09T17:07:59.104Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+  
+  
+## Existing trusted merchant
+In this example, we assume that the merchant was already added to the customer’s trusted list. The next time the customer transacts, the merchant can request the Trusted Beneficiary exemption. As with the Transaction Risk Analysis (TRA) exemption, this can be requested either in the authentication and payment authorization message, or in the authorization message only.
+
+Similarly to TRA, requesting the exemption in the authorization message only could mean bypassing 3D Secure authentication altogether; however, the risk is that the Issuer declines the exemption request (that is, soft decline). This forces you to process a 3D Secure 2 authentication and another authorization. In this article, we cover both use cases.
+  
+### Authentication and Authorization messages
+In this example, we request the exemption in the 3D Secure 2 authentication message. If the Issuer declines the exemption, they may apply another exemption (for example, low value) or respond with a challenge for the customer to complete.
+  
+### Authentication message
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/authentications/AUT_65c32dda-80c6-4368-b1d2-cdd9fff6f230/initiate' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "three_ds": {
+        "source": "BROWSER",
+        "preference": "NO_CHALLENGE_REQUESTED_WHITELIST"
+    },
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "country": "IE",
+    "method_url_completion_status": "YES",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        }
+    },
+    "order": {
+        "time_created_reference": "2019-04-26T10:19:32.552327Z",
+        "amount": "1001",
+        "currency": "EUR",
+        "reference": "ce0a8cd8-d2ae-42cf-a5ba-c9703e19bab7",
+        "address_match_indicator": "false",
+        "shipping_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        }
+    },
+    "payer": {
+        "billing_address": {
+            "line1": "Apartment 852",
+            "line2": "Complex 741",
+            "line3": "House 963",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "840"
+        },
+        "mobile_phone": {
+            "country_code": "44",
+            "subscriber_number": "123456789"
+        }
+    },
+    "browser_data": {
+        "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "color_depth": "TWENTY_FOUR_BITS",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "challenge_window_size": "FULL_SCREEN",
+        "timezone": "0",
+        "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+    },
+    "merchant_contact_url": "https://www.example.com/about"
+}'
+```
+</Code>
+  
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "AUT_d0614650-3453-491b-8f03-c0db6b2b1beb",
+    "time_created": "2022-05-06T16:48:26.202Z",
+    "time_last_updated": "2022-05-06T16:48:22.147Z",
+    "transaction_type": "SALE",
+    "status": "SUCCESS_AUTHENTICATED",
+    "channel": "CNP",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "source": "BROWSER",
+    "three_ds": {
+        "server_trans_ref": "d0614650-3453-491b-8f03-c0db6b2b1beb",
+        "acs_trans_ref": "59485280-cd5c-41ec-8be7-28ab04e64b15",
+        "acs_reference_number": "3DS_LOA_ACS_INTE_020200_00293",
+        "ds_trans_ref": "97aef3fd-2818-4f1d-964d-f3c558857972",
+        "eci": "07",
+        "liability_shift": "NO",
+        "status": "AUTHENTICATION_SUCCESSFUL",
+        "status_reason": "",
+        "authentication_source": "BROWSER",
+        "message_version": "2.1.0",
+        "authentication_value": "AJkBAYKIUwAAAAPpl4EmdAAAAAA=",
+        "cardholder_response_info": "",
+        "message_category": "PAYMENT_AUTHENTICATION",
+        "redirect_url": "",
+        "acs_challenge_request_url": "",
+        "challenge_status": "",
+        "challenge_model": "",
+        "session_data_field_name": "threeDSSessionData",
+        "message_type": "creq",
+        "challenge_value": ""
+    },
+    "notifications": {
+        "challenge_return_url": "https://www.example.com/challengeReturnUrl"
+    },
+    "action": {
+        "id": "ACT_r4P5qFmvJPdC8D70zbx3rzG2hjJjt1",
+        "type": "INITIATE",
+        "time_created": "2022-05-06T16:48:26.202Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "sean_sandbox_app"
+    }
+}
+```
+</Code>
+  
+### Authorization message
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "id": "AUT_f3425c1a-4a92-46f3-80ca-ce30f3180e69",
+            "three_ds": {
+                "exempt_status": "TRUSTED_MERCHANT"
+                        }
+        }
+    }
+}'
+```
+</Code>
+  
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj_a2f43fbba740",
+    "time_created": "2022-05-09T17:07:59.104Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "Ms1FC3QU53XvoWF4",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1087449",
+    "action": {
+        "id": "ACT_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-09T17:07:59.104Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>
+  
+## Authorization only  
+In this example, we proceed straight to authorization and request the exemption. We do not process a 3D Secure 2 authentication.
+    
+### Authorization message
+#### Sample request
+<Code id="JSON" title="JSON" language="json" active>
+```
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TrAtA2UcxiCOj097b5d1P4rj1BKx' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data-raw '{
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "country": "IE",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "card": {
+            "number": "4263970000005262",
+            "expiry_month": "09",
+            "expiry_year": "22"
+        },
+        "authentication": {
+            "id": "AUT_f3425c1a-4a92-46f3-80ca-ce30f3180e69",
+            "three_ds": {            
+                "exempt_status": "TRUSTED_MERCHANT"
+            }
+        }
+    }
+}'
+```
+</Code>
+  
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj_a2f43fbba740",
+    "time_created": "2022-05-09T17:07:59.104Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "8dc288e2-607b-41f4-99b7-a2f43fbba740",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "authentication": {
+            "cavv_result": ""
+        },
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "Ms1FC3QU53XvoWF4",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1087449",
+    "action": {
+        "id": "ACT_wJDkGS1HydsCoGXq7Y1CqcRIAP5dKj",
+        "type": "AUTHORIZE",
+        "time_created": "2022-05-09T17:07:59.104Z",
+        "result_code": "SUCCESS",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>    
+
+## Soft decline
+### What is a soft decline?
+A soft decline is a response we get when a customers issuing bank are not willing to provide an SCA exemption to the transaction you're processing.
+
+By requesting the Trusted Beneficiary exemption directly in the authorization message, the Issuer could reject the exemption request and respond with what’s known as a *soft decline*: result code **111**. If you receive a soft decline, you can then proceed with standard 3D Secure authentication and a second authorization. For more information on authentications, see our [3D Secure](/docs/risk-management/3D-secure/overview) documentation.
+    
+<Infobox type="danger">
+    The examples used in this guide involve one authentication message and two authorization messages. In using this logic, you might incur additional transaction fees. For more information, contact your account manager.
+</Infobox>
+    
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_aUZq8cKq57ur5RyiI9PQwQJheFxVXI_58657811",
+    "time_created": "2022-05-09T12:58:04.224Z",
+    "type": "SALE",
+    "status": "DECLINED",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "amount": "",
+    "currency": "",
+    "country": "US",
+    "merchant_id": "MER_f414851d386a4e1f9fa4beb56c5e38b9",
+    "merchant_name": "Test Merchant",
+    "account_id": "TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+    "account_name": "internet",
+    "reference": "58657811",
+    "payment_method": {
+        "result": "111",
+        "message": "[ test system ] Strong Customer Authentication Required",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX0091",
+            "authcode": "",
+            "brand_reference": "cl3De8e1TAQzttFT",
+            "brand_time_created": "",
+            "cvv_result": "NOT_MATCHED",
+            "avs_address_result": "NOT_CHECKED",
+            "avs_postal_code_result": "NOT_CHECKED",
+            "avs_action": "",
+            "provider": {
+                "result": "111",
+                "cvv_result": "N",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_aUZq8cKq57ur5RyiI9PQwQJheFxVXI",
+        "type": "PREAUTHORIZE",
+        "time_created": "2022-05-09T12:58:04.224Z",
+        "result_code": "DECLINED",
+        "app_id": "a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+        "app_name": "my_sandbox_app"
+    }
+}
+```
+</Code>        

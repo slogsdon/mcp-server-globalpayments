@@ -1,0 +1,170 @@
+---
+title: "Airline Data"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/18/2025"
+---
+Airline data can be passed using the Supplementary data elements and can be included in the following request types: Authorization, Credit, Refund (Rebate) and Capture (Settle). In this article we outline the different types of airline data supported with examples of each.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them.
+
+## PNR and Leg Data
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">29999</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+  <supplementarydata>
+    <item type="pnr">
+      <field01>62SVBP</field01>
+      <field02>MASON JAMES MR.</field02>
+      <field03>194375957326594</field03>
+      <field04>AIRLINE NAME</field04>
+      <field06>TRAVEL AGENT NAME</field06>
+      <field09>EUR</field09>
+      <field10>29999</field10>
+      <field11>TICKET ISSUER ADDRESS</field11>
+      <field12>15</field12>
+      <field13>1</field13>
+      <field14>21180905</field14>
+    </item>
+    <item type="leg">
+      <field01>0</field01>
+      <field02>MCO</field02>
+      <field03>BOS</field03>
+      <field04>EI</field04>
+      <field05>Y</field05>
+      <field06>Y</field06>
+      <field07>JFK</field07>
+      <field08>050918</field08>
+      <field09>DEPARTURE TAX</field09>
+      <field10>BZ73635</field10>
+      <field11>1115</field11>
+      <field12>A</field12>
+      <field13>Y</field13>
+    </item>
+    <item type="leg">
+      <field01>1</field01>
+      <field02>BOS</field02>
+      <field03>DUB</field03>
+      <field04>EI</field04>
+      <field05>J</field05>
+      <field06>J</field06>
+      <field07>SNN</field07>
+      <field08>150918</field08>
+      <field09>DEPARTURE TAX</field09>
+      <field10>BZ9373</field10>
+      <field11>1515</field11>
+      <field12>P</field12>
+      <field13>J</field13>
+    </item>
+  </supplementarydata>
+</request>
+```
+  </Code>
+
+  #### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| **PNR** |     |     |     |     |
+| Passenger Name Record | string | alphanumeric | O   | 0-100 | The Passenger Name Record (PNR) - typically this is 6 characters long. |
+| Lead Passenger Name | string | alphanumeric | O   | 0-100 | The main passenger name, usually in the format LASTNAME FIRSTNAME TITLE. |
+| Lead Ticket Number | string | alphanumeric | O   | 0-100 | The lead ticket number. Usually 13 digits long. |
+| Carrier Name | string | alphanumeric | O   | 0-100 | The name of the airline. |
+| Travel Agent Name | string | alphanumeric | O   | 0-100 | The name of the Travel Agent if present. Can be the Airline name. |
+| Transaction Currency | string | alphanumeric | M   | 0-100 | The currency of the transaction. Must be the same as that sent in the main body of the XML request. |
+| Transaction Amount | string | alphanumeric | M   | 0-100 | The amount of the transaction. Must be the same as that sent in the main body of the XML request. |
+| Ticket Issuer Address | string | alphanumeric | O   | 0-100 | The address of where the ticket was issued. |
+| Buy to Fly | string | alphanumeric | O   | 0-100 | The number of days between date of ticket purchase until flight. |
+| Number of Passengers | string | alphanumeric | O   | 0-100 | The number of passengers being booked on the flight. |
+| Ticket Issue Date | string | alphanumeric | O   | 0-100 | The date the ticket was issued. The format is CCYYMMDD. |
+| **Leg** |     |     |     |     |
+| Leg Number | string | alphanumeric | O   | 0-100 | The leg number. |
+| Leg Origin | string | alphanumeric | O   | 0-100 | The airport code for the origin of the leg of the trip. |
+| Leg Destination | string | alphanumeric | O   | 0-100 | The airport code for the destination of the leg of the trip. |
+| Airline Carrier | string | alphanumeric | O   | 0-100 | The 2-alpha code of the airline. |
+| Fare Basis Code | string | alphanumeric | O   | 0-100 | The Fare Basis code (if used). |
+| Class of Service | string | alphanumeric | M   | 0-100 | The class of service (if used). |
+| Stopover Code | string | alphanumeric | O   | 0-100 | This is the 3-alpha code of the stopover airport |
+| Date of Flight | string | alphanumeric | O   | 0-100 | The departure date. |
+| Departure Tax | string | alphanumeric | O   | 0-100 | Departure Tax. |
+| Flight Number | string | alphanumeric | O   | 0-100 | Flight Number |
+| Departure Time | string | alphanumeric | O   | 0-100 | Departure time – format hhmm. |
+| Departure Time Segment | string | alphanumeric | O   | 0-100 | Departure time segment, format:  <br/>A (00:00 to 11:59)  <br/>P (12:00 to 23:59) |
+| Original Class of Service | string | alphanumeric | O   | 0-100 | Original class of service. |
+
+## MRR data
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">29999</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+  <supplementarydata>
+    <item type="mrr">
+      <field01>Description</field01>
+      <field02>MRR Number</field02>
+      <field03>MRR Date</field03>
+    </item>
+  </supplementarydata>
+</request>
+```
+  </Code>
+
+  #### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| MRR Details | string | alphanumeric | O   | 0-100 | A text description of the charge |
+| MRR Number | string | alphanumeric | O   | 0-100 | The MRR number (if used). |
+| MRR Date | string | alphanumeric | O   | 0-100 | The date of the MRR in the form ddmmyy. |
+
+##### American Express CAPN
+The American Express CAPN platform supports Enhanced Authorization for Airline Data. For merchants who are submitting PNR and Leg data during authorization (rather than only during settlement); elements of the Airline data will be passed to American Express as part of the request. The supported elements are:
+
+* **PNR** - Field02 and Field13
+* **LEG** – Field01, Field02, Field03, Field04
+
+For information on the data contained in these elements, refer to the table above.

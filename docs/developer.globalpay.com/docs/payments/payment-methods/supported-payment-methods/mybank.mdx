@@ -1,0 +1,56 @@
+---
+title: 'My Bank'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/mybank.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers   |
+| -------------------------- | ---------------- |
+| **Payment Method String**  | mybank           |
+| **Available Countries**    | IT               |
+| **Available Currencies**   | EUR              |
+| **Min Transaction Amount** | 0.01 EUR         |
+| **Max Transaction Amount** | 999999999.99 EUR |
+| **Supports Refunds**       | Yes              |
+| **Chargebacks**            | No               |
+| **Sandbox**                | Yes              |
+| **Timeout**                | 5 - 30 min       |
+
+### Sample request
+
+<Code id="json" title="JSON" language="json">
+```
+{
+    "account_name": "transaction_processing",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "2268",
+    "currency": "EUR",
+    "reference": "00001157",
+    "country": "IT",
+    "payment_method": {
+        "entry_mode": "ECOM",
+        "apm": {
+            "provider": "myBank"
+        }
+    },
+    "notifications": {
+        "return_url": "<Replace with your own endpoints>",
+        "status_url": "<Replace with your own endpoints>"
+    },
+    "payer": {},
+}
+```
+</Code>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name    | Type | Format     | Length | Description                                                                                            |
+| ------- | ---- | ---------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| Timeout | O    | \[0-9\]{2} | 2      | Minutes until a pending MyBank transaction times out.Possible values: between 5 and 30Default value: 5 |

@@ -1,0 +1,42 @@
+---
+title: 'Payers - Overview'
+search_results: 'Global Payments - Payers Overview'
+subtitle: 'Store customer details for future transactions'
+tag: 'rest'
+created: '06/08/2024'
+---
+With our Payers solution, you can store customer details such as name, billing address, shipping address, and payment methods. This information can then be used for subsequent actions like transaction processing. We handle the storage of all personal identifiable information (PII) on our system, so you don’t need to worry about keeping payer data secure. 
+
+With Payers, you can:
+* Store multiple payment tokens for a single payer.
+* Charge a payer for one-time and recurring transactions.
+* Specify which stored card the customer wants to use as the default.
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our Payers solution. Keep in mind that this section doesn’t cover all use cases.
+
+##### Use case #1: Penalties and late fees
+A merchant who lends products to their customers wants to charge them a penalty if the products aren’t returned. The merchant can initially create a payer to store the customer’s details and make a charge to that payer if they miss the deadline to return the products.  
+
+##### Use case #2: Multiple payment options
+An online marketplace allows their customers to create a profile where they can add multiple payment cards and select a default for their purchases. Payers can be used here to store multiple cards for each payer and define which payment card to be used as a default for subsequent transactions. 
+
+##### Use case #3: Subscriptions
+A video streaming platform that offers a subscription service and has recurring charges against their customers can use the Payers feature to store their customers details and initiate recurring payments against the payer.
+
+## How does it work?
+Once you’re set up to use our Payers solution, you can start creating your payers. To store cards for a payer, you can use our [Card Storage](/docs/payments/tokenization/card-storage-guide) capability to tokenize payment cards. Tokenized cards can then be stored alongside a payer and used for subsequent transactions. 
+
+At a high level, creating a payer works like this:
+
+![Diagram flow showing interaction between the customer, merchant, and our API to create a payer.}.](/gh-assets/payers_flow.png)
+ <p style={{textAlign: "center"}}>**Payers Typical Flow**</p>
+
+## Next steps
+To get familiar with how Payers work, see our below guide.
+
+<CardsGroup type="with_icon">
+ <Card type="with_icon" link="/docs/payments/tokenization/payers-guide" title="Payers Guide" icon="address-card">
+        Learn how to store customer details for future use.
+    </Card>
+ </CardsGroup>

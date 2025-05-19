@@ -1,0 +1,407 @@
+---
+title: 'Drop-In UI - Guide'
+search_results: 'Global Payments - Drop-In UI Guide'
+subtitle: 'Learn how to integrate our prebuilt payment form'
+tag: 'rest'
+created: '06/08/2024'
+---
+This guide focuses on how to use tokenization to create a highly customized payment page for your website or application. First, we set up the payment form and decide where to put the placeholder for the Drop-In UI. After creating a single-use payment token, we then use the JavaScript Library to target the ID and render the payment form. After configuring the environment, we then generate and charge the payment token.
+
+For more information on Drop-In UI, see our [Overview](/docs/payments/online/drop-in-ui-overview) page.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+
+## Step 1: Create a single permission access token
+First need to create an access token. This is required to execute any API requests and contains the actions that are permitted for your app, including creating single-use tokens.
+
+For added security and integrity, you need to create one access token for each user session. This access token must only contain the single permission to create a single-use payment token and its 'time to expire' must be set to '10 minutes'.
+
+Additionally, you can create a `restricted_token` to mask fields returned from the Create Payment Methods response. Although no sensitive information is returned in the response, restricted access tokens ensure that information pertaining to your account will not be visible in the browser.
+
+The request below requires an `appid`, `nonce` and `secret`. Our guide on [creating an access token](/docs/getting-started/generate-token) shows how to get these values.
+
+<Code id="JSON" language="json" title="JSON" active contextualLinks={{apiExplorerUrl: "/api/access-token"}}>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/accesstoken' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "app_id": "{{appid}}",
+    "secret": "{{secret - from step 3 on create an access token link above}}",
+    "grant_type": "client_credentials",
+    "nonce": "{{nonce - from step 2 on create an access token link above}}",
+    "interval_to_expire": "10_MINUTES",
+    "restricted_token": "YES",
+    "permissions": [
+             "PMT_POST_Create_Single"
+    ]
+}'
+```
+</Code>
+
+
+When passing the `restricted_token` field, the response returned from the JavaScript library for the tokenization request will be masked.
+
+<Code id="JSON" language="json" title="JSON">
+```
+{
+    "token": "GZ9nUu2zK9RAFo6rRcAFckaNUBGl",
+    "type": "Bearer",
+    "scope": {
+        "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+        "merchant_name": "Sandbox_Merchant_4",
+        "accounts": [
+            {
+                "id": "TKA_c1de85a8a5844c56abd9ca07bbd792c8",
+                "name": "tokenization",
+                "permissions": [
+                    "PMT_POST_Create_Single"
+                ]
+            }
+        ]
+    },
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "app_name": "Postman_Collection_Test",
+    "time_created": "2024-12-20T13:01:16.632Z",
+    "seconds_to_expire": 599,
+    "interval_to_expire": "10_MINUTES",
+    "email": "jordan.forde@globalpay.com"
+}
+```
+</Code>
+
+## Step 2: Set up payment form
+Once you’ve created the access token, you can now generate the Drop-In UI for your payment form hosted by us and generate a single-use payment token.
+
+We provide a placeholder for where you want the payment form to render.
+
+<Code id="HTML" language="xml" title="HTML" active contextualLinks={{apiExplorerUrl: "/api/links"}}>
+```
+<div id="credit-card-form"></div>
+```
+</Code>
+
+## Step 3: Add Drop-In UI
+After adding the provided placeholder to determine where you want the payment form, it’s time to place the Drop-In UI. 
+
+In this example, we use our JavaScript Library to target the ID and render the payment form.
+
+<Infobox type="success">
+    `<script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>`
+</Infobox>
+
+<Code id="Javascript" title="JavaScript" language="javascript">
+```
+const cardForm = GlobalPayments.creditCard.form("#credit-card-form", {
+   style: "gp-default"
+});
+```
+</Code>
+
+<br />
+When the JavaScript initializes, the Drop-In UI will render and be displayed on your website or application.
+
+<img src="/gh-assets/gp-default_dropinui.png" style={{display: "block", margin: "0 auto"}} />
+
+
+## Step 4: Configure the environment
+Continue setting up the form by configuring the environment and passing the access token created in the previous step. Once the JavaScript is successful in initializing the Drop-In UI, the payment form will be rendered on your website or application.
+
+The below configuration within `GlobalPayments.configure` is the minimum required to enable Drop-In UI. However, this table contains all allowable configurations.
+
+<Code id="Javascript" title="JavaScript" language="javascript">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      // configuring Drop-In UI
+      GlobalPayments.configure({
+         accessToken: "access-token",
+         apiVersion: "2021-03-22",
+         env: "sandbox" // or "production"
+      });
+      // method to notify that hosted fields have been initialized
+      cardForm.ready(() => {
+         console.log("Registration of all credit card fields occurred");
+         //TODO: Add your successful message
+      });
+   
+   </script>
+</form>
+```
+</Code>
+
+### Display Order Information
+Order Information gives a breakdown of the Merchant name, Amount and the Order Reference. This information will be displayed above the card form.
+
+The Order information can be hidden using the enabled field by setting `enabled = false`.
+
+<Code id="Javascript" title="JavaScript" language="javascript">
+```
+orderInformation: {
+            
+            merchantName: "Test Merchant Name",
+            orderTotalAmount: "84.90",
+            orderReference: "XXXX12345",
+            currencyCode: "USD",
+        }
+```
+</Code>
+
+<img alt="Drop-In UI with Order Information" src="/gh-assets/drop-in_ui-order.png" style={{display: "block", margin: "0 auto"}} />
+<div style={{textAlign: "center"}}>**Drop-in UI with Order Information**</div>
+
+<br/>
+
+Registration of card number and card fields confirmed:
+
+<img alt="Confirmation message of the card number and card fields." src="/gh-assets/drop-in-ui_reg-confirm.png" width="400" height="300" style={{display: "block", margin: "0 auto"}} />
+
+
+## Step 5: Generate the payment token
+Once the JavaScript is successful in initializing the Drop-In UI, the payment form will be rendered.  When the cardholder enters their card details and submits the form, a single-use payment token (`PMT_ID`) is returned. You can append this payment token as a hidden field and pass it to the server side to process a transaction using it.
+
+<Code id="Javascript" title="JavaScript" language="javascript">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      styles: {
+      ...
+      // configuring Drop-In UI
+      // appending the token to the form as a hidden field and
+      // submitting it to the server-side
+      cardForm.on("token-success", (resp) => {
+         // add payment token to form as a hidden input
+         console.log(resp);
+         const token = document.createElement("input");
+         token.type = "hidden";
+         token.name = "payment-reference";
+         token.value = resp.paymentReference;
+         const form = document.getElementById("payment-form");
+         form.appendChild(token);
+         form.submit();
+      });
+
+      // add error handling if token generation is not successful
+      cardForm.on("token-error", (resp) => {
+         // TODO: Add your error handling
+      });
+
+      // field-level event handlers. example:
+      cardForm.on("card-number", "register", () => {
+         console.log("Registration of Card Number occurred");
+      });
+   </script>
+</form>
+```
+</Code>
+
+<br></br>
+To fill in the card details, use our [test cards](/resources/test-cards).
+<img src="/gh-assets/gp-default_dropinui_details.png" style={{display: "block", margin: "0 auto"}} />
+<br></br>
+<br></br>
+Click Submit to see the PMT response.
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+  details: {
+    account_id: "TKA_8dd84277223440cia420745c7f5b1c81",
+    accountName: "tokenisation",
+    cardBin: "426397",
+    cardholderName: "Jane smith",
+    cardLast4: "5262",
+    cardNumber: "426397******5262",
+    cardSecurityCode: true,
+    cardType: "visa",
+    expiryMonth: "10",
+    expiryYear: "2026",
+    merchantId: "MER_2584caaa4b5b4f77a90e7f2582ef53dd",
+    merchantName: "jasonbajariastest",
+    reference: "b1b9dc2a-dc7c-11c0-3c6e-bafe17d36628"
+  },
+  paymentReference: "PMT_96065232-83c3-4e1f-969a-c594c6de8f7e"
+}
+  ```
+</Code>
+
+## Step 6: Charge the payment token
+<Infobox>
+  Before you can charge the payment token, you first need to [create a new access token with permissions](/docs/getting-started/generate-token) to process a transaction.
+</Infobox>
+To charge the single-use token, you need to process a Create Transaction request. Instead of submitting the customer’s card information in the request, you can simply pass the payment token.
+
+This single-use token expires after 30 minutes. You can also assign a reference number to the payment transaction to help reconcile it later.
+
+For more information, see [Transactions](/api/transactions) in the API Explorer.
+
+<Infobox>
+  If 3D Secure Strong Customer Authentication is part of your integration, see [Browser Authentication for 3D Secure](/docs/browser-auth-3DS#single-use-token) for step by step instructions.
+</Infobox>
+
+<br></br>
+Copy `PMT_ID` (`paymentReference`) from the PMT response (generated in Step 4) and paste it into the transaction request.
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "account_name": "{{acc_name}}",
+    "channel": "CNP",
+    "capture_mode":"AUTO",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "{{reference}}",
+    "country": "IE",
+    "payment_method": {
+        "name": "Jane",
+        "entry_mode": "ECOM",
+        "id": "PMT_3f94e565-99a0-4cbf-9a32-aad3e19034df"
+    }
+}
+  ```
+</Code>
+
+<br></br>
+
+Send the request to see a response like the below.
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "id": "TRN_fE2jAsiNCCQ3NzTOE71Qt8OCHSiDNE_39194581",
+    "time_created": "2024-09-04T15:39:29.765Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_2584caaa4b5b4f77a90e7f2582ef53dd",
+    "merchant_name": "jasonbajariastest",
+    "account_id": "TRA_f1300075c09246428aaf06d159b3f4f9",
+    "account_name": "transaction_processing_2",
+    "reference": "39194581",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "card": {
+            "funding": "CREDIT",
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "123456",
+            "brand_reference": "cjEx3A2v00X4hZvR",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1432801",
+    "action": {
+        "id": "ACT_fE2jAsiNCCQ3NzTOE71Qt8OCHSiDNE",
+        "type": "AUTHORIZE",
+        "time_created": "2024-09-04T15:39:29.765Z",
+        "result_code": "SUCCESS",
+        "app_id": "O25QaOrOlCkGRLs7OUtPzhzocF1bGoyS",
+        "app_name": "jason_baj_test_2"
+    }
+}
+  ```
+</Code>
+
+#### Allowable configurations
+| Field Name | Allowable Value | Description |
+| -------- | ------- | ------- |
+| accessToken | string | An access token created for an application. |
+| accountName | string | The tokenization account name for the given merchant account. Required only if there is more than one tokenization account associated with the merchant account. |
+| apiVersion | string | The target API version. Default is *2021-03-22*. |
+| reference | string | The reference for the tokenization request. If not provided, a globally unique identifier (GUID) is created and sent in the request. |
+| enableAutocomplete | boolean | Enables autocomplete/autofill features. Default is *false*. |
+| language | string | Value for the HTML element's *lang* attribute within the iFrames and dictates the language used to display on Drop-In UI. Default is *en*. |
+| enableTwoDigitExpirationYear | boolean | Changes the placeholder of the expiry year to two digits (YY). Applicable only if using the default placeholder. |
+| enableCardFingerPrinting | boolean | Enables the use of the fingerprint mode with the *ALWAYS* value. |
+| requireCardHolderName | boolean | Enables the Cardholder Name field to be mandatory. |
+| fieldValidation.enabled | boolean | Enables the display of a validation message for user input on the card form. |
+| fieldValidation.characterValidation | string | Configuration for the validation used on the Cardholder Name field. |
+| allowedCardTypes | array; string | Configuration to allow specific card types on Drop-In UI. |
+| orderInformation | string | Configuration for the Order Information to display above the card form. |
+| merchantName | string | The name for the given merchant account. |
+| orderTotalAmount | int | The total order amount number. |
+| orderReference | string | The reference for the given transaction. | 
+| currencyCode | string | The currency for the given transaction. |
+
+#### Event handlers
+| Event | Description |
+| -------- | ------- | 
+| cardForm.on("card-number-test", (resp)); | Returns an event with a validity of the card number entered. Returns *true* or *false*. |
+| cardForm.on("card-expiration-test", (resp)); | Returns an event with a validity of the expiration date entered. Returns *true* or *false*. |
+| cardForm.on("card-cvv-test", (resp)); | Returns an event with a validity of the CVV/CVC entered. Returns *true* or *false*. |
+| cardForm.on("card-type", (resp)); | Returns the card type entered in the Card Number field. Returns *visa*, *mastercard*, *amex*, *diners*, *discover*, *jcb*, or *unknown*. |
+| cardForm.on("submit", "click", (resp)); | Returns a click event to indicate that the Submit button was clicked. |
+
+## Integration references
+To get a deeper understanding of this product, we’ve provided some references for both API and SDK integrations. 
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs" icon="code">
+        Integrate via our Java, PHP, or .NET SDKs.
+    </Card>
+</CardsGroup>
+
+## Testing Drop-In UI
+Our Drop-In UI solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for Drop-In UI.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide#api" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide#hpp" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide#hpp" title="Dynamic Currency Conversion" icon="euro-sign">
+        Let international customers pay in their home currency.
+    </Card>
+</CardsGroup>

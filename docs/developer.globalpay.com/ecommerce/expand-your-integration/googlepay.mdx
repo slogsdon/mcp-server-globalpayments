@@ -1,0 +1,236 @@
+---
+title: "Google Pay"
+subtitle: "Let customers pay securely with just a scan, tap, or click"
+tag: "xml"
+created: "02/05/2025"
+---
+Google Pay enables customers to use the cards they have stored with Google to make quick, easy purchases on merchant websites or in-app. Customers can use the details they store on other Google applications such as Play Store, YouTube, and Chrome web browser.
+
+<Infobox>
+Google Pay is available only to merchants who use Global Payments, Amex, or Barclays as their Acquirer. For more information, contact a member of our support team.
+</Infobox>
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+This guide focuses on integrating Google Pay directly using our XML API. You'll learn how to obtain the Google Pay token, including complying with 3D Secure authentication standards, as well as how to process an authorization
+
+## Obtain the Google Pay token
+To offer Google Pay from your website or in-app, refer to the [Google Pay API website](https://developers.google.com/payments/overview) for the integration steps. To integrate with our platform, specific parameters must be passed in the `PaymentData` request to Google.
+
+When you submit a payment data request to the Google API, be sure to include the following parameters:
+
+* `'gateway': 'globalpayments'`
+* `'gatewayMerchantId': '<your merchant id>'`
+
+### SCA and 3DS compliance
+Google Pay on the web may expose the Funding PAN (FPAN) depending on the parameters passed from the Google Pay API. Google provides two options through the `allowedAuthMethods` object:
+
+* **PAN_ONLY** – This authentication method is associated with payment cards stored on file with the user's Google account. Returned payment data includes the FPAN with the expiration month and the expiration year.
+* **CRYPTOGRAM_3DS** – This authentication method is associated with cards stored as Android device tokens. Returned payment data includes a 3D Secure (3DS) cryptogram generated on the device.
+* **PAN_ONLY** – This can expose the FPAN, which requires an additional Strong Customer Authentication (SCA) step up to a 3DS check. Currently, we don't support the Google Pay SCA challenge with an FPAN. For the best acceptance, we recommend that you provide only the CRYPTOGRAM_3DS option.
+
+**Website example**
+
+<Code id="markup" title="JavaScript" language="markup" active>
+   ```
+      {
+  'type': 'CARD',
+  'parameters': {
+    'allowedAuthMethods': ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+    'allowedCardNetworks': ['AMEX', 'DISCOVER', 'JCB', 'MASTERCARD', 'VISA']
+  },
+  'tokenizationSpecification': {
+    'type': 'PAYMENT_GATEWAY',
+    'parameters': {
+      'gateway': 'globalpayments',
+      'gatewayMerchantId': '<YOUR_MERCHANT_ID>'
+    }
+  }
+}
+   ```
+   </Code>
+
+**Extract the payload**
+
+<CodeGroup>
+<Code id="markup" title="JavaScript" language="markup" active>
+   ```
+function onGooglePaymentButtonClicked() {
+  const paymentDataRequest = getGooglePaymentDataRequest();
+  paymentDataRequest.transactionInfo = getGoogleTransactionInfo();
+
+  const paymentsClient = getGooglePaymentsClient();
+  paymentsClient.loadPaymentData(paymentDataRequest)
+      .then(function(paymentData) {
+        // handle the response
+        processPayment(paymentData);
+      })
+      .catch(function(err) {
+        // show error in developer console for debugging
+        console.error(err);
+      });
+}
+function processPayment(paymentData) {
+  // show returned data in developer console for debugging
+    console.log(paymentData);
+ ```
+   </Code>
+
+<Code id="markup" title="Java" language="markup" active>
+   ```
+public void onActivityResult(int requestCode, int resultCode, Intent data) {
+  switch (requestCode) {
+    case LOAD_PAYMENT_DATA_REQUEST_CODE:
+      switch (resultCode) {
+        case Activity.RESULT_OK:
+          PaymentData paymentData = PaymentData.getFromIntent(data);
+          String token = paymentData.getPaymentMethodToken().getToken();
+          JSONObject obj = new JSONObject(token);
+          // Data below goes into the XML message
+          string signature = obj.getString("signature");
+          string protocolVersion = obj.getString("protocolVersion");
+          string signedMessage = obj.getString("signedMessage");
+
+ ```
+   </Code>
+
+</CodeGroup>
+
+**In-app example**
+
+<Code id="markup" title="Java" language="markup" active>
+   ```
+private PaymentDataRequest createPaymentDataRequest() {
+  PaymentDataRequest.Builder request =
+    PaymentDataRequest.newBuilder()
+      .setTransactionInfo(
+        TransactionInfo.newBuilder()
+          .setTotalPriceStatus(WalletConstants.TOTAL_PRICE_STATUS_FINAL)
+            .setTotalPrice("10.00")
+            .setCurrencyCode("USD")
+            .build())
+      .addAllowedPaymentMethod(WalletConstants.PAYMENT_METHOD_CARD)                                 
+      .addAllowedPaymentMethod(WalletConstants.PAYMENT_METHOD_TOKENIZED_CARD)
+      .setCardRequirements(
+        CardRequirements.newBuilder()
+          .addAllowedCardNetworks(
+            Arrays.asList(
+              WalletConstants.CARD_NETWORK_VISA,
+              WalletConstants.CARD_NETWORK_MASTERCARD))
+          .build());
+
+  PaymentMethodTokenizationParameters params =
+    PaymentMethodTokenizationParameters.newBuilder()
+      .setPaymentMethodTokenizationType(
+        WalletConstants.PAYMENT_METHOD_TOKENIZATION_TYPE_PAYMENT_GATEWAY)
+      .addParameter("gateway", "globalpayments")
+      .addParameter("<YOUR_MERCHANT_ID>", "")
+      .build();
+
+  request.setPaymentMethodTokenizationParameters(params);
+  return request.build();
+}
+ ```
+   </Code>
+
+
+Google will respond with the `PaymentData` response, which includes the encrypted payload (token). They provide two environments: ENVIRONMENT_TEST and ENVIRONMENT_PRODUCTION. You can process either token type on our platform. You must contact Google before being able to process Production tokens. For more information, see the [Google Pay website](https://developers.google.com/payments/test-and-deploy).
+
+## Process a Google Pay authorization
+Using the Auth-Mobile request type, include the token obtained from the device instead of the standard card details captured from the customer.
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+   ```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20180614095601" type="auth-mobile">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1999;</amount>
+  <mobile>pay-with-google</mobile>
+  <token>{"signature":"MEUCIQDapDDJyf9lH3ztEWksgAjNe...AXjW+ZM+Ut2BWoTExppDDPc1a9Z7U\u003d","protocolVersion":"ECv1","signedMessage":"{\"encryptedMessage\":\"VkqwkFuMdXp...TZQxVMnkTeJjwyc4\\u003d\",\"ephemeralPublicKey\":\"BMglUoKZWxgB...YCiBNkLaMTD9G4sec\\u003d\",\"tag\":\"4VYypqW2Q5FN7UP87QNDGsLgc48vAe5+AcjR+BxQ2Zo\\u003d\"}"}</token>
+  <autosettle flag="1"/>
+  <sha1hash>3231aebe4b60fe23fda3c0ad1b26f03b3ea081e2</sha1hash>
+</request>
+ ```
+   </Code>
+
+## Testing Google Pay
+You can test Google Pay in our Sandbox environment. The amount specified in the request will map the tokenized data in the transaction to one of our test cards. For example, an amount of 10.00 will map to the successful Visa test card. For further details, see the [Google Pay](https://developer.globalpay.com/resources/test-card-numbers#google-pay) section in our Test Cards article.
+
+## Brand guidelines
+For branding guidelines and to download assets, see [Brand Guidelines](https://developers.google.com/payments/brand-guidelines) on the Google Pay website.
+
+## Enhance your solution
+For the detailed API specification and a full list of features, see the [API Reference](/ecommerce/api/overview) section.
+
+<CardsGroup type="with_icon">
+
+    <Card type="with_icon" link="/ecommerce/api/digital-wallets#google-pay" title="Google Pay - API Reference" icon="window">
+        See the full API specification for Google Pay.
+    </Card>
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>
+
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+
+Google Pay is a standard payment method on the Hosted Payment Page (HPP), which is our low-code PCI DSS–compliant payment form. That means you can accept digital wallets for ecommerce transactions right out of the box, along with all major card brands. 
+
+This guide focuses on integrating Google Pay with the [HPP](/ecommerce/payments/hosted-solution/overview). We provide information on certified acquirers for Google Pay as well as the different ways the Google Pay button can be displayed. 
+
+## Certified acquirer
+Google Pay is available only to merchants who use a certified acquirer. Unless you specify otherwise, Google Pay will automatically appear on the HPP if you use of the following certified acquirers:
+
+* Global Payments
+* Amex
+* Barclays
+
+## Google Pay button
+The following images show the different ways the Google Pay button can be displayed: Full Redirect, iFrame, and Lightbox.
+
+![HPP payment form using full redirect.](/gh-assets/ecommerce/google-pay_hpp-redirect.png)
+<p style={{textAlign: "center"}}>**Full Redirect Example**</p>
+
+![HPP payment form using an iFrame.](/gh-assets/ecommerce/google-pay_hpp-iframe.png)
+<p style={{textAlign: "center"}}>**iFrame Example**</p>
+
+![HPP payment form using Lightbox.](/gh-assets/ecommerce/google-pay_hpp-lightbox.png)
+<p style={{textAlign: "center"}}>**Lightbox Example**</p>
+
+## Google wallet
+After a customer clicks the Google Pay button, they can then select a saved card from their Google wallet to use for payment, as shown below.
+
+![Example of Google Pay Wallet with a choice of Visa credit card.](/gh-assets/ecommerce/google-pay_hpp-wallet.png)
+<p style={{textAlign: "center"}}>**Google Pay Wallet Example**</p>
+
+## Enhance your solution
+For the detailed HPP specification and a full list of features, see the [HPP Reference](/ecommerce/hpp-reference/overview) section.
+
+<CardsGroup type="with_icon">
+
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>
+ 
+   </Tab>
+   
+</Tabs>

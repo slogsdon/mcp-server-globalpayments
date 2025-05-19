@@ -1,0 +1,31 @@
+---
+title: "Unified Payments API - March 10, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "03-10-2023"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Support for up to 3 decimal points in the "amount" field for Card Present (All Territories), Card Not Present (Asia Pacific)Card Present (all territories) for Create a Sale or Refund request
+        * The "transaction_id" field is added in the "platforms" object in the response for Card Present (All Territories) for Create a Sale or Refund and Get a Transaction request
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Authentications">
+    <ReleaseNoteDetail type="added">
+        * Support for single character entry for optional field "message_version" in Check Availability request
+            * For example, "message_version" allows the character of "2" to be submitted for all versions of 3D Secure 2
+    </ReleaseNoteDetail>
+    <ReleaseNoteDetail type="changed">
+        * The field "liability_shift" will now return a value of "NO" when the value of "enrolled_status" is "NOT_ENROLLED"
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Stored Payment Methods">
+    <ReleaseNoteDetail type="added">
+        * Support for passing "brand_reference" field in "card" object for Create Payment Methods request
+            * "brand_reference" value will be stored alongside the card
+        * The "brand_reference" field returned in the response for all Stored Payment Method requests
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

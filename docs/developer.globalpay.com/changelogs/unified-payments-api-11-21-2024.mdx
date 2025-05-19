@@ -1,0 +1,48 @@
+---
+title: "REST API - November 21st, 2024"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "11-21-2024"
+---
+
+
+
+<ReleaseNoteSection title="Currency Conversions">
+    <ReleaseNoteDetail type="changed">
+       The rate inquiry response was not properly formatting the amount when the target currency was JPY and the currency provider was Planet.  It was adding 2 extra decimal places.  This has been corrected.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Disputes">
+    <ReleaseNoteDetail type="added">
+        Dispute Management:
+        * New Product ID for Dispute Management
+        * Added ability to **Get Single Dispute** and **List updates** for Disputes
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+
+<ReleaseNoteSection title="Hosted Payment Page by Links">
+    <ReleaseNoteDetail type="changed">
+        Updated spelling on two fields:
+        * `payer.mobile_phone.subsriber_number` Updated to `payer.mobile_phone.subscriber_number`
+        * `order.transaction_configuration.curreny_conversion_mode` Updated to `order.transaction_configuration.currency_conversion_mode`
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        Included new fields in the Payer object to enable a payer to be stored at the time of a transaction. The fields include : 
+        * `payer.first_name`
+        * `payer.last_name`
+        * `payer.storage_mode`
+        * `payer.reference`
+
+        Included a new field in the Payment_method object to enable cards to be stored against the payer reference.
+        * `payment_method.payer_relationship_mode`
+
+        Transit Cert Changes:
+        * Support new values for `mitStatusIndicator` on Discover transactions (including JCB/Diners/CUP)
+        * Support `originalRecurringAmount` in the REST API
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

@@ -1,0 +1,31 @@
+---
+title: 'Versioning'
+search_results: 'API Definitions - Versioning'
+subtitle: 'Be sure to include the correct version in every API request'
+tag: 'rest'
+created: '16/09/2024'
+---
+The API is version controlled. Some past versions are available to merchants in Production.
+
+The API requires that the header **X-GP-Version** be submitted with every request to indicate the version of the API to execute. The response will contain the same header to indicate the version that was executed.
+
+<Infobox>
+The latest version of the API is: 2021-03-22
+  </Infobox>
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X POST https://apis.globalpay.com/ucp/transactions 
+    -H "Content-type: application/json" 
+    -H "X-GP-Version: 2021-03-22" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+    -d '
+{
+    "account_name": "Transaction_Processsing",
+    "channel": "CP",
+   ...
+}'
+```
+</Code>

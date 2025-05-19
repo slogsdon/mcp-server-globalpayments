@@ -1,0 +1,620 @@
+[
+    {
+        "name": "7 Eleven",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/seveneleven",
+        "logo": "/sites/default/files/2023-03/7-eleven-logo.png",
+        "category": "Cash Payments",
+        "countries": [
+            "Malaysia (MY)"
+        ]
+    },
+    {
+        "name": "AliPay (Online)",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/alipay",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/alipay.png",
+        "category": "Digital Wallets",
+        "countries": [
+            "China (CN)"
+        ],
+        "featured": true
+    },
+    {
+        "name": "Bancontact",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/bancontact",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/bancontact.png",
+        "category": "Local Card",
+        "countries": [
+            "Belgium (BE)"
+        ]
+    },
+    {
+        "name": "BitPay",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/bitpay",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/bitpay.png",
+        "category": "Cryptocurrency",
+        "countries": [
+            "Germany (DE)",
+            "Netherlands (NL)",
+            "Italy (IT)",
+            "Belgium (BE)",
+            "United Kingdom (GB)",
+            "Greece (GR)",
+            "Spain (ES)",
+            "Estonia (EE)",
+            "Cyprus (CY)",
+            "Finland (FI)",
+            "France (FR)",
+            "Ireland (IE)",
+            "Lithuania (LT)",
+            "Luxembourg (LU)",
+            "Malta (MT)",
+            "Portugal (PT)",
+            "Slovenia (SI)",
+            "Slovakia (SK)",
+            "United States (US)",
+            "Monaco (MC)",
+            "Australia (AU)",
+            "Czech Republic (CZ)",
+            "Austria (AT)",
+            "Latvia (LV)",
+            "Hong Kong (HK)",
+            "Macao (MO)",
+            "Singapore (SG)",
+            "Malaysia (MY)",
+            "Philippines (PH)",
+            "Canada (CA)",
+            "Maldives (MV)",
+            "United Arab Emirates (AE)",
+            "Antigua and Barbuda (AG)",
+            "Azerbaijan (AZ)",
+            "Brunei Darussalam (BN)",
+            "China (CN)",
+            "Georgia (GE)",
+            "Hungary (HU)",
+            "Indonesia (ID)",
+            "Japan (JP)",
+            "Kenya (KE)",
+            "Kyrgyzstan (KG)",
+            "Korea: Republic of (KR)",
+            "Kazakhstan (KZ)",
+            "Liechtenstein (LI)",
+            "Madagascar (MG)",
+            "Mongolia (MN)",
+            "Mexico (MX)",
+            "Nepal (NP)",
+            "New Zealand (NZ)",
+            "French Polynesia (PF)",
+            "Portugal (PT)",
+            "Seychelles (SC)",
+            "Suriname (SR)",
+            "Thailand (TH)",
+            "Tajikistan (TJ)",
+            "Tanzania: United Republic of (TZ)",
+            "Viet Nam (VN)"
+        ]
+    },
+    {
+        "name": "Dragonpay",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/dragonpay",
+        "logo": "/sites/default/files/2022-07/dragonpay-logo_0.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Philippines (PH)"
+        ]
+    },
+    {
+        "name": "EPS",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/eps",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/eps.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Austria (AT)"
+        ]
+    },
+    {
+        "name": "Estonian Banks",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/estonianbanks",
+        "logo": "/sites/default/files/2022-07/bank-of-estonia-logo.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Estonia (EE)"
+        ]
+    },
+    {
+        "name": "Finnish Online Banking (Verkkopankki)",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/finlandonlinebt",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/finlandonlinebt.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Finland (FI)"
+        ]
+    },
+    {
+        "name": "Giropay",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/giropay",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/giropay.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Germany (DE)"
+        ],
+        "featured": true
+    },
+    {
+        "name": "iDeal",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/ideal",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/ideal.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Netherlands (NL)"
+        ],
+        "featured": true
+    },
+    {
+        "name": "Latvian Banks",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/latvianbanks",
+        "logo": "/sites/default/files/2022-07/Latvian-banks-logo.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Latvia (LV)"
+        ]
+    },
+    {
+        "name": "Lithuanian Banks",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/lithuanianbanks",
+        "logo": "/sites/default/files/2022-07/Lithuanian-banks-logo.jpeg",
+        "category": "Bank Transfers",
+        "countries": [
+            "Lithuania (LT)"
+        ]
+    },
+    {
+        "name": "Maxima",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/maxima",
+        "logo": "/sites/default/files/2022-07/maxima-logo.png",
+        "category": "Cash Payments",
+        "countries": [
+            "Lithuania (LT)"
+        ]
+    },
+    {
+        "name": "MultiBanco",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/multibanco",
+        "logo": "/sites/default/files/2023-03/Multibanco.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Portugal (PT)"
+        ]
+    },
+    {
+        "name": "My Bank",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/mybank",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/mybank.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Italy (IT)"
+        ]
+    },
+    {
+        "name": "Narvesen",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/narvesen",
+        "logo": "/sites/default/files/2023-03/Narvesen_logo.png",
+        "category": "Cash Payments",
+        "countries": [
+            "Lithuania (LT)"
+        ]
+    },
+    {
+        "name": "Pay by Bank app",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/paybybank",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/paybybank.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "United Kingdom (GB)"
+        ]
+    },
+    {
+        "name": "PayPost",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/paypost",
+        "logo": "/sites/default/files/2022-07/Paypost-logo.png",
+        "category": "Cash Payments",
+        "countries": [
+            "Lithuania (LT)"
+        ]
+    },
+    {
+        "name": "Paysafe Card",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/paysafecard",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/paysafecard.png",
+        "category": "Prepaid Cards & Vouchers",
+        "countries": [
+            "Austria (AT)",
+            "Australia (AU)",
+            "Belgium (BE)",
+            "Bulgaria (BG)",
+            "Canada (CA)",
+            "Switzerland (CH)",
+            "Cyprus (CY)",
+            "Czech Republic (CZ)",
+            "Germany (DE)",
+            "Denmark (DK)",
+            "Spain (ES)",
+            "Finland (FI)",
+            "France (FR)",
+            "United Kingdom (GB)",
+            "Greece (GR)",
+            "Georgia (GE)",
+            "Gibraltar (GI)",
+            "Croatia (HR)",
+            "Hungary (HU)",
+            "Ireland (IE)",
+            "Italy (IT)",
+            "Liechtenstein (LI)",
+            "Lithuania (LT)",
+            "Luxembourg (LU)",
+            "Malta (MT)",
+            "Mexico (MX)",
+            "Netherlands (NL)",
+            "Norway (NO)",
+            "New Zealand (NZ)",
+            "Peru (PE)",
+            "Poland (PL)",
+            "Portugal (PT)",
+            "Romania (RO)",
+            "Sweden (SE)",
+            "Slovenia (SI)",
+            "Slovakia (SK)",
+            "Uruguay (UY)"
+        ]
+    },
+    {
+        "name": "Paysera",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/paysera",
+        "logo": "/sites/default/files/2022-07/paysera-logo.png",
+        "category": "Digital Wallets",
+        "countries": [
+            "Lithuania (LT)",
+            "Latvia (LV)",
+            "Estonia (EE)"
+        ]
+    },
+    {
+        "name": "PayU",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/payu",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/payu.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Czech Republic (CZ)",
+            "Poland (PL)"
+        ]
+    },
+    {
+        "name": "Perlas",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/perlas",
+        "logo": "/sites/default/files/2022-07/Perlas-logo.jpeg",
+        "category": "Cash Payments",
+        "countries": [
+            "Lithuania (LT)"
+        ]
+    },
+    {
+        "name": "Post Finance",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/postfinance",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/postfinance.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Switzerland (CH)"
+        ]
+    },
+    {
+        "name": "Przelewy 24",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/przelewy24",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/przelewy24.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Poland (PL)"
+        ]
+    },
+    {
+        "name": "SafetyPay",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/safetypay",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/safetypay.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Brazil (BR)",
+            "Mexico (MX)",
+            "Peru (PE)"
+        ]
+    },
+    {
+        "name": "SEPA Direct Debit - Model A",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/sepapm",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/sepapm.png",
+        "category": "Direct Debit",
+        "countries": [
+            "Andorra (AD)",
+            "Austria (AT)",
+            "Belgium (BE)",
+            "Bulgaria (BG)",
+            "Switzerland (CH)",
+            "Cyprus (CY)",
+            "Czech Republic (CZ)",
+            "Germany (DE)",
+            "Denmark (DK)",
+            "Estonia (EE)",
+            "Spain (ES)",
+            "Finland (FI)",
+            "France (FR)",
+            "United Kingdom (GB)",
+            "Greece (GR)",
+            "Croatia (HR)",
+            "Hungary (HU)",
+            "Ireland (IE)",
+            "Iceland (IS)",
+            "Italy (IT)",
+            "Liechtenstein (LI)",
+            "Lithuania (LT)",
+            "Luxembourg (LU)",
+            "Latvia (LV)",
+            "Monaco (MC)",
+            "Malta (MT)",
+            "Netherlands (NL)",
+            "Norway (NO)",
+            "Poland (PL)",
+            "Portugal (PT)",
+            "Romania (RO)",
+            "Sweden (SE)",
+            "Slovenia (SI)",
+            "Slovakia (SK)",
+            "San Marino (SM)",
+            "Holy See (Vatican City State) (VA)"
+        ],
+        "featured": true
+    },
+    {
+        "name": "SEPA Direct Debit - Model C",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/sepamm",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/sepamm.png",
+        "category": "Digital Wallets",
+        "countries": [
+            "Andorra (AD)",
+            "Austria (AT)",
+            "Belgium (BE)",
+            "Bulgaria (BG)",
+            "Switzerland (CH)",
+            "Cyprus (CY)",
+            "Czech Republic (CZ)",
+            "Germany (DE)",
+            "Denmark (DK)",
+            "Estonia (EE)",
+            "Spain (ES)",
+            "Finland (FI)",
+            "France (FR)",
+            "United Kingdom (GB)",
+            "Greece (GR)",
+            "Croatia (HR)",
+            "Hungary (HU)",
+            "Ireland (IE)",
+            "Iceland (IS)",
+            "Italy (IT)",
+            "Liechtenstein (LI)",
+            "Lithuania (LT)",
+            "Luxembourg (LU)",
+            "Latvia (LV)",
+            "Monaco (MC)",
+            "Malta (MT)",
+            "Netherlands (NL)",
+            "Norway (NO)",
+            "Poland (PL)",
+            "Portugal (PT)",
+            "Romania (RO)",
+            "Sweden (SE)",
+            "Slovenia (SI)",
+            "Slovakia (SK)",
+            "San Marino (SM)",
+            "Holy See (Vatican City State) (VA)"
+        ]
+    },
+    {
+        "name": "Skrill",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/skrill",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/skrill.png",
+        "category": "Digital Wallets",
+        "countries": [
+            "United Arab Emirates (AE)",
+            "Antigua and Barbuda (AG)",
+            "Australia (AU)",
+            "Azerbaijan (AZ)",
+            "Bangladesh (BD)",
+            "Brunei Darussalam (BN)",
+            "Canada (CA)",
+            "China (CN)",
+            "Germany (DE)",
+            "France (FR)",
+            "Georgia (GE)",
+            "Hong Kong (HK)",
+            "Hungary (HU)",
+            "Indonesia (ID)",
+            "Ireland (IE)",
+            "Italy (IT)",
+            "Japan (JP)",
+            "Kenya (KE)",
+            "Kyrgyzstan (KG)",
+            "Korea: Republic of (KR)",
+            "Kazakhstan (KZ)",
+            "Luxembourg (LU)",
+            "Macao (MO)",
+            "Madagascar (MG)",
+            "Mongolia (MN)",
+            "Maldives (MV)",
+            "Mexico (MX)",
+            "Malaysia (MY)",
+            "Netherlands (NL)",
+            "Nepal (NP)",
+            "New Zealand (NZ)",
+            "French Polynesia (PF)",
+            "Philippines (PH)",
+            "Seychelles (SC)",
+            "Singapore (SG)",
+            "Suriname (SR)",
+            "Thailand (TH)",
+            "Tajikistan (TJ)",
+            "Tanzania: United Republic of (TZ)",
+            "United States (US)",
+            "Viet Nam (VN)"
+        ]
+    },
+    {
+        "name": "Sofort",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/sofort",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/sofort.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Austria (AT)",
+            "Belgium (BE)",
+            "Germany (DE)",
+            "Spain (ES)",
+            "Italy (IT)",
+            "Netherlands (NL)"
+        ],
+        "featured": true
+    },
+    {
+        "name": "Trustly",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/trustly",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/trustly.png",
+        "category": "Bank Transfers",
+        "countries": [
+            "Austria (AT)",
+            "Czech Republic (CZ)",
+            "Germany (DE)",
+            "Denmark (DK)",
+            "Finland (FI)",
+            "Estonia (EE)",
+            "Spain (ES)",
+            "Italy (IT)",
+            "Lithuania (LT)",
+            "Latvia (LV)",
+            "Netherlands (NL)",
+            "Norway (NO)",
+            "Poland (PL)",
+            "Sweden (SE)",
+            "Slovakia (SK)"
+        ]
+    },
+    {
+        "name": "UnionPay SecurePay",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/unionpay-securepay",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/unionpay.png",
+        "category": "Local Card",
+        "countries": [
+            "United Arab Emirates (AE)",
+            "Austria (AT)",
+            "Australia (AU)",
+            "Azerbaijan (AZ)",
+            "Bangladesh (BD)",
+            "Belgium (BE)",
+            "Brunei Darussalam (BN)",
+            "Belarus (BY)",
+            "Canada (CA)",
+            "China (CN)",
+            "Germany (DE)",
+            "Spain (ES)",
+            "Finland (FI)",
+            "France (FR)",
+            "United Kingdom (GB)",
+            "Georgia (GE)",
+            "Hong Kong (HK)",
+            "Hungary (HU)",
+            "Indonesia (ID)",
+            "Ireland (IE)",
+            "Italy (IT)",
+            "Japan (JP)",
+            "Kenya (KE)",
+            "Kyrgyzstan (KG)",
+            "Cambodia (KH)",
+            "Korea: Republic of (KR)",
+            "Kazakhstan (KZ)",
+            "Lebanon (LB)",
+            "Liechtenstein (LI)",
+            "Sri Lanka (LK)",
+            "Lithuania (LT)",
+            "Luxembourg (LU)",
+            "Madagascar (MG)",
+            "Mongolia (MN)",
+            "Macao (MO)",
+            "Malta (MT)",
+            "Mauritius (MU)",
+            "Maldives (MV)",
+            "Mexico (MX)",
+            "Malaysia (MY)",
+            "Netherlands (NL)",
+            "Nepal (NP)",
+            "New Zealand (NZ)",
+            "Panama (PA)",
+            "French Polynesia (PF)",
+            "Philippines (PH)",
+            "Portugal (PT)",
+            "Russian Federation (RU)",
+            "Seychelles (SC)",
+            "Singapore (SG)",
+            "Slovenia (SI)",
+            "Slovakia (SK)",
+            "Suriname (SR)",
+            "Thailand (TH)",
+            "Tajikistan (TJ)",
+            "Tanzania: United Republic of (TZ)",
+            "United States (US)",
+            "Viet Nam (VN)"
+        ]
+    },
+    {
+        "name": "WeChat Pay (Online)",
+        "url": "/docs/payments/payment-methods/supported-payment-methods/wechat",
+        "logo": "/sites/default/files/migrated_images/assets/images/apms/wechat.png",
+        "category": "Digital Wallets",
+        "countries": [
+            "United Arab Emirates (AE)",
+            "Antigua and Barbuda (AG)",
+            "Australia (AU)",
+            "Azerbaijan (AZ)",
+            "Bangladesh (BD)",
+            "Brunei Darussalam (BN)",
+            "Canada (CA)",
+            "China (CN)",
+            "France (FR)",
+            "French Polynesia (PF)",
+            "Georgia (GE)",
+            "Germany (DE)",
+            "Hong Kong (HK)",
+            "Hungary (HU)",
+            "Ireland (IE)",
+            "Indonesia (ID)",
+            "Italy (IT)",
+            "Japan (JP)",
+            "Kazakhstan (KZ)",
+            "Kenya (KE)",
+            "Korea: Republic of (KR)",
+            "Kyrgyzstan (KG)",
+            "Luxembourg (LU)",
+            "Madagascar (MG)",
+            "Macao (MO)",
+            "Maldives (MV)",
+            "Malaysia (MY)",
+            "Mexico (MX)",
+            "Mongolia (MN)",
+            "Netherlands (NL)",
+            "Nepal (NP)",
+            "New Zealand (NZ)",
+            "Philippines (PH)",
+            "Seychelles (SC)",
+            "Singapore (SG)",
+            "Suriname (SR)",
+            "Tajikistan (TJ)",
+            "Tanzania: United Republic of (TZ)",
+            "Thailand (TH)",
+            "United States (US)",
+            "Viet Nam (VN)"
+        ],
+        "featured": true
+    }
+]

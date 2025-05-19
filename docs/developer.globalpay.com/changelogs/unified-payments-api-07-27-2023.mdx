@@ -1,0 +1,49 @@
+---
+title: "Unified Payments API - June 27, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "07-27-2023"
+---
+
+<ReleaseNoteSection title="No title">
+    <ReleaseNoteDetail type="added">
+        * New "transaction_amount_percentage" field added to the split endpoint. This field describes the percentage of the transaction amount that should be split.
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * New response fields added to List Settled Transactions endpoint:
+            * order.reference
+            * deposit_amount
+            * payment_method.card.funding
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * New query parameters added to List Settled Transactions endpoint:
+            * order.reference
+            * payment_method.card.funding
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * Enhanced the Refund a Sale endpoint to support creating a refund for an Open Banking transaction
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Disputes">
+    <ReleaseNoteDetail type="added">
+        * New response "order.reference" field added to List Disputes endpoint
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * New query parameter "order.reference" added to List Disputes endpoint
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Hosted Payment Page">
+    <ReleaseNoteDetail type="added">
+        * New response field "REST_API_PMT_ID" added in the HPP response. This field contains the PMT_ID that represents the stored payment method for the customer.
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="added">
+        * Merchant can now pass the PMT_ID for a customer’s stored card in the SAVED_PMT_REF for a HPP request
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

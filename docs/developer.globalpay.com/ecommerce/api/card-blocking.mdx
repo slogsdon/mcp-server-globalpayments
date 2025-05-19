@@ -1,0 +1,185 @@
+---
+title: "Card Blocking"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/14/2025"
+---
+Card Blocking allows you to choose which card types can be accepted for payment or stored for future-dated payments.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Card Blocking, see our [main article](/ecommerce/expand-your-integration/card-blocking).
+
+## Payment request
+Card Blocking can be enabled at an account level or payment-request level. Here, we set it up at the payment-request level.
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+
+<blockcard>
+	<commercialcredit>true</commercialcredit>
+	<commercialdebit>false</commercialdebit>
+	<consumercredit>false</consumercredit>
+	<consumerdebit>false</consumerdebit>
+</blockcard>
+
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+You can use the following fields to control how Card Blocking options are presented to the customer in the HPP based on the card type used.
+
+_Type_ indicates whether the field is Mandatory (M), Optional (O), or Conditional (C) - depending on another optional field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+     
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| consumerdebit | integer | enum | O   | NA  | **TRUE** - Enables card blocking functionality when the card type is identified as Consumer Debit.  <br/>**FALSE** - Disables card blocking functionality when the card type is identified as Consumer Debit. |
+| consumercredit | integer | enum | O   | NA  | **TRUE** - Enables card blocking functionality when the card type is identified as Consumer Credit.  <br/>**FALSE** - Disables card blocking functionality when the card type is identified as Consumer Credit. |
+| commercialcredit | integer | enum | O   | NA  | **TRUE** - Enables card blocking functionality when the card type is identified as Commercial Credit.  <br/>**FALSE** - Disables card blocking functionality when the card type is identified as Commercial Creditdebit. |
+| commercialdebit | integer | enum | O   | NA  | **TRUE** - Enables card blocking functionality when the card type is identified as Commercial Debit.  <br/>**FALSE** - Disables card blocking functionality when the card type is identified as Commercial Debit. |
+
+#### Sample response
+The following response will be received if a supported Transaction Processing request is attempted with a card-block parameter passed in the payment request or account setting.
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20220815171818">
+  <result>560</result>
+  <message>Card type is not permitted by merchant config</message>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+</response>
+```
+</Code>
+
+## Set all card types to block
+Setting all card types to _block_ is an invalid configuration and will result in the following error code:
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<response timestamp="20220815171818">
+  <result>561</result>
+  <message>All card types are blocked, invalid request</message>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+</response>
+```
+</Code>
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is shown below:
+
+<Code id="xml" title="" language="xml" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above, our initial string will be:
+
+<Code id="xml" title="" language="xml" active>
+```
+"20200414103508.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like:
+
+<Code id="xml" title="" language="xml" active>
+```
+“28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882”
+```
+</Code>
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash using the SHA-1 algorithm of your concatenated string. For example:
+
+<Code id="xml" title="" language="xml" active>
+```
+947903969e7aaf996164c680a6669805fe405269
+```
+</Code>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields, and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+
+##### 1. Create a SHA-1 hash string made up of response values
+The blueprint of the hash for the response is shown below:
+
+<Code id="xml" title="" language="xml" active>
+```
+timestamp.merchantid.orderid.amount.currency
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml" active>
+```
+20200414103508.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like:
+
+<Code id="xml" title="" language="xml" active>
+```
+28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+```
+</Code>
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml" active>
+```
+28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash using the SHA-1 algorithm of your concatenated string. For example:
+
+<Code id="xml" title="" language="xml" active>
+```
+947903969e7aaf996164c680a6669805fe405269
+```
+</Code>
+
+We create the hash in the same way on our side and sends it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

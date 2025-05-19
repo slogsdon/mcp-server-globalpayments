@@ -1,0 +1,114 @@
+---
+title: 'EPS'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/eps.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers                    |
+| -------------------------- | --------------------------------- |
+| **Payment Method String**  | eps                               |
+| **Available Countries**    | AT                                |
+| **Available Currencies**   | EUR                               |
+| **Min Transaction Amount** | EUR 1.00                          |
+| **Max Transaction Amount** | N/A                               |
+| **Supports Refunds**       | Full & Partial with 365 day limit |
+| **Chargebacks**            | No                                |
+| **Sandbox**                | Yes (PPRO-hosted)                 |
+| **Timeout**                | 1 Hour                            |
+
+### Sample request
+<CodeGroup>
+	<Code id="html" language="markup" title="HTML POST (HPP)" active>
+	```
+	<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+		<input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+		<input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+		<input type="hidden" name="ACCOUNT" value ="internet">
+		<input type="hidden" name="ORDER_ID" value ="20230202110644-63db994455de7">
+		<input type="hidden" name="AMOUNT" value ="3800">
+		<input type="hidden" name="CURRENCY" value ="EUR">
+		<input type="hidden" name="SHA1HASH" value ="709eb5aad844533ea5130d3ab8ea224b6d8c1905">
+		<input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+		<input type="hidden" name="HPP_VERSION" value ="2">
+		<input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="AT">
+		<input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+		<input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+		<input type="hidden" name="MERCHANT_RESPONSE_URL" value ="https://www.example.com/statusUrl">
+		<input type="hidden" name="HPP_TX_STATUS_URL" value ="https://www.example.com/statusUrl">
+		<input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+		<input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+		<input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+		<input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+		<input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+		<input type="hidden" name="HPP_LANG" value ="EN">
+		<input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+		<input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+		<input type="hidden" name="COMMENT1" value="Mobile Channel">
+		<input type="hidden" name="COMMENT2" value="Down Payment">
+		<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+		<input type="submit" value="Click here to Purchase">
+	</form>
+	```
+	</Code>
+	<Code id="xml" title="XML" language="markup">
+	```
+	<?xml version='1.0' encoding='UTF-8'?>			
+	<request type='payment-set' timestamp='{{timestamp}}'>			
+		<merchantid>Merchant ID</merchantid>		
+		<account>internet</account>		
+		<amount currency='EUR'>3800</amount>		
+		<autosettle flag='1' />		
+		<orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+		<paymentmethod>EPS</paymentmethod>		
+		<paymentmethoddetails>		
+			<returnurl>https://www.example.com/returnUrl</returnurl>	
+			<errorurl>https://www.example.com/errorUrl</errorurl>	
+			<statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+			<descriptor>Test Transaction</descriptor>	
+			<country>AT</country>	
+			<accountholdername>James Mason</accountholdername>			
+		</paymentmethoddetails>		
+		<comments>		
+			<comment id='1'>Mobile Channel</comment>	
+			<comment id='2'>Down Payment</comment>	
+		</comments>		
+		<sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+	</request>
+	```
+	</Code>
+
+	<Code id="json" language="json" title="JSON">
+	```
+	{                        
+		"account_name": "{{acc_name}}",                
+		"type": "SALE",                
+		"channel": "CNP",                
+		"amount": "3800",                
+		"currency": "EUR",                
+		"reference": "{{reference}}",                
+		"country": "AT",                
+		"payment_method": {                
+			"entry_mode": "ECOM",        
+			"apm": {        
+				"provider": "eps"
+			}        
+		},                
+		"notifications": {                
+			"return_url": "<Replace with your own endpoints>",                
+			"status_url": "<Replace with your own endpoints>"                
+		},                
+		"payer": {}                
+	}
+	```
+	</Code>
+</CodeGroup>
+
+## No Additional Fields Required
+
+No additional mandatory or optional fields are required for this payment method.  
+
+By following our [standard integration article](/ecommerce/payment-methods), you can simply configure it on the HPP. For XML API integrations you'll need to pass the correct payment method string in the payment-set request.

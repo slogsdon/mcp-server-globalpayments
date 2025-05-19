@@ -1,0 +1,50 @@
+---
+title: 'Going Live to Production'
+search_results: 'Global Payments - Going to Production'
+subtitle: 'Ready to go live? Contact us to validate your integration'
+tag: 'rest'
+created: '07/08/2024'
+---
+You’ve done some testing of your integration in our Sandbox environment and now you’re ready to take online payments for real. This article provides the next steps for going live with your integration. 
+
+<Infobox>
+This information is for merchants integrating directly with our API or an SDK to take online payments (card not present). For merchants integrating through one of our plugins or a pre-built hosted solution, contact a member of our Sales Support team for next steps.
+</Infobox>
+<Infobox>
+If you plan to process in-store payments (card present), email certintake@globalpay.com to let us know.
+</Infobox>
+
+Here’s what you need to do:
+* [Sign up with us](#sign-up-with-us)
+* [Complete all testing requirements](#complete-all-testing-requirements)
+* [Validate your integration](#validate-your-integration)
+* [Receive Production credentials](#receive-production-credentials)
+* [Test real transactions](#test-real-transactions)
+
+## Sign up with us
+If you don’t already have a Merchant Service Agreement in place, please visit our main website to sign up. During the onboarding process, you’ll have the chance to decide which of our capabilities (accounts) you want to add. For more information on capabilities, see [Account Capabilities](/api/definitions/account-capabilities) in the API Definitions.
+
+## Complete all testing requirements
+We expect that you’ve already run through some basic checks to make sure your integration works properly (if not, see [Build Your integration](/docs/getting-started/your-integration) to get started). But have you thought about whether your integration can handle expired or invalid access tokens or other errors? Or, whether the Reference field is populated with a unique value for every transaction? These are the types of questions we’ll ask you during the validation process (see next section).
+
+Depending on how complex your integration is, we may ask you to run additional test scenarios. If you have any questions regarding testing requirements, contact [Integration Support](/support/integration-support). 
+
+## Validate your integration
+If you’re integrating directly with our API or via an SDK to accept online payments (card not present), you’ll have to go through a validation process with us. As mentioned in the previous section, we’ll have some questions for you to make sure everything is in order. If you’re using our 3D Secure or Recurring Payments solutions, we’ll want to know whether you’ve received the proper API responses.
+
+To get the validation process started, see [Integration Validation](/support/integration-valid).
+
+## Receive Production credentials
+Once you’ve initiated the onboarding process and signed a Merchant Service Agreement with us, you’ll receive your Production credentials (an App ID and an App Key). These credentials are tailored to the capabilities you certified and signed up for (for example, Transaction Processing, Tokenization, Dispute Management, Settlement Reporting, and so on).
+
+Use your Production credentials in the heading of API requests instead of what you used for testing in the Sandbox environment. You'll also need to change your integration from the Sandbox endpoint to Production:
+
+* **Sandbox:** https://apis.sandbox.globalpay.com
+* **Production:** https://apis.globalpay.com
+
+Now you can start processing and getting paid for real transactions. However, you’ll want to start slowly and test the first few transactions (see next section).
+
+## Test real transactions
+The final step is to do a little testing in Production and process a real transaction. It’s important to confirm that your integration works as expected and also that the merchant’s funds are deposited into the correct bank account. Once that’s been done, you’re good to go. Congratulations!
+
+If you have any issues, our [Integration Support](/support/integration-support) team is here to help you and answer any questions.

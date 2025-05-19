@@ -1,0 +1,721 @@
+---
+title: "Payment Scheduler"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/20/2025"
+---
+Our Payment Scheduler solution allows you to easily set up and manage recurring billing payments. Once the customer and card details are saved in Card Storage you can set up a new schedule using just the returned token references. As per the schedule specified, we will obtain the cardholder details from our secure vault and create the authorization request. Whenever scheduled payments are executed, a full report of the day's transactions with each outcome will be emailed to an administrator on your account.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them.
+
+## Create
+Once you have a card saved in Card Storage, you can set up scheduled payments against it. In the request, you supply the references of the Payer and Payment Method to be charged and the specific schedule pattern to follow – for example weekly, monthly, or on the last day of each month. You can specify the number of times for the scheduled payment to run, or alternatively, use an end date. You can also set the date for the schedule to begin or the date after which it should start. Otherwise, the current date is used. The maximum frequency for schedules to run is daily.
+
+We provide a series of short-hand macros to easily set up a schedule, such as daily, monthly, and bimonthly. You can also use cron expressions for more specific and advanced functionality. For more information on both, see the [Macros](#macros) section below. Once executed, the response will include the Schedule Text element, this is a plain English text of the schedule created. You should ensure that it conforms to your intended payment schedule.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="schedule-new" timestamp="20170331140251">
+  <merchantid>MerchantID</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <scheduleref>58de618b3279c</scheduleref>
+  <alias>Gym Membership</alias>
+  <orderidstub>gym</orderidstub>
+  <transtype>auth</transtype>
+  <schedule>monthly</schedule>
+  <startdate>20170402</startdate>
+  <numtimes>12</numtimes>
+  <!-- if using end date 
+  <numtimes>-1</numtimes>
+  <enddate>20180131</enddate> -->
+  <payerref>03e28f0e-4cf0-492e-80bd-20ec318e9334</payerref>
+  <paymentmethod>3c4af936-3732-483e-a393-f558bec2fb2a</paymentmethod>
+  <amount currency="EUR">1001</amount>
+  <prodid>Fitness First</prodid>
+  <varref>My Legal Entity</varref>
+  <custno>987654123</custno>
+  <comment>Social Sign-Up</comment>
+  <sha1hash>6616a0949b15de433f25cfc4cc5ec5f6f9518e69</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Channel | string | enum | O   |     | Specify how a transaction is to be processed. Compatible with us and certain other acquirers. Allowed values:  <br/>  <br/>**ECOM** - Ecommerce  <br/>**MOTO** - Mail Order/Telephone Order |
+| Schedule Ref | string | alphanumeric | M   | 1-20 | A unique reference for this schedule. The value will form part of the Order ID for each scheduled payment. Can to used to obtain details of the schedule or delete it.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Alias | string | alphanumeric | O   | 0-20 | Name given to this schedule for ease of identification, for example, gym membership or magazine subscription. Allowed characters: \[a-zA-Z0-9␣\] |
+| Order Id Stub | string | alphanumeric | O   | 0-10 | A string to be used as the prefix of the Order ID for each scheduled payment. The Order IDs adhere to the following structure "orderIdStub-scheduleRef-runId-attemptId".  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Trans Type | string | enum | M   | 1-30 | The type of scheduled transaction to process. Allowed values:  <br/>**auth** |
+| Schedule | string | alphanumeric | M   | 3-20 | The schedule to follow. Must consist of 3 space / tab separated items - one each for day-of-month.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Start Date | string | YYYYMMDD | O   | 0-8 | The date the schedule should start after. Does not need to be an actual date that the schedule will run it can be any date in the future. If this field is not provided then the current date will be automatically set as the start date. |
+| Num Times | integer |     | O   | 0-5 | The number of times to process this schedule. Max value is 999. If you want the schedule to run indefinitely (no end date) the value can be set to -1. |
+| Payer Reference | string | alphanumeric | M   | 1-50 | A unique reference for this customer in Card Storage, known as the Payer.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Payment Method | string | alphanumeric | M   | 1-50 | A unique reference for this card in Card Storage, known as the Payment Method.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Product Id | string | alphanumeric | O   | 0-50 | The code you assign to the product, for example the SKU.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Variable Reference | string | alphanumeric | O   | 0-50 | Any reference you also would like to assign to this transaction. Can also be used to pass the Acquirer Statement reference, where supported.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Customer Number | string | alphanumeric | O   | 0-50 | A unique reference for this customer for example from your CRM system.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<response timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <result>00</result>
+  <message>Schedule created successfully</message>
+  <scheduletext>Monthly on the last day of the month, from Aug 15, 2018, 12 times</scheduletext>
+  <sha1hash>163290566153e1c0838418131b1b371e5825f4b8</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](https://developer.globalpay.com/#!/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Schedule Text | string | alphanumeric | A plain English representation of the schedule created. You should ensure that it conforms to your intended payment schedule. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Search
+This request allows you to retrieve the list of scheduled payments associated with a particular Payer and Payment Method. The response will contain the details of each one under the Schedules element.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="schedule-search" timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <payerref>03e28f0f-4cf0-492e-80bd-20ec318e9334</payerref>
+  <paymentmethod>406aec24-b56f-4ee7-9729-05c098afdb07</paymentmethod>
+  <sha1hash>83e0cb3aeffa80d53ffbd72ab83015f8f79ad4a0</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Payer Reference | string | alphanumeric | M   | 1-50 | A unique reference for this customer in Card Storage, known as the Payer.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Payment Method | string | alphanumeric | M   | 1-50 | A unique reference for this card in Card Storage, known as the Payment Method.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <result>00</result>
+  <message>OK</message>
+  <schedules>
+    <schedule>
+      <scheduleref>58e230c4537c8</scheduleref>
+      <alias>gym membership</alias>
+      <account>internet</account>
+      <orderidstub>magazine</orderidstub>
+      <transtype>auth</transtype>
+      <amount currency="EUR">10000</amount>
+      <schedule>L * ?</schedule>
+      <startdate>20170624</startdate>
+      <timesrun>0</timesrun>
+      <numtimes>12</numtimes>
+      <enddate/>
+      <scheduletext>Monthly on the last day of the month, from Jun 24, 2017, 12 times</scheduletext>
+    </schedule>
+    <schedule>
+      <scheduleref>58e2313ae72bf</scheduleref>
+      <alias>magazine subscription</alias>
+      <account>internet</account>
+      <orderidstub>magazine</orderidstub>
+      <transtype>auth</transtype>
+      <amount currency="EUR">2400</amount>
+      <schedule>24 */3 ?</schedule>
+      <startdate>20170624</startdate>
+      <timesrun>0</timesrun>
+      <numtimes>8</numtimes>
+      <enddate/>
+      <scheduletext>Every 3 months on the 24th, from Jun 24, 2017, 8 times</scheduletext>
+    </schedule>
+  </schedules>
+  <sha1hash>29d3e219d2a18866c117326ee90f9652ca7ba32d</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Schedule Ref | string | alphanumeric | A unique reference for this schedule. The value will form part of the Order ID for each scheduled payment. Can be used to obtain details of the schedule or delete it.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Alias | string | alphanumeric | Name given to this schedule for ease of identification, for example, gym membership or magazine subscription. Allowed characters: \[a-zA-Z0-9␣\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id Stub | string | alphanumeric | A string to be used as the prefix of the Order ID for each scheduled payment. The Order IDs adhere to the following structure "orderIdStub-scheduleRef-runId-attemptId".  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Trans Type | string | enum | The type of scheduled transaction to process. Allowed values:  <br/>**auth** |
+| Currency | string | ISO 4217 | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Schedule | string | alphanumeric | The schedule to follow. Must consist of 3 space / tab separated items - one each for day-of-month.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Start Date | string | YYYYMMDD | The date the schedule should start after. Does not need to be an actual date that the schedule will run; it can be any date in the future. If this field is not provided then the current date will be automatically set as the start date. |
+| Times Run | integer |     | The number of times this schedule has already run. |
+| Num Times | integer |     | The number of times to process this schedule. Max value is 999. If you want the schedule to run indefinitely (no end date) the value can be set to -1. |
+| End Date | string | YYYYMMDD | The end date for this schedule. Does not need to be an actual date that the schedule will run; it can be any date in the future and after startdate (if set).If enddate is set then the value of numtimes must be set to -1. |
+| Schedule Text | string | alphanumeric | A plain English representation of the schedule created. You should ensure that it conforms to your intended payment schedule. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Delete
+If you want to cancel a scheduled payment you can send a delete request. 
+
+<Infobox type="danger">
+This action cannot be undone so please exercise caution when using this request type.
+</Infobox>
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="schedule-delete" timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <scheduleref>58de618b3279d</scheduleref>
+  <sha1hash>718ef2612bd985b6a01398888849f8d23b3a49de</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Schedule Ref | string | alphanumeric | M   | 1-20 | A unique reference for this schedule. The value will form part of the Order ID for each scheduled payment. Can to used to obtain details of the schedule or delete it.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <result>00</result>
+  <message>OK</message>
+  <sha1hash>b2144a87565fe21fc774cde67fba355618b4eb00</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Get
+Using just the Schedule Reference, this request retrieves the details (for example, number of times run) of a specific schedule. The response will include the additional data that can be supplied when setting up the schedule, including customer number, product ID, variable reference and comments, in addition to the Payer and Payment Method references the schedule is configured to charge.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="schedule-get" timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <scheduleref>58e2313ae72bf</scheduleref>
+  <sha1hash>a3e961f1b111ceb52a55ee673ec781e1967dc3a3</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Schedule Ref | string | alphanumeric | M   | 1-20 | A unique reference for this schedule. The value will form part of the Order ID for each scheduled payment. Can be used to obtain details of the schedule or delete it.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+
+Sample Response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantID</merchantid>
+  <result>00</result>
+  <message>OK</message>
+  <scheduleref>58e2313ae72bf</scheduleref>
+  <alias>magazine subscription</alias>
+  <payerref>03e28f0e-4cf0-492e-80bd-20ec318e9334</payerref>
+  <paymentmethod>406aec24-a56f-4ee7-9729-05c098afdb07</paymentmethod>
+  <account>internet</account>
+  <orderidstub>magazine</orderidstub>
+  <transtype>auth</transtype>
+  <amount currency="EUR">2400</amount>
+  <prodid>Beginners Guide</prodid>
+  <varref>My Legal Entity</varref>
+  <custnum>987654123</custnum>
+  <comment>Social Sign-Up</comment>
+  <schedule>24 */3 ?</schedule>
+  <startdate>20170624</startdate>
+  <timesrun>0</timesrun>
+  <numtimes>12</numtimes>
+  <enddate/>
+  <scheduletext>Every 3 months on the 24th, from Jun 25, 2017, 12 times</scheduletext>
+  <sha1hash>7e0384732c1b3a87347e51c521dfb0a47c58db21</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Schedule Ref | string | alphanumeric | A unique reference for this schedule. The value will form part of the Order ID for each scheduled payment. Can to used to obtain details of the schedule or delete it.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Alias | string | alphanumeric | Name given to this schedule for ease of identification, for example, gym membership or magazine subscription. Allowed characters: \[a-zA-Z0-9␣\] |
+| Payer Reference | string | alphanumeric | A unique reference for this customer in Card Storage, known as the Payer.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id Stub | string | alphanumeric | A string to be used as the prefix of the Order ID for each scheduled payment. The Order IDs adhere to the following structure "orderIdStub-scheduleRef-runId-attemptId".  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Trans Type | string | enum | The type of scheduled transaction to process. Allowed values:  <br/>**auth** |
+| Currency | string | ISO 4217 | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Product Id | string | alphanumeric | The code you assign to the product, for example the SKU.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Variable Reference | string | alphanumeric | Any reference you also would like to assign to this transaction. Can also be used to pass the Acquirer Statement reference, where supported.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Customer Number | string | alphanumeric | A unique reference for this customer for example from your CRM system.  <br/>Allowed special characters: \[-.,+@\_␣\] |
+| Comment | string | alphanumeric | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Schedule | string | alphanumeric | The schedule to follow. Must consist of 3 space / tab separated items - one each for day-of-month.  <br/>Allowed characters: \[a-zA-Z0-9-\*?/#␣\] |
+| Start Date | string | YYYYMMDD | The date the schedule should start after. Does not need to be an actual date that the schedule will run; it can be any date in the future. If this field is not provided then the current date will be automatically set as the start date. |
+| Times Run | integer |     | The number of times this schedule has already run. |
+| Num Times | integer |     | The number of times to process this schedule. Max value is 999. If you want the schedule to run indefinitely (no end date) the value can be set to -1. |
+| End Date | string | YYYYMMDD | The end date for this schedule. Does not need to be an actual date that the schedule will run; it can be any date in the future and after startdate (if set).If enddate is set then the value of numtimes must be set to -1. |
+| Schedule Text | string | alphanumeric | A plain English representation of the schedule created. You should ensure that it conforms to your intended payment schedule. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Macros
+When creating a recurring or subscription payment, the `<schedule>` element is used to specify how often and when to charge the relevant Payer and Payment Method. You can submit this schedule as a Cron expression, we also have some simple macros you can use. The macros will set up a schedule based on the current date. For example, sending the value as monthly will set up a monthly recurring scheduled transaction each month on today's date. This does not include the actual day the schedule is created.
+
+| Macro | Description |
+| --- | --- |
+| **weekly** | Set up a payment weekly on today's day. For example if the schedule is set up on a Tuesday, it will be charged every Tuesday. |
+| **monthly** | Set up a payment monthly on today's date. If the date is 29th, 30th or 31st then the last day of the month will be used automatically. |
+| **bimonthly** | Set up a payment every January, March, May, July, September and November on today's date. If the date is 29th, 30th or 31st then the last day of the month will be used automatically. |
+| **quarterly** | Set up a payment every January, April, July and October on today's date. If the date is 29th, 30th or 31st then the last day of the month will be used automatically. |
+| **halfyearly** | Set up a payment every January and July on today's date. If the date is 29th, 30th or 31st then the last day of the month will be used automatically. |
+| **yearly** | Set up a payment yearly on today's date. |
+
+### Cron expressions
+Alternatively, you can use the cron expression format. It is comprised of three required fields separated by white space: "day-of-month␣month␣day-of-week".
+
+<Infobox>
+Specifying both a day-of-week and a day-of-month value is currently not supported. You'll need to use the '?' character in one of these fields.
+</Infobox>
+
+| Field Name | Allowed Values | Value Translation | Allowed Special Characters |
+| --- | --- | --- | --- |
+| **day-of-month** | 1-31 | The specific date in the month to execute | , - \* ? / L W |
+| **month** | 1-12 | The specific month to execute (Jan - Dec) | , - \* / |
+| **day-of-week** | 1-7 | The specific day of the week to execute (Sun - Sat) | , - \* ? / L # |
+
+You can use the numerical allowed values to declare specific dates, months and days of the week for the payment to be executed. The special characters allow for more advanced functionality. In the table below we've outlined their general function and what their value means in each field.
+
+| Value | Description | day-of-month | month | day-of-week |
+| --- | --- | --- | --- | --- |
+| **,** | Specify additional values. For example **1,2 \* ?** means run on the 1st and 2nd of every month. | N/A | N/A | N/A |
+| **\-** | Specify a range of values. For example **1-5 \* ?** means run on each day from the 1st to the 5th of the month, every month. | N/A | N/A | N/A |
+| **\*** | Specify all values | every day of the month | every month | N/A |
+| **?** | Used to declare **no specific value**. Can only be used in the day-of-month and day-of-week fields. Used when you wish to specify a particular in one of those fields, but not the other. | any day of the month | N/A | any day of the week |
+| **/** | Can be used to specify increments in months. For example **\*/4** means **every 4 months**.  <br/>  <br/>In addition to increments, can also be used to specify exactly what months in the year it will occur. Based on the increment set, the year will be divided into segments of that increment. For example, if we set the increment to 4, the year is then divided into three segments of 4:  <br/>Jan - April, May - Aug, Sept - Dec.  <br/>  <br/>If we want our schedule to start in March and run in July and November (and repeat the exact same the next year) we would set a value of **3/4**(or the third month in our segments of 4). | N/A | every nth month | N/A |
+| **L** | Short-hand for **last**.  <br/>  <br/>If used in the **day-of-month** field it can be used in conjunction with an offset.  <br/>For example, **L-3** would mean the third-to-last day of a calendar month.  <br/>In the **day-of-week** field, it can be used to specify "the last Sun-Sat of the month".  <br/>For example, **6L** would mean "**last Friday of the month**". | last day of the month | N/A | last day of the week |
+| **W** | This character is used to specify the weekday (Monday-Friday) nearest the given day.  <br/>  <br/>For example, if you were to specify **15W** as the value for the day-of-month field,  <br/>the meaning would be: "**the nearest weekday to the 15th of the month**".  <br/>So if the 15th is a Saturday, the payment will execute on Friday the 14th.  <br/>If the 15th is a Sunday, it will execute on Monday the 16th.  <br/>If the 15th is a Tuesday, then it will execute on that day.  <br/>  <br/>The **L** and **W** characters can also be combined for the day-of-month expression to yield LW, which translates to "**last weekday of the month**". | nearest weekday to | N/A | N/A |
+| **#** | Used to specify "**the nth Sun-Sat day of the month**".  <br/>For example, the value of **6#3** means "**the third Friday of the month**" (day 6 = Friday and "#3" = the 3rd one in the month).  <br/>Some other examples include:<br/><br/>*   **2#1** - the first Monday of the month<br/>*   **4#5** - the fifth Wednesday of the month<br/><br/>Note that if you specify **#5** and there is no 5th of the given day-of-week in a particular month, then the payment will not execute for that month. | N/A | N/A | the nth Sun-Sat of the month |
+
+### Some Cron examples
+
+| Cron expression | **Value meaning** |
+| --- | --- |
+| **\* \* ?** | Daily |
+| **? \* 3** | Weekly on Tuesday |
+| **4 \* ?** | Monthly on the 4th |
+| **L \* ?** | Monthly on the last day of the month |
+| **24 \*/3 ?** | Every quarter of the year (January, April, July and October) regardless of when the schedule is created. |
+| **? \* 6#3** | Monthly on the 3rd Friday |
+| **? \* 4L** | Monthly on the last Wednesday |
+| **? \*/2 1#2** | Every 2 months on the 2nd Sunday |
+| **? \*/4 2L** | Every 4 months on the last Monday |
+| **28 6/6 ?** | On the 28th every 6 months starting in June |
+| **24 1 ?** | Yearly on the 24th of January |
+| **LW \* ?** | Monthly on the last weekday of the month |
+| **7W \*/2 ?** | Every 2 months on the nearest weekday to the 7th |
+| **15W \* ?** | Monthly on the nearest weekday to the 15th |
+| **L 2 ?** | Yearly on the last day of February |
+| **7W 11 ?** | Yearly on the nearest weekday to the 7th of November |
+| **LW 8 ?** | Yearly on the last weekday of August |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Create, Search, Delete or Get. 
+
+<Tabs active="create">  
+<Tab id="create" title="Create">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.scheduleref.amount.currency.payerref.schedule"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.58de666fb8ab5.1001.EUR.03e28f0e-4cf0-492e-80bd-20ec318e9334.monthly"
+```
+</Code>
+
+If we were using a Cron string instead of a macro in the schedule element it would be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180903100255.MerchantID.58de666fb8ab5.1001.EUR.03e28f0e-4cf0-492e-80bd-20ec318e9334.L * ?"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="search" title="Search">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.payerref.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.03e28f0f-4cf0-492e-80bd-20ec318e9334.406aec24-b56f-4ee7-9729-05c098afdb07"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="delete" title="Delete">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.scheduleref"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.58de666fb8ab5"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="get" title="Get">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.scheduleref"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.58de666fb8ab5"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+#### Check the response hash
+Use the tabs below to follow the steps for a certain request type: Create, Search, Delete or Get. 
+
+<Tabs active="create">  
+<Tab id="create" title="Create">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.result"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.00"
+```
+</Code>
+
+If we were using a Cron string instead of a macro in the schedule element it would be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180903100255.MerchantID.58de666fb8ab5.1001.EUR.03e28f0e-4cf0-492e-80bd-20ec318e9334.L * ?"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We creates the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="search" title="Search">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.result"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.MerchantID.00"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We creates the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="delete" title="Delete">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.result"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140..MerchantID.00"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We creates the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="get" title="Get">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.result"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140..MerchantID.00"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We creates the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>

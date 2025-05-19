@@ -1,0 +1,26 @@
+---
+title: 'PayPost'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/2022-07/Paypost-logo.png" />
+</div>
+
+| **Payment Type**           | Cash Payments |
+| -------------------------- | ------------- |
+| **Payment Method String**  | paypost       |
+| **Available Countries**    | LT            |
+| **Available Currencies**   | EUR           |
+| **Min Transaction Amount** | EUR 0.01      |
+| **Max Transaction Amount** | No Limit      |
+| **Supports Refunds**       | No            |
+| **Chargebacks**            | No            |
+| **Timeout**                | 7 Days        |
+
+## No Additional Fields Required
+
+No additional mandatory or optional fields are required for this payment method.  
+
+By following our [standard integration article](/ecommerce/payment-methods), you can simply configure it on the HPP. For XML API integrations you'll need to pass the correct payment method string in the payment-set request.

@@ -1,0 +1,51 @@
+---
+title: "PHP SDK"
+subtitle: "Integrate our PHP SDK into your project"
+tag: "xml"
+created: "01/24/2025"
+---
+## Requirements
+
+For security and support, we highly recommend you use PHP 8+.
+
+* PHP >= 8.0.0
+
+## Installation
+
+Installing the SDK into your solution is usually done using Composer/Packagist.
+
+To install via [Composer/Packagist](https://packagist.org/packages/globalpayments/php-sdk):
+
+### Composer
+Add the following to your composer.json file:
+<Code id="XML" title="" language="XML" active>
+```
+{
+    "require": {
+        "globalpayments/php-sdk": "2.0.0"
+    }
+}
+```
+</Code>
+
+Inside the application directory, run composer (from the command line):
+
+<Code id="XML" title="" language="XML" active>
+```
+composer update OR (depending on your server configuration) php composer.phar update
+```
+</Code>
+
+Add a reference to the autoloader class anywhere you need to use the SDK:
+
+<Code id="XML" title="" language="XML" active>
+```
+require_once ('vendor/autoload.php');
+```
+</Code>
+
+### GitHub
+
+Download the the latest release of the SDK from [GitHub](https://github.com/globalpayments/php-sdk).
+
+

@@ -1,0 +1,45 @@
+---
+title: 'Payment Method Alias'
+search_results: 'Global Payments - Payment Method Alias Guide'
+subtitle: 'Unify customer transactions from multiple channels'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+Merchants need more than just the ability to process both card-present and card-not-present payments. To deliver a seamless experience, the payment channels must be unified and present a full picture of the customer and their purchase data. 
+
+## What is it?
+Our Payment Method Alias solution enables your business to seamlessly identify customers using their method of payment across any channel by creating a link between payment-processing channels. Combined with tokenization, this enables merchants to track and store the customer’s payment details on file to connect a customer’s behavior with their payment interactions, whether they occur in-store, in-app, or online — without exposing sensitive information.
+
+Using our Payment Method Alias solution, merchants can:
+
+* Identify a customer by their card only.
+* Match transactions through a card to a known customer.
+* Link the data to existing customer profiles on the merchant’s Customer Relationship Management (CRM) system.
+* Provide an endless range of new commerce opportunities, including simplified refunds, loyalty incentives, verifications, and much more.
+
+## How does it work?
+With our API, each time a card number (<Tooltip content="Stands for Primary Account Number. The PAN identifies the intended card issuer and account for the transaction.">PAN</Tooltip>) passes through for tokenization or processing, we create and store a unique non-sensitive reference for this card that is separate from the payment token. Using this alias, you can uniquely identify a card in your system, even across different processing channels (for example, in-store, online, mobile, or <Tooltip content="Mail Order / Telephone Order">MOTO</Tooltip>). This alias is used for reporting purposes only and is not required for any API requests.
+
+When the `fingerprint_mode` flag is set to either `ALWAYS` or `ON_SUCCESS` in a transaction request, the alias that is returned in the response enables additional use cases that merchants can implement (for examples, see the Payment Method Alias section in our [Card Storage Guide](/docs/payments/tokenization/card-storage-guide).
+
+## Use cases
+Here, we present some “real world” examples that can be enabled through our Payment Method Alias tokenization solution. Keep in mind that this section doesn’t cover all of the use cases and assumes that the merchant neither has nor wants direct access to the PAN used in the transaction.
+
+##### Use case #1: Using card as ID (buy online, pick up in-store)
+A merchant who offers the ability to buy online and pick up in-store will usually require that the customer authenticate or identify themselves at the register. Using our Payment Method Alias solution, merchants can leverage a secure and robust mechanism to authenticate the purchaser by using the PAN read from the card’s (<Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip>) chip and matching it against the stored token from the online transaction.
+
+With a semi-integrated terminal that supports payment aliases, a merchant can request that a customer insert their card to perform an account-verification transaction (or instruct them to use a tokenization-specific function of the terminal). The alias returned in the result can then be compared with the alias stored from the online transaction to see if there’s a match.
+
+##### Use case #2: Refund without a receipt, using card as customer lookup
+When a customer wants to return merchandise (whether purchased online or in-store) but doesn’t have the receipt, the merchant can look up their purchase using the customer’s card. As in the previous use case, a merchant can request that a customer insert their card into a semi-integrated terminal that supports a payment alias to perform an account-verification transaction (or instruct them to use a tokenization-specific function of the terminal). The alias returned in the result can then be compared with other aliases stored in the merchant’s database. 
+
+If an alias match is found, the search then focuses on matching transaction details to find the particular merchandise. Once the item is found, the merchant can authorize a refund directly to that card without requiring the card to be reinserted if a token of the card was also stored with the transaction.
+
+##### Use case #3: Recognize existing customers for loyalty rewards or CRM tracking
+When processing a transaction from a returning customer, a merchant can offer loyalty rewards or other items related to customer tracking without requiring that the customer identify themselves through other means, such as entering a phone number or scanning a barcode.
+
+When a transaction is processed, the merchant uses the alias in the result to see if the customer already has an account. If so, the merchant can add loyalty points, email a receipt, or take some other CRM-related action. If the alias doesn’t match anything in the database, the merchant can ask for additional identifying information, such as a phone number, to determine whether the card represents an existing customer using a new card or whether the customer is new. If the additional information produces a match, the merchant can add the new card alias to the existing customer’s profile; if not, they can set up a new account.
+
+## Next steps
+Take a look at our [Card Storage Guide](/docs/payments/tokenization/card-storage-guide), which takes you through the tokenization of a card and how to enable Payment Method Alias.

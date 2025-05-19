@@ -1,0 +1,143 @@
+---
+title: 'Create an Access Token'
+search_results: 'Global Payments Developer Portal'
+subtitle: 'Learn how to generate a single-use key to start making API requests'
+tag: 'rest'
+created: '07/08/2024'
+---
+An access token is a unique, single-use key used to access API actions for a limited time. Allowable actions are based on what capabilities were assigned to you during onboarding. An access token must be used in every request to create, edit, or read resources. So, before you can send a transaction, for example, you first need to create one to access our API. 
+
+This guide focuses on how to create an access token, including obtaining your app credentials, creating a random nonce value, calculating a secret key, calling the endpoint, and then receiving a response. You’ll also find information on how an access token differs from other [token types](#token-types).
+
+## Token types
+An access token is used only for authentication. It's sometimes mistaken for a payment token, which is another type of token used to substitute sensitive card data in a transaction. A card token can be either _single-use_ or _multi-use_, but there is only one type of access token. However, there are some functional differences for an access token:
+
+* Duration – Limits how long it is valid for (timeout value)
+* Permissions – Restricts the functionality (required for hosted integrations) 
+
+Token Duration and Token Permissions can be limited for security purposes. The shorter the duration of a token, the less time it is able to be abused; the fewer permissions available for a token to access, the less likely bad actors can repurpose it for exploits. Some integration types and features, such as our hosted features, require single permission tokens to avoid this exact problem on the clearweb.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register#get-registered)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+
+## Step 1: Obtain your app credentials
+Your app credentials are the `app_id` and `app_key`. Your app credentials for testing in Sandbox are located on your account page (to learn how to create them, see [Register / Create an App](/docs/getting-started/register)). For Production credentials, check with your account manager.
+
+For example:
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+app_id = "MN500Q8lk5jp0rEmB5LGvTo27gdQgZln"
+app_key = "QtOSeNmh3DY6AuMO"
+```
+</Code>
+
+<Infobox type="danger">
+App credentials (App ID and App Key) are specific to merchants and should never be shared with any unauthorized person.
+</Infobox>
+
+## Step 2: Create a random nonce value
+A random nonce is a unique string used to calculate the secret key (see the next step). The value must be unique. Typically, a timestamp is used because the time changes every time an access token is run, making it a unique value. 
+
+For example:
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+nonce="2029-03-14T13:24:10.832Z"
+```
+</Code>
+
+## Step 3: Calculate the secret key 
+For security reasons, you should never send your `app_key` in a request. That’s why we use encryption to make it secret. The secret key consists of a SHA512 hash of the nonce concatenated with the `app_key`. 
+
+For example:
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+// secret = SHA512(nonce + app_key)
+secret = SHA512(2029-03-14T13:24:10.832ZQtOSeNmh3DY6AuMO) 
+```
+</Code>
+
+## Step 4: Call the endpoint
+Now it’s time to send the values from the previous steps to the Access Token endpoint.
+
+<Infobox type="danger">
+ Never send the app key in a request. Always store it securely. 
+</Infobox>
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+curl -v -X POST https://apis.globalpay.com/ucp/accesstoken 
+  -H "Content-type: application/json" 
+  -H "X-GP-Version: 2021-03-22" 
+  -d '
+      {
+       app_id="<APP_ID>"
+       nonce="<NONCE>",
+       secret="<SECRET>",
+       grant_type="client_credentials"
+       }
+'
+```
+ </Code>
+  
+## Step 5: Receive a response
+After receiving the token response and its permission, you can now use it in the Authorization header field in subsequent API requests.
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+ "token": "qdYUdzfZfigqTppQOHVwrbJwLlNd",
+“Type”: “Bearer”,
+ "scope": {
+    "merchant_id": "MER_8cc2638c8a14453fa98e08ad51511a1a",
+    "merchant_name": "GPQA_IPP_CERT",
+    "accounts": [
+      {
+        "id": "TRA_34b9806b35bd4012bd23206a00abc1a1",
+        "name": "GP API",
+        "permissions": [
+          "BAT_PUT_Close",
+          "TRN_POST_Adjustment",
+          "TRN_POST_Authorize",
+          "TRN_POST_Capture",
+          "TRN_POST_Force",
+          "TRN_POST_Initiate",
+          "TRN_POST_Reauthorize",
+          "TRN_POST_Refund",
+          "TRN_POST_Refund_Standalone",
+          "TRN_POST_Reverse",
+          "TRN_POST_Verify"
+        ]
+      }
+    ]
+  },
+  "app_id": "MN500Q8lk5jp0rEmB5LGvTo27gdQgZln",
+  "app_name": "My app name",
+  "date_created": "2019-03-20T10:42:23.527Z",
+  "seconds_to_expire": "86399",
+  "email": "dev.mcdev@example.com"
+}
+```
+ </Code>
+  
+  
+## Troubleshooting
+After receiving an access token, you may encounter some errors when trying to pass it in a request. The two most common error messages are:
+
+* Invalid Access Token – This most often occurs when a token request is rejected, but your website or application attempts a transaction anyway.
+* Access Token Expired – This occurs if a token is used after its timeout value has passed (`interval_to_expire` or `seconds_to_expire fields`).
+
+ <br />
+ If you’re having issues passing a token, verify the following:
+
+1) Are the `app_id` and `app_key` you’re using correct?
+2) Was the secret key calculated correctly and properly entered in the field?
+3) Are other mandatory fields you included in the request correct (for example, `grant_type`)?
+4) Do you have the right account permissions for your request? If you’re not sure, check with your account manager.
+
+## Next steps
+Now that you have your test app credentials and an access token, it's time to start [building your integration](/docs/getting-started/your-integration).

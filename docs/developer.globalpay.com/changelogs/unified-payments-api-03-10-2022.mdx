@@ -1,0 +1,68 @@
+---
+title: "Unified Payments API - March 10, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "03-10-2022"
+---
+
+<ReleaseNoteSection title="Pay by Link">
+    <ReleaseNoteDetail type="added">
+        - Ability to create payment links to customers
+        - New resource to perform:
+            - Link Create
+            - Link Edit
+            - Report on a single link
+            - Report on a list of links 
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Dynamic MCC">
+    <ReleaseNoteDetail type="added">
+        - New Field merchant category code added to the Transaction create resource
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Case-Sensitive ENUMs">
+    <ReleaseNoteDetail type="changed">
+        - ENUMs can now be accepted in camel case, lowercase, and uppercase
+        - ENUMs returned in the response will always be in uppercase
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Card Present (all territories) and Card Not Present (Asia Pacific)">
+    <ReleaseNoteDetail type="changed">
+        - Reversal request is processed where a timeout scenario occurs or any technical issue occurs
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Card Not Present (UK, CA, US, EU)">
+    <ReleaseNoteDetail type="changed">
+        - Enhancement to support reference fields for the secondary transactions:
+            - order.reference
+            - order.items.reference
+            - payer.reference
+            - Description
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Enhancement to Card Present (all territories) and Card Not Present (Asia Pacific)">
+    <ReleaseNoteDetail type="changed">
+        - Enhancement to support Level 2 data for primary and secondary transactions:
+            - purchase_order_number
+            - tax_mode
+            - tax_amount
+            - User_reference
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Webhook Notification for ACH Transaction">
+    <ReleaseNoteDetail type="changed">
+        - Enhancement to Payment Facilitator Transactions to generate a static webhook URL
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Merchants Resource">
+    <ReleaseNoteDetail type="changed">
+        - Update to the Country Code field to accept two-character values for the Create Merchant and Edit Merchant requests
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

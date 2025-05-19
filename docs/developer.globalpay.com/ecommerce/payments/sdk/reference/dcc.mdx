@@ -1,0 +1,235 @@
+---
+title: "Dynamic Currency Conversion SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+<Infobox>
+The DCC feature is currently not available in the United States or Canada. <br />
+
+The amount of information that must be presented to the customer, such as rate or margin, varies by acquirer and currency conversion processor. For more information, contact your acquirer or a member of our support team. 
+</Infobox>
+
+## Rate Lookup
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+  // create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4006097467207025");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCvnPresenceIndicator(CvnPresenceIndicator.Present);
+card.setCardHolderName("James Mason");
+
+try {
+   DccRateData dccRateData = card.getDccRate(DccRateType.Sale, new BigDecimal("10.01"), "EUR", DccProcessor.Fexco);
+   // get the details to present the choice to the customer
+   String cardHolderCurrency = dccRateData.getCurrency(); // AUD
+   BigDecimal cardHolderAmount = dccRateData.getAmount(); // 1722
+   BigDecimal cardHolderRate = dccRateData.getDccRate(); // 1.7203
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+CreditCardData card = new CreditCardData
+{
+	Number = "4006097467207025",
+	ExpMonth = 12,
+	ExpYear = 2025,
+	Cvn = "131",
+	CvnPresenceIndicator = CvnPresenceIndicator.Present,
+	CardHolderName = "James Mason"
+};
+
+try
+{
+	Transaction dccResponse = card.GetDccRate(DccRateType.Sale, DccProcessor.Fexco)
+		.WithAmount(10.01m)
+		.WithCurrency("EUR")
+		.Execute("dcc");
+	// get the details to present the choice to the customer
+	string cardHolderCurrency = dccResponse.DccRateData.CardHolderCurrency; 
+	decimal? cardHolderAmount = dccResponse.DccRateData.CardHolderAmount;
+	string cardHolderRate = dccResponse.DccRateData.CardHolderRate;
+
+}
+catch (ApiException exce)
+{
+	// TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4006097467207025";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+try {
+   // check if Dynamic Currency Conversion is available
+   $response = $card->getDccRate("1", "19.99", "EUR", "fexco", GenerationUtils::getGuid());
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $dccResponseResult = $response->dccResponseResult;
+   // get the details to present to the customer
+   $cardHolderCurrency = $dccResponseResult->cardHolderCurrency; // AUD
+   $customerAmount = $dccResponseResult->cardHolderAmount; // 3439
+   $exchangeRate = $dccResponseResult->cardHolderRate; // 1.7203
+   // TODO: update your application and display the conversion option to the customer
+}
+```
+</Code>
+</CodeGroup>
+
+## Authorization with DCC
+
+<Infobox>
+To process an authorization with DCC information, you must use the same Order ID as the DCC Rate Lookup request.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4006097467207025");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCvnPresenceIndicator(CvnPresenceIndicator.Present);
+card.setCardHolderName("James Mason");
+
+// populate the dcc data based on the customer's choice
+DccRateData dccRateData = new DccRateData();
+dccRateData.setDccProcessor("fexco");
+dccRateData.setDccRateType("S");
+dccRateData.setCurrency("AUD");
+dccRateData.setAmount(new BigDecimal("1722"));
+dccRateData.setDccRate(new BigDecimal("1.7203"));
+
+try {
+   // process an auto-settle authorization with dcc data
+   Transaction response = card.charge(new BigDecimal("10.01"))
+      .withOrderId("9QDdMAGhTeiCyNxkuiMXYA")
+      .withDccRateData(dccRateData)
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+CreditCardData card = new CreditCardData
+{
+	Number = "4006097467207025",
+	ExpMonth = 12,
+	ExpYear = 2025,
+	Cvn = "131",
+	CvnPresenceIndicator = CvnPresenceIndicator.Present,
+	CardHolderName = "James Mason"
+};
+
+DccRateData dccRateData = new DccRateData
+{
+	DccProcessor = DccProcessor.Fexco,
+	DccRateType = DccRateType.Sale,
+	CardHolderCurrency = "AUD",
+	CardHolderAmount = 1627,
+	CardHolderRate = "1.6250"
+};
+
+Transaction response = card.Charge(10.01m)
+   .WithOrderId("GRDiMShkI0aKUp7jab_smA")	// same Order ID as Rate Lookup
+   .WithDccRateData(dccRateData)
+   .WithCurrency("EUR")
+   .Execute();
+Assert.IsNotNull(response);
+Assert.AreEqual("00", response.ResponseCode);
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4006097467207025";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+// populate the dcc data based on the customer's choice
+$dccRateData = new DccRateData();
+$dccRateData->dccProcessor = "fexco";
+$dccRateData->dccRateType = "S";
+$dccRateData->currency = "AUD";
+$dccRateData->dccRate = "1.7203";
+$dccRateData->amount = "3439";
+
+try {
+   // Submit the Authorization with the customer's DCC choice
+   $response = $card->charge(19.99)
+      ->withOrderId("cd82c0aa-cf3c-4887-aed9-0680aee9f484") // same Order ID as Rate Lookup
+      ->withDccRateData($dccRateData)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+   // TODO: update your application and display transaction outcome to the customer
+}
+```
+</Code>
+</CodeGroup>
+

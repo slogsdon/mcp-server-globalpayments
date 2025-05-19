@@ -1,0 +1,145 @@
+---
+title: 'Validating Webhook Notifications'
+search_results: 'Validate Webhooks Came From Us'
+subtitle: 'Learn how to validate a webhook notification message and its sender.'
+tag: 'rest'
+created: '02/07/2025'
+---
+
+A webhook is a message from us that notifies a merchant’s system that a particular event has occurred.
+There are two types of webhooks that can be sent from our system: a **POST webhook** that contains data in the payload body of a message and a **GET webhook** that contains data in the query string of the URL being notified. 
+This guide focuses on how to validate both of these types of webhooks to ensure the message came from our API.
+
+## POST Webhook
+The below webhook is a HTTP POST request and the message content is in the body of the webhook. The signature is in the header field `X-GP-Signature`.
+
+### Sample Webhook
+<CodeGroup>
+<Code id="Header" title="Header" language="JSON">
+```
+["Host","example.com",
+"Content-Length","652",
+"Content-Type","application/json",
+"Accept","application/json",
+"Content-Encoding","gzip",
+"Cache-Control","private,no-store",
+"Strict-Transport-Security","max-age=31536000; includeSubDomains;",
+"X-Content-Type-Options","nosniff",
+"x_global_transaction_id","rrt-6432659491113021748-b-geu1-27725-72152606-1",
+"x_global_transaction_id_source","globalpay.ApigeeEdge",
+"X-GP-Signature","ee16e2d14fb2969565499c172522e69955945a544751a5fa9e5fc775b3141785612c223ed77c2ff4cc367ead60f816c4fec6e16dc35564882d9aa695a3d0a907"]
+```
+</Code>
+<Code id="Body" title="Body" language="JSON">
+```
+{  
+   "id":"TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181",
+   "time_created":"2024-07-03T15:23:51.342Z",
+   "type":"SALE",
+   "status":"CAPTURED",
+   "channel":"CNP",
+   "capture_mode":"AUTO",
+   "amount":"1005",
+   "currency":"EUR",
+   "country":"DE",
+   "merchant_id":"MER_f414851d386a4e1f9fa4beb56c5e38b9",
+   "merchant_name":"Global Payments Test Merchant Mason",
+   "account_id":"TRA_4d49f5d4e1b84ea4a28c8902a8538375",
+   "account_name":"79810948",
+   "reference":"44819181",
+   "payment_method":{  
+      "result":"00",
+      "message":"SUCCEEDED",
+      "entry_mode":"ECOM",
+      "apm":{  
+         "provider":"testpay",
+         "wait_notification":"",
+         "fund_status":"NOT_EXPECTED",
+         "payment_description":"546CCB7",
+         "confirmed_accountholder":"",
+         "account_number":"",
+         "iban":"",
+         "bank_identifier_code":"",
+         "bank_name":"",
+         "bank_address":"",
+         "optional_redirect":""
+      }
+   },
+   "batch_id":"",
+   "action":{  
+      "id":"ACT_Jm6BviEawzx7XgbQZUh0dbfBettgQ5",
+      "type":"STATUS_NOTIFICATION",
+      "time_created":"2024-07-03T15:24:52.217Z",
+      "result_code":"SUCCESS",
+      "app_id":"a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ",
+      "app_name":"sean_sandbox_app"
+   }
+}
+```
+</Code>
+</CodeGroup>
+### How to check the X-GP-Signature
+1) Take the signature value from the header field `X-GP-Signature`.
+2) Take the full JSON body of the message. The message must be minified to ensure all unnecessary whitespace and control characters are removed.
+3) Take the `app_key` (Click [here](/api/definitions/access-tokens#step-1-obtain-your-app-credentials) to learn about `app_key`).
+4) Concatenate the JSON body of the message with the `app_key`.
+5) SHA512 the string from Step 4.
+6) Check if the string from Step 5 is the same as the `X-GP-Signature` value from the header. If it’s the same, the message came from us. If they do not match, the message did not come our system.
+
+<Code id="Pseudocode" title="Pseudocode" language="Pseudocode">
+```
+X-GP-Signature = "ee16e2d14fb2969565499c172522e69955945a544751a5fa9e5fc775b3141785612c223ed77c2ff4cc367ead60f816c4fec6e16dc35564882d9aa695a3d0a907";
+
+body = '{"id":"TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181","time_created":"2024-07-03T15:23:51.342Z","type":"SALE","status":"CAPTURED","channel":"CNP","capture_mode":"AUTO","amount":"1005","currency":"EUR","country":"DE","merchant_id":"MER_f414851d386a4e1f9fa4beb56c5e38b9","merchant_name":"Global Payments Test Merchant Mason","account_id":"TRA_4d49f5d4e1b84ea4a28c8902a8538375","account_name":"79810948","reference":"44819181","payment_method":{"result":"00","message":"SUCCEEDED","entry_mode":"ECOM","apm":{"provider":"testpay","wait_notification":"","fund_status":"NOT_EXPECTED","payment_description":"546CCB7","confirmed_accountholder":"","account_number":"","iban":"","bank_identifier_code":"","bank_name":"","bank_address":"","optional_redirect":""}},"batch_id":"","action":{"id":"ACT_Jm6BviEawzx7XgbQZUh0dbfBettgQ5","type":"STATUS_NOTIFICATION","time_created":"2024-07-03T15:24:52.217Z","result_code":"SUCCESS","app_id":"a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ","app_name":"sean_sandbox_app"}}';
+
+app_key = "WinZP9PgPfVZuTi4";
+
+stringToHash = body + app_key;
+stringToHash = '{"id":"TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181","time_created":"2024-07-03T15:23:51.342Z","type":"SALE","status":"CAPTURED","channel":"CNP","capture_mode":"AUTO","amount":"1005","currency":"EUR","country":"DE","merchant_id":"MER_f414851d386a4e1f9fa4beb56c5e38b9","merchant_name":"Global Payments Test Merchant Mason","account_id":"TRA_4d49f5d4e1b84ea4a28c8902a8538375","account_name":"79810948","reference":"44819181","payment_method":{"result":"00","message":"SUCCEEDED","entry_mode":"ECOM","apm":{"provider":"testpay","wait_notification":"","fund_status":"NOT_EXPECTED","payment_description":"546CCB7","confirmed_accountholder":"","account_number":"","iban":"","bank_identifier_code":"","bank_name":"","bank_address":"","optional_redirect":""}},"batch_id":"","action":{"id":"ACT_Jm6BviEawzx7XgbQZUh0dbfBettgQ5","type":"STATUS_NOTIFICATION","time_created":"2024-07-03T15:24:52.217Z","result_code":"SUCCESS","app_id":"a5f0OOTJdAChObGXIqi8I5eGq6i6sLlJ","app_name":"sean_sandbox_app"}}WinZP9PgPfVZuTi4';
+
+hashedString = SHA512(stringToHash);
+hashedString = 'ee16e2d14fb2969565499c172522e69955945a544751a5fa9e5fc775b3141785612c223ed77c2ff4cc367ead60f816c4fec6e16dc35564882d9aa695a3d0a907'
+
+IF X-GP-Signature == hashedString { All Good }
+
+IF X-GP-Signature != hashedString { Issue }
+```
+</Code>
+
+## HTTP GET Webhook
+The below webhook is a HTTP GET request and the message content is in the URL’s query string. The signature is in the first query string field, `X-GP-Signature`.
+
+### Sample Webhook
+<Code id="HTTP GET URL" title="HTTP GET URL" language="Pseudocode">
+```
+https://www.example.com/?X-GP-Signature=8174e708320993a2083d82c097cbb148f1dcf381fb33ca85495fdc672c219e52d0ba19dab2f15460b00f80727fc952ad23cf9390b1af49227d8f6acd81205c14&id=TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181&status=PENDING&reference=44819181&payment_method.result=01&payment_method.message=PENDING&provider=testpay&apm.wait_notification=&apm.optional_redirect=&apm.fund_status=NOT_EXPECTED&apm.payment_description=546CCB7&apm.confirmed_accountholder=&apm.account_number=&country=DE&apm.bank.iban=&apm.bank.identifier_code=&apm.bank.name=&apm.bank.code=&action.id=ACT_UWGHF3hQxRmfe9im2W7AmSLUdXB1Rb&action.type=RETURN_NOTIFICATION&action.time_created=2024-07-03T15%3A24%3A23.402Z
+```
+</Code>
+### How to check the X-GP-Signature
+1) Take the signature value from the `X-GP-Signature` query string field. It will be the first parameter in the query string.
+2) Take the remaining query string value: everything after the ampersand (&) directly after the `X-GP-Signature` value.
+3) Take the `app_key` (Click [here](/api/definitions/access-tokens#step-1-obtain-your-app-credentials) to learn about `app_key`).
+4) Concatenate the remaining query string value with the `app_key`.
+5) SHA512 the string from Step 4
+6) Check if the string from Step 5 is the same as the `X-GP-Signature` value from the query string field. If it’s the same, the message came from us. If they do not match, the message did not come from our system.
+<Code id="Pseudocode" title="Pseudocode" language="Pseudocode">
+```
+fullURL = ‘https://www.example.com/?X-GP-Signature=8174e708320993a2083d82c097cbb148f1dcf381fb33ca85495fdc672c219e52d0ba19dab2f15460b00f80727fc952ad23cf9390b1af49227d8f6acd81205c14&id=TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181&status=PENDING&reference=44819181&payment_method.result=01&payment_method.message=PENDING&provider=testpay&apm.wait_notification=&apm.optional_redirect=&apm.fund_status=NOT_EXPECTED&apm.payment_description=546CCB7&apm.confirmed_accountholder=&apm.account_number=&country=DE&apm.bank.iban=&apm.bank.identifier_code=&apm.bank.name=&apm.bank.code=&action.id=ACT_UWGHF3hQxRmfe9im2W7AmSLUdXB1Rb&action.type=RETURN_NOTIFICATION&action.time_created=2024-07-03T15%3A24%3A23.402Z”;
+
+X-GP-Signature = "8174e708320993a2083d82c097cbb148f1dcf381fb33ca85495fdc672c219e52d0ba19dab2f15460b00f80727fc952ad23cf9390b1af49227d8f6acd81205c14";
+
+remainingQueryStringToHash = “id=TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181&status=PENDING&reference=44819181&payment_method.result=01&payment_method.message=PENDING&provider=testpay&apm.wait_notification=&apm.optional_redirect=&apm.fund_status=NOT_EXPECTED&apm.payment_description=546CCB7&apm.confirmed_accountholder=&apm.account_number=&country=DE&apm.bank.iban=&apm.bank.identifier_code=&apm.bank.name=&apm.bank.code=&action.id=ACT_UWGHF3hQxRmfe9im2W7AmSLUdXB1Rb&action.type=RETURN_NOTIFICATION&action.time_created=2024-07-03T15%3A24%3A23.402Z”;
+
+appKey = "WinZP9PgPfVZuTi4";
+
+stringToHash = body + app_key;
+stringToHash = 'id=TRN_wRWA1rOQeVRDUOafRmirrpYPURPODJ_44819181&status=PENDING&reference=44819181&payment_method.result=01&payment_method.message=PENDING&provider=testpay&apm.wait_notification=&apm.optional_redirect=&apm.fund_status=NOT_EXPECTED&apm.payment_description=546CCB7&apm.confirmed_accountholder=&apm.account_number=&country=DE&apm.bank.iban=&apm.bank.identifier_code=&apm.bank.name=&apm.bank.code=&action.id=ACT_UWGHF3hQxRmfe9im2W7AmSLUdXB1Rb&action.type=RETURN_NOTIFICATION&action.time_created=2024-07-03T15%3A24%3A23.402ZWinZP9PgPfVZuTi4';
+
+hashedString = SHA512(stringToHash);
+hashedString = '8174e708320993a2083d82c097cbb148f1dcf381fb33ca85495fdc672c219e52d0ba19dab2f15460b00f80727fc952ad23cf9390b1af49227d8f6acd81205c14'
+
+IF X-GP-Signature == hashedString { All Good }
+
+IF X-GP-Signature != hashedString { Issue }
+```
+</Code>

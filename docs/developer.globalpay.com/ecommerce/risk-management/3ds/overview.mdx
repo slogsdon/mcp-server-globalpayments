@@ -1,0 +1,80 @@
+---
+title: "3D Secure & SCA - Overview"
+subtitle: "Explore our 3D Secure integration resources"
+tag: "xml"
+created: "01/27/2025"
+---
+3D Secure is the authentication protocol used by card brands, such as Visa and Mastercard, to enable merchants to gain protection from fraud in a Card Not Present (CNP) environment and to comply with European Strong Customer Authentication (SCA) regulations set in Payment Services Directive 2 (PSD2).
+
+When 3D Secure 2 is used with an Authorization request requiring the customer to authenticate the card used in a transaction, the financial liability can shift from the merchant to the Issuer in the event of a fraud-related chargeback.
+
+<Infobox>
+Many factors affect whether a 3D Secure liability shift occurs, so check with your Account Manager for more specific information.
+</Infobox>
+
+## Card brand liability shifts
+There are some differences in the liability shift offered by Mastercard, Visa, and American Express (AMEX). The following tables include the transaction status, Electronic Commerce Indicator (ECI), authentication value, authentication flow, liability, and recommendation for each card brand.
+
+#### Mastercard
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| Authentication Successful | 2   | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 1   | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 0   | Not Present | Challenge/Frictionless | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 0   | Not Present | Challenge/Frictionless | Merchant | No liability shift; do not proceed to Authorization |
+
+#### Visa
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| Authentication Successful | 5   | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 6   | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 7   | Not Present | Challenge/Frictionless | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 7   | Not Present | Challenge/Frictionless | Merchant | No liability shift; do not proceed to Authorization |
+
+#### AMEX
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Transaction Status | ECI | Authentication Value | Authentication Flow | Liability | Recommendation |
+| Authentication Successful | 5   | Present | Challenge/Frictionless | Issuer | Proceed to Authorization |
+| Authentication Attempted | 6   | Present | Frictionless | Issuer | Proceed to Authorization |
+| Authentication Unavailable | 7   | Not Present | Challenge/Frictionless | Merchant | No liability shift; consider whether to proceed to Authorization |
+| Authentication Failed/Rejected | 7   | Not Present | Challenge/Frictionless | Merchant | No liability shift; do not proceed to Authorization |
+
+## Next steps
+
+Check out the following guides to learn how to integrate 3D Secure 2 into your application or website. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/browser-authentication" title="Browser Authentication" icon="browser">
+        Use our SDKs & Libraries or JSON API to perform an end-to-end 3D Secure transaction for the Hosted Payment Page (HPP).
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/3DS-mobile-sdk" title="In-App Authentication" icon="square-a-lock">
+        Learn to use our 3DS Mobile SDK solution with Netcetera to authenticate customers within an app.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/3ri" title="Merchant-Initiated Authentication (3RI)" icon="store">
+       Learn to generate authentication data without the customer’s involvement in the transaction.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/decoupled-authentication" title="Decoupled Authentication" icon="id-card">
+        Verify and authenticate the customer's identity outside of their interaction with the merchant's website or app. 
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/message-extension" title="Message Extension" icon="comments">
+        Learn how to use this field to send customized information to the card issuer.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/authentication-reporting" title="Authentication Reporting" icon="file-chart-line">
+        Generate a report on transaction authentication using our Authentication Reporting API.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/auth-exemp-request" title="Exemption Optimization Service (EOS)" icon="cart-shopping-fast">
+        Use EOS to identify customer exemptions and avoid unnecessary authentications.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/3ds/auth-exemp-request" title="Authorization with Exemption Request" icon="flag-pennant">
+Learn how to flag an exemption in an authorization message for low-risk customers.
+    </Card>
+<Card type="with_icon" link="/ecommerce/risk-management/psd2-sca-exemptions" title="Exemptions to SCA" icon="book-section">
+Determine what exemptions are available according to European PSD2 regulations and how to best flag them.
+</Card>
+</CardsGroup>

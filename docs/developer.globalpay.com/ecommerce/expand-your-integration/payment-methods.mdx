@@ -1,0 +1,795 @@
+---
+title: "Alternative Payment Methods"
+subtitle: "Integrate with alternative and local payment methods"
+tag: "xml"
+created: "02/07/2025"
+---
+Accepting transactions from a number of worldwide alternative payment methods (APMs) not only widens your customer base to more shoppers across the globe, but also provides the added benefit of managing all your payments through our Reporting tool. Integrate using either direct API or our Hosted Payment Page (HPP).
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+In this API guide, we set up integration fields for five APMs (in addition to our standard authorization fields). This structure gives you access to over 30 APMs (albeit some payment methods may include mandatory or optional additional fields). To see what local and APMs we support, as well as any supplementary fields that are required for each, see [Supported Payment Methods](/payment-methods-list).
+
+For full details of the request and response syntax, see the API Reference for [Payment Methods](/ecommerce/api/payment-methods).
+
+## Introduction
+
+With our API, you can accept transactions from a number of worldwide payment methods. This not only widens your customer base to more shoppers across the globe, but also provides the added benefit of managing all your payments through our Reporting tool.
+
+For most payment methods, a direct API integration looks like this:
+
+![Typical interaction between the customer, our API, and the merchant for an API integration for Alternative Payment Methods](/gh-assets/ecommerce/apm_api-flow.png)
+ <span style={{textAlign: "center"}}>**Typical API Integration for Alternative Payment Methods**</span>
+
+To facilitate these steps, a “payment method details” block is included in the code. This includes data elements for mandatory and optional fields required per payment method. 
+
+### Mandatory and optional fields
+
+These fields are **always mandatory**:
+
+* Return URL 
+* Status Update URL
+* Country
+* Currency
+* Amount
+* Payment Method
+* Merchant ID
+* Order Id
+* Timestamp
+* Sha1hash
+
+These fields are **optional or mandatory** depending on the payment method (and there may be further fields required in addition to the following):
+
+* Account (merchant sub-account)
+* Descriptor
+* Email 
+* Account Holder name 
+* Comment (always optional)
+
+Optional and mandatory field information for each payment method is available on the payment method's designated page. These individual pages can be accessed from our list of [Supported Payment Methods](/payment-methods-list).
+
+### Request types
+
+There are two types of requests that are supported for Payment Method transactions:
+
+* `payment-set` – Used to initiate a payment (SALE) transaction
+* `payment-credit` – Used to initiate a credit (REFUND) transaction
+
+### Message flow
+
+A typical APM transaction consists of at least two messages, but the full lifecycle of an APM transaction may consist of five or more requests. For the majority of APMs, the customer is redirected to the landing page of the relevant payment method to complete authentication and transaction authorization. 
+
+A typical message flow may consist of the following steps, each of which is outlined below:
+
+* Initiate the payment - An initiation API request that is required to begin all APM transactions.
+* Redirect to payment method - Following a successful payment-set request, redirects the customer to the provided scheme URL to facilitate authentication and authorization.
+* Redirect back to your application - Returns the customer to a URL in your application, along with the pending or final status of the transaction.
+* Payment status update - Communicates the final status of the transaction. The timing of this notification depends on the payment method.
+
+## Step 1: Initiate the payment
+
+In an alternative payment transaction, the first request is a `payment-set`. This is used to advise the payment method of the details of a new transaction and to retrieve the redirect link necessary to facilitate authentication by your customer with their preferred payment method.
+
+For full details of the request and response syntax, see the API Reference for [Payment Methods](/ecommerce/api/payment-methods).
+
+Here, we set up a SOFORT transaction.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="xml" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-set" timestamp="20180613173251">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <autosettle flag="1"/>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <paymentmethod>sofort</paymentmethod>
+  <paymentmethoddetails>
+    <returnurl>https://www.example.com/returnUrl</returnurl>
+    <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+    <descriptor>Test Transaction</descriptor>
+    <country>DE</country>
+    <accountholdername>James Mason</accountholdername>
+  </paymentmethoddetails>
+  <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>
+</request>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+//coming soon
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client
+            var config = new GpEcomConfig();
+            config.MerchantId = "MerchantId";
+            config.AccountId = "internet";
+            config.SharedSecret = "secret";
+            config.ServiceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+            ServicesContainer.ConfigureService(config);
+
+            var paymentMethod = new AlternativePaymentMethod();
+            paymentMethod.AlternativePaymentMethodType = AlternativePaymentType.SOFORTUBERWEISUNG;
+
+            paymentMethod.ReturnUrl = 'https://www.example.com/returnUrl';
+            paymentMethod.StatusUpdateUrl = 'https://www.example.com/statusUrl';
+            paymentMethod.Descriptor = 'Test Transaction';
+            paymentMethod.Country = 'DE';
+            paymentMethod.AccountHolderName = 'James Mason';
+
+            try
+            {
+                var response = paymentMethod.Charge(10.01m)
+                    .WithCurrency("EUR")
+                    .WithDescription("New APM")
+                    .Execute();
+                //response.AlternativePaymentResponse.RedirectUrl => the RedirectUrl for Step2;
+            }
+            catch (ApiException ex) {
+                // TODO: Add your error handling here
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\Entities\Enums\AlternativePaymentType;
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\PaymentMethods\AlternativePaymentMethod;
+use GlobalPayments\Api\ServicesContainer;
+
+// configure client
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://api.sandbox.realexpayments.com/epage-remote.cgi";
+ServicesContainer::configureService($config);
+
+$paymentMethod = new AlternativePaymentMethod(AlternativePaymentType::SOFORTUBERWEISUNG);
+
+$paymentMethod->returnUrl = 'https://www.example.com/returnUrl';
+$paymentMethod->statusUpdateUrl = 'https://www.example.com/statusUrl';
+$paymentMethod->descriptor = 'Test Transaction';
+$paymentMethod->country = 'DE';
+$paymentMethod->accountHolderName = 'James Mason';
+
+try {
+    $response = $paymentMethod->charge(10.01)
+        ->withCurrency("EUR")
+        ->withDescription('New APM')
+        ->execute();
+    // $response->alternativePaymentResponse->redirectUrl => the redirectUrl for Step2;
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Redirect to the payment method
+
+Following a successful `payment-set` request, the next step is to redirect the customer to the payment scheme to facilitate authentication and authorization. This can be achieved, for example, using a simple JavaScript redirect. You could also use an HTTP GET (302 redirect).
+
+For full details of the request and response syntax, see the API Reference for [Payment Methods](/ecommerce/api/payment-methods).
+
+Next, we redirect the customer to the URL returned in the `payment-set` response with JavaScript.
+
+#### Sample redirect code
+
+<Code id="markup" title="HTML" language="markup">
+```
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Sample APM Redirect</title>
+      <meta charset="UTF-8">
+   </head>
+   <body>
+      <script>
+         window.location = "https://www.paymentMethodUrl.com/pay";
+      </script>
+   </body>
+</html>
+```
+</Code>
+
+## Step 3: Redirect back to your application
+
+Once the customer completes the transaction with the payment method, they are redirected to the Return URL of the `payment-set` request. The current status of the transaction will also be returned.
+
+Your application might put the customer on hold for a few seconds while it checks to see if the Status URL was sent a final update. You can then redirect the customer to a final success or failure page once the final status is received.
+
+If the payment method is known to have a long timeout period (that is, can remain in pending state for several hours or days), you may want to advise the customer that the payment is still pending and that you will notify them once it is completed (for example, via email or text message). You would need a separate process to trigger this message once the final status is received, particularly if the transaction goes to “Failed.”
+
+#### Sample return URL parameters
+
+<Code id="markup" title="HTML" language="markup">
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20181016103012&
+merchantid=Merchant ID&
+account=internet&
+merchanttransactionid=f48856d1c7e4492eb7594e68e2fc682c&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=01&
+Amount=100&
+message=PENDING&
+paymentpurpose=37TC6LD Test Transaction&
+paymentmethod=sofort&
+fundstatus=WAITING&
+pasref=14627849160897986&
+country=DE
+```
+</Code>
+
+## Step 4: Receive the final status
+
+The URL specified in the Status URL element of the `payment-set` request receives the final status. Depending on the payment method used, this can happen at the same time as the customer is redirected to your Return URL, moments after, or potentially, the final status update might come days later.
+
+For payment methods in which you expect the final status update to come days later, your Status URL will need to accept the message sent by us, find the correct order in your application, and update the status accordingly. You may want to inform the customer at this point that their payment was finally accepted (or that it failed). You can also initiate the dispatch of items to the customer.
+
+For full details of the request and response syntax, see the API Reference for [Payment Methods](/ecommerce/api/payment-methods).
+
+#### Sample status URL parameters
+
+<Code id="markup" title="HTML POST" language="markup">
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20181016103012&
+merchantid=Merchant ID&
+account=internet&
+merchanttransactionid=f48856d1c7e4492eb7594e68e2fc682c&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=01&
+Amount=100&
+message=PENDING&
+paymentpurpose=37TC6LD Test Transaction&
+paymentmethod=sofort&
+fundstatus=WAITING&
+pasref=14627849160897986&
+country=DE
+```
+</Code>
+
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+
+In this Hosted Payment Page (HPP) guide, we set up integration fields for five alternative payment methods (APMs) (in addition to our standard authorization fields). This will give you access to over 30 APMs. To see what local and APMs we support, see [Supported Payment Methods](/payment-methods-list).
+
+## Introduction
+
+With the HPP, you can accept transactions from a number of worldwide payment methods. This not only widens your customer base to more shoppers across the globe, but also provides the added benefit of managing all your payments through our Reporting tool in Ecommerce Portal. 
+
+For most APMs, the HPP integration works like this:
+
+![Typical interaction between the customer, our API, and the merchant for an HPP integration for Alternative Payment Methods](/gh-assets/ecommerce/apm_hpp-flow.png)
+ <span style={{textAlign: "center"}}>**Typical HPP Integration for Alternative Payment Methods**</span>
+
+### HPP example
+
+The HPP displays whatever APMs are enabled on your account or those you have pre-selected in the request using the optional `PM_METHODS` field. In addition, it displays only those payment methods that are available in the country submitted in the `HPP_CUSTOMER_COUNTRY` field. 
+
+![HPP with Alternative Payment Method Options](/gh-assets/ecommerce/apm_hpp-example.png)
+ <span style={{textAlign: "center"}}>**HPP with APM Options**</span>
+
+### Message flow
+
+A typical APM transaction consists of at least two messages, but the full lifecycle of an APM transaction may consist of four or more requests. For the majority of APMs, the customer is redirected to the landing page of the relevant payment method to complete authentication and transaction authorization. 
+
+A typical message flow may consist of the following steps, each of which is outlined below:
+
+* Initiate the payment — The customer reaches the merchant’s checkout page and the HPP call is initiated. The HPP returns the relevant payment methods based on currency and country opted by the customer.
+* Receive the payment method response — Following a successful selection of the payment method, the customer is redirected to the URL you provided in the `MERCHANT_RESPONSE_URL` field of the HPP request.
+* Receive the final status — The final status of the transaction is communicated to your application or website. The timing of this notification depends on the payment methods opted.
+
+## Step 1: Initiate the payment
+
+Once the customer makes their choice, the HPP redirects the customer’s browser to their selected payment method so that they can authenticate and authorize the transaction. All the payment methods have a similar flow except for SEPA (for more information, see SEPA  [Model A](/alternative-payment-method/sepapm) or [Model C](/alternative-payment-method/sepamm) Once that's complete, they are redirected back to your application or website along with the transaction response. The final transaction status will also be sent to a dedicated Status Update URL.
+
+Here, we include the optional field to display a subset of the payment methods enabled on the account. We also supply the customer's country along with their first and last name. Incidentally, the Payment Methods field (`PM_Methods`) can be used to include any combination of cards, local payment methods, or APMs. If the field is blank, all of the enabled payment methods are returned.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="markup" title="HTML POST" language="markup" lineHighlight="18" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180614095601">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1001">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <!-- APMs Mandatory Fields -->
+  <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value="DE">
+  <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+  <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/returnUrl">
+  <input type="hidden" name="HPP_TX_STATUS_URL" value="https://www.example.com/statusUrl">
+  <!-- APMs Mandatory Fields -->
+  <!-- APMs Optional Fields -->
+  <input type="hidden" name="PM_METHODS" value="cards|paypal|testpay|sepapm|sofort">
+  <!-- End APMs Optional Fields -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+import com.global.api.entities.HostedPaymentData;
+import com.global.api.entities.enums.AlternativePaymentType;
+import com.global.api.entities.enums.HppVersion;
+import com.global.api.entities.exceptions.ApiException;
+import com.global.api.serviceConfigs.GatewayConfig;
+import com.global.api.serviceConfigs.HostedPaymentConfig;
+import com.global.api.services.HostedService;
+
+import java.math.BigDecimal;
+
+// configure client, request and HPP settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+HostedPaymentConfig hostedPaymentConfig = new HostedPaymentConfig();
+hostedPaymentConfig.setVersion(HppVersion.Version2);
+
+config.setHostedPaymentConfig(hostedPaymentConfig);
+
+HostedService service = new HostedService(config);
+
+HostedPaymentData hostedPaymentData = new HostedPaymentData();
+hostedPaymentData.setCustomerCountry("DE");
+hostedPaymentData.setCustomerFirstName("James");
+hostedPaymentData.setCustomerLastName("Mason");
+hostedPaymentData.setMerchantResponseUrl("https://www.example.com/returnUrl");
+hostedPaymentData.setTransactionStatusUrl("https://www.example.com/statusUrl");
+
+hostedPaymentData.setPresetPaymentMethods(
+        AlternativePaymentType.SOFORTUBERWEISUNG,
+        AlternativePaymentType.SEPA_DIRECTDEBIT_PPPRO_MANDATE_MODEL_A,
+        AlternativePaymentType.TESTPAY
+);
+
+try {
+    String hppJson =
+            service
+                    .charge(new BigDecimal("10.01"))
+                    .withCurrency("EUR")
+                    .withHostedPaymentData(hostedPaymentData)
+                    .serialize();
+// TODO: pass the HPP JSON to the client-side
+} catch (ApiException e) {
+// TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+ // configure client, request and HPP settings
+var config = new GpEcomConfig();
+config.MerchantId = "MerchantId";
+config.AccountId = "internet";
+config.SharedSecret = "secret";
+config.ServiceUrl = "https://pay.sandbox.realexpayments.com/pay";
+
+config.HostedPaymentConfig = new HostedPaymentConfig();
+config.HostedPaymentConfig.Version = HppVersion.VERSION_2;
+
+var service = new HostedService(config);
+
+var hostedPaymentData = new HostedPaymentData();
+hostedPaymentData.CustomerCountry = "DE";
+hostedPaymentData.CustomerFirstName = "James";
+hostedPaymentData.CustomerLastName = "Mason";
+hostedPaymentData.MerchantResponseUrl = "https://www.example.com/returnUrl";
+hostedPaymentData.TransactionStatusUrl = "https://www.example.com/statusUrl";
+
+var apmTypes = new AlternativePaymentType[] {
+    AlternativePaymentType.SOFORTUBERWEISUNG,
+    AlternativePaymentType.PAYPAL,
+    AlternativePaymentType.SEPA_DIRECTDEBIT_PPPRO_MANDATE_MODEL_A,
+    AlternativePaymentType.TESTPAY
+};
+hostedPaymentData.PresetPaymentMethods = apmTypes;
+
+            try
+            {
+    var hppJson = service.Charge(10.01m)
+        .WithCurrency("EUR")
+        .WithHostedPaymentData(hostedPaymentData)
+        .Serialize();
+                // TODO: pass the HPP JSON to the client-side
+            }
+            catch (ApiException ex) {
+                // TODO: Add your error handling here
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\Entities\Enums\AlternativePaymentType;
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\HostedPaymentConfig;
+use GlobalPayments\Api\Entities\HostedPaymentData;
+use GlobalPayments\Api\Entities\Enums\HppVersion;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Tests\Integration\Gateways\RealexConnector\Hpp\RealexHppClient;
+
+// configure client, request and HPP settings
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+
+$config->hostedPaymentConfig = new HostedPaymentConfig();
+$config->hostedPaymentConfig->version = HppVersion::VERSION_2;
+
+$service = new HostedService($config);
+
+$hostedPaymentData = new HostedPaymentData();
+$hostedPaymentData->customerCountry = 'DE';
+$hostedPaymentData->customerFirstName = 'James';
+$hostedPaymentData->customerLastName = 'Mason';
+$hostedPaymentData->merchantResponseUrl = 'https://www.example.com/returnUrl';
+$hostedPaymentData->transactionStatusUrl = 'https://www.example.com/statusUrl';
+
+$apmTypes = [
+    AlternativePaymentType::SOFORTUBERWEISUNG,
+    AlternativePaymentType::PAYPAL,
+    AlternativePaymentType::SEPA_DIRECTDEBIT_PPPRO_MANDATE_MODEL_A,
+    AlternativePaymentType::TEST_PAY
+];
+$hostedPaymentData->presetPaymentMethods = $apmTypes;
+
+try {
+    $hppJson = $service->charge(10.01)
+        ->withCurrency("EUR")
+        ->withHostedPaymentData($hostedPaymentData)
+        ->serialize();
+    // TODO: pass the HPP JSON to the client-side
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 2: Receive the payment method response
+
+Once the customer completes their transaction with the payment method, they are redirected to the Response URL you provided in the `MERCHANT_RESPONSE_URL` field of the HPP request (alternatively, our support team can add a fixed URL to your account). The current status of the transaction will also be sent as an HTTP POST to that Status URL. The POST message is limited to 5,000 characters. Once the character limit is reached, no more values are included—that is, your application or website won’t receive any truncated transaction variables.
+
+Depending on the payment method used, the message sent to the Response URL might not indicate the final status of the transaction. In the example below, the current result message is PENDING and the fund status is WAITING. The final transaction status will be sent to the Status URL you provided in the HPP request. In the case of some payment methods, this message to the Status URL will be sent at almost exactly the same time that the customer is redirected to your Response URL.
+
+In the case of asynchronous payment methods, the Response URL should be treated as an interim step. Your application might put the customer on hold for a few seconds while it checks to see if the Status URL was sent a final update. You can then redirect the customer to a final success or failure page. In the event of the Status URL not receiving the final status update within your determined time limit, you can display a message to the customer informing them that their order will be processed when the final status is received.
+
+#### Sample response
+
+<CodeGroup>
+<Code id="markup" title="HTTP POST" language="markup" lineHighlight="9" active>
+```
+[RESULT=01,
+ MESSAGE=PENDING,
+ FUNDSTATUS=WAITING
+ PASREF=14631546336115597,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20171003164640,
+ AMOUNT=1001,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ SHIPPING_CODE=R90|ZQ7,
+ SHIPPING_CO=GB,
+ BILLING_CODE=E77|4QJ,
+ BILLING_CO=GB,
+ COMMENT1=Mobile Channel,
+ COMMENT2=Down Payment,
+ PAYMENTMETHOD=sofort,
+ WAITFORNOTIFICATION=0,
+ PAYMENTPURPOSE=37TC6LD Test Transaction&
+ HPP_CUSTOMER_FIRSTNAME=James,
+ HPP_CUSTOMER_LASTNAME=Mason,
+ HPP_CUSTOMER_COUNTRY=DE,
+ HPP_CUSTOMER_BANK_ACCOUNT=9876543210,
+ HPP_CUSTOMER_IBAN=DE84837473949793743749,
+ HPP_CUSTOMER_BIC=GENODEF1GW1,
+ HPP_CUSTOMER_BANK_NAME=Volksbank Raiffeisenbank,
+ HPP_CUSTOMER_BANK_CODE=13061028,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61]
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+import com.global.api.entities.Transaction;
+import com.global.api.entities.exceptions.ApiException;
+import com.global.api.serviceConfigs.GatewayConfig;
+import com.global.api.services.HostedService;
+
+import java.util.HashMap;
+
+// configure client settings
+GatewayConfig config = new GatewayConfig();
+config.setMerchantId("MerchantId");
+config.setAccountId("internet");
+config.setSharedSecret("secret");
+config.setServiceUrl("https://pay.sandbox.realexpayments.com/pay");
+
+HostedService service = new HostedService(config);
+String responseJson = null;
+
+/**
+ TODO: grab the JSON response  from the client-side.
+ Sample JSON response (values will be Base64 encoded):
+
+ $responseJson = '{
+     "MERCHANT_ID": "MerchantId",
+     "ACCOUNT": "internet",
+     "ORDER_ID": "NWIzNmE2MGQtYzhhOGQyMA",
+     "TIMESTAMP": "20211117100417",
+     "RESULT": "01",
+     "PASREF": "16371434569622613",
+     "MERCHANT_RESPONSE_URL": "https://www.example.com/returnUrl",
+     "MESSAGE": "PENDING",
+     "AMOUNT": "1001",
+     "SHA1HASH": "a429120031e3f6ff5cbcf0960acf826cc71c04e3",
+     "HPP_CUSTOMER_FIRSTNAME": "James",
+     "HPP_CUSTOMER_LASTNAME": "Mason",
+     "HPP_CUSTOMER_COUNTRY": "DE",
+     "PAYMENTMETHOD": "sofort",
+     "PAYMENTPURPOSE": "4JQBVNK REALEXTEST",
+     "HPP_CUSTOMER_BANK_ACCOUNT": "",
+ }';
+ */
+
+try {
+    // create the response object from the response JSON
+    Transaction parsedResponse = service.parseResponse(responseJson);
+    String responseCode = parsedResponse.getResponseCode(); // 01
+    String responseMessage = parsedResponse.getResponseMessage(); // PENDING
+    HashMap<String, String> responseValues = parsedResponse.getResponseValues(); // get values accessible by key
+
+    String pasref = responseValues.get("PASREF"); // 1636457734629657
+    String setupMessage = responseValues.get("MESSAGE"); // Successful
+    String orderId = responseValues.get("ORDER_ID"); // MTVmNmY4MGMtMjIyMzJlNA
+
+    String merchantResponseUrl = responseValues.get("MERCHANT_RESPONSE_URL"); // https://www.example.com/responseUrl
+    String paymentMethodType = responseValues.get("PAYMENTMETHOD"); // sofort
+    String cardReference = responseValues.get("PAYMENTPURPOSE"); // 4NPL0A7 REALEXTEST
+    String customerFirstName = responseValues.get("HPP_CUSTOMER_FIRSTNAME"); // James
+    String customerLastName = responseValues.get("HPP_CUSTOMER_LASTNAME"); // Mason
+    String customerCountry = responseValues.get("HPP_CUSTOMER_COUNTRY"); // DE
+
+    // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException e) {
+    // For example if the SHA1HASH doesn't match what is expected
+    // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// configure client settings
+var config = new GpEcomConfig();
+config.MerchantId = "MerchantId";
+config.AccountId = "internet";
+config.SharedSecret = "secret";
+config.ServiceUrl = "https://pay.sandbox.realexpayments.com/pay";
+
+var service = new HostedService(config);
+
+            /**
+              TODO: grab the response JSON from the client-side.
+              Sample response JSON (values will be Base64 encoded):            
+
+              var responseJson = "{
+                \"MERCHANT_ID\":\"MerchantId\",
+                \"ACCOUNT\":\"internet\",
+                \"ORDER_ID\":\"xS_1TgGYk06TIICK6BWfIQ\",
+                \"TIMESTAMP\":\"20230413121749\",
+                \"RESULT\": \"01\",
+                \"PASREF\": \"16371434569622613\",    
+                \"MERCHANT_RESPONSE_URL\":\"https://www.example.com/returnUrl\",
+                \"MESSAGE\": \"PENDING\",
+                \"AMOUNT\": \"1001\",
+                \"SHA1HASH\": \"a429120031e3f6ff5cbcf0960acf826cc71c04e3\",
+                \"HPP_CUSTOMER_FIRSTNAME\": \"James\",
+                \"HPP_CUSTOMER_LASTNAME\": \"Mason\",
+                \"HPP_CUSTOMER_COUNTRY\": \"DE\",
+                \"PAYMENTMETHOD\": \"sofort\",
+                \"PAYMENTPURPOSE\": \"4JQBVNK REALEXTEST\",
+                \"HPP_CUSTOMER_BANK_ACCOUNT\": \"\"
+}";
+*/
+
+
+            try
+            {
+    // create the response object from the response JSON
+    var parsedResponse = service.ParseResponse(responseJson);
+    string responseCode = parsedResponse.ResponseCode; // 01
+    string responseMessage = parsedResponse.ResponseMessage; // PENDING
+    Dictionary<string, string> responseValues = parsedResponse.ResponseValues; // get values accessible by key
+
+    string pasref = responseValues["PASREF"]; // 1636457734629657
+    string setupMessage = responseValues["MESSAGE"]; // Successful
+    string orderId = responseValues["ORDER_ID"]; // MTVmNmY4MGMtMjIyMzJlNA
+
+    string merchantResponseUrl = responseValues["MERCHANT_RESPONSE_URL"]; // https://www.example.com/responseUrl
+    string paymentMethodType = responseValues["PAYMENTMETHOD"]; // sofort
+    string cardReference = responseValues["PAYMENTPURPOSE"]; // 4NPL0A7 REALEXTEST
+    string customerFirstName = responseValues["HPP_CUSTOMER_FIRSTNAME"]; // James
+    string customerLastName = responseValues["HPP_CUSTOMER_LASTNAME"]; // Mason
+    string customerCountry = responseValues["HPP_CUSTOMER_COUNTRY"]; // DE
+
+                // TODO: update your application and display transaction outcome to the customer
+            }
+            catch (ApiException e) {
+                // For example if the SHA1HASH doesn't match what is expected
+                // TODO: add your error handling here
+            }
+
+            }
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+require_once('vendor/autoload.php');
+
+use GlobalPayments\Api\ServiceConfigs\Gateways\GpEcomConfig;
+use GlobalPayments\Api\Services\HostedService;
+use GlobalPayments\Api\Entities\Exceptions\ApiException;
+
+// configure client settings
+$config = new GpEcomConfig();
+$config->merchantId = "MerchantId";
+$config->accountId = "internet";
+$config->sharedSecret = "secret";
+$config->serviceUrl = "https://pay.sandbox.realexpayments.com/pay";
+
+$service = new HostedService($config);
+
+/**
+  TODO: grab the response JSON from the client-side.
+  Sample response JSON (values will be Base64 encoded):
+ 
+  $responseJson = '{
+    "MERCHANT_ID": "MerchantId",
+    "ACCOUNT": "internet",
+    "ORDER_ID": "NWIzNmE2MGQtYzhhOGQyMA",
+    "TIMESTAMP": "20211117100417",
+    "RESULT": "01",
+    "PASREF": "16371434569622613",    
+    "MERCHANT_RESPONSE_URL": "https:\/\/www.example.com\/returnUrl",
+    "MESSAGE": "PENDING",
+    "AMOUNT": "1001",
+    "SHA1HASH": "a429120031e3f6ff5cbcf0960acf826cc71c04e3",
+    "HPP_CUSTOMER_FIRSTNAME": "James",
+    "HPP_CUSTOMER_LASTNAME": "Mason",
+    "HPP_CUSTOMER_COUNTRY": "DE",
+    "PAYMENTMETHOD": "sofort",
+    "PAYMENTPURPOSE": "4JQBVNK REALEXTEST",
+    "HPP_CUSTOMER_BANK_ACCOUNT": "",
+}';
+*/
+
+try {
+    // create the response object from the response JSON
+    $parsedResponse = $service->parseResponse($responseJson);
+    $responseCode = $parsedResponse->responseCode; // 01
+    $responseMessage = $parsedResponse->responseMessage; // PENDING
+    $responseValues = $parsedResponse->responseValues; // get values accessible by key
+
+    $pasref = $responseValues["PASREF"]; // 1636457734629657
+    $etupMessage = $responseValues["MESSAGE"]; // Successful
+    $orderId = $responseValues["ORDER_ID"]; // MTVmNmY4MGMtMjIyMzJlNA
+
+    $merchantResponseUrl = $responseValues["MERCHANT_RESPONSE_URL"]; // https://www.example.com/responseUrl
+    $paymentMethodType = $responseValues["PAYMENTMETHOD"]; // sofort
+    $cardReference = $responseValues["PAYMENTPURPOSE"]; // 4NPL0A7 REALEXTEST
+    $customerFirstName = $responseValues["HPP_CUSTOMER_FIRSTNAME"]; // James
+    $customerLastName = $responseValues["HPP_CUSTOMER_LASTNAME"]; // Mason
+    $customerCountry = $responseValues["HPP_CUSTOMER_COUNTRY"]; // DE
+
+    // TODO: update your application and display transaction outcome to the customer
+} catch (ApiException $e) {
+    // For example if the SHA1HASH doesn't match what is expected
+    // TODO: add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Step 3: Receive the final status
+
+As mentioned previously, depending on the payment method used, the Response URL might not receive the final transaction status. The URL specified in the `HPP_TX_STATUS_URL` field receives the final status. Again, depending on the payment method used, this can happen at the same time as the customer is redirected to your Response URL, moments after—or, potentially, the final status update might come days later. So, the Response URL acts as an interim processing page, waiting for the final update.
+
+The status of the transaction will be sent as a HTTP GET. The transaction variables will be URL encoded, and the message is limited to 2,048 characters. Once the character limit is reached, no more values are included. That means your application won’t receive any truncated transaction variables.
+
+For payment methods in which you expect the final status update to come days later, your Status URL will need to accept the message sent by us, find the correct order in your application, and update the status accordingly. You may want to inform the customer at this point that their payment was accepted. You can also initiate the dispatch of items to the customer.
+
+The timeout period indicates how long the customer has to complete the payment, and by extension, how long your application may need to wait to receive the final status. For timeout details, see the individual [Supported Payment Methods](/payment-methods-list).
+
+In summary, the Status URL will need to be an endpoint in your application capable of accepting a HTTP GET message. This will inform your application of the final status of a transaction. Upon receipt, it can validate the response, check the details against what your application has stored, and update accordingly.
+
+#### Sample response URL parameters
+
+<Code id="markup" title="HTTP POST" language="markup" lineHighlight="9" active>
+```
+sha1hash=0aa43f1d647819efd238e46fe3301d80076a8648&
+timestamp=20160829141523&
+merchantid=MerchantId&
+orderid=N6qsk4kYRZihmPrTXWYS6g&
+result=00&
+message=SUCCEEDED&
+pasref=14627849160897986&
+paymentmethod=sofort&
+waitfornotification=0&
+fundstatus=RECIEVED&
+paymentpurpose=37TC6LD Test Transaction&
+acountholdername=James Mason&
+country=DE&
+accountnumber=9876543210&
+iban=DE84837473949793743749&
+bic=GENODEF1GW1&
+bankname=Volksbank Raiffeisenbank&
+bankcode=13061028&
+redirectoptional=0
+```
+</Code>
+
+   </Tab>
+</Tabs>
+
+## Supported payment methods
+  
+  Browse the APMs we support or search for a specific one. If additional fields are required, these will be documented along with the countries and currencies that are available with the payment method.
+
+<FeaturedPaymentMethods />
+
+## Enhance your solution
+
+Explore more functionality to enrich your application.
+
+<CardsGroup type="with_icon">
+
+   <Card type="with_icon" link="/ecommerce/expand-your-integration/payment-methods" title="Digital Wallets" icon="wallet">
+       Explore ways to let customers use their favorite stored cards.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/3ds/overview" title="3D Secure and SCA" icon="lock-keyhole">
+        Add strong customer authentication to your online payment flow.
+    </Card>
+    <Card type="with_icon" link="/ecommerce/risk-management/fraud/overview" title="Fraud Management" icon="badge-check">
+        Better identify customers and reduce fraud.
+    </Card>
+</CardsGroup>

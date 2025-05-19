@@ -1,0 +1,76 @@
+---
+title: 'Android Library'
+search_results: 'Android Library'
+subtitle: 'Integrate using our Android library'
+tag: 'rest'
+created: '06/08/2024'
+---
+## Requirements
+* Android Studio 4.2+
+* Android SDK 21 (Lollipop)
+* Android SDK Tools
+* Java Version 1.8
+
+## Installation
+
+1. Declare jcenter repository in the rood build.gradle file: <br />
+   <Code>
+   ```
+   allprojects {
+      repositories {
+         jcenter()
+      }
+   }
+   ```
+   </Code>
+2. Declare dependency in the app build.gradle file: <br />
+   <Code>
+   ```
+   dependencies {
+      implementation 'com.globalpayments.android:globalpayments-android-sdk:1.0'
+   }
+   ```
+   </Code>
+
+## Github
+You can find a test suite of code samples for using the Android SDK in our [GitHub repository](https://github.com/globalpayments/android-sdk).
+
+## Documentation and samples
+You can find the latest SDK documentation under [SDKs & Libraries](/docs/integration-options/sdk/overview). For a full list of test cards, see our [Test Cards](/resources/test-cards) article. Code examples can be found in the [API Explorer](/api/overview).
+
+#### Sample code - Processing a payment
+<Code id="Java" language="Java" id="Java" active>
+```
+/// Prepare required configuration
+GpApiConfig config = new GpApiConfig();
+config.setServiceUrl("Service Url"); //(Sandbox URL: "https://apis.sandbox.globalpay.com/ucp")
+config.setAppId("Your application ID");
+config.setAppKey("Your application key");
+
+/// Add config to container
+ServicesContainer.configureService(config);
+
+/// Prepare card
+CreditCardData card = new CreditCardData();
+card.setNumber("4111111111111111");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("123");
+
+// Execute operation
+Transaction transaction = card.charge(new BigDecimal("19.99"))
+   .withCurrency("USD")
+   .execute();
+```
+</Code>
+
+## Test cards
+| Card Number | Card Type | Expiration Date | Security Code |
+| --- | --- | --- | --- |
+| 4263970000005262 | Visa | 12/2025 | 123   |
+| 2223000010005780 | MasterCard | 12/2025 | 900   |
+| 5425230000004415 | MasterCard | 12/2025 | 123   |
+| 6011000000000087 | Discover | 12/2025 | 123   |
+| 374101000000608 | Amex | 12/2025 | 1234   |
+| 3566000000000000 | JCB | 12/2025 | 123   |
+| 36256000000725 | Diners Club | 12/2025 | 123   |

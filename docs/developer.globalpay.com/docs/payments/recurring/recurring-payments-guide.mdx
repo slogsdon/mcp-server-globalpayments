@@ -1,0 +1,1082 @@
+---
+title: 'Recurring Payments - Guide'
+search_results: 'Global Payments - Recurring Payments Guide'
+subtitle: 'Learn how to perform a recurring transaction'
+tag: 'rest'
+created: '09/09/2024'
+
+---
+This guide focuses on the full scope of running a recurring payment and provides steps from start to finish. This includes tokenizing the card, authorizing a transaction, converting your card token to multi-use, and performing a recurring payment when needed.
+
+For information on the various use cases for recurring payments, see our [Overview](/docs/payments/recurring/overview).
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Tokenize the card
+The access token for this step should be a single-permission access token used expressly for tokenization. We will create a second access token for any transactions later in the process.
+
+This step is mandatory for storing card credentials. For more information on this process, see [Card Storage - Guide](/docs/payments/tokenization/card-storage-guide).
+
+## Step 2: Authorize a transaction
+In this example, we send a request for a standard transaction using the stored card data. This allows for verification that the card data is valid. Simply storing a card in Step 1 will not validate the card information as accurate.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer gtcdyINGefJlynhSh8siTr8nYbG3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "capture_mode":"AUTO",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "USD",
+    "reference": "88355871",
+    "country": "US",
+    "payment_method": {
+        "name": "Jane",
+        "entry_mode": "ECOM",
+        "id": "PMT_0a5129b8-1e31-4d05-a172-0a3384fcc04e"
+    }
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java"> 
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(“AppId”);
+config.setAppKey(“AppKey”);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+config.setEnableLogging(true);
+config.setRequestLogger(new RequestConsoleLogger());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setToken("PMT_7554986a-1e77-4c75-a80f-5889d0621c13");
+card.setCardHolderName("Jane");
+
+try {
+    Transaction response = card.charge(new BigDecimal("1.00"))
+            .withCurrency("USD")
+            .withClientTransactionId("88355871")
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "batch_id"
+    String batchId = response.getBatchSummary().getBatchReference();
+    // API raw response key "type"
+    TransactionType transactionType = response.getTransactionReference().getOriginalTransactionType();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String cardBrandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->authcode"
+    String authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->avs_postal_code_result"
+    String avsResponseCode = response.getAvsResponseCode();
+    // API raw response key "payment_method->card->avs_address_result"
+    String avsAddressResponse = response.getAvsAddressResponse();
+    // API raw response key "payment_method->card->cvv_result"
+    String cvnResponseMessage = response.getCvnResponseMessage();
+    // API raw response key "payment_method->card->brand"();
+    String cardType = response.getCardDetails().getBrand();
+    // API raw response key "payment_method->card->masked_number_last4"
+    String maskedNumberLast4 = response.getCardDetails().getMaskedNumberLast4();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+    // API raw response key "payment_method->card->provider->cvv_result"
+    String cardIssuerCvv = response.getCardIssuerResponse().getCvvResult();
+    // API raw response key "payment_method->card->provider->avs_address_result"
+    String cardIssuerAvsAddressResult = response.getCardIssuerResponse().getAvsAddressResult();
+    // API raw response key "payment_method->card->provider->avs_postal_code_result"
+    String cardIssuerAvsPostalCodeResult = response.getCardIssuerResponse().getAvsPostalCodeResult();
+    // API raw response key "risk_assessment->mode"
+    String fraudResponseMode = response.getFraudFilterResponse().getFraudResponseMode();
+    // API raw response key "risk_assessment->result"
+    String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult();
+    // API raw response key "risk_assessment->rules"
+    List<FraudRule> fraudResponseRules = response.getFraudFilterResponse().getFraudResponseRules();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+CreditCardData card = new CreditCardData {
+	Token = "PMT_7554986a-1e77-4c75-a80f-5889d0621c13",
+	CardHolderName = "Jane"
+};
+ 
+try
+{
+	Transaction response = card.Charge(1m)
+		.WithCurrency("USD")
+		.WithClientTransactionId("88355871")
+		.Execute(); 
+	
+	// API raw response key "id"
+	var transactionId = response.TransactionId;
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	//API raw response key "batch_id"
+	var batchId = response.BatchSummary.BatchReference;
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode; 
+	//API raw response key "payment_method->card->brand_reference"
+	var cardBrandReference = response.CardBrandTransactionId;
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->avs_postal_code_result"
+	var avsResponseCode = response.AvsResponseCode;
+	//API raw response key "payment_method->card->->avs_address_result"
+	var avsAddressResponse  = response.AvsAddressResponse;
+	// API raw response key "payment_method->card->cvv_result"
+	var cvnResponseMessage = response.CvnResponseMessage;
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+	//API raw response key "payment_method->card->provider->cvv_result"
+	var cardIssuerCvv = response.CardIssuerResponse.CvvResult;
+	//API raw response key "payment_method->card->provider->avs_address_result"
+	var cardIssuerAvsAddressResult = response.CardIssuerResponse.AvsAddressResult;
+	//API raw response key "payment_method->card->provider->avs_postal_code_result"
+	var cardIssuerAvsPostalCodeResult = response.CardIssuerResponse.AvsPostalCodeResult;
+	//API raw response key "risk_assessment->mode"
+	var fraudResponseMode = response.FraudFilterResponse.FraudResponseMode;
+	//API raw response key "risk_assessment->result"
+	var fraudResponseResult = response.FraudFilterResponse.FraudResponseResult;
+	//API raw response key "risk_assessment->rules"
+	var fraudResponseRules = response.FraudFilterResponse.FraudResponseRules;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->token = 'PMT_7554986a-1e77-4c75-a80f-5889d0621c13';
+$card->cardHolderName = 'Jane';
+
+try {
+    $response = $card->charge(1)
+        ->withCurrency("USD")
+        ->withClientTransactionId("88355871")
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+//API raw response key "payment_method->card->brand_reference"
+$cardBrandReference = $response->cardBrandTransactionId;
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "payment_method->card->avs_postal_code_result"
+$avsResponseCode = $response->avsResponseCode;
+//API raw response key "payment_method->card->->avs_address_result"
+$avsAddressResponse  = $response->avsAddressResponse;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->cvv_result"
+$cardIssuerCvv = $response->cardIssuerResponse->cvvResult;
+//API raw response key "payment_method->card->provider->avs_address_result"
+$cardIssuerAvsAddressResult = $response->cardIssuerResponse->avsAddressResult;
+//API raw response key "payment_method->card->provider->avs_postal_code_result"
+$cardIssuerAvsPostalCodeResult = $response->cardIssuerResponse->avsPostalCodeResult;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $response->fraudFilterResponse->fraudResponseMode;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $response->fraudFilterResponse->fraudResponseResult;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $response->fraudFilterResponse->fraudResponseRules;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_4bCB2tH9l4pOkGGgY99kVSzfhQzMRt_26851101",
+    "time_created": "2024-09-09T16:39:30.032Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "26851101",
+    "payment_method": {
+        "result": "00",
+        "message": "(00)[ test system ] Authorised",
+        "entry_mode": "ECOM",
+        "card": {
+            "funding": "CREDIT",
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX4242",
+            "authcode": "123456",
+            "brand_reference": "eTiqLRunWnBjM6XY",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "ACCEPTED",
+            "rules": [
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "BAT_1434980",
+    "action": {
+        "id": "ACT_4bCB2tH9l4pOkGGgY99kVSzfhQzMRt",
+        "type": "AUTHORIZE",
+        "time_created": "2024-09-09T16:39:30.032Z",
+        "result_code": "SUCCESS",
+        "app_id": "iTWOpWdxIJD5k1nY46CBN3Ug7G9C65KN",
+        "app_name": "Jordans_Cool_App"
+    }
+}
+```
+</Code>
+
+## Step 3: Convert card token to multi-use
+In this step, we convert the card token to multi-use. For more information on this process, see [Card Storage - Guide](/docs/payments/tokenization/card-storage-guide).
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer gtcdyINGefJlynhSh8siTr8nYbG3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "USD",
+    "reference": "26851101",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "RECURRING",
+        "reason": "INCREMENTAL",
+        "sequence": "SUBSEQUENT"
+    },
+    "payment_method": {
+        "name": "Jane",
+        "entry_mode": "ECOM",
+        "id": "PMT_0a5129b8-1e31-4d05-a172-0a3384fcc04e",
+        "card": {
+            "brand_reference": "eTiqLRunWnBjM6XY"
+        }
+    }
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(“AppId”);
+config.setAppKey(“AppKey”);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+config.setEnableLogging(true);
+config.setRequestLogger(new RequestConsoleLogger());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setToken("PMT_7554986a-1e77-4c75-a80f-5889d0621c13");
+card.setCardHolderName("Jane");
+
+StoredCredential storedCredential = new StoredCredential();
+storedCredential.setInitiator(StoredCredentialInitiator.Merchant);
+storedCredential.setType(StoredCredentialType.Recurring);
+storedCredential.setSequence(StoredCredentialSequence.Subsequent);
+storedCredential.setReason(StoredCredentialReason.Incremental);
+
+String chargeCardBrandReference = "4SQHQJrra8mZLAJV";
+
+try {
+    Transaction response = card.charge(new BigDecimal("1.00"))
+            .withCurrency("USD")
+            .withClientTransactionId("26851101")
+            .withStoredCredential(storedCredential)
+            .withCardBrandStorage(StoredCredentialInitiator.Merchant, chargeCardBrandReference)
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "batch_id"
+    String batchId = response.getBatchSummary().getBatchReference();
+    // API raw response key "type"
+    TransactionType transactionType = response.getTransactionReference().getOriginalTransactionType();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String cardBrandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->authcode"
+    String authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->cvv_result"
+    String cvnResponseMessage = response.getCvnResponseMessage();
+    // API raw response key "payment_method->card->brand"();
+    String cardType = response.getCardDetails().getBrand();
+    // API raw response key "payment_method->card->masked_number_last4"
+    String maskedNumberLast4 = response.getCardDetails().getMaskedNumberLast4();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+    // API raw response key "payment_method->card->provider->cvv_result"
+    String cardIssuerCvv = response.getCardIssuerResponse().getCvvResult();
+    // API raw response key "payment_method->card->provider->avs_address_result"
+    String cardIssuerAvsAddressResult = response.getCardIssuerResponse().getAvsAddressResult();
+    // API raw response key "payment_method->card->provider->avs_postal_code_result"
+    String cardIssuerAvsPostalCodeResult = response.getCardIssuerResponse().getAvsPostalCodeResult();
+    // API raw response key "risk_assessment->mode"
+    String fraudResponseMode = response.getFraudFilterResponse().getFraudResponseMode();
+    // API raw response key "risk_assessment->result"
+    String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult();
+    // API raw response key "risk_assessment->rules"
+    List<FraudRule> fraudResponseRules = response.getFraudFilterResponse().getFraudResponseRules();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet"> 
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+ CreditCardData card = new CreditCardData {
+	Token = "PMT_7554986a-1e77-4c75-a80f-5889d0621c13",
+	CardHolderName = "Jane"
+};
+StoredCredential storedCredential = new StoredCredential
+{
+	Initiator = StoredCredentialInitiator.Merchant,
+	Type = StoredCredentialType.Recurring,
+	Sequence = StoredCredentialSequence.Subsequent,
+	Reason = StoredCredentialReason.Incremental
+};
+var cardBrandRef = "4SQHQJrra8mZLAJV";
+
+try
+{
+	Transaction response = card.Charge(1m)
+		.WithCurrency("USD")
+		.WithClientTransactionId("26851101")
+		.WithStoredCredential(storedCredential)
+		.WithCardBrandStorage(StoredCredentialInitiator.Merchant, cardBrandRef)
+		.Execute(); 
+	
+	// API raw response key "id"
+	var transactionId = response.TransactionId;
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	//API raw response key "batch_id"
+	var batchId = response.BatchSummary.BatchReference;
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode; 
+	//API raw response key "payment_method->card->brand_reference"
+	var cardBrandReference = response.CardBrandTransactionId;
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->avs_postal_code_result"
+	var avsResponseCode = response.AvsResponseCode;
+	//API raw response key "payment_method->card->->avs_address_result"
+	var avsAddressResponse  = response.AvsAddressResponse;
+	// API raw response key "payment_method->card->cvv_result"
+	var cvnResponseMessage = response.CvnResponseMessage;
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+	//API raw response key "payment_method->card->provider->cvv_result"
+	var cardIssuerCvv = response.CardIssuerResponse.CvvResult;
+	//API raw response key "payment_method->card->provider->avs_address_result"
+	var cardIssuerAvsAddressResult = response.CardIssuerResponse.AvsAddressResult;
+	//API raw response key "payment_method->card->provider->avs_postal_code_result"
+	var cardIssuerAvsPostalCodeResult = response.CardIssuerResponse.AvsPostalCodeResult;
+	//API raw response key "risk_assessment->mode"
+	var fraudResponseMode = response.FraudFilterResponse.FraudResponseMode;
+	//API raw response key "risk_assessment->result"
+	var fraudResponseResult = response.FraudFilterResponse.FraudResponseResult;
+	//API raw response key "risk_assessment->rules"
+	var fraudResponseRules = response.FraudFilterResponse.FraudResponseRules;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->token = 'PMT_7554986a-1e77-4c75-a80f-5889d0621c13';
+$card->cardHolderName = 'Jane';
+
+$storeCredentials = new StoredCredential();
+$storeCredentials->initiator = StoredCredentialInitiator::MERCHANT;
+$storeCredentials->type = StoredCredentialType::RECURRING;
+$storeCredentials->sequence = StoredCredentialSequence::SUBSEQUENT;
+$storeCredentials->reason = StoredCredentialReason::INCREMENTAL;
+
+$cardBrandReference = '4SQHQJrra8mZLAJV';
+try {
+    $response = $card->charge(1)
+        ->withCurrency("USD")
+        ->withClientTransactionId("26851101")
+        ->withStoredCredential($storeCredentials)
+        ->withCardBrandStorage(StoredCredentialInitiator::MERCHANT, $cardBrandReference)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+//API raw response key "payment_method->card->brand_reference"
+$cardBrandReference = $response->cardBrandTransactionId;
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->cvv_result"
+$cardIssuerCvv = $response->cardIssuerResponse->cvvResult;
+//API raw response key "payment_method->card->provider->avs_address_result"
+$cardIssuerAvsAddressResult = $response->cardIssuerResponse->avsAddressResult;
+//API raw response key "payment_method->card->provider->avs_postal_code_result"
+$cardIssuerAvsPostalCodeResult = $response->cardIssuerResponse->avsPostalCodeResult;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $response->fraudFilterResponse->fraudResponseMode;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $response->fraudFilterResponse->fraudResponseResult;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $response->fraudFilterResponse->fraudResponseRules;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_VlPpcvVMlLoZGOW1o0edXsZsMtLo53_88355871",
+    "time_created": "2024-09-09T16:39:45.631Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "88355871",
+    "payment_method": {
+        "result": "00",
+        "message": "(00)[ test system ] Authorised",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX4242",
+            "authcode": "123456",
+            "brand_reference": "VF5zk3S5I9V5S117",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "ACCEPTED",
+            "rules": [
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "BAT_1434980",
+    "action": {
+        "id": "ACT_VlPpcvVMlLoZGOW1o0edXsZsMtLo53",
+        "type": "AUTHORIZE",
+        "time_created": "2024-09-09T16:39:45.631Z",
+        "result_code": "SUCCESS",
+        "app_id": "iTWOpWdxIJD5k1nY46CBN3Ug7G9C65KN",
+        "app_name": "Jordans_Cool_App"
+    }
+}
+```
+</Code>
+## Step 4: Perform a recurring payment (as needed)
+This process is not automated in our API. The request must be sent at the time a recurring payment is needed. This is typically handled by your software.
+
+<Infobox>
+Because this transaction might occur days or weeks after the initial authorization, a new access token will be required to complete these subsequent authorizations.
+    </Infobox>
+
+#### Sample request
+
+<CodeGroup>
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer mfGaFXa92Vj8cY5QBMvtJoKpm6Tc' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "USD",
+    "reference": "65547451",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "RECURRING",
+        "reason": "INCREMENTAL",
+        "sequence": "SUBSEQUENT"
+    },
+    "payment_method": {
+        "name": "Jane",
+        "entry_mode": "ECOM",
+        "id": "",
+        "card": {
+            "brand_reference": "{{brand_ref}}"
+        }
+    }
+}'
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(“AppId”);
+config.setAppKey(“AppKey”);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+config.setEnableLogging(true);
+config.setRequestLogger(new RequestConsoleLogger());
+
+ServicesContainer.configureService(config);
+
+CreditCardData card = new CreditCardData();
+card.setToken("PMT_7554986a-1e77-4c75-a80f-5889d0621c13");
+card.setCardHolderName("Jane");
+
+StoredCredential storedCredential = new StoredCredential();
+storedCredential.setInitiator(StoredCredentialInitiator.Merchant);
+storedCredential.setType(StoredCredentialType.Recurring);
+storedCredential.setSequence(StoredCredentialSequence.Subsequent);
+storedCredential.setReason(StoredCredentialReason.Incremental);
+
+String chargeCardBrandReference = "4SQHQJrra8mZLAJV";
+
+try {
+    Transaction response = card.charge(new BigDecimal("1.00"))
+            .withCurrency("USD")
+            .withClientTransactionId("26851101")
+            .withStoredCredential(storedCredential)
+            .withCardBrandStorage(StoredCredentialInitiator.Merchant, chargeCardBrandReference)
+            .execute();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "batch_id"
+    String batchId = response.getBatchSummary().getBatchReference();
+    // API raw response key "type"
+    TransactionType transactionType = response.getTransactionReference().getOriginalTransactionType();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "payment_method->card->brand_reference"
+    String cardBrandReference = response.getCardBrandTransactionId();
+    // API raw response key "payment_method->card->authcode"
+    String authCode = response.getAuthorizationCode();
+    // API raw response key "payment_method->card->cvv_result"
+    String cvnResponseMessage = response.getCvnResponseMessage();
+    // API raw response key "payment_method->card->brand"();
+    String cardType = response.getCardDetails().getBrand();
+    // API raw response key "payment_method->card->masked_number_last4"
+    String maskedNumberLast4 = response.getCardDetails().getMaskedNumberLast4();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+    // API raw response key "payment_method->card->provider->cvv_result"
+    String cardIssuerCvv = response.getCardIssuerResponse().getCvvResult();
+    // API raw response key "payment_method->card->provider->avs_address_result"
+    String cardIssuerAvsAddressResult = response.getCardIssuerResponse().getAvsAddressResult();
+    // API raw response key "payment_method->card->provider->avs_postal_code_result"
+    String cardIssuerAvsPostalCodeResult = response.getCardIssuerResponse().getAvsPostalCodeResult();
+    // API raw response key "risk_assessment->mode"
+    String fraudResponseMode = response.getFraudFilterResponse().getFraudResponseMode();
+    // API raw response key "risk_assessment->result"
+    String fraudResponseResult = response.getFraudFilterResponse().getFraudResponseResult();
+    // API raw response key "risk_assessment->rules"
+    List<FraudRule> fraudResponseRules = response.getFraudFilterResponse().getFraudResponseRules();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet"> 
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+ CreditCardData card = new CreditCardData {
+	Token = "PMT_7554986a-1e77-4c75-a80f-5889d0621c13",
+	CardHolderName = "Jane"
+};
+StoredCredential storedCredential = new StoredCredential
+{
+	Initiator = StoredCredentialInitiator.Merchant,
+	Type = StoredCredentialType.Recurring,
+	Sequence = StoredCredentialSequence.Subsequent,
+	Reason = StoredCredentialReason.Incremental
+};
+var cardBrandRef = "4SQHQJrra8mZLAJV";
+
+try
+{
+	Transaction response = card.Charge(1m)
+		.WithCurrency("USD")
+		.WithClientTransactionId("26851101")
+		.WithStoredCredential(storedCredential)
+		.WithCardBrandStorage(StoredCredentialInitiator.Merchant, cardBrandRef)
+		.Execute(); 
+	
+	// API raw response key "id"
+	var transactionId = response.TransactionId;
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	//API raw response key "batch_id"
+	var batchId = response.BatchSummary.BatchReference;
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode; 
+	//API raw response key "payment_method->card->brand_reference"
+	var cardBrandReference = response.CardBrandTransactionId;
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "payment_method->card->avs_postal_code_result"
+	var avsResponseCode = response.AvsResponseCode;
+	//API raw response key "payment_method->card->->avs_address_result"
+	var avsAddressResponse  = response.AvsAddressResponse;
+	// API raw response key "payment_method->card->cvv_result"
+	var cvnResponseMessage = response.CvnResponseMessage;
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+	//API raw response key "payment_method->card->provider->cvv_result"
+	var cardIssuerCvv = response.CardIssuerResponse.CvvResult;
+	//API raw response key "payment_method->card->provider->avs_address_result"
+	var cardIssuerAvsAddressResult = response.CardIssuerResponse.AvsAddressResult;
+	//API raw response key "payment_method->card->provider->avs_postal_code_result"
+	var cardIssuerAvsPostalCodeResult = response.CardIssuerResponse.AvsPostalCodeResult;
+	//API raw response key "risk_assessment->mode"
+	var fraudResponseMode = response.FraudFilterResponse.FraudResponseMode;
+	//API raw response key "risk_assessment->result"
+	var fraudResponseResult = response.FraudFilterResponse.FraudResponseResult;
+	//API raw response key "risk_assessment->rules"
+	var fraudResponseRules = response.FraudFilterResponse.FraudResponseRules;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->token = 'PMT_7554986a-1e77-4c75-a80f-5889d0621c13';
+$card->cardHolderName = 'Jane';
+
+$storeCredentials = new StoredCredential();
+$storeCredentials->initiator = StoredCredentialInitiator::MERCHANT;
+$storeCredentials->type = StoredCredentialType::RECURRING;
+$storeCredentials->sequence = StoredCredentialSequence::SUBSEQUENT;
+$storeCredentials->reason = StoredCredentialReason::INCREMENTAL;
+
+$cardBrandReference = '4SQHQJrra8mZLAJV';
+try {
+    $response = $card->charge(1)
+        ->withCurrency("USD")
+        ->withClientTransactionId("26851101")
+        ->withStoredCredential($storeCredentials)
+        ->withCardBrandStorage(StoredCredentialInitiator::MERCHANT, $cardBrandReference)
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+//API raw response key "payment_method->card->brand_reference"
+$cardBrandReference = $response->cardBrandTransactionId;
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->cvv_result"
+$cardIssuerCvv = $response->cardIssuerResponse->cvvResult;
+//API raw response key "payment_method->card->provider->avs_address_result"
+$cardIssuerAvsAddressResult = $response->cardIssuerResponse->avsAddressResult;
+//API raw response key "payment_method->card->provider->avs_postal_code_result"
+$cardIssuerAvsPostalCodeResult = $response->cardIssuerResponse->avsPostalCodeResult;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $response->fraudFilterResponse->fraudResponseMode;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $response->fraudFilterResponse->fraudResponseResult;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $response->fraudFilterResponse->fraudResponseRules;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+{
+    "id": "TRN_VlPpcvVMlLoZGOW1o0edXsZsMtLo53_88355871",
+    "time_created": "2024-09-09T16:39:45.631Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "88355871",
+    "payment_method": {
+        "result": "00",
+        "message": "(00)[ test system ] Authorised",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX4242",
+            "authcode": "123456",
+            "brand_reference": "VF5zk3S5I9V5S117",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "ACCEPTED",
+            "rules": [
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "BAT_1434980",
+    "action": {
+        "id": "ACT_VlPpcvVMlLoZGOW1o0edXsZsMtLo53",
+        "type": "AUTHORIZE",
+        "time_created": "2024-09-09T16:39:45.631Z",
+        "result_code": "SUCCESS",
+        "app_id": "iTWOpWdxIJD5k1nY46CBN3Ug7G9C65KN",
+        "app_name": "Jordans_Cool_App"
+    }
+}
+```
+</Code>
+## Integration references
+
+To get a deeper understanding of this function, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview). 
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/access-token" title="/accesstoken - API Explorer" icon="window">
+        Generate an access token.
+    </Card>
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        See the full transaction endpoint, including recurring payments.
+    </Card>
+  <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Add server-side or client-side code to your integration.
+    </Card>
+</CardsGroup>
+
+## Testing
+
+Our Recurring Payments solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing.
+
+<CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+  <Card type="with_icon" link="/docs/getting-started/postman-collection" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+  <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

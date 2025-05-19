@@ -1,0 +1,42 @@
+---
+title: "iOS Library"
+subtitle: "Integrate using our iOS Library"
+tag: "xml"
+created: "01/24/2025"
+---
+## Requirements
+
+* iOS 8.0+
+* Xcode 7.1.1+
+
+## Installation
+
+### Cocoapods
+
+You can integrate our iOS Library into your Xcode project using Cocoapods.
+
+1) Specify it in your podfile: <br />
+<Code id="XML" title="" language="XML" active>
+```
+pod 'RXPiOS', '~> 1.5.0'
+```
+</Code>
+2) Next, run the following command: <br />
+<Code id="XML" title="" language="XML" active>
+```
+$ pod install
+```
+</Code>
+
+### Manual
+If you prefer not to use a dependency manager, you can manually integrate our iOS Library into your project.
+
+1) Download the the latest release from [GitHub](https://github.com/realexpayments/rxp-ios/releases).
+2) Drag and drop the **RealexComponent** folder into Xcode to use the HPP part of the library.
+3) Run the following command: <br />
+<Code id="XML" title="" language="XML" active>
+```
+$ pod install
+```
+</Code>
+4) If you want to use the card data validation library, drag and drop the **RealexRemote** folder into your Xcode project.

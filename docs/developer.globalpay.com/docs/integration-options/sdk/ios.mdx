@@ -1,0 +1,108 @@
+---
+title: 'iOS Library'
+search_results: 'Global Payments - iOS Library'
+subtitle: 'Integrate using our iOS Library'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+## Requirements
+* iOS 9.0+
+* Xcode 11+
+* Swift 5.0+
+
+## Installation
+You can integrate our iOS Library into your Xcode project using Cocoapods.
+
+1) Specify it in your podfile:
+    <Code>
+    ```
+    pod 'GlobalPayments-iOS-SDK', '~> 1.0',
+    ```
+    </Code>
+2) Next, run the following command:
+    <Code>
+    ```
+    $ pod install
+    ```
+    </Code>
+
+## Manual
+If you prefer not to use a dependency manager, you can manually integrate our iOS Library into your project.
+
+1) Download our latest iOS SDK release from [GitHub](https://github.com/globalpayments/ios-sdk/releases).
+2) Drag and drop the folder “GlobalPayments-iOS-SDK” into Xcode.
+
+## Github
+You can find a test suite of code samples for using the iOS SDK in our [GitHub repository](https://github.com/globalpayments/ios-sdk).
+
+## Documentation and samples
+You can find the latest SDK documentation under [SDKs & Libraries](/docs/integration-options/sdk/overview). For a full list of test cards, see our [Test Cards](/resources/test-cards) article. Code examples can be found in the [API Explorer](/api/overview).
+
+#### Sample code - Processing a payment
+<Code id="swift" language="swift" title="swift" active>
+```
+/// Prepare required configuration
+let config = GpApiConfig (
+appId: "Your application ID",
+appKey: "Your application key"
+)
+
+/// Add config to container
+try ServicesContainer.configureService(config: config)
+
+/// Prepare card
+let card = CreditCardData()
+card.number = "4111111111111111"
+card.expMonth = 12
+card.expYear = 2025
+card.cvn = "123"
+card.cardHolderName = "Joe Smith"
+
+// Execute operation
+card.charge(amount: 19.99)
+    .withCurrency("USD")
+
+.execute { transaction, error in
+     // Handle transaction response or error
+}
+```
+</Code>
+
+#### Sample code - Error handling
+<Code id="swift" language="swift" title="swift" active>
+```
+card.charge(amount: 19.99)
+    .withCurrency("USD")
+    .withAddress(address)
+.execute { transaction, error in
+     if let error = error as? BuilderException {
+         // handle builder errors
+     } else if let error = error as? ConfigurationException {
+         // handle errors related to your services configuration
+     } else if let error = error as? GatewayException {
+         // handle gateway errors/exceptions
+     } else if let error = error as? UnsupportedTransactionException {
+         // handle errors when the configured gateway doesn't support desired transaction
+     } else if let error = error as? ApiException {
+         // handle all other errors
+     }
+}
+```
+</Code>
+
+## Testing exceptions
+During integration, you’ll want to test for specific issuer responses such as "Card Declined." In our Sandbox, you can simulate the response of gateways and Issuers by using specific transaction amounts or card numbers. 
+
+For a full list of test cards, see our [Test Cards](/resources/test-cards) article. If you don’t find what you need to simulate a certain result, contact your account manager. 
+
+## Test cards
+| Card Number | Card Type | Expiration Date | Security Code |
+| --- | --- | --- | --- |
+| 4263970000005262 | Visa | 12/2025 | 123   |
+| 2223000010005780 | MasterCard | 12/2025 | 900   |
+| 5425230000004415 | MasterCard | 12/2025 | 123   |
+| 6011000000000087 | Discover | 12/2025 | 123   |
+| 374101000000608 | Amex | 12/2025 | 1234   |
+| 3566000000000000 | JCB | 12/2025 | 123   |
+| 36256000000725 | Diners Club | 12/2025 | 123   |

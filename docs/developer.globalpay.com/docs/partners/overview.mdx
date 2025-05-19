@@ -1,0 +1,82 @@
+---
+title: 'Partners'
+search_results: 'Partners - Create, manage, and act on behalf of your merchants.'
+subtitle: 'Create, manage, and act on behalf of your merchants.'
+tag: 'rest'
+created: '06/08/2024'
+---
+Partner Solutions is a collection of tools that enables software providers to deliver payments as a service to their customers. Partners can embed all aspects of managing a merchant’s account into their software or application. As a partner, you can:
+* Integrate payments seamlessly into your software or application
+* Use API-driven customer boarding for payments
+* Report details on all merchant actions across transactions and settlement
+
+## Merchants and Partners
+When interacting with the API, you can act as either a merchant or a partner. This section covers the differences.
+
+* A **merchant** represents a customer of ours who can use our API. Merchants can use all the capabilities our API has to offer. 
+* **Partners** manage _merchants_. Partners are set up for the management capability on our API via Merchant Management Account (MMA). A partner can only execute API actions on behalf of merchants based on the management accounts configured for them, the permissions on those accounts, and the merchants associated with those accounts.
+
+<Infobox>
+  To get set up in Sandbox as a partner - Please contact our [support team](/support/integration-support). If you do wish to see the capabilities as a single merchant, please register for an account today, get an app and start integrating
+</Infobox>
+
+The table below summarizes the differences between a merchant and a partner.
+| User Profile | Description |
+| -------- | -------- |
+| Merchant | A person or company that sells goods or services. On our API it's a single identifier within our system API, called a MER_ID. Multiple permissions and accounts can be connected to this single MER_ID. |
+| Partner | Act on behalf of their merchants. A partner can be associated with one or multiple MER_IDs. Partners on our system and API are defined by a Partner Id, called a PAR_ID. We provide the partner credentials directly; they cannot be generated via API.<br/><br/>Multiple MER_IDs can exist under a PAR_ID.<br/><br/>Multiple accounts associated with managing merchants or managing partner funds can be connected to a single PAR_ID. |
+
+## Accounts & Products
+#### Accounts
+Partners and merchants are set up for capabilities on our API via accounts, and they can only execute API actions based on the accounts configured for them. 
+
+The following table describes each account type.
+| Capability | Type | Account | Description |
+| -------- | -------- | --------| -------- |
+| Funds Management | Partner | FMA | Used to transfer funds between accounts with us, or to move funds from an account with us to a business bank account or debit card. |
+| Merchant Management | Partner | MMA | Used to grant a partner the capabilities to board, manage, and transact on behalf of merchants. |
+| Tokenization Management |	Merchant | TKA | Used to tokenize payment methods. For example, to store a card or use Hosted Fields. |
+| Transaction Processing | Merchant | TRA | Used to create and manage transactions (i.e. authorize, capture, reverse, adjust) as well as activities that occur before or after transaction creation and management (e.g. 3D Secure and card validations). |
+
+#### Products
+Products represent the capabilities a partner can set up for a merchant using their MMA. For example, Transaction Processing, Funds Management, 3D Secure, and so on—and are a simple mechanism to create accounts for a merchant. One or more products can be referenced when creating a merchant so that the accounts needed by that merchant for the associated capability actions will be created.
+
+The following table shows what accounts are created for a product.
+| Product Name | Product ID | Account Created Name | Account Created Id |
+| -------- | -------- | -------- | -------- |
+| 3DS and Card Not Present Transaction Processing | PRO_TRA_CNP_PPP | Transaction Processing | TRA | 
+| Card Not Present Transaction Processing |	PRO_TRA_CNP-US-CARD_PP | Transaction Processing | TRA |
+| Card Present transaction processing | PRO_TRA_CP_PPP | Transaction Processing | TRA | 
+| ACH Processing | PRO_TRA_CNP_US_BANK-TRANSFER_PP | Transaction Processing | TRA | 
+| Card Present transaction processing on Device A920 | PRO_TRA_CP-US-CARD-A920_SP | Transaction Processing | TRA | 
+| PARTNER_TOKEN_STORE | PRO_d02541e6-84e4-48e7-86a3-dddb68f51310 | Tokenization Management | TKA |
+| Fund Management | PRO_FMA_PUSH-FUNDS_PP | Funds Management | FMA | 
+
+## Partner Sandbox
+<Infobox>
+  To get set up in Sandbox as a partner - Please contact our [support team](/support/integration-support). If you do wish to see the capabilities as a single merchant, please register for an account today, get an app and start integrating
+</Infobox>
+
+## Partner API resource paths
+Resource paths in the API Explorer are indicated for apps with individual integrated merchants. As a partner, you'll need to indicate the merchant identifier (MER_ID) in the URL path. 
+| Type | URL |
+| -------- | -------- |
+| Sample standalone merchant | `https://apis.sandbox.globalpay.com/ucp/transactions` |
+| Sample partner merchant | `https://apis.sandbox.globalpay.com/ucp/merchants/`<br />`MER_87b40c2f76cf4bee999aef1a05d893a7/transactions` |
+| A partner with a single MMA can omit the `accounts/{MMA_id}` | `https://apis.sandbox.globalpay.com/ucp/merchants/`<br/>`MER_87b40c2f76cf4bee999aef1a05d893a7/transactions` |
+| A partner with multiple MMAs must include the `accounts/{MMA_id}` | `https://apis.sandbox.globalpay.com/ucp/accounts/MMA_3025f59e0a244a25a27f375cb731f71f/`<br/>`merchants/MER_87b40c2f76cf4bee999aef1a05d893a7/transactions` |
+
+## Ready to get started?
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/partners/merchant-mgt" title="Merchant Creation &amp; Management">
+    </Card>
+
+    <Card type="with_icon" link="/docs/partners-transfers-transactions" title="Transfers &amp; Split Transactions">
+    </Card>  
+
+    <Card type="with_icon" link="/docs/partners-funds-mgt" title="Funds Management">
+    </Card>
+
+    <Card type="with_icon" link="/docs/partners/embedded/disputes-guide" title="Partner Disputes Management">
+    </Card>
+</CardsGroup>

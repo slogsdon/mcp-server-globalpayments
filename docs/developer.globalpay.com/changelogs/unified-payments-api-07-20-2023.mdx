@@ -1,0 +1,18 @@
+---
+title: "Unified Payments API - July 20, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "07-20-2023"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="changed">
+        * The "brand_reference" field is no longer conditionally mandatory. This field is now optional.
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="changed">
+        * Enhanced the response field names for Open Banking transactions. The fields "payment_method.bank_transfer.account_number" and “payment_method.bank_transfer.iban" were updated to reflect the data returned in these fields. New fields names are:
+            * payment_method.bank_transfer.masked_account_number_last4
+            * payment_method.bank_transfer.masked_iban_last4
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

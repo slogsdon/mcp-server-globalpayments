@@ -1,0 +1,120 @@
+---
+title: 'Przelewy 24'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/przelewy24.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers                |
+| -------------------------- | ----------------------------- |
+| **Payment Method String**  | p24                           |
+| **Available Countries**    | PL                            |
+| **Available Currencies**   | PLN                           |
+| **Min Transaction Amount** | 0.01 PLN / 0.01 EUR           |
+| **Max Transaction Amount** | 55,000 PLN/ equivalent in EUR |
+| **Supports Refunds**       | Yes, until 365 days           |
+| **Chargebacks**            | No                            |
+| **Sandbox**                | Yes                           |
+| **Timeout**                | 1 Hour                        |
+
+**Note:** For refund claims after 90 days customer should communicate refund directly to P24 as they close the initial transaction.
+
+### Sample request
+<CodeGroup>
+        <Code id="html" title="HTTP POST (HPP)" language="markup" active>
+        ```
+        <form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+        <input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+        <input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+        <input type="hidden" name="ACCOUNT" value ="internet">
+        <input type="hidden" name="ORDER_ID" value ="20230202210833-63dc26514d513">
+        <input type="hidden" name="AMOUNT" value ="100">
+        <input type="hidden" name="CURRENCY" value ="PLN">
+        <input type="hidden" name="SHA1HASH" value ="9442fe7ae11b071f08826167cababf9e693f55fa">
+        <input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+        <input type="hidden" name="HPP_VERSION" value ="2">
+        <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="PL">
+        <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+        <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+        <input type="hidden" name="MERCHANT_RESPONSE_URL" value =”https://www.example.com/statusUrl”>
+        <input type="hidden" name="HPP_TX_STATUS_URL" value =”https://www.example.com/statusUrl”>
+        <input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+        <input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+        <input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+        <input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+        <input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+        <input type="hidden" name="HPP_LANG" value ="EN">
+        <input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+        <input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+        <input type="hidden" name="COMMENT1" value="Mobile Channel">
+        <input type="hidden" name="COMMENT2" value="Down Payment">
+        <input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+        <input type="submit" value="Click here to Purchase">
+        </form>
+        ```
+        </Code>
+        <Code id="xml" title="XML" language="markup">
+        ```
+        <?xml version='1.0' encoding='UTF-8'?>			
+        <request type='payment-set' timestamp='{{timestamp}}'>			
+                <merchantid>Merchant ID</merchantid>		
+                <account>internet</account>		
+                <amount currency='PLN'>5100</amount>		
+                <autosettle flag='1' />		
+                <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+                <paymentmethod>p24</paymentmethod>		
+                <paymentmethoddetails>		
+                        <returnurl>https://www.example.com/returnUrl</returnurl>	
+                        <errorurl>https://www.example.com/errorUrl</errorurl>	
+                        <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+                        <descriptor>Test Transaction</descriptor>	
+                        <country>PL</country>	
+                        <accountholdername>James Mason</accountholdername>	
+                        <customeremail>test@example.com</customeremail>
+                </paymentmethoddetails>		
+                <comments>		
+                        <comment id='1'>Mobile Channel</comment>	
+                        <comment id='2'>Down Payment</comment>	
+                </comments>		
+                <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+        </request>	
+        ```
+        </Code>
+        <Code id="json" title="JSON" language="json">
+        ```
+        {
+                "account_name": "{{acc_name}}",                
+                "type": "SALE",                
+                "channel": "CNP",                
+                "amount": "5100",                
+                "currency": "PLN",                
+                "reference": "{{reference}}",                
+                "country": "PL",                
+                "payment_method": {                
+                        "entry_mode": "ECOM",        
+                        "apm": {        
+                                "provider": "p24"
+                        }        
+                },                
+                "notifications": {                
+                "return_url": "<Replace with your own endpoints>",                
+                "status_url": "<Replace with your own endpoints>"                
+                },                
+                "payer": {
+                        "email": "abcd@gmail.com"
+                }                
+        }
+        ```
+        </Code>
+</CodeGroup>
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name               | Type | Format                                                                 | Length | Description                                                                                                                                                                            |
+| ------------------ | ---- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer Email     | M    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80   | The email address of the customer.                                                                                                                                                     |
+| Dynamic Descriptor | O    | a-z A-Z 0-9 \[space\] / - French-accented                              | 25     | Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement. |

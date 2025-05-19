@@ -1,0 +1,290 @@
+---
+title: "Message Extension"
+subtitle: "Use this field to send customized information to the card issuer"
+tag: "xml"
+created: "01/28/2025"
+---
+<Tabs>  
+<Tab id="mc" title="Mastercard">
+
+In the 3D Secure 2 protocol, the Message Extension fields allow for more customized and card-specific information to be passed in both the request and response messages. This article focuses on what Mastercard uses the Message Extension fields for, including:
+ 
+* Strong Customer Authentication (SCA) exemptions and Allowlisting
+* Merchant fraud rate
+* Acquirer country code
+* Secure corporate payments
+
+To get the most out of this article, we recommend you first read our [Browser Authentication for 3D Secure](/ecommerce/risk-management/3ds/browser-authentication) article.
+
+## SCA exemptions
+
+One of the key advantages of 3D Secure 2 is that it provides a framework for merchants to benefit from exemptions from SCA under certain conditions. With 3D Secure version 2.2, merchants can flag specific exemptions using the Challenge Request Indicator field.
+
+In addition, for Mastercard authentications, the specific exemption the merchant is requesting must be included in the Message Extension fields during the Initiate Authentication step.
+
+#### Sample request (specific fields)
+
+In the authentication request, include the following fields.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+"challenge_request_indicator":"NO_CHALLENGE_REQUESTED",
+"message_extension": [
+   {
+      "name": "Merchant Data",
+      "id": "A000000004-merchantData",
+      "criticality_indicator": "false",
+      "data": {
+         "A000000004-merchantData": {
+            "scaExemptions":"05"
+         }
+      }
+   }
+]
+```
+</Code>
+
+#### Request Syntax (Specific Fields)
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Challenge Request Indicator | string | enum | Indicates whether a challenge is requested for this transaction. The Issuer may override whatever preference is specified in this field. In this use case it should always be set to the following:  <br />  <br />**NO\_CHALLENGE\_REQUESTED** - Preference is for the customer not to be challenged.  <br />  <br />European merchants: optional for SCA. |
+| Message Extension Name | string | alphanumeric | The name of the extension data set as defined by the extension owner. Maximum 64 characters. |
+| Message Extension ID | string | alphanumeric | A unique identifier for the extension. Maximum 64 characters. |
+| Message Extension Criticality Indicator | boolean |     | Indicates whether the data in the Message Extension affects the overall response.  <br />  <br />**True** - The message is critical. The overall response can only be understood by taking into account the extension data.  <br />**False** - The message is non-critical. The overall response message is not affected by the extension data and can be interpreted as normal.  <br />  <br />Under normal circumstances the Criticality Indicator will return as false. |
+| Message Extension Data | string | alphanumeric | The data carried in the extension. Maximum 8059 characters. |
+| SCA Exemptions | string | numeric | Used to indicate SCA exemption request for all types of possible SCA exemptions (see list below).  <br />  <br />**05** - No challenge requested (transactional risk analysis is already performed)  <br />**06** - No challenge requested (data share only)  <br />**07** - No challenge requested (strong costumer authentication already performed)  <br />  <br />Allowed values: 05, 06, 07 |
+
+#### Sample response (specific fields)
+
+If the request for an exemption is successful, the response of the Authentication request will contain the following values. The authentication value will start with **kN**.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "authentication_value": "kNABBhIBRwAAAAAANQFHAAAAAAA=",
+   "status": "AUTHENTICATION_FAILED",
+   "status_reason": "81",
+   "eci": "06",
+}
+```
+</Code>
+
+#### Response Syntax (specific fields)
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Authentication Value | string | alphanumeric | Unique value provided as part of the ACS registration for each supported DS. Must be used to provide proof of authentication.  <br />  <br />In this case, if the exemption request is successful the leading indication of this value will be **kN**. |
+| Transaction Status | string | enum | Indicates whether a transaction qualifies as an authenticated transaction or account verification.  <br />  <br />In this case, if the exemption request is successful the value will be AUTHENTICATION\_FAILED |
+| Transaction Status Reason | string | enum | Indicates whether a transaction qualifies as an authenticated transaction or account verification.  <br />  <br />In this case, if the exemption request is successful the value will be: **81** which for Mastercard maps to Challenge Exemption Accepted. |
+| Eci | string | alphanumeric | The E-Commerce Indicator: indicates whether chargeback protection is available for the transaction or not. |
+
+## Allowlisting
+3D Secure 2 allows customers to allowlist, or whitelist, certain merchants—effectively telling the Issuer that transactions with particular merchants should be trusted. If this occurs, the Issuer may return information in the authentication response regarding the allowlist status of the merchant.
+
+In version 2.1, Mastercard does not support allowlisting merchants as trusted beneficiaries list. However, Mastercard is able to share the allowlist status of a merchant through message extension.
+
+#### Sample response (specific values)
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+"message_extension": [
+   {
+      "name": "ACS Data",
+      "id": "A000000004-acsData",
+      "criticality_indicator": "false",
+      "data": {
+         "A000000004-acsData": {
+            "whitelistStatus":"Y"
+         }
+      }
+   }
+],
+
+```
+</Code>
+
+#### Response syntax (specific fields)
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Message Extension Name | string | alphanumeric | The name of the extension data set as defined by the extension owner. Maximum 64 characters. |
+| Message Extension ID | string | alphanumeric | A unique identifier for the extension. Maximum 64 characters. |
+| Message Extension Criticality Indicator | boolean |     | Indicates whether the data in the Message Extension affects the overall response.  <br />  <br />**True** - The message is critical. The overall response can only be understood by taking into account the extension data.  <br />**False** - The message is non-critical. The overall response message is not affected by the extension data and can be interpreted as normal.  <br />  <br />Under normal circumstances the Criticality Indicator will return as false. |
+| Message Extension Data | string | alphanumeric | The data carried in the extension. Maximum 8059 characters. |
+| SCA Exemptions | string | string | Indicates the whitelist status of the merchant with the customer.  <br />  <br />**Y** - Merchant is whitelisted by customer  <br />**N** - Merchant is not whitelisted by customer  <br />**E** - Not eligible as determined by Issuer  <br />**P** - Pending confirmation by customer  <br />**R** Customer Rejected  <br />**U** - Whitelist status unknown, unavailable, or does not apply |
+
+## Merchant fraud rate
+
+Mastercard allows the merchant fraud rate to be shared with the Issuer as part of the Authentication Request message using a specific Message Extension field. Sharing the merchant fraud rate can increase the Issuer’s level of confidence in the transaction. Issuers can also use it to decide if a merchant should be eligible for the allowlist exemption.
+
+<div><Infobox>
+There is no change to the response message when using this extension.
+</Infobox></div>
+
+#### Sample request (specific fields)
+
+In the authentication request, include the following fields.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+"message_extension": [
+   {
+      "name": "Merchant Data",
+      "id": "A000000004-merchantData",
+      "criticality_indicator": false,
+      "data": {
+         "A000000004-merchant_data":{
+         "merchantfraudrate": "1"
+         }
+      }
+   }
+]
+```
+</Code>
+
+#### Request syntax (specific fields)
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Message Extension Name | string | alphanumeric | The name of the extension data set as defined by the extension owner. Maximum 64 characters. |
+| Message Extension ID | string | alphanumeric | A unique identifier for the extension. Maximum 64 characters. |
+| Message Extension Criticality Indicator | boolean |     | Indicates whether the data in the Message Extension affects the overall response.  <br />  <br />**True** - The message is critical. The overall response can only be understood by taking into account the extension data.  <br />**False** - The message is non-critical. The overall response message is not affected by the extension data and can be interpreted as normal.  <br />  <br />Under normal circumstances the Criticality Indicator will return as false. |
+| Message Extension Data | string | alphanumeric | The data carried in the extension. Maximum 8059 characters. |
+| Merchant Fraud Rate | string | string | Indicates the Merchant fraud rate in bps taking into account all Merchant sites and card volumes. Calculated as per PSD2 RTS Article 19  <br />  <br />**1** - (represents fraud rate ≤1)  <br />**2** - (represents fraud rate 1+ - 6)  <br />**3** - (represents fraud rate 6+ -13)  <br />**4** - (represents fraud rate 13+ -25)  <br />**5** - (represents fraud rate >25) |
+
+## Acquirer country code
+Merchants can use this extension to inform the Issuer if the Acquirer country and merchant country differ. This is particularly important for transaction processing in countries where regulations may apply based on the Acquirer country. 
+
+If a transaction is “two-leg” — that is, the country code of both the Acquirer and the Issuer is in the European Economic Area (EEA) — then it is in scope of SCA. It is therefore important to share the Acquirer country code; otherwise, an Issuer could incorrectly flag a transaction as a “one-leg” transaction, which would be out of scope of SCA.
+
+<div><Infobox>
+There is no change to the response message when using this extension.
+</Infobox></div>
+
+#### Sample request (specific fields)
+
+In the authentication request, include the following fields.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+"message_extension": [
+   {
+      "name": "Merchant Data",
+      "id": "A000000004-merchantData",
+      "criticality_indicator": false,
+      "data": {
+         "A000000004-merchant_data":{
+         "acquirer_country_code": "050"
+         }
+      }
+   }
+]
+```
+</Code>
+
+#### Request syntax (specific fields)
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Message Extension Name | string | alphanumeric | The name of the extension data set as defined by the extension owner. Maximum 64 characters. |
+| Message Extension ID | string | alphanumeric | A unique identifier for the extension. Maximum 64 characters. |
+| Message Extension Criticality Indicator | boolean |     | Indicates whether the data in the Message Extension affects the overall response.  <br />  <br />**True** - The message is critical. The overall response can only be understood by taking into account the extension data.  <br />**False** - The message is non-critical. The overall response message is not affected by the extension data and can be interpreted as normal.  <br />  <br />Under normal circumstances the Criticality Indicator will return as false. |
+| Message Extension Data | string | alphanumeric | The data carried in the extension. Maximum 8059 characters. |
+| Acquirer Country Code | string | string | ISO 3166-1 numeric three-digit country code |
+
+</Tab> 
+
+   <Tab id="amex" title="American Express Rewards">
+
+The American Express Membership Rewards message extension enables merchants to obtain the balance of a card member’s rewards points and display it on the checkout page as an alternative payment option for the customer.
+
+There are two major steps in this process:
+
+* Perform a **non-payment authentication** to obtain the rewards points balance
+* Perform a **payment authentication** to redeem their points and use them to pay
+
+<div><Infobox>
+To use the American Express Membership Rewards message extension, contact your account manager or a member of our support team.
+</Infobox></div>
+
+## Step 1: Eligibility and points balance
+
+After gathering the customer’s card data, billing and shipping details, as well as other 3D Secure 2 data such as browser information, we can then perform a non-payment authentication while specifying that we want the American Express rewards balance.
+
+If the customer is eligible for membership rewards, the Issuer will respond with an Authentication Successful message and include the rewards data in the Message Extension fields. If they are not eligible, the reason for this will be returned.
+
+#### Sample request (specific fields)
+In the non-payment authentication request, include the following fields.
+
+<Code id="JSON" title="" language="json" active>
+```
+"message_category": "NON_PAYMENT_AUTHENTICATION",
+"authentication_request_type": "AMEX_REWARDS_BALANCE",
+```
+</Code>
+
+#### Sample response (specific fields)
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+"message_extension": [
+   {
+      "name": "Membership Rewards",      
+      "id": "A000000025-001",
+      "criticality_indicator": false,
+      "data": {
+         "mr_balance":"14040", 
+         "mr_currencyName":"Membership Rewards", 
+         "conversion_points":"1000", 
+         "converted_currAmount":"10", 
+         "mr_status_reason":"01" 
+      }
+   }
+]
+```
+</Code>
+
+#### Response syntax (specific fields)
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Message Extension Name | string | alphanumeric | The name of the extension data set as defined by the extension owner. Maximum 64 characters. |
+| Message Extension ID | string | alphanumeric | A unique identifier for the extension. Maximum 64 characters. |
+| Message Extension Criticality Indicator | boolean |     | Indicates whether the data in the Message Extension affects the overall response.  <br />  <br />**True** - The message is critical. The overall response can only be understood by taking into account the extension data.  <br />**False** - The message is non-critical. The overall response message is not affected by the extension data and can be interpreted as normal.  <br />  <br />Under normal circumstances the Criticality Indicator will return as false. |
+| Message Extension Data | string | alphanumeric | The data carried in the extension. Maximum 8059 characters. |
+| MR Balance | string | string | The Membership Rewards Balance. |
+| MR Currency Name | string | string | The Membership Rewards Currency Name. |
+| Conversion Points | string | string | The number points converted. |
+| Converted Currency Amount | string | string | The amount in the converted currency. |
+| MR Status Reason | string | string | The Membership Rewards status and reason. Possible values:  <br />  <br />**01** – Membership Rewards balance included  <br />**02** – Card not eligible to use Membership Rewards points on this transaction  <br />**03** – Eligible, but high-risk transaction requires Card Member authentication  <br />**04** – Other |
+
+## Step 2: Points authentication
+You can now present the customer with the option to pay using their points balance. Next, we perform a 3D Secure 2 payment authentication for a customer paying with their points balance. The authentication will proceed through a standard challenge flow to allow the customer to redeem their points and use them to pay.
+
+For more information on the standard challenge flow, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+#### API sample request (specific fields)
+
+In the payment authentication request, include the following fields.
+
+<Code id="JSON" title="" language="json" active>
+```
+"message_category": "PAYMENT_AUTHENTICATION",
+"authentication_request_type": "AMEX_REWARDS_BALANCE",
+```
+</Code>
+
+</Tab> 
+
+  </Tabs>

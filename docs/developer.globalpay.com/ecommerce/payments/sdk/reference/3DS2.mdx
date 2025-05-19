@@ -1,0 +1,1207 @@
+---
+title: "3D Secure 2 SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+<Infobox>
+3D Secure 2 endpoint URLs: <br />
+Production: https://api.globalpay-ecommerce.com <br />
+Sandbox: https://api.sandbox.globalpay-ecommerce.com
+</Infobox>
+
+## Notification URLs
+
+<Infobox type="danger">
+The code samples used throughout this article are simple examples and should not be used as Production-ready code.
+</Infobox>
+
+### Sample Method Notification Endpoint
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+@RequestMapping("/methodUrlResponse")
+public void consumeMethodUrlResponse(String threeDSMethodData) throws UnsupportedEncodingException {
+
+   // sample ACS response for Method URL Response Notification
+   // String threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+   try {
+      byte[] decodedBytes = Base64.getDecoder().decode(threeDSMethodData);
+      String methodUrlResponseString = new String(decodedBytes);
+      Gson gson = new Gson();
+
+      // map to a custom class MethodUrlResponse
+      MethodUrlResponse response = gson.fromJson(methodUrlResponseString, MethodUrlResponse.class);
+
+      String threeDSServerTransID = response.getThreeDSServerTransID(); // // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+
+      // TODO: notify client-side that the Method URL step is complete
+   }
+
+   catch(Exception e) {
+      // TODO: add your exception handling here
+   }
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+var threeDSMethodData = Request.Form["threeDSMethodData"];
+
+// sample ACS response for Method URL Response Notification
+// threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+try
+{
+   byte[] data = Convert.FromBase64String(threeDSMethodData);
+   string methodUrlResponseString = Encoding.UTF8.GetString(data);
+
+   // map to a custom class MethodUrlResponse
+   MethodUrlResponse methodUrlResponse = JsonConvert.DeserializeObject<MethodUrlResponse>(methodUrlResponseString);
+
+   string threeDSServerTransID = methodUrlResponse.ThreeDSServerTransID; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+
+   // TODO: notify client-side that the Method URL step is complete
+}
+
+catch (Exception exce)
+{
+   // TODO: add your exception handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+$threeDSMethodData = $_REQUEST["threeDSMethodData"];
+
+// sample ACS response for Method URL Response Notification
+// $threeDSMethodData = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSJ9";
+
+try {
+   $decodedThreeDSMethodData = base64_decode($threeDSMethodData);
+   $convertedThreeDSMethodData = json_decode($decodedThreeDSMethodData, true);
+   $serverTransID = $convertedThreeDSMethodData['threeDSServerTransID']; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5  
+
+   // TODO: notify client-side that the Method URL step is complete
+   
+} catch (Exception $exce) {
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+</CodeGroup>
+
+### Sample Challenge Notification Endpoint
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+@RequestMapping("/challengeUrlResponse")
+public void consumeChallengeUrlResponse(@RequestParam("cres") String cres) throws UnsupportedEncodingException {
+
+   // example CRes (Challenge Result) sent by the ACS
+   /* String cres = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+     + "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+     + "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+     + "1N0YXR1cyI6IlkifQ==";
+     */
+
+   try {
+
+      byte[] decodedBytes = Base64.getDecoder().decode(cres);
+      String challengeUrlResponseString = new String(decodedBytes);
+      Gson gson = new Gson();
+
+      // map to a custom class ChallengeUrlResponse which has String variables for each response element
+      ChallengeUrlResponse challengeUrlResponse = gson.fromJson(challengeUrlResponseString, ChallengeUrlResponse.class);
+
+      String threeDSServerTransID = challengeUrlResponse.getThreeDSServerTransID(); // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+      String acsTransId = challengeUrlResponse.getAcsTransID(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+      String challengeCompletionInd = challengeUrlResponse.getChallengeCompletionInd(); // Y
+      String messageType = challengeUrlResponse.getMessageType(); // Cres
+      String messageVersion = challengeUrlResponse.getMessageVersion(); // 2.1.0
+      String transStatus = challengeUrlResponse.getTransStatus(); // Y
+
+      // TODO: notify client-side that the Challenge step is complete and pass any required data
+   }
+
+   catch(Exception e) {
+      // TODO: Add your exception handling here
+   }
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+ var cres = Request.Form["cres"];
+
+// Example CRes (Challenge Result) sent by the ACS
+// var cRes = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+// + "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+// + "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+// + "1N0YXR1cyI6IlkifQ==";
+
+try
+{
+   byte[] data = Convert.FromBase64String(cres);
+   string challengeUrlResponseString = Encoding.UTF8.GetString(data);
+   // map to a custom class ChallengeUrlResponse which has String variables for each response element
+   ChallengeUrlResponse challengeUrlResponse = JsonConvert.DeserializeObject<ChallengeUrlResponse>(challengeUrlResponseString);
+
+   var threeDSServerTransID = challengeUrlResponse.ThreeDSServerTransID; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   var acsTransId = challengeUrlResponse.AcsTransID; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   var challengeCompletionInd = challengeUrlResponse.ChallengeCompletionInd; // Y
+   var messageType = challengeUrlResponse.MessageType; // Cres
+   var messageVersion = challengeUrlResponse.MessageVersion; // 2.1.0
+   var transStatus = challengeUrlResponse.TransStatus; // Y
+
+   // TODO: notify client-side that the Challenge step is complete and pass any required data
+}
+
+catch (Exception exce)
+{
+   // TODO: add your exception handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+/*
+ * this sample code is intended as a simple example and should not be treated as Production-ready code 
+ * you'll need to add your own message parsing and security in line with your application or website
+ */
+$cres = $_REQUEST['cres'];
+
+/* $cres = "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImF"
+ * . "jc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VDb21wbGV0a"
+ * . "W9uSW5kIjoiWSIsIm1lc3NhZ2VUeXBlIjoiQ3JlcyIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAiLCJ0cmFuc"
+ * . "1N0YXR1cyI6IlkifQ==";
+ */
+
+try {
+   $decodedString = base64_decode($cres);
+   $convertedObject = json_decode($decodedString, true);
+
+   $serverTransID = $convertedObject['threeDSServerTransID']; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   $acsTransID = $convertedObject['acsTransID']; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   $challengeCompletionInd = $convertedObject['challengeCompletionInd']; // Y
+   $messageType = $convertedObject['messageType']; // Cres
+   $messageVersion = $convertedObject['messageVersion']; // 2.1.0
+   $transStatus = $convertedObject['transStatus']; // Y
+
+   // TODO: notify client-side that the Challenge step is complete and pass any required data
+} catch (Exception $exce) {
+   // TODO: Add your exception handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Gather device data
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// import javax.servlet.http.HttpServletRequest;
+String customerIp = request.getRemoteAddr(); // 123.123.123.123
+String acceptHeader = request.getHeader("accept"); // text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+String customerIp = Request.ServerVariables["REMOTE_ADDR"];
+String acceptHeader = Request.ServerVariables["HTTP_ACCEPT"];
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+$customerIp = $_SERVER['REMOTE_ADDR']; // 123.123.123.123
+$acceptHeader = $_SERVER['HTTP_ACCEPT']; // text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+```
+</Code>
+</CodeGroup>
+
+## Check version
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Add cardholder data
+// Frictionless Example: 4263970000005262
+// Challenge Example: 4012001038488884
+CreditCardData card = new CreditCardData();
+card.setNumber("4012001038488884");
+
+ThreeDSecure threeDSecureData = null;
+
+try {
+   threeDSecureData = Secure3dService.checkEnrollment(card).execute();
+}
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+
+if (threeDSecureData != null) {
+
+   Boolean enrolled = threeDSecureData.isEnrolled(); // true or false
+   // If enrolled = true, the available response data
+   String serverTransactionId = threeDSecureData.getServerTransactionId(); // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   String dsStartProtocolVersion = threeDSecureData.getDirectoryServerStartVersion(); // 2.1.0
+   String dsEndProtocolVersion = threeDSecureData.getDirectoryServerEndVersion(); // 2.1.0
+   String acsStartProtocolVersion = threeDSecureData.getAcsStartVersion(); // 2.1.0
+   String acsEndProtocolVersion = threeDSecureData.getAcsEndVersion(); // 2.1.0
+   String methodUrl = threeDSecureData.getIssuerAcsUrl(); // https://www.acsurl.com/method
+   String encodedMethodData = threeDSecureData.getPayerAuthenticationRequest(); // Base64 encoded string
+
+   // TODO: if supported pass the Method URL and Encoded Method Data to the client-side   
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// Add cardholder data
+// Frictionless Example: 4263970000005262
+// Challenge Example: 4012001038488884
+CreditCardData card = new CreditCardData
+{
+   Number = "4012001038488884"
+};
+
+ThreeDSecure threeDSecureData = null;
+
+try
+{
+   threeDSecureData = Secure3dService.CheckEnrollment(card)
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+if (threeDSecureData != null)
+{
+   var enrolled = threeDSecureData.Enrolled; // True
+   // if enrolled, the available response data
+   var serverTransactionId = threeDSecureData.ServerTransactionId; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   var dsStartProtocolVersion = threeDSecureData.DirectoryServerStartVersion; // 2.1.0
+   var dsEndProtocolVersion = threeDSecureData.DirectoryServerEndVersion; // 2.1.0
+   var acsStartProtocolVersion = threeDSecureData.AcsStartVersion; // 2.1.0
+   var acsEndProtocolVersion = threeDSecureData.AcsEndVersion; // 2.1.0
+   var methodUrl = threeDSecureData.IssuerAcsUrl; // https://www.acsurl.com/method
+   var encodedMethodData = threeDSecureData.PayerAuthenticationRequest; // Base64 encoded string
+
+   // TODO: if supported pass the Method URL and Encoded Method Data to the client-side
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// add cardholder data
+// Frictionless Example: 4263970000005262
+// Challenge Example: 4012001038488884
+$card = new CreditCardData();
+$card->number = "4012001038488884";
+
+try {
+   $threeDSecureData = Secure3dService::checkEnrollment($card)->execute('default', Secure3dVersion::TWO);
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+$enrolled = $threeDSecureData->enrolled; // TRUE
+// if enrolled, the available response data
+$serverTransactionId = $threeDSecureData->serverTransactionId; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+$dsStartProtocolVersion = $threeDSecureData->directoryServerStartVersion; // 2.1.0
+$dsEndProtocolVersion = $threeDSecureData->directoryServerEndVersion; // 2.1.0
+$acsStartProtocolVersion = $threeDSecureData->acsStartVersion; // 2.1.0
+$acsEndProtocolVersion = $threeDSecureData->acsEndVersion; // 2.1.0
+$methodUrl = $threeDSecureData->issuerAcsUrl; // https://www.acsurl.com/method
+$encodedMethodData = $threeDSecureData->payerAuthenticationRequest; // Base64 encoded string
+
+// TODO: if supported pass the Method URL and Encoded Method Data to the client-side
+```
+</Code>
+</CodeGroup>
+
+## Initiate authentication - exemptions
+
+<Infobox>
+When a merchant requests an exemption they will no longer be able to avail of a liability shift in the event of a chargeback. <br />
+
+For Mastercard exemption requests, please also refer to our [Message Extension](/ecommerce/risk-management/3ds/message-extension) article.
+</Infobox>
+
+### Mandatory & recommended fields
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Add the cardholder data
+CreditCardData card = new CreditCardData();
+card.setNumber("4012001038488884");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("123");
+card.setCardHolderName("James Mason");
+
+// Add the customer's billing address
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Apartment 852");
+billingAddress.setStreetAddress2("Complex 741");
+billingAddress.setStreetAddress3("Unit 4");
+billingAddress.setCity("Chicago");
+billingAddress.setPostalCode("50001");
+billingAddress.setState("IL");
+billingAddress.setCountryCode("840");
+
+// Add the customer's shipping address
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("Flat 456");
+shippingAddress.setStreetAddress2("House 789");
+shippingAddress.setStreetAddress3("Basement Flat");
+shippingAddress.setCity("Halifax");
+shippingAddress.setPostalCode("W5 9HR");
+shippingAddress.setCountryCode("826");
+
+// Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData();
+browserData.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,/;q=0.8");
+browserData.setColorDepth(ColorDepth.TwentyFourBit);
+browserData.setIpAddress("123.123.123.123");
+browserData.setJavaEnabled(true);
+browserData.setLanguage("en");
+browserData.setScreenHeight(1080);
+browserData.setScreenWidth(1920);
+browserData.setChallengeWindowSize(ChallengeWindowSize.Windowed_600x400);
+browserData.setTimezone("0");
+browserData.setUserAgent("Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
+
+ThreeDSecure threeDSecureData = new ThreeDSecure();
+threeDSecureData.setServerTransactionId("9de5bccf-c438-4024-8961-ec4b3cff15ff");
+
+try {
+   // Initiate the 3D Secure 2 Authentication request
+   threeDSecureData = Secure3dService.initiateAuthentication(card, threeDSecureData)
+      .withAmount(new BigDecimal("10.01"))
+      .withCurrency("USD")
+      .withOrderCreateDate(DateTime.parse("2019-09-09T11:19:12"))
+      .withCustomerEmail("james.mason@example.com")
+      .withAddress(shippingAddress, AddressType.Billing)
+      .withAddress(billingAddress, AddressType.Shipping)
+      .withBrowserData(browserData)
+      .withMethodUrlCompletion(MethodUrlCompletion.Yes)
+      .withMobileNumber("44", "7123456789")
+      .execute();
+}
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+
+String status = threeDSecureData.getStatus(); // for example AUTHENTICATION_SUCCESSFUL or CHALLENGE_REQUIRED
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4012001038488884",
+   CardType = "VISA",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+// Add the customer's billing address
+Address billingAddress = new Address
+{
+   StreetAddress1 = "Apartment 852",
+   StreetAddress2 = "Complex 741",
+   StreetAddress3 = "Unit 4",
+   City = "Chicago",
+   PostalCode = "50001",
+   State = "IL",
+   CountryCode = "840"
+};
+
+// Add the customer's shipping address
+Address shippingAddress = new Address
+{
+   StreetAddress1 = "Flat 456",
+   StreetAddress2 = "House 789",
+   StreetAddress3 = "Basement Flat",
+   City = "Halifax",
+   PostalCode = "W5 9HR",
+   CountryCode = "826"
+};
+
+// Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData
+{
+   AcceptHeader = "text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,/;q=0.8",
+   ColorDepth = ColorDepth.TWENTY_FOUR_BITS,
+   IpAddress = "123.123.123.123",
+   JavaEnabled = true,
+   Language = "en",
+   ScreenHeight = 1080,
+   ScreenWidth = 1920,
+   ChallengeWindowSize = ChallengeWindowSize.FULL_SCREEN,
+   Timezone = "0",
+   UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+};
+
+ThreeDSecure threeDSecureData = new ThreeDSecure
+{
+   ServerTransactionId = "9de5bccf-c438-4024-8961-ec4b3cff15ff"
+};
+
+try
+{
+   threeDSecureData = Secure3dService.InitiateAuthentication(card, threeDSecureData)
+      .WithAmount(10.01m)
+      .WithCurrency("USD")
+      .WithOrderCreateDate(DateTime.Parse("2019-09-09T11:19:12"))
+      .WithCustomerEmail("james.mason@example.com")
+      .WithAddress(billingAddress, AddressType.Billing)
+      .WithAddress(shippingAddress, AddressType.Shipping)
+      .WithBrowserData(browserData)
+      .WithMethodUrlCompletion(MethodUrlCompletion.YES)
+      .WithMobileNumber("44", "7123456789")
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+var status = threeDSecureData.Status; // for example AUTHENTICATION_SUCCESSFUL or CHALLENGE_REQUIRED
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Add the cardholder data
+$card = new CreditCardData();
+$card->number = "4012001038488884";
+$card->expMonth = "05";
+$card->expYear = "25";
+$card->cvn = "123";
+$card->cardHolderName = "James Mason";
+
+// Add the customer's billing address
+$billingAddress = new Address();
+$billingAddress->streetAddress1 = "Apartment 852";
+$billingAddress->streetAddress2 = "Complex 741";
+$billingAddress->streetAddress3 = "Unit 4";
+$billingAddress->city = "Chicago";
+$billingAddress->state = "IL";
+$billingAddress->postalCode = "50001";
+$billingAddress->countryCode = "840";
+
+// Add the customer's shipping address
+$shippingAddress = new Address();
+$shippingAddress->streetAddress1 = "Flat 456";
+$shippingAddress->streetAddress2 = "House 789";
+$shippingAddress->streetAddress3 = "Basement Flat";
+$shippingAddress->city = "Halifax";
+$shippingAddress->postalCode = "W5 9HR";
+$shippingAddress->countryCode = "826";
+
+// Add captured browser data from the client-side and server-side 
+$browserData = new BrowserData();
+$browserData->acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+$browserData->colorDepth = ColorDepth::TWENTY_FOUR_BITS;
+$browserData->ipAddress = "123.123.123.123";
+$browserData->javaEnabled = TRUE;
+$browserData->language = "en";
+$browserData->screenHeight = "1080";
+$browserData->screenWidth = "1920";
+$browserData->challengWindowSize = ChallengeWindowSize::FULL_SCREEN;
+$browserData->timeZone = "0";
+$browserData->userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36";
+
+$threeDSecureData = new ThreeDSecure();
+$threeDSecureData->serverTransactionId = "9de5bccf-c438-4024-8961-ec4b3cff15ff";
+
+try {
+   $threeDSecureData = Secure3dService::initiateAuthentication($card, $threeDSecureData)
+      ->withAmount(10.01)
+      ->withCurrency("USD")
+      ->withOrderCreateDate(date("Y-m-d H:i:s"))
+      ->withCustomerEmail("james.mason@example.com")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->withAddress($shippingAddress, AddressType::SHIPPING)
+      ->withBrowserData($browserData)
+      ->withMethodUrlCompletion(MethodUrlCompletion::YES)
+      ->withMobileNumber("44", "7123456789")
+      ->execute(Secure3dVersion::TWO);
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+$status = $threeDSecureData->status;
+```
+</Code>
+</CodeGroup>
+
+## Optional fields
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Initiate the 3D Secure 2 Authentication request
+threeDSecureData = Secure3dService.initiateAuthentication(card, threeDSecureData)
+   .withAmount(new BigDecimal("10.01"))
+   .withCurrency("USD")
+   .withOrderCreateDate(DateTime.parse("2019-09-09T11:19:12"))
+   .withCustomerEmail("james.mason@example.com")
+   .withAddress(shippingAddress, AddressType.Billing)
+   .withAddress(billingAddress, AddressType.Shipping)
+   .withBrowserData(browserData)
+   .withMethodUrlCompletion(MethodUrlCompletion.Yes)
+   .withMobileNumber("44", "7123456789")
+   // Begin Optional Fields
+   .withHomeNumber("44", "123456789")
+   .withWorkNumber("44", "1801555888")
+   .withMerchantInitiatedRequestType(AuthenticationRequestType.RecurringTransaction)
+   // Gift Card Information
+   .withGiftCardCount(1)
+   .withGiftCardCurrency("USD")
+   .withGiftCardAmount(new BigDecimal("5.00"))
+   // Additional Order Information
+   .withDeliveryEmail("james.mason@example.com")
+   .withDeliveryTimeFrame(DeliveryTimeFrame.ElectronicDelivery)
+   .withShippingMethod(ShippingMethod.VerifiedAddress)
+   .withShippingNameMatchesCardHolderName(true)
+   .withPreOrderIndicator(PreOrderIndicator.MerchandiseAvailable)
+   .withPreOrderAvailabilityDate(DateTime.parse("2019-09-25"))
+   .withReorderIndicator(ReorderIndicator.FirstTimeOrder)
+   .withOrderTransactionType(OrderTransactionType.GoodsAndServicesPurchase)
+   // Additional Payer Information
+   .withCustomerAccountId("6dcb24f5-74a0-4da3-98da-4f0aa0e88db3")
+   .withAccountAgeIndicator(AgeIndicator.LessThanThirtyDays)
+   .withAccountCreateDate(DateTime.parse("2019-09-01"))
+   .withAccountChangeIndicator(AgeIndicator.ThisTransaction)
+   .withAccountChangeDate(DateTime.parse("2019-09-09"))
+   .withPasswordChangeIndicator(AgeIndicator.LessThanThirtyDays)
+   .withPasswordChangeDate(DateTime.parse("2019-09-05"))
+   .withPaymentAccountAgeIndicator(AgeIndicator.LessThanThirtyDays)
+   .withPaymentAccountCreateDate(DateTime.parse("2019-09-25"))
+   .withPreviousSuspiciousActivity(false)
+   .withNumberOfPurchasesInLastSixMonths(3)
+   .withNumberOfTransactionsInLast24Hours(1)
+   .withNumberOfTransactionsInLastYear(5)
+   .withNumberOfAddCardAttemptsInLast24Hours(1)
+   .withShippingAddressUsageIndicator(AgeIndicator.ThisTransaction)
+   .withShippingAddressCreateDate(DateTime.parse("2019-09-09"))
+   // Prior 3D Secure 2 Authentication Data
+   .withPriorAuthenticationMethod(PriorAuthenticationMethod.FrictionlessAuthentication)
+   .withPriorAuthenticationTransactionId("26c3f619-39a4-4040-bf1f-6fd433e6d615")
+   .withPriorAuthenticationTimestamp(DateTime.parse("2019-09-01T12:25:14"))
+   .withPriorAuthenticationData("cKTYtrvvKU7gUoiqbbO7Po")
+   // Recurring Authorization Data
+   .withMaxNumberOfInstallments(5)
+   .withRecurringAuthorizationFrequency(25)
+   .withRecurringAuthorizationExpiryDate(DateTime.parse("2020-05-25"))
+   // Payer Login Data
+   .withCustomerAuthenticationMethod(CustomerAuthenticationMethod.MerchantSystem)
+   .withCustomerAuthenticationTimestamp(DateTime.parse("2019-09-09T11:14:55"))
+   // The following field is currently not in use
+   // .withCustomerAuthenticationData(String)   
+   .execute();
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+threeDSecureData = Secure3dService.InitiateAuthentication(card, threeDSecureData)
+   .WithAmount(10.01m)
+   .WithCurrency("USD")
+   .WithOrderCreateDate(DateTime.Parse("2019-09-09T11:19:12"))
+   .WithCustomerEmail("james.mason@example.com")
+   .WithAddress(billingAddress, AddressType.Billing)
+   .WithAddress(shippingAddress, AddressType.Shipping)
+   .WithBrowserData(browserData)
+   .WithMethodUrlCompletion(MethodUrlCompletion.YES)
+   .WithMobileNumber("44", "7123456789")
+   // Begin Optional Fields
+   .WithHomeNumber("44", "123456789")
+   .WithWorkNumber("44", "1801555888")
+   .WithMerchantInitiatedRequestType(AuthenticationRequestType.RECURRING_TRANSACTION)
+   // Gift Card Information
+   .WithGiftCardCount(1)
+   .WithGiftCardCurrency("USD")
+   .WithGiftCardAmount(5.00m)
+   // Additional Order Information
+   .WithDeliveryEmail("james.mason@example.com")
+   .WithDeliveryTimeFrame(DeliveryTimeFrame.ELECTRONIC_DELIVERY)
+   .WithShippingMethod(ShippingMethod.ANOTHER_VERIFIED_ADDRESS)
+   .WithShippingNameMatchesCardHolderName(true)
+   .WithPreOrderIndicator(PreOrderIndicator.MERCHANDISE_AVAILABLE)
+   .WithPreOrderAvailabilityDate(DateTime.Parse("2019-09-25"))
+   .WithReorderIndicator(ReorderIndicator.FIRST_TIME_ORDER)
+   .WithOrderTransactionType(OrderTransactionType.GOODS_SERVICE_PURCHASE)
+   // Additional Payer Information
+   .WithCustomerAccountId("6dcb24f5-74a0-4da3-98da-4f0aa0e88db3")
+   .WithAccountAgeIndicator(AgeIndicator.LESS_THAN_THIRTY_DAYS)
+   .WithAccountCreateDate(DateTime.Parse("2019-09-01"))
+   .WithAccountChangeIndicator(AgeIndicator.THIS_TRANSACTION)
+   .WithAccountChangeDate(DateTime.Parse("2019-09-09"))
+   .WithPasswordChangeIndicator(AgeIndicator.LESS_THAN_THIRTY_DAYS)  
+   .WithPasswordChangeDate(DateTime.Parse("2019-09-05"))
+   .WithPaymentAccountAgeIndicator(AgeIndicator.LESS_THAN_THIRTY_DAYS)
+   .WithPaymentAccountCreateDate(DateTime.Parse("2019-09-01"))
+   .WithPreviousSuspiciousActivity(false)
+   .WithNumberOfPurchasesInLastSixMonths(3)
+   .WithNumberOfTransactionsInLast24Hours(1)
+   .WithNumberOfTransactionsInLastYear(5)
+   .WithNumberOfAddCardAttemptsInLast24Hours(1)
+   .WithShippingAddressUsageIndicator(AgeIndicator.THIS_TRANSACTION)
+   .WithShippingAddressCreateDate(DateTime.Parse("2019-09-09"))
+   // Prior 3D Secure 2 Authentication Data
+   .WithPriorAuthenticationMethod(PriorAuthenticationMethod.FRICTIONLESS_AUTHENTICATION)
+   .WithPriorAuthenticationTransactionId("26c3f619-39a4-4040-bf1f-6fd433e6d615")
+   .WithPriorAuthenticationTimestamp(DateTime.Parse("2019-09-01T12:25:14"))
+   .WithPriorAuthenticationData("cKTYtrvvKU7gUoiqbbO7Po")
+   // Recurring Authorization Data
+   .WithMaxNumberOfInstallments(5)
+   .WithRecurringAuthorizationFrequency(25)
+   .WithRecurringAuthorizationExpiryDate(DateTime.Parse("2020-05-25"))
+   // Payer Login Data
+   .WithCustomerAuthenticationMethod(CustomerAuthenticationMethod.MERCHANT_SYSTEM_AUTHENTICATION)
+   .WithCustomerAuthenticationTimestamp(DateTime.Parse("2019-09-09T11:14:55"))
+   // The following field is currently not in use
+   // .WithCustomerAuthenticationData(String)
+   .Execute();
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Initiate the 3D Secure 2 Authentication request
+$threeDSecureData = Secure3dService::initiateAuthentication($card, $threeDSecureData)
+   ->withAmount(10.01)
+   ->withCurrency("USD")
+   ->withOrderCreateDate(date("Y-m-d H:i:s"))
+   ->withCustomerEmail("james.mason@example.com")
+   ->withAddress($billingAddress, AddressType::BILLING)
+   ->withAddress($shippingAddress, AddressType::SHIPPING)
+   ->withBrowserData($browserData)
+   ->withMethodUrlCompletion(MethodUrlCompletion::YES)
+   ->withMobileNumber("44", "7123456789")
+   // Begin Optional Fields
+   ->withHomeNumber("44", "123456789")
+   ->withWorkNumber("44", "1801555888")
+   ->withMerchantInitiatedRequestType(AuthenticationRequestType::RECURRING_TRANSACTION)
+   // Gift Card Information
+   ->withGiftCardCount(1)
+   ->withGiftCardCurrency("USD")
+   ->withGiftCardAmount(5.00)
+   // Additional Order Information
+   ->withDeliveryEmail("james.mason@example.com")
+   ->withDeliveryTimeFrame(DeliveryTimeFrame::ELECTRONIC_DELIVERY)
+   ->withShippingMethod(ShippingMethod::VERIFIED_ADDRESS)
+   ->withShippingNameMatchesCardHolderName(TRUE)
+   ->withPreOrderIndicator(PreOrderIndicator::MERCHANDISE_AVAILABLE)
+   ->withPreOrderAvailabilityDate(date("Y-m-d H:i:s"))
+   ->withReorderIndicator(ReorderIndicator::FIRST_TIME_ORDER)
+   ->withOrderTransactionType(OrderTransactionType::GOODS_SERVICE_PURCHASE)
+   // Additional Payer Information
+   ->withCustomerAccountId("6dcb24f5-74a0-4da3-98da-4f0aa0e88db3")
+   ->withAccountAgeIndicator(AgeIndicator::LESS_THAN_THIRTY_DAYS)
+   ->withAccountCreateDate(date("Y-m-d H:i:s"))
+   ->withAccountChangeDate(date("Y-m-d H:i:s"))
+   ->withAccountChangeIndicator(AgeIndicator::THIS_TRANSACTION)
+   ->withPasswordChangeDate(date("Y-m-d H:i:s"))
+   ->withPasswordChangeIndicator(AgeIndicator::LESS_THAN_THIRTY_DAYS)
+   ->withPaymentAccountCreateDate(date("Y-m-d H:i:s"))
+   ->withPaymentAccountAgeIndicator(AgeIndicator::LESS_THAN_THIRTY_DAYS)
+   ->withPreviousSuspiciousActivity(false)
+   ->withNumberOfPurchasesInLastSixMonths(3)
+   ->withNumberOfTransactionsInLast24Hours(1)
+   ->withNumberOfTransactionsInLastYear(5)
+   ->withNumberOfAddCardAttemptsInLast24Hours(1)
+   ->withShippingAddressCreateDate(date("Y-m-d H:i:s"))
+   ->withShippingAddressUsageIndicator(AgeIndicator::THIS_TRANSACTION)
+   // Prior 3D Secure 2 Authentication Data
+   ->withPriorAuthenticationMethod(PriorAuthenticationMethod::FRICTIONLESS_AUTHENTICATION)
+   ->withPriorAuthenticationTransactionId("26c3f619-39a4-4040-bf1f-6fd433e6d615")
+   ->withPriorAuthenticationTimestamp(date("Y-m-d H:i:s"))
+   ->withPriorAuthenticationData("cKTYtrvvKU7gUoiqbbO7Po")
+   // Recurring Authorization Data
+   ->withMaxNumberOfInstallments(5)
+   ->withRecurringAuthorizationFrequency(25)
+   ->withRecurringAuthorizationExpiryDate(date("Y-m-d H:i:s"))
+   // Payer Login Data
+   ->withCustomerAuthenticationMethod(CustomerAuthenticationMethod::MERCHANT_SYSTEM)
+   ->withCustomerAuthenticationTimestamp(date("Y-m-d H:i:s"))
+   // The following field is currently not in use
+   // ->withCustomerAuthenticationData(String)
+   ->execute(Secure3dVersion::TWO);
+```
+</Code>
+</CodeGroup>
+
+## Authentication - Frictionless flow
+
+### Successful authentication response
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+String status = threeDSecureData.getStatus(); // AUTHENTICATION_SUCCESSFUL
+// Data required for authorization or database record
+String authenticationValue = threeDSecureData.getAuthenticationValue(); // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+String dsTransId = threeDSecureData.getDirectoryServerTransactionId(); // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+String messageVersion = threeDSecureData.getMessageVersion(); // 2.1.0
+String eci = threeDSecureData.getEci(); // 5
+// Additional response data
+String acsTransId = threeDSecureData.getAcsTransactionId(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+String statusReason = threeDSecureData.getStatusReason(); // LOW_CONFIDENCE
+String authenticationSource = threeDSecureData.getAuthenticationSource(); // BROWSER
+String messageCategory = threeDSecureData.getMessageCategory(); // PAYMENT_AUTHENTICATION
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var status = threeDSecureData.Status; // AUTHENTICATION_SUCCESSFUL
+// Data required for authorization or database record
+var authenticationValue = threeDSecureData.AuthenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+var dsTransId = threeDSecureData.DirectoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+var messageVersion = threeDSecureData.MessageVersion; // 2.1.0
+var eci = threeDSecureData.Eci; // 5
+// Additional response data
+var acsTransId = threeDSecureData.AcsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+var statusReason = threeDSecureData.StatusReason; // LOW_CONFIDENCE
+var authenticationSource = threeDSecureData.AuthenticationSource; // BROWSER
+var messageCategory = threeDSecureData.MessageCategory; // PAYMENT_AUTHENTICATION
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+$status = $threeDSecureData->status; // AUTHENTICATION_SUCCESSFUL
+// Data required for authorization or database record
+$authenticationValue = $threeDSecureData->authenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=s
+$dsTransId = $threeDSecureData->directoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+$messageVersion = $threeDSecureData->messageVersion; // 2.1.0
+$eci = $threeDSecureData->eci; // 05
+// Additional response data
+$acsTransID = $threeDSecureData->acsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+$statusReason - $threeDSecureData->statusReason; // LOW_CONFIDENCE
+$authenticationSource = $threeDSecureData->authenticationSource; // BROWSER
+$messageCategory = $threeDSecureData->messageCategory; // PAYMENT_AUTHENTICATION
+```
+</Code>
+</CodeGroup>
+
+### Failed authentication response
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+String status = threeDSecureData.getStatus(); // AUTHENTICATION_FAILED
+String authenticationValue = threeDSecureData.getAuthenticationValue(); // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+String dsTransId = threeDSecureData.getDirectoryServerTransactionId(); // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+String messageVersion = threeDSecureData.getMessageVersion(); // 2.1.0
+String eci = threeDSecureData.getEci(); // 7
+String acsTransId = threeDSecureData.getAcsTransactionId(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+String statusReason = threeDSecureData.getStatusReason(); // CARD_AUTHENTICATION_FAILED
+String authenticationSource = threeDSecureData.getAuthenticationSource(); // BROWSER
+String messageCategory = threeDSecureData.getMessageCategory(); // PAYMENT_AUTHENTICATION
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+var status = threeDSecureData.Status; // AUTHENTICATION_FAILED
+var authenticationValue = threeDSecureData.AuthenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+var dsTransId = threeDSecureData.DirectoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+var messageVersion = threeDSecureData.MessageVersion; // 2.1.0
+var eci = threeDSecureData.Eci; // 7
+var acsTransId = threeDSecureData.AcsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+var statusReason = threeDSecureData.StatusReason; // CARD_AUTHENTICATION_FAILED
+var authenticationSource = threeDSecureData.AuthenticationSource; // BROWSER
+var messageCategory = threeDSecureData.MessageCategory; // PAYMENT_AUTHENTICATION
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+$status = $threeDSecureData->status; // AUTHENTICATION_FAILED
+$authenticationValue = $threeDSecureData->authenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=s
+$dsTransId = $threeDSecureData->directoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+$messageVersion = $threeDSecureData->messageVersion; // 2.1.0
+$eci = $threeDSecureData->eci; // 07
+$acsTransID = $threeDSecureData->acsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+$statusReason - $threeDSecureData->statusReason; // CARD_AUTHENTICATION_FAILED
+$authenticationSource = $threeDSecureData->authenticationSource; // BROWSER
+$messageCategory = $threeDSecureData->messageCategory; // PAYMENT_AUTHENTICATION
+```
+</Code>
+</CodeGroup>
+
+## Authentication - Challenge flow
+
+### Challenge response
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Data required to display the challenge to the customer
+String challengeRequestUrl = threeDSecureData.getIssuerAcsUrl(); // https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs
+String encodedCreq = threeDSecureData.getPayerAuthenticationRequest(); // Very long base64 encoded string
+// Additional response data
+String authenticationType = threeDSecureData.getAuthenticationType(); // DYNAMIC_CHALLENGE
+Boolean challengeMandated = threeDSecureData.isChallengeMandated(); // true
+String statusReason = threeDSecureData.getStatusReason(); // LOW_CONFIDENCE
+String authenticationSource = threeDSecureData.getAuthenticationSource(); // BROWSER
+String messageCategory = threeDSecureData.getMessageCategory(); // PAYMENT_AUTHENTICATION
+String dsTransId = threeDSecureData.getDirectoryServerTransactionId(); // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+String acsTransId = threeDSecureData.getAcsTransactionId(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+String messageVersion = threeDSecureData.getMessageVersion(); // 2.1.0
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// Data required to display the challenge to the customer
+var challengeRequestUrl = threeDSecureData.IssuerAcsUrl; // https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs
+var encodedCreq = threeDSecureData.PayerAuthenticationRequest; // Very long base64 encoded string
+// Additional response data
+var authenticationType = threeDSecureData.AuthenticationType; // DYNAMIC_CHALLENGE
+var challengeMandated = threeDSecureData.ChallengeMandated; // true
+var statusReason = threeDSecureData.StatusReason; // LOW_CONFIDENCE
+var authenticationSource = threeDSecureData.AuthenticationSource; // BROWSER
+var messageCategory = threeDSecureData.MessageCategory; // PAYMENT_AUTHENTICATION
+var dsTransId = threeDSecureData.DirectoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+var acsTransId = threeDSecureData.AcsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+var messageVersion = threeDSecureData.MessageVersion; // 2.1.0
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Data required to display the challenge to the customer
+$challengeRequestUrl = $threeDSecureData->issuerAcsUrl; // https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs
+$encodedCreq = $threeDSecureData->payerAuthenticationRequest; // Very long base64 encoded string
+// Additional response data
+$authenticationType = $threeDSecureData->authenticationType; // DYNAMIC_CHALLENGE
+$challengeMandated = $threeDSecureData->challengeMandated; // true
+$statusReason - $threeDSecureData->statusReason; // LOW_CONFIDENCE
+$authenticationSource = $threeDSecureData->authenticationSource; // BROWSER
+$messageCategory = $threeDSecureData->messageCategory; // PAYMENT_AUTHENTICATION
+$dsTransId = $threeDSecureData->directoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+$acsTransID = $threeDSecureData->acsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+$messageVersion = $threeDSecureData->messageVersion; // 2.1.0
+```
+</Code>
+</CodeGroup>
+
+## Obtain authentication data
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+ThreeDSecure threeDSecureData = null;
+
+try {
+   threeDSecureData = Secure3dService.getAuthenticationData()
+      .withServerTransactionId("6c8c286b-9842-4c74-b298-da640da6ebbd")
+      .execute();
+}
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+
+if (threeDSecureData != null) {
+   String status = threeDSecureData.getStatus(); // for example AUTHENTICATION_SUCCESSFUL or AUTHENTICATION_FAILED  
+   // Data required for authorization or database record
+   String authenticationValue = threeDSecureData.getAuthenticationValue(); // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+   String dsTransId = threeDSecureData.getDirectoryServerTransactionId(); // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+   String messageVersion = threeDSecureData.getMessageVersion(); // 2.1.0
+   String eci = threeDSecureData.getEci(); // 5
+   // Additional response data
+   String acsTransId = threeDSecureData.getAcsTransactionId(); // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   String statusReason = threeDSecureData.getStatusReason(); // LOW_CONFIDENCE
+   String authenticationSource = threeDSecureData.getAuthenticationSource(); // BROWSER
+   String messageCategory = threeDSecureData.getMessageCategory(); // PAYMENT_AUTHENTICATION
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+ThreeDSecure threeDSecureData = null;
+
+try
+{
+   threeDSecureData = Secure3dService.GetAuthenticationData()
+      .WithServerTransactionId("6c8c286b-9842-4c74-b298-da640da6ebbd")
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error and decline handling here
+}
+
+if (threeDSecureData != null)
+{
+   var status = threeDSecureData.Status; // for example AUTHENTICATION_SUCCESSFUL or AUTHENTICATION_FAILED 
+   // Data required for authorization or database record
+   var authenticationValue = threeDSecureData.AuthenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=
+   var dsTransId = threeDSecureData.DirectoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+   var messageVersion = threeDSecureData.MessageVersion; // 2.1.0
+   var eci = threeDSecureData.Eci; // 5
+   // Additional response data
+   var acsTransId = threeDSecureData.AcsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   var statusReason = threeDSecureData.StatusReason; // LOW_CONFIDENCE
+   var authenticationSource = threeDSecureData.AuthenticationSource; // BROWSER
+   var messageCategory = threeDSecureData.MessageCategory; // PAYMENT_AUTHENTICATION
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+try {
+   $threeDSecureData = Secure3dService::getAuthenticationData()
+      ->withServerTransactionId("6c8c286b-9842-4c74-b298-da640da6ebbd")
+      ->execute(Secure3dVersion::TWO);
+} catch (ApiException $e) { 
+   // TODO: add your error handling here 
+}
+
+if (isset($threeDSecureData)) {
+   $status = $threeDSecureData->status; // for example AUTHENTICATION_SUCCESSFUL or AUTHENTICATION_FAILED  
+   // Data required for authorization or database record
+   $authenticationValue = $threeDSecureData->authenticationValue; // ODQzNjgwNjU0ZjM3N2JmYTg0NTM=s
+   $dsTransId = $threeDSecureData->directoryServerTransactionId; // c272b04f-6e7b-43a2-bb78-90f4fb94aa25
+   $messageVersion = $threeDSecureData->messageVersion; // 2.1.0
+   $eci = $threeDSecureData->eci; // 05
+   // Additional response data
+   $acsTransID = $threeDSecureData->acsTransactionId; // 13c701a3-5a88-4c45-89e9-ef65e50a8bf9
+   $statusReason - $threeDSecureData->statusReason; // LOW_CONFIDENCE
+   $authenticationSource = $threeDSecureData->authenticationSource; // BROWSER
+   $messageCategory = $threeDSecureData->messageCategory; // PAYMENT_AUTHENTICATION
+}
+```
+</Code>
+</CodeGroup>
+
+## Authorization
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// if you're using the Global Payments JS Library and SDK solution for 3D Secure 2
+// you can skip below to Transaction response = null;
+
+// Create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4012001038488884");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("123");
+card.setCardHolderName("James Mason");
+
+// Add obtained 3D Secure 2 authentication data
+ThreeDSecure threeDSecureData = new ThreeDSecure();
+threeDSecureData.setAuthenticationValue("ODQzNjgwNjU0ZjM3N2JmYTg0NTM=");
+threeDSecureData.setDirectoryServerTransactionId("c272b04f-6e7b-43a2-bb78-90f4fb94aa25");
+threeDSecureData.setEci("05");
+threeDSecureData.setMessageVersion("2.1.0");
+
+// Add the 3D Secure 2 data to the card object
+card.setThreeDSecure(threeDSecureData);
+
+Transaction response = null;
+
+try {
+   response = card.charge(new BigDecimal("10.01"))
+         .withCurrency("USD")
+         .execute();
+}
+
+catch (ApiException exec) {
+   // TODO: add your error handling here
+}
+
+if (response != null) {
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715  
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// if you're using the Global Payments JS Library and SDK solution for 3D Secure 2
+// you can skip below to Transaction response = null;
+
+// add obtained 3D Secure 2 authentication data
+var threeDSecureData = new ThreeDSecure()
+{
+   AuthenticationValue = "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+   DirectoryServerTransactionId = "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+   Eci = 5,
+   MessageVersion = "2.1.0"
+};
+
+// add the 3D Secure 2 data to the card object
+card.ThreeDSecure = threeDSecureData;
+
+Transaction response = null;
+
+try
+{
+   response = card.Charge(10.01m)
+      .WithCurrency("USD")
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+if (response != null)
+{
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// if you're using the Global Payments JS Library and SDK solution for 3D Secure 2
+// you can skip below to the try/catch
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+// add obtained 3D Secure 2 authentication data
+$threeDSecureData = new ThreeDSecure();
+$threeDSecureData->authenticationValue = "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=";
+$threeDSecureData->directoryServerTransactionId = "c272b04f-6e7b-43a2-bb78-90f4fb94aa25";
+$threeDSecureData->eci = "5";
+$threeDSecureData->messageVersion = "2.1.0";
+
+// add the 3D Secure 2 data to the card object
+$card->threeDSecure = $threeDSecureData;
+
+try {
+    // process an auto-settle authorization
+    $response = $card->charge(10.01)
+        ->withCurrency("EUR")
+        ->execute();
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+

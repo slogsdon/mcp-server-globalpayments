@@ -1,0 +1,327 @@
+---
+title: 'Buy Now Pay Later - Guide'
+search_results: 'Buy Now Pay Later Guide'
+subtitle: 'Learn how to let customers repay the cost of their purchase over time'
+tag: 'rest'
+created: '06/08/2024'
+---
+In this guide, you’ll learn how to create a transaction that uses Buy Now Pay Later (BNPL). This includes initiating the payment, redirecting the customer, handling the redirect, checking the status, and capturing the transaction.  
+
+For an overview of BNPL, see our [Overview](/docs/payments/payment-methods/buy-now-pay-later-overview) page.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Initiate the payment
+In this step, we create a transaction using the Initiate call. This will specify which BNPL provider the customer wants to pay with and includes the various data elements needed by the BNPL provider to validate and authorize the transaction. The Initiate call will also retrieve some necessary information to facilitate the redirect and authentication of the customer.
+
+In the request, You must specify the corresponding BNPL provider (for example, KLARNA, AFFIRM, ZIP) in the `payment_method.bnpl.provider` field.
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" lineHighlight="17,18" active>
+```    
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer RyVpwpFYkuHowpkkMI3joCn0AB13' \
+--data-raw '{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "capture_mode": "LATER",
+    "type": "SALE",
+    "amount": "55000",
+    "net_amount": "55000",
+    "currency": "USD",
+    "reference": "TRANS-123",
+    "country": "US",
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "ECOM",
+        "bnpl": {
+            "provider": "AFFIRM"
+        }
+    },
+    "order": {
+        "shipping_method": "DELIVERY",
+        "items": [
+            {
+                "reference": "92ebf294-f3ef-4aba-af30-6ebaf747de8f",
+                "label": "iPhone 13",
+                "description": "iPhone 13",
+                "quantity": "1",
+                "unit_amount": "55000",
+                "total_amount": "55000",
+                "tax_amount": "0",
+                "discount_amount": "0",
+                "tax_percentage": "0",
+                "net_unit_amount": "55000",
+                "gift_card_currency": "USD",
+                "url": "https://www.example.com/iphone.html",
+                "image_url": "https://www.example.com/iphone.png"
+            }
+        ],
+        "shipping_address": {
+            "first_name": "James",
+            "last_name": "Mason",
+            "line_1": "10 Glenlake Pkwy NE",
+            "line_2": "",
+            "city": "Atlanta",
+            "postal_code": "30328",
+            "state": "GA",
+            "country": "US",
+            "address_type": "HOME"
+        },
+        "shipping_phone": {
+            "country_code": "1",
+            "subscriber_number": "123456789"
+        }
+    },
+    "payer": {
+        "reference": "d78f06cf-7ad5-4a60-8507-ab8d5fc40787",
+        "email": "james.mason@example.com",
+        "date_of_birth": "1993-08-24",
+        "billing_address": {
+            "line_1": "10 Glenlake Pkwy NE",
+            "line_2": "",
+            "city": "Atlanta",
+            "postal_code": "30328",
+            "state": "GA",
+            "country": "US"
+        },
+        "contact_phone": {
+            "country_code": "1",
+            "subscriber_number": "123456789"
+        },
+        "documents": [
+            {
+                "type": "PASSPORT",
+                "reference": "123456789",
+                "issuer": "US"
+            }
+        ]
+    },
+    "notifications": {
+        "return_url": "https://www.example.com/returnUrl",
+        "cancel_url": "https://www.example.com/cancelUrl",
+        "status_url": "https://www.example.com/statusUrl"
+    }
+}'
+```
+</Code>
+
+## Step 2: Redirect the customer
+Once the transaction is initiated, the customer must be redirected to the BNPL checkout flow using the URL returned in the Initiate response to facilitate authorization and authentication. To do this, use a simple JavaScript redirect or HTTP GET (302 redirect).
+
+In our example, we redirect the customer to the URL returned in the field 'payment_method.redirect_url' of the Initiate response using JavaScript. 
+
+#### Sample redirect code
+<Code id="HTML" language="xml" title="HTML" active>
+```    
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sample APM Redirect</title>
+    <meta charset="UTF-8">
+  </head>
+
+  <body>
+    <script>
+      window.location = "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_FId92HkAXmgLA7AZr33BNbvZvyYM2K/redirect/eyJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl83ZTNlMmM3ZGYzNGY0MjgxOWIzZWRlZTMxMDIyZWUzZiIsImFjY291bnRfaWQiOiJUUkFfYzk5NjdhZDdkOGVjNGI0NmI2ZGQ0NGE2MWNkZTlhOTEiLCJhcHBfaWQiOiI1aDJaRHo0N0RIblNSRkY4RUdTNWdvZElBVWpFWlRNSyIsIlgtR1AtVmVyc2lvbiI6IjIwMjEtMDMtMjIifQ==";
+    </script>
+  </body>
+</html>
+```
+</Code>
+
+## Step 3:  Handle the redirect and check the status
+Once the customer completes the transaction with the BNPL provider, they are redirected back to your app or website based on transaction success/failure using the URLs specified in the Initiate request. The unique transaction identifier is also returned, allowing you to check the status of the payment.
+
+When the customer is redirected back to your app or website, you can provide additional messaging depending on the BNPL provider used. Each BNPL provider has relevant marketing assets available that can be added to your app or webpages to enhance the customer experience.
+
+#### Sample Return URL parameters
+<Code>
+```    
+X-GP-Signature=88b9d04eaa711f0f1595c9eb78458c1d23efc483aac419d3b86905de62fb97242f67a413c0e444250fd8c58384b86a90d0030f8fba4b111399551da54ac21f38
+id=TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ&payer_reference=TRANS-123
+action_type=REDIRECT_FROM
+action_id=ACT_0noTmweklBS8W2KENpxMZNqoRcyP0d
+```
+</Code>
+
+#### Sample URL
+<Code id="JSON" title="JSON" language="JSON" active>
+```    
+https://www.example.com/returnUrl/?X-GP-Signature=88b9d04eaa711f0f1595c9eb78458c1d23efc483aac419d3b86905de62fb97242f67a413c0e444250fd8c58384b86a90d0030f8fba4b111399551da54ac21f38&id=TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ&payer_reference=TRANS-123&action_type=REDIRECT_FROM&action_id=ACT_0noTmweklBS8W2KENpxMZNqoRcyP0d
+```
+</Code>
+
+The ID that is passed as a URL parameter is the `TRN_ID` and should be used to check the status of the transaction. A status of PREAUTHORIZED indicates that the amount indicated can now be captured by the merchant (see [Step 4 - Capture the transaction](#step-4-capture-the-transaction)).
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```    
+curl --location --request GET 'https://https://apis-sandbox.globalpay.com/ucp/transactions/TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer eDgd0njOaUMAtjzn58ABxglxubyP' \
+--data-raw ''
+
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```    
+{
+    "id": "TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ",
+    "time_created": "2022-03-24T18:37:31.109Z",
+    "time_last_updated": "2022-03-24T18:57:35.272Z",
+    "status": "PREAUTHORIZED",
+    "type": "SALE",
+    "merchant_id": "MER_1b64665c7a3e48989e75e6f33af03f7b",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_f623dc47576944129029696bf6be41bc",
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "amount": "55000",
+    "merchant_amount": "",
+    "partner_amount": "",
+    "currency": "USD",
+    "reference": "TRANS-123",
+    "description": "",
+    "order_reference": "",
+    "time_created_reference": "",
+    "batch_id": "",
+    "initiator": "",
+    "country": "US",
+    "language": "",
+    "ip_address": "37.228.242.98",
+    "site_reference": "",
+    "payment_method": {
+        "result": "0",
+        "message": "REQUEST_SUCCESS",
+        "entry_mode": "ECOM",
+        "fingerprint": "",
+        "fingerprint_presence_indicator": "",
+        "name": "James Mason"
+    },
+    "action_create_id": "ACT_vxeNsN6B9JKnjiIyz4tvrikc6skGPR",
+    "parent_resource_id": "TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ",
+    "action": {
+        "id": "ACT_ancrTzNwEfEPAztBi2KuIfFxRzweO4",
+        "type": "TRANSACTION_SINGLE",
+        "time_created": "2022-03-24T18:59:28.779Z",
+        "result_code": "SUCCESS",
+        "app_id": "gkXGvDH5FPvgUyDw9egbQSrHgu4GJYT0",
+        "app_name": "demo_app"
+    }
+}
+
+```
+</Code>
+
+## Step 4: Capture the transaction
+Any transaction that is successfully PREAUTHORIZED can be captured. Depending on if the capture mode is LATER or MULTIPLE, the transaction can be captured once or multiple times, respectively.
+
+
+| Capture mode from payment initiation request | Status TRN_ID after capture |
+| -------- | ------- |
+| LATER | Original TRN - CAPTURED |
+| MULTIPLE | Original TRN - PREAUTHORIZED <br /> New TRNs created for each capture request - CAPTURED |
+
+Once the capture is complete, you can display a success message to the customer and update your app or website accordingly. You can also initiate the dispatch of items to the customer.
+
+Once the transaction is captured, you can expect to receive settlement directly from the BNPL provider. Refer to documentation for the individual BNPL provider for settlement timeframes.
+
+At any point in the process, you can call the Transactions endpoint for a status on the transaction and use the Settlement endpoint to check the final status. Settlement data is available via our API after the transaction is settled by the BNPL provider.
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```    
+curl --location --request GET 'https://https://apis.sandbox.globalpay.com/ucp/transactions/TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ/capture' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer eDgd0njOaUMAtjzn58ABxglxubyP'
+
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```    
+{
+    "id": "TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ",
+    "time_created": "2022-03-24T18:37:31.109Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "55000",
+    "currency": "USD",
+    "country": "US",
+    "reference": "TRANS-123",
+    "payment_method": {
+        "result": "0",
+        "message": "REQUEST_SUCCESS",
+        "bnpl": {
+            "provider": "AFFIRM",
+            "result": "201 CREATED"
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_vxeNsN6B9JKnjiIyz4tvrikc6skGPR",
+        "type": "CAPTURE",
+        "time_created": "2022-03-24T18:57:35.272Z",
+        "result_code": "SUCCESS",
+        "app_id": "gkXGvDH5FPvgUyDw9egbQSrHgu4GJYT0",
+        "app_name": "GPAPI_Affirm_App"
+    }
+}
+```
+</Code>
+
+## Refunds
+To make a refund, follow the steps in our [Refund guide](/docs/payments/manage-payments/refund-guide) or see [Transactions](/api/transactions#/Capture%20a%20Sale/captureSaleTransaction) in API Explorer.
+
+Remember that for transactions initiated in MULTIPLE capture mode, each capture request generates a new `TRN_ID` that is returned in the request’s response. To make a refund for a particular capture request, the corresponding `TRN_ID` needs to be submitted as the id parameter path of the refund request. That is, `https://apis.sandbox.globalpay.com/ucp/transactions/{id}/refund` replaces `{id}` with the `TRN_ID` of the capture request you want to refund.
+
+#### Sample request
+<Code id="JSON" title="JSON" language="JSON" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_hgokzKko3EFJpkL5BVBKoRfiJh6kEJ/refund' \
+--header 'content-type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: eDgd0njOaUMAtjzn58ABxglxubyP' \
+--data '{
+        "amount": "1199"
+    }'
+ ```
+</Code>
+
+<br />
+<br />
+
+| Capture mode<br />from payment initiation request | id parameter path |
+| -------- | ------- |
+| LATER | Original _TRN_ID_. |
+| MULTIPLE | _TRN_ID_ returned in the corresponding capture request. |
+
+## Testing BNPL
+Our BNPL solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

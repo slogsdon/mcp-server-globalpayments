@@ -1,0 +1,735 @@
+---
+title: "Card Payments"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/14/2025"
+---
+In addition to authorizations, our API offers a range of other payment types including Credits and OTBs (Open To Buy). Whether you're using one of our SDKs or are integrating directly to our API, this guide gives an overview of each transaction type and example request/response values for each one.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them.
+
+## Authorization
+
+Once you have the card data captured in your application you can send it to us to be checked, sanitized, and formatted in the correct way to be sent to be processed. Merchants capturing data in their application (and on their server) should be aware of their PCI DSS compliance responsibilities (for more information, see the [PCI website](https://www.pcisecuritystandards.org/)).
+
+To understand how to use Credential on File functionality in relation to this request type, see the [Supplementary data](#supplementary-data) section.
+
+We highly recommend sanitizing the cardholder data before sending it in the request. For example, you can check the card number is valid and the expiry date is in the future. Our [JavaScript Library](/ecommerce/payments/client-side-libraries/javascript) contains a handy set of functions to help you do this. 
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml">
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <foreignretailer flag="false"/>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Channel | string | enum | O   |     | Specify how a transaction is to be processed. Compatible with us and certain other acquirers. Allowed values:  <br/>  <br/>**ECOM** - Ecommerce  <br/>**MOTO** - Mail Order/Telephone Order |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Amount | integer |     | O   | 0-11 | The amount should be in the smallest unit of the required currency For example, 2000 = €20.00 |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](/resources/test-card-numbers). |
+| Security Code Number | string | numeric | O   | 0-4 | The 3 digit number on the reverse of the card (known as CVC for Visa and CVV2 for MasterCard). For American Express the code is 4 digits long. |
+| Presence Indicator | integer |     | C   | 0-1 | Used to specify whether the Security Code is being submitted. Allowed values:  <br/>**1** - cvn present  <br/>**2** - cvn illegible  <br/>**3** - cvn not on card  <br/>**4** - cvn not requested |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+#### Sample response
+<Code id="xml" title="XML" language="xml">
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Scheme Reference Data | string | alphanumeric | The Scheme ID provided by Visa and Mastercard. Provides a link to the payment history between a customer and a merchant.  <br/>Expected for all successful Visa and Mastercard transactions. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+## Validate (OTB)
+Open to Buy (OTB) allows you to check that a card is still valid and active without actually processing a payment against it. The Security Code (CVN) and Address Verification Service (AVS) checks will also be performed against it. This is an alternative to charging the card a small amount (for example €1) to obtain the same result.
+
+To understand how to utilize Credential on File functionality in relation to this request type, see the API Reference for [Card Storage](/ecommerce/api/card-storage).
+
+<Infobox>
+It is possible to set the Fraud Filter mode to ACTIVE for OTB transactions. This can be configured by setting the Fraud Filter Mode as ACTIVE. This field is available in the API Reference for [Fraud Management](/api/fraud-management#api-fraud-filter).
+</Infobox>
+
+#### Sample request
+<Code id="xml" title="XML" language="xml">
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="otb" timestamp="20180613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>BA5qJD1DQMuNNocGU_y3HQ</orderid>
+  <foreignretailer flag="false"/>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <sha1hash>11e5d2ce54eec98892155715497e5c4c4866d998</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](/resources/test-card-numbers). |
+| Security Code Number | string | numeric | O   | 0-4 | The 3 digit number on the reverse of the card (known as CVC for Visa and CVV2 for MasterCard). For American Express the code is 4 digits long. |
+| Presence Indicator | integer |     | C   | 0-1 | Used to specify whether the Security Code is being submitted. Allowed values:  <br/>**1** - cvn present  <br/>**2** - cvn illegible  <br/>**3** - cvn not on card  <br/>**4** - cvn not requested |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+#### Sample response
+<Code id="xml" title="XML" language="xml">
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+## Credit
+This request type allows you to credit an amount to a customer's card. To process this request you must supply the **Refund Password**, which you can set with a member of our support team (note: this is a different password than the **Rebate Password**). This password must be hashed using the SHA-1 algorithm before being added to the request. Credit requests are not sent on to the Issuer; they are placed directly into the next day's settlement file.
+
+<Infobox type="danger">
+For security reasons, this request type is not enabled by default. It must be requested by one of the listed contacts on your account with us.
+</Infobox>
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml">
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="credit" timestamp="20180615094902">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>klmnjrTQRpaseGCzKCYCpQ</orderid>
+  <foreignretailer flag="false"/>
+  <amount currency="EUR">1999</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+  </card>
+  <refundhash>e51118f58785274e117efe1bf99d4d50ccb96949</refundhash>
+  <sha1hash>c9f606ca80b0c691628537dc662f4002b5d6e78e</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](/resources/test-card-numbers). |
+| Refund Hash | string | alphanumeric | M   | 40  | The additional signature for this request derived from the Rebate or Refund Password.  <br/>Allowed characters: [0-9a-fA-F] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+#### Sample response
+<Code id="xml" title="XML" language="xml">
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>klmnjrTQRpaseGCzKCYCpQ</orderid>
+  <authcode>005056</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>REFUND ACCEPTED</message>
+  <pasref>14610630569586471</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>1</authtimetaken>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>57e526abbebe6a721c2aab2271d42e9d4dba9f33</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+## Offline
+Some authorizations will be declined with a code 102 response, the message will be REFFERAL B or similar. These transactions may still be authorized using the **Offline** request type. Merchants must manually obtain an authorization code for transactions of this type. Typically, this involves contacting the Acquirer authorization center by phone.
+
+The Offline transaction will be linked to the original transaction for which the REFERRAL B result was received. The original Order ID and Payments Reference are required.
+
+#### Sample request
+
+<Code id="xml" title="XML" language="xml">
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="offline" timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>BA5qJD1DQMuNNocGU_y3HQ</orderid>
+  <authcode>12345</authcode>
+  <pasref>1461142363479682</pasref>
+  <comments>
+    <comment id="1">Auth Centre</comment>
+    <comment id="2">ID#45478</comment>
+  </comments>
+  <sha1hash>ab3d8aebae75d96c44cdf28d03409e54ba04b39d</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+
+_Type_ indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Authcode | string | alphanumeric | M   | 0-10 | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+#### Sample response
+<Code id="xml" title="XML" language="xml">
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>LQsStY2NQJWmW9IJ1Pv_ag</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>319970</batchid>
+  <message>OFFLINE AUTH CODE 12345</message>
+  <pasref>14611427658228048</pasref>
+  <timetaken>0</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank/>
+    <country/>
+    <countrycode/>
+    <region/>
+  </cardissuer>
+  <sha1hash>157b5b79aafdbbcedb11a6c90ecbf94225046274</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: [a-zA-Z0-9␣] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+## Supplementary data
+The supplementary data elements can be used to include any amount of extra data in the request and can be used in Authorization, Credit, Refund (Rebate) and Capture (Settle) requests. The value of each field is available in reports downloaded from Ecommerce Portal. Some merchants may also use these elements to pass on additional transaction information to their Acquirer.
+
+#### Request syntax
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Item | string | alphanumeric | O   | 0-20 | The first element defines the data type to be supplied in the subsequent fields.<br/><br/>For example, `<item type="logData">` |
+| Field# | string | alphanumeric | O   | 0-100 | There can be up to 14 data fields for each item element; `<field01>` up to `<field14>`. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Authorization, Validate (OTB), Credit, or Offline. 
+
+<Tabs>
+<Tab id="auth" title="Authorization">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200414103508.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="validate" title="Validate (OTB)">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200414103508.Merchant ID.AiCibJ5UR7utURy_slxhJw.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="credit" title="Credit">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="offline" title="Offline">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no amount, currency or card number in this request, based on the XML example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.Merchant ID.BA5qJD1DQMuNNocGU_y3HQ..."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the Response hash
+Use the tabs below to follow the steps for a certain request type: Authorization, Validate (OTB), Credit, or Offline. 
+
+<Tabs active="auth">
+<Tab id="auth" title="Authorization">
+
+##### 1. Create a SHA-1 hash string made up of response values
+The blueprint of the hash for the response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So based on the above example the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200204155942.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and sends it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+We create the hash in the same way on our side and sends it back. In order to confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+  <Tab id="validate" title="Validate (OTB)">
+
+##### 1. Create a SHA-1 hash string made up of response values
+The blueprint of the hash for the response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200204155942.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="credit" title="Credit">
+
+##### 1. Create a SHA-1 hash string made up of response values
+The blueprint of the hash for the response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So based on the above example the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200204155942.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="offline" title="Offline">
+
+##### 1. Create a SHA-1 hash string made up of response values
+The blueprint of the hash for the response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200204155942.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and compare
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+</Tab>
+
+</Tabs>

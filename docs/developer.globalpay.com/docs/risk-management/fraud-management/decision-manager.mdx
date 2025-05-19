@@ -1,0 +1,502 @@
+---
+title: 'Decision Manager'
+search_results: 'Global Payments - Fraud Management - Decision Manager'
+subtitle: 'Perform risk assessment for transactions'
+tag: 'rest'
+created: '30/09/2024'
+---
+
+We work with third-party fraud services such as Decision Manager. The service enables both standalone risk assessment calls to Decision Manager, independent of a transaction or calls made automatically as part of processing a transaction. Each call can trigger 260 global validation checks based on over 60 billion transactions. 
+
+For more information on Fraud Management, see our [Overview](/docs/risk-management/fraud-management/overview).
+
+## Standalone risk assessment 
+In this example, we include just a subset of the Address, Customer, and Product-specific fields. For the full list of available fields, see the [API Explorer](/api/overview).
+      
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "account_name": "dm_analyzer",
+    "reference": "TRANS-20210505061758941Z27a1d9b986",
+    "payment_method": {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "card": {
+            "number": "4012000098765439",
+            "expiry_month": "12",
+            "expiry_year": "22",
+            "brand": "VISA",
+            "provider": {
+                "result": "0",
+                "cvv_result": "M",
+                "avs_result": "N",
+                "avs_address_result": "I"
+            }
+        }
+    },
+    "order": {
+        "time_created_reference": "2021-04-11T10:19:32.552327Z",
+        "amount": "1001",
+        "currency": "USD",
+        "item_count": "34",
+        "delivery_timeframe": "ELECTRONIC_DELIVERY",
+        "shipping_method": "ANOTHER_VERIFIED_ADDRESS",
+        "shipping_name_matches_cardholder_name": "true",
+        "preorder_indicator": "MERCHANDISE_AVAILABLE",
+        "preorder_availability_date": "2019-04-18",
+        "reorder_indicator": "FIRST_TIME_ORDER",
+        "items": [
+            {
+                "reference": "fsdf",
+                "label": "afa",
+                "description": "12",
+                "quantity": "112",
+                "unit_amount": "12000",
+                "total_amount": "150",
+                "tax_amount": "13",
+                "gift_card_currency": "CAD",
+                "risk": "LOW",
+                "type": "daf"
+            }
+        ],
+        "shipping_address": {
+            "first_name": "Jithin",
+            "last_name": "Dev",
+            "name": "Jithin Dev",
+            "line_1": "Apartment 852",
+            "line_2": "Complex 741",
+            "city": "Chicago",
+            "postal_code": "50003sf",
+            "state": "IL",
+            "country": "US",
+            "address_type": "",
+            "shipping_phone": {
+                "country_code": "44",
+                "subscriber_number": "6734323"
+            }
+        }
+    },
+    "payer": {
+        "reference": "6dcb24f5-74a0-4da3-98da-4f0aa0e88db3",
+        "email": "jdc@gmail.com",
+        "date_of_birth": "2019-04-18",
+        "address": {
+            "line_1": "Apartment 852",
+            "line_2": "Complex 741",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "AL"
+        },
+        "payer.mobile_phone": {
+            "country_code": "61",
+            "subscriber_number": "123456789"
+        },
+        "document": {
+            "type": "DRIVER_LICENSE",
+            "reference": "ref",
+            "issuer": "DRIVER_LICENSE"
+        }
+    },
+    "browser_data": {
+        "color_depth": "24",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "timezone": "0",
+        "user_agent": "dfsggggggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhuuuuuuuuuuuuuuuu",
+        "cookies_accepted": "YES",
+        "host_name": "gfh",
+        "device_fingerprint": "sgrsg",
+        "browser_email": "rgwgw",
+        "accept_header": "efffff",
+        "accept_content": "fdsss"
+    }
+}
+```
+</Code>      
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "RAS_Wb8MLaXd7TJgIGqGkkgY7yzx2HCEj7",
+    "time_created": "2021-11-17T13:15:10.471Z",
+    "status": "ACCEPTED",
+    "amount": "1001",
+    "currency": "USD",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "RAA_83d6df6b8ef24543a129271be85e1b87",
+    "account_name": "dm_analyzer",
+    "reference": "TRANS-20210505061758941Z27a1d9b986",
+    "result": "DECISION_PROFILE_ACCEPT",
+    "message": "The order has been accepted by Decision Manager",
+    "payment_method": {
+        "card": {
+            "masked_number_last4": "XXXXXXXXXXXX5439",
+            "brand": "VISA",
+            "bin": "401200",
+            "bin_country": "",
+            "account_type": "",
+            "issuer": ""
+        }
+    },
+    "raw_response": {
+        "platform": "CYBS",
+        "data": {
+            ,,,,,<!-- Full Response Here, See Sample Below →...
+
+        }
+    },
+    "action": {
+        "id": "ACT_Wb8MLaXd7TJgIGqGkkgY7yzx2HCEj7",
+        "type": "ASSESS",
+        "time_created": "2021-11-17T13:15:10.471Z",
+        "result_code": "SUCCESS",
+        "app_id": "eGDCvrUPGbdGXySvAYGmweC5Hg3iedZi",
+        "app_name": "cathal_sandbox_sm2"
+    }
+}
+```
+</Code>
+        
+## Risk assessment as part of a transaction
+In this example, we call for a `RISK_ASSESSMENT` automatically as part of processing a transaction.
+
+#### Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{   
+ "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_83d6df6b8ef24543a129271be85e1b87",
+    "account_name": "dm_analyzer",
+    "channel": "CP",
+    "capture_mode": "AUTO",
+    "type": "SALE",
+    "amount": "400",
+    "currency": "USD",
+    "reference": "TRANS-201912132001",
+    "description": "test",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "SUBSCRIPTION",
+        "sequence": "SUBSEQUENT"
+    },
+    "payment_method": {
+        "name": "James Mason",
+        "entry_mode": "CONTACTLESS",
+        "card": {
+            "funding": "FOOD_STAMP",
+            "pin_block": "F26B23D6705EA6153D010000144000B8",
+            "track": "%B4012002000060016^VI TEST CREDIT^251210118039000000000396?;4012002000060016=25121011803939600000?"
+        }
+    },
+    "custom_data": [
+        {
+            "reference": "44",
+            "description": "66"
+        }
+    ],
+    "order": {
+        "time_created_reference": "2021-04-11T10:19:32.552327Z",
+        "amount": "10000",
+        "currency": "USD",
+        "item_count": "34",
+        "delivery_timeframe": "ELECTRONIC_DELIVERY",
+        "shipping_method": "ANOTHER_VERIFIED_ADDRESS",
+        "shipping_name_matches_cardholder_name": "true",
+        "preorder_indicator": "MERCHANDISE_AVAILABLE",
+        "preorder_availability_date": "2019-04-18",
+        "reorder_indicator": "FIRST_TIME_ORDER",
+        "items": [
+            {
+                "reference": "fsdf",
+                "label": "afa",
+                "description": "abc",
+                "quantity": "1",
+                "unit_amount": "1200000",
+                "total_amount": "150",
+                "tax_amount": "13",
+                "gift_card_currency": "CAD",
+                "risk": "LOW",
+                "type": "daf"
+            },
+            {
+                "reference": "fsdf1",
+                "label": "afa1",
+                "description": "abc1",
+                "quantity": "1",
+                "unit_amount": "120",
+                "total_amount": "160",
+                "tax_amount": "15",
+                "gift_card_currency": "USD",
+                "risk": "",
+                "type": ""
+            }
+        ],
+        "shipping_address": {
+            "first_name": "Jithin",
+            "last_name": "Dev",
+            "line_1": "Apartment 852",
+            "line_2": "Complex 741",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "US",
+            "address_type": "",
+            "shipping_phone": {
+                "country_code": "44",
+                "subscriber_number": "6734323"
+            }
+        }
+    },
+    "payer": {
+        "reference": "6dcb24f5-74a0-4da3-98da-4f0aa0e88db3",
+        "email": "jdc@gmail.com",
+        "date_of_birth": "2019-04-18",
+        "address": {
+            "line_1": "Apartment 852",
+            "line_2": "Complex 741",
+            "city": "Chicago",
+            "postal_code": "50001",
+            "state": "IL",
+            "country": "US"
+        },
+        "Contact_phone": {
+            "country_code": "61",
+            "subscriber_number": "123456789"
+        },
+        "document": {
+            "type": "DRIVER_LICENSE",
+            "reference": "ref",
+            "issuer": "DRIVER_LICENSE"
+        }
+    },
+"browser_data": {
+        "color_depth": "24",
+        "ip": "123.123.123.123",
+        "java_enabled": "true",
+        "javascript_enabled": "true",
+        "language": "en-US",
+        "screen_height": "1080",
+        "screen_width": "1920",
+        "timezone": "0",
+        "user_agent": "dfs",
+        "cookies_accepted": "NO",
+        "host_name": "gfh",
+        "device_fingerprint": "sgrsg",
+        "browser_email": "rgwgw",
+        "accept_header": "efffff",
+        "accept_content": "fdsss"
+    },
+    "instructions": [
+        [
+            "TRANSACTION-SUCCESS-ASSESS"
+        ],
+        [
+            "RISK_ASSESSMENT-REJECTED-REVERSE"
+        ]
+    ]
+}
+```
+</Code>
+   
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "TRN_WLNM4JORnt2RUytmfkaLfMPE8G4uDF",
+    "time_created": "2021-11-17T15:24:52.730Z",
+    "type": "SALE",
+    "status": "REVERSED",
+    "channel": "CP",
+    "capture_mode": "AUTO",
+    "amount": "400",
+    "currency": "USD",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "RAA_83d6df6b8ef24543a129271be85e1b87",
+    "account_name": "dm_analyzer",
+    "reference": "TRANS-201912132001",
+    "payment_method": {
+        "result": "00",
+        "message": "APPROVAL",
+        "entry_mode": "CONTACTLESS",
+        "card": {
+            "funding": "FOOD_STAMP",
+            "available_balance": "1600",
+            "brand": "EBT",
+            "masked_number_last4": "XXXXXXXXXXXX0016",
+            "authcode": "",
+            "brand_reference": "",
+            "brand_time_created": "",
+            "bin": "401200",
+            "issuer": "",
+            "bin_country": "",
+            "account_type": "",
+            "provider": {
+                "result": "00"
+            }
+        }
+    },
+    "risk_assessment": {
+        "raw_response": {
+            "platform": "CYBS",
+            "data": {
+            ,,,,,<!-- Full Response - See Sample Below -->...
+                       }
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_ppJ3o7PVUZgEOgPu3d2WSS0QTS7GZt",
+        "type": "REVERSE",
+        "time_created": "2021-11-17T15:24:54.208Z",
+        "result_code": "SUCCESS",
+        "app_id": "7bSFlAf1KiXv5O1fWHvYTeAjgH9Yx7Dt",
+        "app_name": "QA_Portico_RiskAssessment"
+    }
+}
+```
+</Code>
+
+## Raw response
+The full response from Decision Manager is also returned in the Raw Response object.
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+"raw_response": {
+        "platform": "CYBS",
+        "data": {
+            "clientReferenceInformation": {
+                "comments": "",
+                "code": "RAS_Wb8MLaXd7TJgIGqGkkgY7yzx2HCEj7"
+            },
+            "consumerAuthenticationInformation": {
+                "token": "AxjzbwSTWWcBojRsqnDDABEBURxbjo0dpBHDggpSvDpJl6MWJgTgHQAAJCJS"
+            },
+            "errorInformation": {
+                "reason": "DECISION_PROFILE_REJECT",
+                "message": "The order has been rejected by Decision Manager"
+            },
+            "id": "6371549097436723704003",
+            "paymentInformation": {
+                "bin": "401200"
+            },
+            "riskInformation": {
+                "localTime": "14:15:09",
+                "score": {
+                    "result": "94",
+                    "factorCodes": [
+                        "B",
+                        "H",
+                        "V",
+                        "Y",
+                        "Z"
+                    ],
+                    "modelUsed": "default_cemea"
+                },
+                "infoCodes": {
+                    "address": [
+                        "MM-A",
+                        "MM-CO",
+                        "MM-Z",
+                        "UNV-ADDR"
+                    ],
+                    "globalVelocity": [
+                        "VEL-NAME",
+                        "VELL-EM",
+                        "VELL-IP",
+                        "VELV-CC",
+                        "VELV-EM",
+                        "VELV-IP",
+                        "VELV-SA"
+                    ],
+                    "suspicious": [
+                        "RISK-SD"
+                    ],
+                    "identityChange": [
+                        "ID-M-HNEG",
+                        "ID-X-HNEG"
+                    ],
+                    "internet": [
+                        "FREE-EM",
+                        "MM-IPBCO"
+                    ]
+                },
+                "profile": {
+                    "earlyDecision": "ACCEPT",
+                    "destinationQueue": "Example",
+                    "name": "Example",
+                    "selectorRule": "Default Active Profile"
+                },
+                "ipAddress": {
+                    "country": "cn",
+                    "carrier": "china unicom beijing province network",
+                    "organization": "china unicom beijing province network",
+                    "locality": "beijing",
+                    "routingMethod": "fixed",
+                    "administrativeArea": "bj"
+                },
+                "rules": [
+                    {
+                        "decision": "REVIEW",
+                        "name": "Billing and/or shipping address not verifiable",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "Order exceeds your maximum amount.",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "REJECT",
+                        "name": "Order is above your AFS threshold for reject.",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "Order outside merchant's region",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "CVN not submitted",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "Shipping address different from billing address",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "Free e-mail provider",
+                        "executionTiming": "POST_AUTH"
+                    },
+                    {
+                        "decision": "IGNORE",
+                        "name": "Similarities of this order to recent orders",
+                        "executionTiming": "POST_AUTH"
+                    }
+                ],
+                "providers": {
+                    "fingerprint": {
+                        "profile_duration": "5",
+                        "test_risk_rating": "neutral"
+                    }
+                },
+                "casePriority": "3"
+            },
+            "status": "REJECTED",
+            "submitTimeUtc": "2021-11-17T13:15:10Z"
+        }
+    },
+```
+</Code>

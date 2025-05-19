@@ -1,0 +1,117 @@
+---
+title: 'In-Store Payments'
+search_results: 'Global Payments - In-Store'
+subtitle: 'Explore our solutions for card-present transactions'
+tag: 'rest'
+created: '06/08/2024'
+---
+Merchants have many options when it comes to accepting card payments at the point of sale (POS) from customers who visit their place of business. This article first explains how this card-present process works — such as authorization flow, entry methods, and payer verification — and then covers the various integration solutions we offer to meet the needs of your POS application.
+
+## What is POS?
+
+POS environments primarily include “brick and mortar” merchants who want to have their customers (that is, cardholders) pay by swiping an attached terminal device. Application developers who want to use our API to integrate card-present transaction processing into their existing POS application should integrate using our POS options. 
+
+Our API uses a <Tooltip content="Stands for Representational State Transfer. A type of API architecture that uses HTTP requests.">REST</Tooltip> framework and is designed to connect payments from numerous regions, channels, and payment methods worldwide into a single integration. It’s ideally suited if you want to add in-store payments to your existing online integration, such as an app or website. (For more information on taking online payments, see [Online Payments](/docs/payments/online/overview).) 
+
+## What is _card present_?
+
+Customers have the option of paying with their card in person at a store (_card present_) or using their card remotely to pay via some type of technology (_card not present_). Our API, when implemented in a POS environment, creates a card-present environment, as defined below:
+* **Card present** – The card (and cardholder) is physically present during the transaction, such as an in-person sale.
+* **Card not present** – The card (and cardholder) is not physically present during the transaction, such as via a website or app, or by MOTO (mail order / telephone order).
+
+### Authorization flow
+
+The outcome of each card-present authorization request is determined by the card issuer. The issuer analyzes the information in the request and either approves or declines. This information can include merchant location, merchant type/category, transaction amount, whether the card was present, how the payer was authenticated, and — if the card was present — other risk factors from the chip. 
+
+The entire processing time should take no longer than 2–3 seconds, which speaks to the robustness of the payments ecosystem considering all of the entities involved in the transaction. For more information on the key players in the payments industry, see [Introduction to Payments](/docs/getting-started/new-to-payments/introduction) and our [Payments Glossary](/docs/getting-started/new-to-payments/glossary).
+
+At a high level, a typical payment authorization works like this:
+
+![Diagram flow showing interaction between the cardholder, merchant, payment processor, and acquirer to authorize a payment.](/gh-assets/instore_auth-flow.png)
+ <p style={{textAlign: "center"}}>**Payment Authorization Process**</p>
+
+### Entry methods
+
+Card data can be collected in different ways:
+
+* **Manually entered** – Merchants can key card data in cases where the card is damaged such that the chip or mag-stripe data can’t be read by the payment device. <br/>
+++Note++: This is considered a card-not-present transaction.
+* **Swiped** – Card data is collected by a card reader device via the mag-stripe reader, returning the entire track or just track-1 or track-2 data.
+* **Chip insert** – Card data is collected by a card reader device via the chip reader, returning both track and chip data.
+* **Contactless chip** – Card data is collected by a payment device via the contactless/<Tooltip content="Near Field Communication. Technology that allows two devices to communicate wirelessly when close together.">NFC</Tooltip>
+ proximity reader, returning both track and chip data. This interface not only supports NFC-enabled cards but also smartwatches, smartphones, and key fobs. 
+
+To verify a cardholder’s identity, several types of security can be implemented, as described in the next section.
+
+### Payer verification methods
+There are several payer verification methods that can be supported. We list them below from highest to lowest security:
+* **Online <Tooltip content="Personal Identification Number">PIN</Tooltip>/biometrics** – Debit and credit cards can be authenticated with biometrics or a PIN, which is encrypted and sent to the card issuer for verification. 
+* **Offline PIN/biometrics** – Debit and credit cards can be authenticated with biometrics or a PIN, which is verified offline by the chip card data on the card.   
+* **Signature** – Printed receipts can have a signature line that is intended to be signed by the payer and matched to the signature panel on the back of the card. 
+* **No verification method** – High-value payers or low-value transactions typically don’t have any verification method. For example, unattended kiosks, vending machines, or payers flagged as having a special status (VIP) with their card issuer.
+
+The following factors determine the payer verification method:
+* Risk profile set within the chip card data from the card issuer
+* Physical capabilities of the card reader
+* Amount of the transaction
+
+## Integration methods
+There are various types of integrations for you to choose from. One of these types of integrations should meet the needs of your POS application. We have solutions for each, which you can discuss with your account manager. The pros and cons of each integration are described in each section below. 
+
+### Standalone terminals
+Standalone terminals are an in-store method that integrates to our API but has no communication with your POS system. After consulting with an account manager, you purchase an off-the-shelf terminal that already runs a terminal application connected to our API. This will allow your business to quickly run credit card transactions with little additional training. No certifications are required on your end, but additional functionality is limited to what is already available on the terminal.
+
+| PROS    | CONS |
+| -------- | ------- |
+| <ul><li>No development work or certification required</li><li>Devices are provisioned and supported by us</li><li>Reduced scope from <Tooltip content="Payment Card Industry">PCI</Tooltip> <Tooltip content="Payment Application Data Security Standard">PA-DSS</Tooltip> since the payment card data only resides within the PCI <Tooltip content="PIN Transaction Security">PTS</Tooltip> certified device</li></ul> | <ul><li>Limited to devices available through us</li><li>No flexibility of the payer experience and flows</li><li>No control over the device, screens, or messaging to the payer</li><li>No control over the transaction workflows</li><li>Can be specific to device/manufacturer</li></ul> |
+
+### Semi-integration
+Semi-integration is much easier from a time and effort perspective but is less flexible. This is our preferred integration method as it doesn’t require platform/gateway or <Tooltip content="Mandate required by Europay, MasterCard, and Visa (EMV) for payment acceptance systems.">EMV</Tooltip> certifications, all of which can take a significant amount of time. Semi-integation also significantly reduces your PCI PA-DSS scope from your POS solution.
+
+| PROS    | CONS |
+| -------- | ------- |
+| <ul><li>Usually a quick and easy integration</li><li>Devices are provisioned and supported by us</li><li>Reduced scope from PCI PA-DSS since the payment card data only resides within the PCI PTS certified device</li><li>Platform/gateway certification not required</li><li>EMV certification not required, so neither is <Tooltip content="Brand Test Tool for the company UL Solutions.">UL BTT</Tooltip> software</li></ul> | <ul><li>Limited to devices available through us</li><li>Less flexibility of the payer experience and flows</li><li>No control over the device, screens, or messaging to the payer</li><li>Less control over the transaction workflows</li><li>Can be specific to device/manufacturer</li></ul> |
+
+### Cloud integration
+Cloud integrations are a subset of semi-integration since they use a semi-integrated capable device. Cloud integrations are typically used by integrators with browser or web-based solutions that can communicate only via a browser versus traditional “fat client” software running on a computer. With semi-integration, the POS application maintains a connection to the device via serial/USB or TCP/IP (Ethernet or WiFi).
+
+With cloud integration, the POS application is not physically connected to the device. The POS uses a cloud message routing service as does the terminal. Once the POS sends the transaction request to the cloud-routing service, the device performs the transaction and sends the results to the cloud routing service, which then sends the results back to the POS.
+
+| PROS    | CONS |
+| -------- | ------- |
+| <ul><li>Same pros as semi-integration, but integration efforts are much easier</li><li>Simple APIs using HTTP POST/GET commands</li></ul> | <ul><li>Same cons as semi-integration</li><li>Need a local connection to the device and a backup internet communication method if the internet connection goes down</li></ul> |
+
+### Full integration
+Full integration is the most demanding, but it also provides the most flexibility. You have full control over the payer experience and workflows. This type of integration requires a certification to our processing platform followed by EMV certifications in each processing region.
+
+In addition, you would be coding directly to a payment device to retrieve card/EMV data to send us for transaction processing. This gives you full control of what is displayed on the device, so you can add marketing images or videos and display or collect any additional information from the payer. Your POS solution needs to be PA-DSS compliant, as you’re in control of sensitive payment card data.
+
+| PROS    | CONS |
+| -------- | ------- |
+| <ul><li>Full flexibility of the payer experience and flows</li><li>Full control over the PCI PTS certified device choice and screens/messaging to the payer</li><li>Full control over the transaction workflows</li></ul> | <ul><li>Requires PCI PA-DSS approval</li><li>Requires certification to a processing platform or gateway</li><li>Requires EMV certifications by region</li><li>Requires UL BTT software ($10k+ or equivalent)</li><li>Time and cost intensive</li><li>Specific to device/manufacturer</li></ul> |
+
+## Next steps
+To get started with POS transactions, read more about our integration methods.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/in-store/standalone" title="Standalone Terminals" icon="mobile-retro">
+ Purchase one of our POS terminals to connect to our API.   
+ </Card>
+
+    <Card type="with_icon" link="/docs/payments/in-store/cloud" title="Cloud" icon="cloud">
+ Integrate wirelessly with your POS device.   
+ </Card>
+  
+</CardsGroup>
+
+<CardsGroup type="with_icon">
+  
+    <Card type="with_icon" link="/docs/payments/in-store/semi-integration" title="Semi Integration" icon="circle-half-stroke" icon="cash-register">
+ Connect your POS system to our API via a terminal.   
+ </Card>
+  
+  
+    <Card type="with_icon" link="/docs/payments/in-store/full-integration" title="Full Integration" icon="computer">
+ Code directly for complete control of displays and workflows.   
+ </Card>
+</CardsGroup>

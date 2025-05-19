@@ -1,0 +1,138 @@
+---
+title: 'Open Banking - Overview'
+search_results: 'Global Payments - Open Banking Overview'
+subtitle: 'Allow customers to pay using their bank account'
+tag: 'rest'
+created: '06/08/2024'
+---
+<Infobox>
+  We currently support Open Banking transactions in GBP and EUR currencies. The full list of EUR countries supported by our Open Banking partner [Token.io](http://token.io/) can be found on their [coverage page](https://token.io/coverage).
+</Infobox>
+
+With our Open Banking solution, merchants can allow customers to pay for goods and services directly from their bank account. For example, customers can authorize a third party to make payments from their bank account on their behalf.
+
+You can easily add Open Banking to a new or existing integration, including with our hosted solutions. For merchants, the benefits of Open Banking include:
+* No card brand or interchange fees
+* Faster settlement — obtain funds in real time
+* No chargebacks
+* No customer onboarding or registration required
+* Faster allocation of incoming funds
+* Better screening, fewer false declines, and higher success rates — by leveraging bank authentication
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our Bank Payment service for Open Banking. Keep in mind that this section doesn’t cover all of the use cases.
+
+##### Use Case #1: Invoicing software
+An invoice software platform wants to allow its merchants to enable Bank Payments as a payment option so that they get paid faster. In addition, the platform wants to reduce the processing fees associated with traditional card payments. Another advantage for the platform’s merchants is that with the in-app payment flow, they can settle invoices in just a few clicks.
+
+##### Use Case #2: Wallet or account top-up
+A digital wallet provider wants to allow their customers to top up their wallet, or a customer wants to top up an investment account. Bank Payment can be used as an alternative to card top-ups so the digital wallet provider or investment company pays less in processing fees. 
+
+##### Use Case #3: High-ticket items
+Car dealerships and jewelry shops often deal with significant transaction values. The instant settlement of funds that comes with using Bank Payment would give these merchants of high-ticket items the confidence to release the product knowing the funds were received and that there can’t be a fraudulent chargeback.
+
+##### Use Case #4: Regular money movement
+A financial institution wants to make the moving of money and the repayments of credit card balances easier and cheaper than card payments since these activities are the core of their business, so it uses Bank Payment instead. It’s also a better option than paying with bank transfers, personal checks, and cash—all of which can be prone to error, come with significant overhead costs, or involve an inconsistent and time-consuming reconciliation process. 
+
+##### Use Case #5: Monthly utility bills
+A utility company wants a better process for collecting payment for their services regularly. Traditional ways of paying like direct debit and bank transfers require a higher operational cost (for example, fraud compliance) and longer settlement times, not to mention tedious data entry for the customer — which can lead to increased drop-off rates and even missed payments. So, instead, the company leverages Bank Payment to give customers an easy way to pay online, on invoices, or via QR codes, including form fields that are pre-filled with the customer’s bank details. Customers can also pay multiple bills in bulk or top up their accounts to pay off balances.
+
+## What is Open Banking?
+Open Banking is the process through which banks allow third-party financial service companies to access a customer's financial data via APIs (with the customer’s permission). 
+
+To facilitate Open Banking purchases on merchant ecommerce sites, we built a service called _Bank Payment_ in collaboration with our technology partner, Token.io (Token). Token serves as an intermediary and has an API integration with participating banks. This API is called when a customer using Bank Payment is redirected to their bank for authentication. 
+
+For our hosted solutions, Bank Payment appears as another payment option alongside non-card payment methods like PayPal or local payment methods. Bank Payment transactions display in Merchant Portal reporting with a Bank Payment icon in the Payment Method column.
+
+<img alt="Bank payment icon" src="/sites/default/files/2022-05/bank-payment-logo.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Bank Payment Icon</p>**
+
+### Settlement options
+Open Banking transactions allow the funds to transfer directly from a customer’s account into your account (_Direct Settlement_). This gives fast access to the money but may be difficult for reconciliation of every individual transaction on your bank statement and funds arriving throughout the day.
+
+To overcome this issue, we offer a managed service (_Managed Settlement_) where we collect the funds on your behalf throughout the day and then make a batch settlement (the same as for card transactions). Reporting and reconciliation tools are available in our Merchant Portal.
+
+#### Direct Settlement
+For Direct Settlement, you can either store the bank account details in your account or pass them through in the payment request. You may want to use different accounts for receiving funds in different currencies—for example, one for British pounds (GBP) and another for euro (EUR) transactions. If you have the bank account details stored with us, you can choose to supersede this on a transaction-by-transaction basis by supplying the details in the request.
+<Infobox>
+If you’re using an HSBC Payment Initiation Service Provider (PISP), the beneficiary accounts must be an HSBC account and must be stored by us. Also, the accounts must be allowlisted and can’t be sent in the request. You’ll need to submit these accounts to us during boarding so we can allowlist them.
+</Infobox>
+
+#### Managed Settlement
+Receiving bank account information (that is, beneficiary account) is not required in the payment request. We will append our own beneficiary account details to the transaction request before it’s sent to the bank for the customer to authenticate and confirm the payment.
+
+### Currency selection
+Where possible, a customer should be able to select the currency that they want to pay in. Many banks use the SWIFT network to route cross-border and trans-currency payments. However, this can trigger significant transaction fees, which can lead to a poor user experience and less ongoing conversion.
+
+You can initiate cross-border payments with our Open Banking solution. However, there is a lack of consistency in how this works across the banks that our technology partner Token provides connectivity to. 
+
+Your incorporation location as a merchant is not important when collecting cross-border payments via Open Banking, but the beneficiary accounts you use are. These accounts dictate the currency and payment method types (Single Euro Payments Area [SEPA] or Faster Payments) that can be received and used.
+* For payments in euros, use a euro-denominated beneficiary account at an institution that is connected to the SEPA network.
+* For payments in British pounds, use a GBP-denominated beneficiary account at an institution that is connected to the Faster Payments network.
+
+
+## How does it work?
+The Open Banking transaction is initiated when the customer selects the Bank Payment button as the payment method. The customer is then redirected to Token’s Bank Payment web app to find their bank. Once their bank account is selected, the customer accepts the bank’s terms and conditions (T&Cs). The customer is then redirected to the bank’s website or mobile app where they can log in and confirm the payment. They are then redirected to your Return URL where you can hold them temporarily until you call and receive the final status of the transaction. 
+
+In the following sections, we provide more details for each of these steps.
+
+### Redirect the customer to bank selection
+After initiating the Open Banking transaction, the customer is redirected to the Bank Payment web app to select their bank, which is hosted by our technology partner Token. The customer is presented with a list of supported banks based on the country and the currency of the transaction. After selecting their bank, the customer then confirms the payment details and continues to the bank’s T&Cs page.
+
+<img src="/sites/default/files/2024-05/redirect-customer_cropped.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Bank Selection and Payment Details Screens</p>**
+
+### Customer accepts T&Cs
+After the customer selects the bank they want to use to pay, they will need to accept the T&Cs of the Open Banking transaction. These terms are governed by the PISP—that is, the regulated entity that is authorized by the Financial Conduct Authority, or equivalent authority, to provide Open Banking services. 
+
+This is a required step in Open Banking so that the customer is fully aware of the conditions of the transaction. Either we or our partners Token or HSBC UK will serve as the PISP. It depends on the settings agreed to and configured when you set up Open Banking with us.
+
+<img alt="Terms and conditions screen" src="/sites/default/files/2024-05/%20customer-accepts-terms-cropped.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Terms and Conditions Screen</p>**
+
+### Customer is redirected to their bank
+At the next step, the customer is redirected to their bank to log in and confirm the payment. If they are transacting on a mobile device that has their bank app installed, they will be prompted to use the app (_Decoupled Model_); otherwise, they will be redirected to a web app (_Redirect Model_) hosted and controlled by the bank. 
+
+The customer will log in using their online or mobile banking credentials (this may include multi-factor authentication if required by their bank). They will then see all the transaction details (including amount, payee, and remittance reference) automatically populated. The customer simply selects the account they want to pay from and confirms the transaction.
+
+#### Decoupled Model
+<img alt="Decoupled model for open banking on a mobile device app." src="/sites/default/files/2023-01/Model-Decoupled.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Open Banking - Decoupled Model (Mobile Device App)</p>**
+
+#### Redirect Model
+<img alt="Redirect model for open banking on a web app." src="/sites/default/files/2023-01/Model-Redirect.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Open Banking - Redirect Model (Web App)</p>**
+
+### Customer is redirected back to the merchant
+Before the customer is redirected back to your website, they will be presented with the Payment Confirmation screen. This is another required step in Open Banking so the customer is fully aware of the conditions of the transaction.
+
+At this point, the customer is shown four potential outcomes:
+* Success
+* Submitted
+* Technical Error
+* Unsuccessful
+
+After 10 seconds, the customer will then be able to click Return to Merchant where they will see their final confirmation and summary.
+
+#### Payment confirmation
+<img alt="Payment Status Potential Outcomes." src="/sites/default/files/2024-05/Pay-Confirmation_cropped.png" style={{display: "block", margin: "0 auto"}} />
+**<p style={{textAlign: "center"}}>Payment Status Potential Outcomes</p>**
+
+### Receive the customer back to your app
+The browser will be redirected back to the Return URL (`return_url`) that you specify. The redirection includes the Open Banking Transaction ID (`&id`) as a URL parameter. At this point, you’ll need to hold the customer temporarily while you query the final status of the transaction. To query the transaction, do a GET call to get the status of the transaction. 
+
+Depending on the status that is returned, there may be a subsequent webhook notification sent to the `status_url` you provided. 
+
+The following table shows a few examples of when an additional webhook could be sent, but doesn’t list them all.
+| Status    | Additional Webhook    | Reason |
+| -------- | ------- | ------- |
+| SUCCESS/CAPTURED | No | Transaction is complete. |
+| SUBMITTED/PENDING | Yes | Original transaction was not fully complete at the time, and the bank needs to send a subsequent notification of the result. We recommend using caution when shipping goods or releasing funds before a SUCCESS status is given by the asynchronous webhook. |
+| DECLINED/ERROR | No | Transaction has ended. |
+
+
+## Next steps
+To get familiar with how Open Banking works, see our [guide](/docs/payments/payment-methods/open-banking-guide).
+<Infobox>
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

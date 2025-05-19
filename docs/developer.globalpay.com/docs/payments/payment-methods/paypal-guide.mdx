@@ -1,0 +1,1143 @@
+---
+title: 'PayPal - Guide'
+search_results: 'Global Payments - PayPal'
+subtitle: 'Learn how to add PayPal as a payment method for your integration'
+tag: 'rest'
+created: '06/08/2024'
+---
+For more information about our PayPal solution, see our [Overview](/docs/payments/payment-methods/paypal-overview).
+<br />
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+
+This guide focuses on adding PayPal as a payment method using direct API integration. We provide a full suite of APIs that allow you to process and manage PayPal transactions. Requests to [initiate](#payment-initiate-request), [reverse](#payment-reversal-request), [confirm](#payment-confirm-request), [capture](#payment-capture-request), and [refund](#payment-refund-request) PayPal transactions are supported. Sample code and responses for these requests are provided in the [Message flows](#message-flows) section.
+
+Each PayPal transaction consists of at least two requests — Payment Initiate and Payment Confirm — but the full lifecycle of a PayPal transaction, including capturing amounts and refunding transactions, might consist of up to five requests. To complete transaction authorization, the customer must be redirected to PayPal between the initiation and confirmation of the transaction.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Supported requests
+The following table describes the requests we support for PayPal. *Type* indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Request | Type | Description |
+| --- | --- | --- |
+| Payment Initiate | M   | Used to initiate a PayPal transaction, obtain the redirection URL, advise PayPal of the details of a new transaction, and retrieve the necessary details for customer authorization of the transaction. |
+| Payment Describe | O   | Used to retrieve data about the PayPal transaction, in particular, shipping information. |
+| Payment Confirm | M   | Required to confirm the PayPal transaction after customer authorization. For transactions initiated as AUTO settlement, this request initiates the transfer of funds. |
+| Payment Capture | C   | Used to initiate the transfer of funds for the amount specified. Used only for transactions that are not set for AUTO settlement in the Payment Initiate request. |
+| Payment Reversal | O   | Used to void a PayPal transaction. Used only for transactions that are not set for AUTO settlement in the Payment Initiate request. |
+| Payment Refund | O   | Used to return funds to a customer. |
+
+## Message flows
+There are three types of PayPal transactions: AUTO, LATER, and MULTI. The use case and applicable message flow for each transaction type are described in the following table. 
+
+| Transaction Type | Use Case | Message Flow |
+| --- | --- | --- |
+| AUTO | You want to charge the customer right after <br /> they authorized the payment. | 1 - Payment Initiate <br /> 2 - Redirect to PayPal <br /> 3 - Receive PayPal Response <br /> \[OPTIONAL\] Describe (retrieve transaction information) <br /> 4 - Payment Confirm |
+| LATER | You want to charge the customer at a later time <br /> after their authorization, e.g., when your product <br /> is ready to be shipped. | 1 - Payment Initiate <br /> 2 - Redirect to PayPal <br /> 3 - Receive PayPal Response <br /> \[OPTIONAL\] Describe (retrieve transaction information) <br /> 4 - Payment Confirm <br /> 5 - Capture |
+| MULTI | You want  to charge the customer at a later time <br /> after their authorization and in multiple installments, <br /> e.g., if an order is composed of multiple items that <br /> you will ship separately, and you want to charge for each item individually as it is shipped. | 1 - Payment Initiate  <br /> 2 - Redirect to PayPal <br /> 3 - Receive PayPal Response <br /> \[OPTIONAL\] Describe (retrieve transaction information) <br /> 4 - Payment Confirm <br /> 5 - Capture (multiple requests allowed) |
+
+<br />
+The following sections contain more details on the various steps of the message flows, including sample requests and responses for each.
+
+### Payment Initiate request
+The request must contain the following URLs:
+* **Return URL** – The URL on your website to which the customer should be redirected if the PayPal authentication attempt is successful.
+* **Cancel URL** – The URL on your website to which the customer should be redirected in the event of the customer canceling the transaction.
+
+Every transaction initiation needs to have a different `order.reference`. This reference cannot be duplicated.
+
+<Infobox>
+A successful PayPal transaction will return a **00** success code, even though standard non-card transactions usually return a **01** success code.
+</Infobox>
+
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TsgUfhGDmdYWS9W8SFM9lfzAiMk3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "1000",
+    "currency": "GBP",
+    "reference": "transaction reference",
+    "country": "GB",
+    "description": "description",
+    "order":{
+        "reference": "unique order reference"
+    },
+    "payer": {
+        "reference": "payer reference"
+    },
+    "payment_method": {
+        "name": "Doe",
+        "entry_mode": "ECOM",
+        "apm": {
+            "provider": "paypal"
+        }
+    },
+    "notifications": {
+        "return_url": "https://www.example.com/returnUrl",
+        "cancel_url": "https://www.example.com/cancelUrl"
+    }
+}'
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference",
+    "time_created": "2024-01-17T11:40:42.567Z",
+    "type": "SALE",
+    "status": "INITIATED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "1000",
+    "currency": "GBP",
+    "country": "GB",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "transaction reference",
+    "payment_method": {
+        "result": "00",
+        "message": "SUCCESS",
+        "entry_mode": "ECOM",
+        "redirect_url": "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/redirect/eyJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl83ZTNlMmM3ZGYzNGY0MjgxOWIzZWRlZTMxMDIyZWUzZiIsImFjY291bnRfaWQiOiJUUkFfYzk5NjdhZDdkOGVjNGI0NmI2ZGQ0NGE2MWNkZTlhOTEiLCJtZXJjaGFudF9uYW1lIjoiU2FuZGJveF9tZXJjaGFudF8zIiwiYWNjb3VudF9uYW1lIjoidHJhbnNhY3Rpb25fcHJvY2Vzc2luZyIsInBheXBhbF91cmwiOiJodHRwczovL3d3dy5zYW5kYm94LnBheXBhbC5jb20vY2dpLWJpbi93ZWJzY3I/Y21kPV9leHByZXNzLWNoZWNrb3V0JnRva2VuPUVDLTY2Vzk0MzI2OEIzNzQzOTJQIiwiYXBwX2lkIjoiNWgyWkR6NDdESG5TUkZGOEVHUzVnb2RJQVVqRVpUTUsiLCJhcHBfbmFtZSI6Imdpb3Zhbm5pc2FwcCIsImFwcF9kZXZlbG9wZXIiOiJzdW1hbm8uZ2lvdmFubmlAZ21haWwuY29tIiwiWC1HUC1WZXJzaW9uIjoiMjAyMS0wMy0yMiJ9",
+        "apm": {
+            "provider_redirect_url": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-66W943268B374392P",
+            "provider": "paypal",
+            "session_token": "EC-66W943268B374392P",
+            "ack": "SUCCESS",
+            "correlation_reference": "963889dfaa606",
+            "version_reference": "98.0",
+            "build_reference": "58313039"
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_KciNriJY2JihUWRnn2BeOn2bdqYeZo",
+        "type": "INITIATE",
+        "time_created": "2024-01-17T11:40:42.567Z",
+        "result_code": "SUCCESS",
+        "app_id": "5h2ZDz47DHnSRFF8EGS5godIAUjEZTMK",
+        "app_name": "myapp"
+    }
+}
+```
+</Code>
+</CodeGroup>  
+  
+### Redirect to PayPal
+Following a successful Payment Initiate request, the next step is to redirect the customer to `payment_method.apm.provider_redirect_url` returned in the Payment Initiate response. This can be achieved, for example, using a simple JavaScript redirect. 
+
+#### Sample redirect
+<Infobox type="danger">
+    The sample code below is an example only. You may need to modify it to suit your particular needs.
+</Infobox>
+
+<CodeGroup>
+<Code id="HTML" title="HTML" language="html" active>
+```
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Sample PayPal Redirect</title>
+      <meta charset="UTF-8">
+   </head>
+
+   <body>
+      <script>
+         window.location = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-66W943268B374392P";
+      </script>
+   </body>
+</html>
+```
+</Code>
+</CodeGroup> 
+
+<br />
+Upon redirection, the customer will need to log in to their PayPal account and confirm the transaction details. Afterwards, the customer will be redirected back to your application to continue shopping.
+
+### Receive PayPal response
+There are two possible outcomes of the authentication process:
+
+* **Successful Authentication/Authorization** – The customer successfully authenticates and authorizes the transaction. They are then returned to the ReturnURL set in the payment-set request.
+* **Canceled Transaction** – The customer cancels the transaction on the PayPal page and is returned to the CancelURL set in the payment-set request.
+
+For successfully authenticated and authorized transactions where the customer has been redirected to the `ReturnURL`, your application should proceed to process the Payment Describe (optional) and Payment Confirm (mandatory) requests.
+
+### [OPTIONAL] Payment Describe request
+This optional request is used to retrieve data about the transaction, particularly the customer’s shipping address as stored on PayPal.
+
+The Translation ID returned in the Payment Initiate response must be used.
+
+#### Sample request
+
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/describe' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TsgUfhGDmdYWS9W8SFM9lfzAiMk3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data ''
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+{
+    "id": "TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference",
+    "time_created": "2024-08-06T15:32:04.969Z",
+    "time_last_updated": "2024-08-06T15:32:04.969Z",
+    "type": "SALE",
+    "status": "PENDING",
+    "amount": "1000",
+    "currency": "GBP",
+    "country": "GB",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "reference": "transaction reference",
+    "description": "Comment 1",
+    "order_reference": "unique order reference",
+    "order": {
+        "reference": "unique order reference"
+    },
+    "time_created_reference": "",
+    "batch_id": "",
+    "initiator": "",
+    "language": "",
+    "ip_address": "",
+    "site_reference": "",
+    "payment_method": {
+        "result": "00",
+        "message": "SUCCESS",
+        "entry_mode": "ECOM",
+        "name": "Doe",
+        "redirect_url": "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/redirect/eyJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl83ZTNlMmM3ZGYzNGY0MjgxOWIzZWRlZTMxMDIyZWUzZiIsImFjY291bnRfaWQiOiJUUkFfYzk5NjdhZDdkOGVjNGI0NmI2ZGQ0NGE2MWNkZTlhOTEiLCJtZXJjaGFudF9uYW1lIjoiU2FuZGJveF9tZXJjaGFudF8zIiwiYWNjb3VudF9uYW1lIjoidHJhbnNhY3Rpb25fcHJvY2Vzc2luZyIsInBheXBhbF91cmwiOiJodHRwczovL3d3dy5zYW5kYm94LnBheXBhbC5jb20vY2dpLWJpbi93ZWJzY3I/Y21kPV9leHByZXNzLWNoZWNrb3V0JnRva2VuPUVDLTRDMTgzNDI4SkYyNjU5OTRWIiwiYXBwX2lkIjoiNWgyWkR6NDdESG5TUkZGOEVHUzVnb2RJQVVqRVpUTUsiLCJhcHBfbmFtZSI6Imdpb3Zhbm5pc2FwcCIsImFwcF9kZXZlbG9wZXIiOiJzdW1hbm8uZ2lvdmFubmlAZ21haWwuY29tIiwiWC1HUC1WZXJzaW9uIjoiMjAyMS0wMy0yMiJ9",
+        "apm": {
+            "provider": "paypal",
+            "provider_redirect_url": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-4C183428JF265994V",
+            "session_token": "EC-4C183428JF265994V",
+            "provider_reference": "MW44PN3H9PXCY",
+            "seller_reference": "testmerchant@globalpay.com",
+            "time_created_reference": "2024-08-06T15:32:29Z",
+            "ack": "SUCCESS",
+            "version_reference": "98.0",
+            "build_reference": "58576904",
+            "correlation_reference": "176f4e28c8982",
+            "billing_agreement_status": "false",
+            "payer": {
+                "reference": "MW44PN3H9PXCY",
+                "status": "VERIFIED",
+                "name": "Global Pay Buyer",
+                "email": "testbuyer@globalpay.com",
+                "country": "GB",
+                "address": {
+                    "name": "John Doe",
+                    "status": "Confirmed",
+                    "line_1": "Spitalfields Arts Market, 112 Brick Lane",
+                    "line_2": "N/A",
+                    "city": "London",
+                    "postal_code": "E1 6RL",
+                    "state": "London",
+                    "country": "GB",
+                    "country_name": "United Kingdom",
+                    "source": "PayPal"
+                },
+                "billing_address": {
+                    "name": "John Doe",
+                    "status": "Confirmed",
+                    "line_1": "Spitalfields Arts Market, 112 Brick Lane",
+                    "city": "London",
+                    "postal_code": "E1 6RL",
+                    "state": "London",
+                    "country": "GB",
+                    "country_name": "United Kingdom",
+                    "source": "PayPal"
+                }
+            },
+            "order": {
+                "reference": "unique order reference",
+                "description": "order description",
+                "amount": "10000",
+                "currency": "GBP",
+                "item_amount": "10000",
+                "tax_amount": "0",
+                "insurance_offered": "NO",
+                "shipping_amount": "0",
+                "shipping_discount": "0",
+                "handling_amount": "0",
+                "insurance_amount": "0",
+                "checkout_status": "PaymentActionNotInitiated",
+                "shipping_address": {
+                    "name": "John Doe",
+                    "status": "Confirmed",
+                    "line_1": "Spitalfields Arts Market, 112 Brick Lane",
+                    "line_2": "N/A",
+                    "city": "London",
+                    "postal_code": "E1 6RL",
+                    "state": "London",
+                    "country": "GB",
+                    "country_name": "United Kingdom",
+                    "normalization_status": "None",
+                    "source": "PayPal"
+                }
+            }
+        }
+    },
+    "action_create_id": "ACT_plE30CwHDLQWBd7KipVR7H9DFG6Haz",
+    "parent_resource_id": "TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference",
+    "action": {
+        "id": "ACT_LTOFUchOjXSFKg8UZfDrVPUTdhItIb",
+        "type": "TRANSACTION_SINGLE",
+        "time_created": "2024-08-06T15:32:30.057Z",
+        "result_code": "SUCCESS",
+        "app_id": "5h2ZDz47DHnSRFF8EGS5godIAUjEZTMK",
+        "app_name": "myapp"
+    }
+}
+```
+</Code>
+</CodeGroup>
+
+### Payment Confirm request
+This request is mandatory and used to commit a previously initiated PayPal transaction. For requests initiated with the `capture_mode` field set to AUTO, this request also initiates the transfer of funds. 
+
+The Transaction ID returned by the Payment Initiate request must be submitted as a parameter in the request’s endpoint as shown below.
+
+#### Sample request
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/confirmation' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TsgUfhGDmdYWS9W8SFM9lfzAiMk3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "payment_method": {
+        "apm": {
+            "provider": "paypal"
+        }
+    }
+}
+
+
+'
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+{
+    "id": "TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference",
+    "time_created": "2024-01-18T16:32:14.115Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "amount": "1000",
+    "currency": "GBP",
+    "country": "GB",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "transaction reference",
+    "payment_method": {
+        "result": "00",
+        "message": "SUCCESS",
+        "entry_mode": "ECOM",
+        "apm": {
+            "provider": "paypal",
+            "session_token": "EC-2AV990714G0682134",
+            "seller_reference": "testmerchant@globalpay.com",
+            "time_created_reference": "2024-01-18T16:32:13Z",
+            "transaction_reference": "6458857216218215F",
+            "ack": "SUCCESS",
+            "version_reference": "98.0",
+            "build_reference": "58313039",
+            "correlation_reference": "de9171030c89d",
+            "secure_account_reference": "CUEXTCPF4MNQY",
+            "reason_code": "none",
+            "pending_reason": "none",
+            "gross_amount": "1001",
+            "payment_time_reference": "2024-01-18T16:32:13Z",
+            "payment_type": "INSTANT",
+            "payment_status": "COMPLETED",
+            "type": "express-checkout",
+            "protection_eligibilty": "ELIGIBLE"
+        }
+    },
+    "action": {
+        "id": "ACT_A32IorkZQCCL5XBlMtntE3fJktlXcQ",
+        "type": "CONFIRM",
+        "time_created": "2024-01-18T16:32:14.115Z",
+        "result_code": "SUCCESS",
+        "app_id": "5h2ZDz47DHnSRFF8EGS5godIAUjEZTMK",
+        "app_name": "myapp"
+    }
+}
+```
+</Code>
+</CodeGroup>
+
+### Payment Capture request
+This request is applicable, and required, only for transactions that were initiated with the capture_mode field set to LATER or MULTIPLE. In these types of transactions, the request is used to initiate the transfer of funds. If no capture request is processed successfully, no funds will be transferred.
+
+#### Sample request
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+curl --location --request POST 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/capture' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TsgUfhGDmdYWS9W8SFM9lfzAiMk3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data ''
+```
+</Code>
+</CodeGroup>
+
+### Payment Reversal request
+This request is applicable to transactions in which the `capture_mode` field was set to LATER or MULTIPLE. It can be used to cancel the transaction without settling any funds so long as the transaction was not captured yet. If the transaction was already captured, a Payment Refund request should be used to return funds to the customer.
+
+### Payment Refund request
+This request is used to refund a transaction that has been initiated, committed, and captured. 
+
+#### Sample request
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_KciNriJY2JihUWRnn2BeOn2bdqYeZo_ionreference/refund' \
+--header 'Authorization: Bearer TsgUfhGDmdYWS9W8SFM9lfzAiMk3' \
+--header 'Accept: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Content-Type: application/json' \
+--data '{
+    "amount": "1000",
+    "description": "refund description",
+    "order": {
+        "reference": "refund reference"
+    },
+    "payer": {
+        "reference": "refund payer reference"
+    }
+}'
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<CodeGroup>
+<Code id="json" title="json" language="json" active>
+```
+{
+    "id": "TRN_HjbI68v1pG6p8QjCp10SiKJZGTjmfS_ionreference",
+    "time_created": "2024-08-06T15:47:45.515Z",
+    "type": "REFUND",
+    "status": "CAPTURED",
+    "amount": "1000",
+    "currency": "GBP",
+    "country": "GB",
+    "reference": "transaction reference",
+    "payment_method": {
+        "result": "00",
+        "message": "SUCCESS",
+        "apm": {
+            "provider": "paypal",
+            "time_created_reference": "2024-08-06T15:47:44Z",
+            "transaction_reference": "49V448067H5095101",
+            "pending_reason": "none",
+            "gross_amount": "10000",
+            "fee_amount": "34",
+            "payment_status": "INSTANT",
+            "ack": "SUCCESS",
+            "version_reference": "98.0",
+            "build_reference": "20240724222844319",
+            "correlation_reference": "90cada9b3dc6e"
+        }
+    },
+    "batch_id": "",
+    "action": {
+        "id": "ACT_HjbI68v1pG6p8QjCp10SiKJZGTjmfS",
+        "type": "REFUND",
+        "time_created": "2024-08-06T15:47:45.515Z",
+        "result_code": "SUCCESS",
+        "app_id": "5h2ZDz47DHnSRFF8EGS5godIAUjEZTMK",
+        "app_name": "myapp"
+    }
+}
+```
+</Code>
+</CodeGroup>
+
+## Testing PayPal
+Use your credentials to log in to your PayPal test account. Then you can test the PayPal payment method with the test details available.
+
+</Tab>
+<Tab id="hosted" title="Drop-In UI">
+This guide focuses on integrating PayPal with our Drop-In User Interface (UI), which is a ready-made payment form using our Hosted Fields solution. You’ll learn how to add PayPal to your payment form using our JavaScript Library.
+    
+To learn how to use the Hosted Fields components on their own with your existing payment form, see our [Hosted Fields Guide](/docs/payments/online/hosted-fields-guide).
+    
+## Prerequisites
+    Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+
+## Step 1: Configure with PayPal
+Once you’ve created the access token, you can now configure the JavaScript Library to enable PayPal in your payment form.
+
+Add a `<div>` tag to render the Drop-In UI payment form to the customer.
+<Code id="html" title="HTML" language="xml" active>
+```
+<div id="payment-form"></div>
+```
+</Code>
+<br></br>
+Next, we configure our JavaScript Library with the transaction details required for PayPal.  
+<Code id="javascript" title="JavaScript" language="javascript" active>
+```
+GlobalPayments.configure({
+    accessToken: "accessToken",
+    env: "sandbox",
+    apiVersion: "2021-03-22",
+    language: "en",
+    account: "accountId",
+    apms: {
+        currencyCode: "GBP",
+        countryCode: "GB",
+        nonCardPayments: {
+            allowedPaymentMethods: [{
+                provider: GlobalPayments.enums.ApmProviders.PayPal,
+            }]
+        }
+    },
+});
+
+
+const cardForm = GlobalPayments.creditCard.form(
+    '#credit-card-form',
+    {
+        amount: "800",
+        style: "gp-default",
+        apms: [ GlobalPayments.enums.Apm.PayPal ],
+    }
+);
+
+cardForm.on(GlobalPayments.enums.ApmEvents.PaymentMethodSelection, paymentProviderData => {
+    const { provider } = paymentProviderData;
+    console.log('Selected provider: ' + provider);
+
+    if (provider === GlobalPayments.enums.ApmProviders.PayPal) {
+        const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+            detail: {
+                provider,
+                redirect_url: "paypal url returned from API",
+            }
+        });
+        window.dispatchEvent(merchantCustomEventProvideDetails);
+    }
+});
+```
+</Code>
+<br></br>
+<br></br>
+<br></br>    
+<img alt="Drop-In UI with PayPal button." src="/gh-assets/paypal.png" style={{display: "block", margin: "0 auto"}} />    
+**<p style={{textAlign: "center"}}>Drop-In UI with PayPal Button</p>**
+<br></br>
+#### JavaScript configuration (PayPal specific parameters)
+*Type* indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+| Name | Format | Type | Description |
+| -------- | -------- | -------- | -------- |
+| currencyCode | string | M | Currency of the amount in ISO-4217 (alpha-3). |
+| countryCode | string | M | The country in ISO-3166-1(alpha-2 code) format. |
+| provider | string | M | The string used to identify the payment method provider used to execute this transaction. |
+    
+
+## Step 2: Capture customer selection
+Now that we have configured PayPal and it's displayed on the Drop-In UI, when a customer selects PayPal as the payment method, the Drop-In UI returns this selection in an event. For example, the Drop-In UI returns: _Selected provider: PayPal_.
+
+Below is the code snippet of how the Drop-In UI returns this event.
+<Code id="javascript" title="JavaScript" language="javascript" active>
+```
+cardForm.on(GlobalPayments.enums.ApmEvents.PaymentMethodSelection, paymentProviderData => {
+    const { provider } = paymentProviderData;
+    console.log('Selected provider: ' + provider);
+
+...
+//continued in Step 4 - Redirect customer to PayPal
+```
+</Code>
+<br></br>
+The provider that is returned is used to initiate the transaction to retrieve the necessary information to complete the PayPal transaction.
+
+## Step 3: Initiate PayPal transaction
+Now that we know what payment method the customer has selected, we can initiate the payment to complete the transaction. We create a transaction request with PayPal as the payment method provider and include the transaction information in the request. This returns the necessary details required to facilitate authentication with PayPal. The response contains a specific URL that is passed to the Drop-In UI to redirect the customer to PayPal.
+    
+#### Sample request
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+POST https://apis.sandbox.globalpay.com/ucp/transactions
+{
+    "account_name": "Transaction_Processing",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "20045",
+    "currency": "EUR",
+    "reference": "Paypal-210420-3",
+    "payment_method": {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "entry_mode": "ECOM",
+        "apm": {
+            "provider": "paypal"
+        }
+    },
+    "notifications": {
+        "return_url": "<Replace with your own endpoints>",
+        "cancel_url": "<Replace with your own endpoints>"
+    }
+}
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod(AlternativePaymentType.PAYPAL);
+paymentMethod.setReturnUrl("https://www.example.com/return");
+paymentMethod.setStatusUpdateUrl("https://www.example.com/status");
+paymentMethod.setCancelUrl("https://www.example.com/cancel");
+paymentMethod.setCountry("GB");
+paymentMethod.setAccountHolderName("James Mason");
+
+try {
+    Transaction response = paymentMethod.charge(new BigDecimal("200.45"))
+            .withCurrency("EUR")
+            .withClientTransactionId("PayPal-210420-3")
+            .execute();
+
+    AlternativePaymentResponse alternativePaymentResponse = response.getAlternativePaymentResponse();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->redirect_url"
+    String redirectUrl = alternativePaymentResponse.getRedirectUrl();
+    // API raw response key "payment_method->apm->provider"
+    String provider = alternativePaymentResponse.getProviderName();
+    // API raw response key "payment_method->apm->ack"
+    String ack = alternativePaymentResponse.getAck();
+    // API raw response key "payment_method->apm->session_token"
+    String sessionToken = alternativePaymentResponse.getSessionToken();
+    // API raw response key "payment_method->apm->correlation_reference"
+    String correlationReference = alternativePaymentResponse.getCorrelationReference();
+    // API raw response key "payment_method->apm->version_reference"
+    String versionReference = alternativePaymentResponse.getVersionReference();
+    // API raw response key "payment_method->apm->build_reference"
+    String buildReference = alternativePaymentResponse.getBuildReference();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig {
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+AlternativePaymentMethod paymentMethod = new AlternativePaymentMethod {
+	AlternativePaymentMethodType = AlternativePaymentType.PAYPAL,
+	ReturnUrl = "https://www.example.com/return",
+	StatusUpdateUrl = "https://www.example.com/status",
+	CancelUrl = "https://www.example.com/cancel",
+	Country = "GB",
+	AccountHolderName = "James Mason"
+};
+
+try
+{
+	var response = paymentMethod.Charge(200.45m)
+		.WithCurrency("EUR")
+		.WithClientTransactionId("Paypal-210420-3")
+		.Execute(); 
+	
+	// API raw response key "id"
+	var transactionId = response.TransactionId; 
+	// API raw response key "amount"
+	var amount = response.BalanceAmount;
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber;
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode;
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key payment_method->redirect_url
+	var redirectUrl = response.AlternativePaymentResponse.RedirectUrl;
+	// API raw response key payment_method->apm->provider
+	var provider = response.AlternativePaymentResponse.ProviderName;
+	// API raw response key payment_method->apm->ack
+	var ack = response.AlternativePaymentResponse.Ack;
+	// API raw response key payment_method->apm->session_token
+	var sessionToken = response.AlternativePaymentResponse.SessionToken;
+	// API raw response key payment_method->apm->correlation_reference
+	var correlationReference = response.AlternativePaymentResponse.CorrelationReference;
+	// API raw response key payment_method->apm->version_reference
+	var versionReference = response.AlternativePaymentResponse.VersionReference;
+	// API raw response key payment_method->apm->build_reference
+	var buildReference = response.AlternativePaymentResponse.BuildReference;
+	// API raw response key payment_method->result
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = '4gPqnGBkppGYvoE5UX9EWQlotTxGUDbs';
+$config->appKey = 'FQyJA5VuEQfcji2M';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$paymentMethod = new AlternativePaymentMethod(AlternativePaymentType::PAYPAL);
+$paymentMethod->returnUrl = 'https://www.example.com/return';
+$paymentMethod->statusUpdateUrl = 'https://www.example.com/status';
+$paymentMethod->cancelUrl = 'https://www.example.com/cancel';
+$paymentMethod->country = 'GB';
+$paymentMethod->accountHolderName = 'James Mason';
+
+try {
+    $response = $paymentMethod->charge(200.45)
+        ->withCurrency('EUR')
+        ->withClientTransactionId('Paypal-210420-3')
+        ->execute();
+} catch (GatewayException $ex) {
+    // TODO: Add your exception handling here
+}
+$transactionId = $response->transactionId; // "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+$responseCode = $response->responseCode; // API raw response key "action->result_code"
+$transactionStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+// payment_method->redirect_url
+$redirectUrl = $response->alternativePaymentResponse->redirectUrl;
+// payment_method->apm->provider
+$provider = $response->alternativePaymentResponse->providerName;
+// payment_method->apm->ack
+$ack = $response->alternativePaymentResponse->ack;
+//payment_method->apm->session_token
+$sessionToken = $response->alternativePaymentResponse->sessionToken;
+// payment_method->apm->correlation_reference
+$correlationReference = $response->alternativePaymentResponse->correlationReference;
+// payment_method->apm->version_reference
+$versionReference = $response->alternativePaymentResponse->versionReference;
+// payment_method->apm->build_reference
+$buildReference = $response->alternativePaymentResponse->buildReference;
+//payment_method->result
+$cardIssuerResult = $response->cardIssuerResponse->result;
+```
+</Code>
+</CodeGroup>    
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "id": "TRN_keglsmdsOjeef0g5q5TDO0m8Jqk0uF",
+   "time_created": "2024-09-17T12:53:43.960Z",
+   "type": "SALE",
+   "status": "INITIATED",
+   "channel": "CNP",
+   "capture_mode": "LATER",
+   "amount": "20045",
+   "currency": "EUR",
+   "country": "GB",
+   "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+   "merchant_name": "Sandbox_Merchant_4",
+   "account_id": "TRA_27c901760029495f813afbb0dab197ef",
+   "account_name": "transaction_processing",
+   "reference": "Paypal-210420-3",
+   "payment_method": {
+      "result": "00",
+      "message": "SUCCESS",
+      "entry_mode": "ECOM",
+      "redirect_url": "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_keglsmdsOjeef0g5q5TDO0m8Jqk0uF_paypal-123/redirect/eyJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl8yNTg0Y2FhYTRiNWI0Zjc3YTkwZTdmMjU4MmVmNTNkZCIsImFjY291bnRfaWQiOiJUUkFfZjEzMDAwNzVjMDkyNDY0MjhhYWYwNmQxNTliM2Y0ZjkiLCJtZXJjaGFudF9uYW1lIjoiamFzb25iYWphcmlhc3Rlc3QiLCJhY2NvdW50X25hbWUiOiJ0cmFuc2FjdGlvbl9wcm9jZXNzaW5nXzIiLCJwYXlwYWxfdXJsIjoiaHR0cHM6Ly93d3cuc2FuZGJveC5wYXlwYWwuY29tL2NnaS1iaW4vd2Vic2NyP2NtZD1fZXhwcmVzcy1jaGVja291dCZ0b2tlbj1FQy03Ulk3NzY3OFJGMzkxNjUzUiIsImFwcF9pZCI6Ik8yNVFhT3JPbENrR1JMczdPVXRQemh6b2NGMWJHb3lTIiwiYXBwX25hbWUiOiJqYXNvbl9iYWpfdGVzdF8yIiwiYXBwX2RldmVsb3BlciI6Imphc29uLmJhamFyaWFzQGdsb2JhbHBheS5jb20iLCJYLUdQLVZlcnNpb24iOiIyMDIxLTAzLTIyIn0=",
+      "apm": {
+         "provider_redirect_url": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-7RY77678RF391653R",
+         "provider": "paypal",
+         "session_token": "EC-7RY77678RF391653R",
+         "ack": "SUCCESS",
+         "correlation_reference": "3430159d8404c",
+         "version_reference": "98.0",
+         "build_reference": "58613796"
+      }
+   },
+   "batch_id": "",
+   "action": {
+      "id": "ACT_keglsmdsOjeef0g5q5TDO0m8Jqk0uF",
+      "type": "INITIATE",
+      "time_created": "2024-09-17T12:53:43.960Z",
+      "result_code": "SUCCESS",
+      "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+      "app_name": "Postman_Collection_Test"
+   }
+}
+```
+</Code>
+
+## Step 4: Redirect customer to PayPal
+The next step is to redirect the customer to PayPal using the URL provided in the response field of the previous step (`payment_method.redirect_url`) to facilitate authentication with PayPal. To do this, we pass the `redirect_url` returned in the response to the Drop-In UI.
+    
+<Code id="javascript" title="JavaScript" language="javascript" active>
+```
+...
+// Continuation from Step 2 - Capture Customer Selection
+
+    if (provider === GlobalPayments.enums.ApmProviders.PayPal) {
+        const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+            detail: {
+                provider,
+                redirect_url: "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_keglsmdsOjeef0g5q5TDO0m8Jqk0uF_paypal-123/redirect/eyJtZXJjaGFudF9tYW5hZ2VtZW50X2lkIjpudWxsLCJtZXJjaGFudF9pZCI6Ik1FUl8yNTg0Y2FhYTRiNWI0Zjc3YTkwZTdmMjU4MmVmNTNkZCIsImFjY291bnRfaWQiOiJUUkFfZjEzMDAwNzVjMDkyNDY0MjhhYWYwNmQxNTliM2Y0ZjkiLCJtZXJjaGFudF9uYW1lIjoiamFzb25iYWphcmlhc3Rlc3QiLCJhY2NvdW50X25hbWUiOiJ0cmFuc2FjdGlvbl9wcm9jZXNzaW5nXzIiLCJwYXlwYWxfdXJsIjoiaHR0cHM6Ly93d3cuc2FuZGJveC5wYXlwYWwuY29tL2NnaS1iaW4vd2Vic2NyP2NtZD1fZXhwcmVzcy1jaGVja291dCZ0b2tlbj1FQy03Ulk3NzY3OFJGMzkxNjUzUiIsImFwcF9pZCI6Ik8yNVFhT3JPbENrR1JMczdPVXRQemh6b2NGMWJHb3lTIiwiYXBwX25hbWUiOiJqYXNvbl9iYWpfdGVzdF8yIiwiYXBwX2RldmVsb3BlciI6Imphc29uLmJhamFyaWFzQGdsb2JhbHBheS5jb20iLCJYLUdQLVZlcnNpb24iOiIyMDIxLTAzLTIyIn0=",
+            }
+        });
+        window.dispatchEvent(merchantCustomEventProvideDetails);
+    }
+});
+```
+</Code>
+    
+When the customer is redirected and is on the PayPal website, they can proceed in two ways:
+* Complete the transaction – In this scenario, the transaction is processed, and the customer is redirected back to your `notifications.return_url`.
+* Cancel the transaction – The customer is redirected back to your `notifications.cancel_url`. The payment_method.result is 110.
+    
+Both the `notifications.return_url` and the `notifications.cancel_url` were set in the API request in Step 1.
+
+
+## Step 5: Receive the PayPal response
+The response from PayPal for a completed transaction contains data in the URL query string, which you need for the next request. 
+
+#### Sample response
+<Code id="html" title="HTML" language="xml" active>
+```    
+https://<return_url>?X-GP-Signature=99016d93b133a2814f0579e7458473e66c0163f8cb333b91a5b47e7de4fbcb788a66cc36639582f1d6cac7c43d84805b601ab2435aabcb01f008eb380cd4289c&id=TRN_tlEzfFPmB2ZlVMYcvO0X7z86i8QUId_22828941&session_token=EC-09G73155FR885902M&payer_reference=B8J9KSQA5M6S2&pasref=16232310449607197&action_type=REDIRECT_FROM&action_id=ACT_g4zZFihxKQgQU0ttTUwc8WMqTjtL4W
+```
+</Code>
+  
+#### Parameters
+| Field    | Description |
+| -------- | ------- |
+| return_url | Provided in the Initiate the Transaction request (_notifications.return_url_). |
+| id |  Unique reference in our system for the transaction. |
+  
+## Step 6: Complete the transaction
+The final step is to confirm the transaction, which is used to execute a successfully authenticated and authorized transaction. The `ID` from the previous step must be included in the URL. A body is not required, unless you want to change the shipping address or amount at this stage.
+  
+#### Sample request
+<CodeGroup>
+<Code id="json" title="JSON" language="json" active>
+```
+POST https://apis.sandbox.globalpay.com/ucp/transactions/<id>/confirmation
+{
+    "payment_method": {
+        "apm": {
+            "provider": "PAYPAL"
+        }
+    }
+}
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+
+ServicesContainer.configureService(config);
+
+String trnId = "TRN_KJtVKMwFIyZScDOvMkutIkdR7dP2p4_pal-210420-3";
+
+Transaction transaction = Transaction.fromId(trnId, PaymentMethodType.APM);
+transaction.setAlternativePaymentResponse(new AlternativePaymentResponse());
+transaction.getAlternativePaymentResponse().setProviderName(AlternativePaymentType.PAYPAL.name());
+transaction.getAlternativePaymentResponse().setProviderReference("string");
+
+try {
+    Transaction response = transaction
+            .confirm()
+            .execute();
+
+    AlternativePaymentResponse alternativePaymentResponse = response.getAlternativePaymentResponse();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->redirect_url"
+    String redirectUrl = alternativePaymentResponse.getRedirectUrl();
+    // API raw response key "payment_method->apm->provider"
+    String provider = alternativePaymentResponse.getProviderName();
+    // API raw response key "payment_method->apm->ack"
+    String ack = alternativePaymentResponse.getAck();
+    // API raw response key "payment_method->apm->session_token"
+    String sessionToken = alternativePaymentResponse.getSessionToken();
+    // API raw response key "payment_method->apm->correlation_reference"
+    String correlationReference = alternativePaymentResponse.getCorrelationReference();
+    // API raw response key "payment_method->apm->version_reference"
+    String versionReference = alternativePaymentResponse.getVersionReference();
+    // API raw response key "payment_method->apm->build_reference"
+    String buildReference = alternativePaymentResponse.getBuildReference();
+    // API raw response key "payment_method->card->provider->result"
+    String cardIssuerResult = response.getCardIssuerResponse().getResult();
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig {
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+var transaction = Transaction.FromId("TRN_KJtVKMwFIyZScDOvMkutIkdR7dP2p4_pal-210420-3", null, PaymentMethodType.APM);
+transaction.AlternativePaymentResponse = new AlternativePaymentResponse {
+	ProviderName = AlternativePaymentType.PAYPAL.ToString(),
+	ProviderReference = "string"
+};
+
+try
+{
+  Transaction response = transaction.Confirm().Execute(); 
+	
+  //API raw response key "id"
+  var transactionId = response.TransactionId; 
+  // API raw response key "amount"
+  var amount = response.BalanceAmount;
+  // API raw response key "reference"
+  var referenceNumber = response.ReferenceNumber;
+  // API raw response key "action->result_code"
+  var responseCode = response.ResponseCode;
+  // API raw response key "status"
+  var transactionStatus = response.ResponseMessage;
+  // API raw response key "time_created"
+  var timeCreated = response.Timestamp; 
+  //API raw response key payment_method->redirect_url
+  var redirectUrl = response.AlternativePaymentResponse.RedirectUrl;
+  //API raw response key payment_method->apm->provider
+  var provider = response.AlternativePaymentResponse.ProviderName;
+  //API raw response key payment_method->apm->ack
+  var ack = response.AlternativePaymentResponse.Ack;
+  //API raw response key payment_method->apm->session_token
+  var sessionToken = response.AlternativePaymentResponse.SessionToken;
+  //API raw response key payment_method->apm->correlation_reference
+  var correlationReference=response.AlternativePaymentResponse.CorrelationReference;
+  //API raw response key payment_method->apm->version_reference
+  var versionReference = response.AlternativePaymentResponse.VersionReference;
+  //API raw response key payment_method->apm->build_reference
+  var buildReference = response.AlternativePaymentResponse.BuildReference;
+  //API raw response key payment_method->result
+  var cardIssuerResult = response.CardIssuerResponse.Result;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+```
+</Code>
+<Code id="php" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$trnId = "TRN_KJtVKMwFIyZScDOvMkutIkdR7dP2p4_pal-210420-3";
+$transaction = Transaction::fromId($trnId, null, PaymentMethodType::APM);
+$transaction->alternativePaymentResponse = new AlternativePaymentMethod();
+$transaction->alternativePaymentResponse->providerName = AlternativePaymentType::PAYPAL;
+$transaction->alternativePaymentResponse->providerReference = "string";
+
+try {
+    /** @var Transaction $response */
+    $response = $transaction->confirm()->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+//API raw response key "id"
+$transactionId = $response->transactionId; 
+// API raw response key "amount"
+$amount = $response->balanceAmount; 
+// API raw response key "reference"
+$referenceNumber = $response->referenceNumber; 
+// API raw response key "action->result_code"
+$responseCode = $response->responseCode;
+// API raw response key "status"
+$transactionStatus = $response->responseMessage;
+// API raw response key "time_created"
+$timeCreated = $response->timestamp; 
+//API raw response key payment_method->redirect_url
+$redirectUrl = $response->alternativePaymentResponse->redirectUrl;
+//API raw response key payment_method->apm->provider
+$provider = $response->alternativePaymentResponse->providerName;
+//API raw response key payment_method->apm->ack
+$ack = $response->alternativePaymentResponse->ack;
+//API raw response key payment_method->apm->session_token
+$sessionToken = $response->alternativePaymentResponse->sessionToken;
+//API raw response key payment_method->apm->correlation_reference
+$correlationReference = $response->alternativePaymentResponse->correlationReference;
+//API raw response key payment_method->apm->version_reference
+$versionReference = $response->alternativePaymentResponse->versionReference;
+//API raw response key payment_method->apm->build_reference
+$buildReference = $response->alternativePaymentResponse->buildReference;
+//API raw response key payment_method->result
+$cardIssuerResult = $response->cardIssuerResponse->result;
+```
+</Code>
+</CodeGroup>
+ 
+#### Sample response
+<Code id="json" title="JSON" language="json" active>
+```
+{
+   "id": "TRN_L5zXCu1cKs2jkoj71pRXNJXAAUpS8A_83118561",
+   "time_created": "2024-09-17T13:05:19.382Z",
+   "type": "SALE",
+   "status": "CAPTURED",
+   "amount": "20045",
+   "currency": "EUR",
+   "country": "GB",
+   "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+   "merchant_name": "Sandbox_Merchant_4",
+   "account_id": "TRA_27c901760029495f813afbb0dab197ef",
+   "account_name": "transaction_processing",
+   "reference": "83118561",
+   "payment_method": {
+      "result": "00",
+      "message": "SUCCESS",
+      "entry_mode": "ECOM",
+      "apm": {
+         "provider": "paypal",
+         "session_token": "EC-7FB82811AD668211X",
+         "seller_reference": "testmerchant@globalpay.com",
+         "time_created_reference": "2024-09-17T13:05:19Z",
+         "transaction_reference": "5B097801L4829094B",
+         "ack": "SUCCESS",
+         "version_reference": "98.0",
+         "build_reference": "58613796",
+         "correlation_reference": "8aaf790c20f20",
+         "secure_account_reference": "CUEXTCPF4MNQY",
+         "reason_code": "none",
+         "pending_reason": "none",
+         "gross_amount": "20045",
+         "payment_time_reference": "2024-09-17T13:05:18Z",
+         "payment_type": "INSTANT",
+         "payment_status": "COMPLETED",
+         "type": "express-checkout",
+         "exchange_rate": "0.87785",
+         "protection_eligibilty": "ELIGIBLE"
+      }
+   },
+   "action": {
+      "id": "ACT_xn2AWGSLfmFWqgyofyLa99fkSKEI19",
+      "type": "CONFIRM",
+      "time_created": "2024-09-17T13:05:19.382Z",
+      "result_code": "SUCCESS",
+      "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+      "app_name": "Postman_Collection_Test"
+   }
+}
+```
+</Code>
+
+## Testing PayPal
+Use your credentials to log in to your PayPal test account. Then you can test the PayPal payment method with the test details available.
+
+</Tab>
+</Tabs>

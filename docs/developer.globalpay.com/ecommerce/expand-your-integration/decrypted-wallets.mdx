@@ -1,0 +1,138 @@
+---
+title: "Decrypted Wallets"
+subtitle: "Set up payload decryption to preview card data"
+tag: "xml"
+created: "02/07/2025"
+---
+Decrypted digital wallets allow you to view the card data before submitting the transaction. This option gives full control of your payment journey. For example, you can block specific cards or make informed decisions for subsequent payment actions. 
+
+First, let’s explain a few terms related to this feature.
+
+* **Funding Primary Account Number (FPAN)** - The identifiable cardholder’s card number on the front of a physical credit or debit card. 
+* **Device Primary Account Number (DPAN)** - A device-specific token from the wallet provider to identify the underlying card that is associated with a cardholder’s FPAN.
+
+We also support the ability to make payments using Apple Pay / Google Pay tokens that you have decrypted. To use this feature, use the `TOKENIZED_CARD` source type and specify the wallet type as `apple-pay` or `pay-with-google`. You can then provide the DPAN, expiry, and authentication information to make a payment.
+
+To decrypt the payload, each mobile wallet provider requires you to follow its process. For example, Apple Pay requires you to generate your public/private key pair and your Certificate Signing Request (CSR) to upload to the Apple Pay developer website. You can find the details on their respective developer websites:
+
+* [Apple Pay - Payment Token Format Reference](https://developer.apple.com/documentation/passkit/apple_pay/payment_token_format_reference)
+* [Google Pay - Payment Data Cryptography for Merchants](https://developers.google.com/pay/api/web/guides/resources/payment-data-cryptography)
+
+## Step 1: Decrypt and map the request
+Once you've successfully decrypted the payload, you'll have the raw message content. Use this table to map the mobile wallet provider's fields to the request to us. Add the data from the payload into the request without any manipulation.
+
+| Wallet Provider Field | Our Field | Notes |
+| --- | --- | --- |
+| applicationPrimaryAccountNumber | `<number>` |     |
+| currencyCode | `<currency>` | 3 digit ISO 4217 code, i.e., “GBP” |
+| applicationExpirationDate | `<expdate>` | Format MMYY, i.e., “0525” |
+| transactionAmount | `<amount>` |     |
+| cardholderName | `<chname>` |     |
+| onlinePaymentCryptogram | `<cavv>` |     |
+| eciIndicator | `<eci>` |
+
+## Step 2: Process request 
+Change the `item type` field to the appropriate wallet provider: `apple-pay` or `pay-with-google`. If the response does not include the cryptogram and Electronic Commerce Indicator (ECI), these can be removed and sent without the values. However, the two values are typically expected for the best acceptance rates.
+
+### DPAN - Including ECI and cryptogram
+In this scenario, the customer’s DPAN is used, along with the ECI and cryptogram.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="EUR">1000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0525</expdate>
+    <chname>Cardholder</chname>
+    <type>VISA</type>
+  </card>
+  <autosettle flag="1"/>
+	<mpi>
+		<cavv>YwAAATMDZfzsm0UAuSY0gIJgAgA=</cavv>
+		<eci>5</eci>
+	</mpi>
+	<supplementarydata>
+		<item type="mobile">
+			<field01>apple-pay OR pay-with-google</field01>
+		</item>
+		<item type="paymentMethod">
+			<field01>TOKENIZED_CARD</field01>
+		</item>
+		<item type="authMethod">
+			<field01>3DS</field01>
+		</item>
+	</supplementarydata>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>
+
+### PAN - Google Pay Web - ECI and cryptogram
+In the scenario where a FPAN is provided for Google Pay, you should specify the `field01` type as `CARD` rather than `TOKENIZED_CARD`. The use case for this is when “Google Pay on the Web” is used and the customer doesn’t have Google Pay on their mobile device to provide a DPAN rather than FPAN. Note that in the case of “CARD” transactions, we process these transactions as regular card transactions for which 3D Secure applies as well.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="EUR">1000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0525</expdate>
+    <chname>Cardholder</chname>
+    <type>VISA</type>
+  </card>
+  <autosettle flag="1"/>
+	<supplementarydata>
+		<item type="mobile">
+			<field01>pay-with-google</field01>
+		</item>
+		<item type="paymentMethod">
+			<field01>CARD</field01>
+		</item>
+	</supplementarydata>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>
+
+## Repeat MIT Payments
+With a decrypted setup, you can process repeat Merchant-Initiated Transactions (MITs) for both Google Pay and Apple Pay. Repeat MITs include the following payment types:
+
+* Recurring
+* Installment
+* Unscheduled
+
+To process a recurring payment, the first payment must originate from a successful customer-initiated transaction. You can then store the returned brand_reference value for all subsequent MIT transactions. 
+
+You’ll need to comply with the stored credential mandate of card brands like Visa or Mastercard. For more information, see our [Credential on File](/ecommerce/risk-management/3ds/COF) article.
+
+Apple Pay supports specific merchant tokens for repeat payments. For more information, see their [Apple Merchant Token Guide](https://developer.apple.com/apple-pay/merchant-tokens/).
+
+The following table shows our corresponding field for each wallet provider field. 
+
+|     |     |     |
+| --- | --- | --- |  
+| Wallet Provider Field | Our Field | Notes |
+| applicationPrimaryAccountNumber | `<number>` |     |
+| currencyCode | `<currency>` | 3 digit ISO 4217 code i.e. “GBP” |
+| applicationExpirationDate | `<expdate>` | Format MMYY i.e. “0525” |
+| transactionAmount | `<amount>` |     |
+| cardholderName | `<chname>` |     |
+| Type | `<type>` | **recurring** - Payment with no fixed duration that continues until the customer cancels.  <br/>**installment** - Payment of an agreed amount on the same day each month until the fixed duration ends.   <br/>**oneoff** - Unscheduled payment with no fixed duration. |
+| Initiator | `<initiator>` | Set to **merchant** for MIT transactions |
+| Sequence | `<sequence>` | Set to **subsequent** for MIT transactions |
+| Scheme Reference Data (SRD) | `<srd>` | Unique identifier provided by a card brand, such as Visa or Mastercard, that links to the payment history between the customer and merchant. Also referred to as _Transaction ID_ or _Trace ID_, depending on the card scheme. This will appear in the response message of an **initial** transaction. |
+
+

@@ -1,0 +1,104 @@
+---
+title: 'SEPA Direct Debit - Model A'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/sepapm.png" />
+</div>
+
+| **Payment Type**           | Direct Debit                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Payment Method String**  | sepapm                                                                                                                                         |
+| **Available Countries**    | AD, AT, BE, BG, CH, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IS, IT, LI, LT, LU, LV, MC, MT, NL, NO, PL, PT, RO, SE, SI, SK, SM, VA |
+| **Available Currencies**   | EUR                                                                                                                                            |
+| **Min Transaction Amount** | EUR 0.10                                                                                                                                       |
+| **Max Transaction Amount** | EUR 1,000                                                                                                                                      |
+| **Supports Refunds**       | Full & Partial with 365 day limit                                                                                                              |
+| **Chargebacks**            | Yes                                                                                                                                            |
+| **Sandbox**                | Yes                                                                                                                                            |
+| **Timeout**                | Not Applicable                                                                                                                                 |
+
+**Note:** Unlike other non-card payment methods, SEPA follows a synchronous flow and a response is provided immediately confirming if the mandate was set up.
+
+### Sample request
+<CodeGroup>
+    <Code id="html" title="HTTP POST (HPP)" language="markup" active>
+    ```
+    <form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+        <input type="hidden" name="TIMESTAMP" value="{{ timestamp }}">
+        <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+        <input type="hidden" name="ACCOUNT" value="internet">
+        <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+        <input type="hidden" name="AMOUNT" value="1001">
+        <input type="hidden" name="CURRENCY" value="EUR">
+        <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+        <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+        <input type="hidden" name="HPP_VERSION" value="2">
+        <input type="hidden" name="HPP_CUSTOMER_COUNTRY" value="DE">
+        <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+        <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+        <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/returnUrl">
+        <input type="hidden" name="HPP_TX_STATUS_URL" value="https://www.example.com/statusUrl">
+        <!-- Begin Mandatory / Optional Additional Fields -->
+        <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="test@example.com">
+        <input type="hidden" name="HPP_CUSTOMER_IBAN" value="DE84837473949793743749">
+        <input type="hidden" name="CUST_NUM" value="E8953893489">
+        <!-- End Mandatory / Optional Additional Fields -->
+        <input type="hidden" name="COMMENT1" value="Mobile Channel">
+        <input type="hidden" name="COMMENT2" value="Down Payment">
+        <input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+        <input type="submit" value="Click here to Purchase">
+    </form>
+    ```
+    </Code>
+    <Code id="xml" title="XML" language="markup">
+    ```
+    <?xml version='1.0' encoding='UTF-8'?>
+    <request type='payment-set' timestamp='{{ timestamp }}'>
+        <merchantid>Merchant ID</merchantid>
+        <account>internet</account>
+        <amount currency='EUR'>1001</amount>
+        <autosettle flag='1' />
+        <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+        <paymentmethod>sepapm</paymentmethod>
+        <paymentmethoddetails>
+            <returnurl>https://www.example.com/returnUrl</returnurl>
+            <statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>
+            <descriptor>Test Transaction</descriptor>
+            <country>DE</country>
+            <accountholdername>James Mason</accountholdername>
+            <!-- Begin Mandatory / Optional Additional Fields -->
+            <customeremail>test@example.com</customeremail>
+            <bankaccount>
+                <iban>DE84837473949793743749</iban>
+            </bankaccount>
+        </paymentmethoddetails>
+        <tssinfo>
+            <custnum>248b1c43-0fb2-4fa1-9b1c-8cca3cfb4269</custnum>
+        </tssinfo>
+        <!-- End Mandatory / Optional Additional Fields -->
+        <comments>
+            <comment id='1'>Mobile Channel</comment>
+            <comment id='2'>Down Payment</comment>
+        </comments>
+        <sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>
+    </request>
+    ```
+    </Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name               | Type | Format                                                                 | Length | Description                                                                                                                                                                            |
+| ------------------ | ---- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer Email     | M    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80   | The email address of the customer.                                                                                                                                                     |
+| IBAN               | M    | \[A-Z\]{2}\[0-9\]{2}\[0-9,A-Z\]{10,30}                                 | 34     | Code that identifies the customer's bank, account number itself and the country of origin.                                                                                             |
+| Customer Number    | O    | \[a-zA-Z0-9\\-\\s\\.,\\+@\_\]\*                                        | 0-50   | A unique reference for this customer for example from your CRM systems                                                                                                                 |
+| Mandate Reference  | M    | \[A-Za-z0-9:?/+(),. -\]\*                                              | 0-35   | A unique reference for this mandate.                                                                                                                                                   |
+| Mandate Signature  | M    | \[0-9\]{4}-\[0-9\]{2}-\[0-9\]{2}                                       | 10     | Date of mandate signature. Format: YYYY-MM-DD.                                                                                                                                         |
+| Consumer Name      | O    | \[a-zA-Z0-9\\-\\s\\.,\\+@\_\]\*                                        | 0-50   | A unique reference for this customer; for example, from your CRM system.                                                                                                               |
+| Dynamic Descriptor | O    | a-z A-Z 0-9 \[space\] / - French-accented                              | 25     | Dynamic Descriptor allows merchants to pass through an alternative “doing business as” (DBA) name in the Charge Description field so that it appears on the customer's bank statement. |

@@ -1,0 +1,85 @@
+---
+title: 'Requests'
+search_results: 'API Definitions - Requests'
+subtitle: 'Get to know the basics of sending requests to our API'
+tag: 'rest'
+created: '16/09/2024'
+---
+This guide focuses on the key principles of executing API requests. 
+
+## Environments
+The environment you target, whether it's Sandbox or Production, is determined by the URL the request is sent to.
+
+#### Sandbox
+This is a test environment used to assess and test an integration to the API. Funds are never moved in this environment.
+
+<Code id="JSON" title="" language="JSON" active>
+```
+https://apis.sandbox.globalpay.com/ucp
+```
+</Code>
+
+#### Production
+This environment is used to move actual funds between payers and merchants. 
+
+<Code id="JSON" title="" language="JSON" active>
+```
+https://apis.globalpay.com/ucp
+```
+</Code>
+
+## Resource location
+The location to send requests to create, edit, or read resources is the base URL of the environment appended with the plural of the resource name.
+
+For example: <br />
+
+The **Transactions** URL is used to authorize, reverse, refund, capture, and report on transactions.
+
+<Code id="JSON" title="" language="JSON" active>
+```
+https://apis.sandbox.globalpay.com/ucp/transactions 
+```
+</Code>
+<br/>The **Disputes** URL is used to report on, challenge, and accept disputes.
+<Code id="JSON" title="" language="JSON" active>
+```
+https://apis.sandbox.globalpay.com/ucp/disputes
+```
+</Code>
+<br/>The **Deposits** URL is used to report on and reconcile deposits.
+<Code id="JSON" title="" language="JSON" active>
+```
+https://apis.sandbox.globalpay.com/ucp/deposits
+```
+</Code>
+
+## HTTP verbs
+When initiating an action through the API, an HTTP verb needs to be used. The usage of this aspect of the HTTP protocol ensures a lightweight and intuitive experience. The verbs indicate the behavior of the action being executed.
+
+* **GET** – Requests data about a single resource or a list of resources and is idempotent.
+* **POST** – Creates or updates a resource and is not idempotent.
+* **PATCH** – Partially updates an existing resource and is not idempotent.
+
+## Headers
+The following table outlines the properties that can be sent in the header of a request.
+
+| Header | Description |
+| --- | --- |
+| Accept | Indicates the format of the response requested. Set to _application/json_. | 
+| Authorization | Contains the access token to use in a request. | 
+| Content-type | Indicates the format of the data in the request. Set to _application/json_. | 
+| Accept-encoding | Confirms that compressed response messages can be received, reducing network bandwidth. Supports `gzip` and `identity`. | 
+| X-GP-Version | Mandatory field that contains the version of the API to execute the request. | 
+| Idempotency-key | Contains a unique user-generated value that if repeated in a subsequent request, within a 24-hour window, the subsequent request will fail. | 
+
+## Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X POST https://apis.globalpay.com/ucp/settlement/deposits 
+    -H "X-GP-Version: 2021-03-22" 
+    -H "X-GP-Idempotency: 234quigdua7stduabkjwe"
+    -H "Content-type: application/json" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+```
+</Code>

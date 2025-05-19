@@ -1,0 +1,511 @@
+---
+title: 'Network Tokenization - Guide'
+search_results: 'Global Payments - Network Tokenization Guide'
+subtitle: 'Learn how to create a network token for card processing'
+tag: 'rest'
+created: '04/04/2025'
+---
+
+<Infobox type="danger">
+Before coding this feature, please contact us to confirm it will be available to you when you go live.
+</Infobox>
+
+In this guide, you’ll learn how to create and process network tokens so that payment credentials for Visa and Mastercard customers can be kept up to date by the card brands instead.
+
+For more information on network tokens, see our [Overview](/docs/payments/tokenization/network-tokenization-overview).
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register#get-registered)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+
+## Step 1: Create a Network Token
+
+The first step is to create the network token using the [Payment Methods - Tokenization](/api/payment-methods-tokenization#/Create/post-payment-method) resource. The field that determines whether a network token is created when creating the token is the `usage_mode` field. This needs to be set to `USE_NETWORK_TOKEN` for a network token to be created and associated with the token (`PMT_ID`).
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/payment-methods-tokenization#/Create/post-payment-method"}}>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/payment-methods' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Authorization: Bearer LE1wnLSzvmbptrDWeEbjmw4t6Vsc' \
+--header 'Content-Type: application/json' \
+--data '{
+    "account_id": "TKA_236d5785e12a4ba380521ddfd9d4a70a",
+    "reference": "TRANS-20221030203649423Z421b8221fc",
+    "first_name": "James",
+    "last_name": "Mason",
+    "usage_mode": "USE_NETWORK_TOKEN",
+    "fingerprint_mode": "",
+    "card": {
+        "number": "4622943123052970",
+        "expiry_month": "12",
+        "expiry_year": "25"
+    }
+}'
+```
+</Code>
+
+#### Sample response
+
+The ID field returned in the response is the payer token to use to reference the stored card when processing payments. It begins with the three letters `PMT_`. 
+
+The network token is returned in the card `network_token` field. If a network token can’t be created for a card, the following fields will **not** be returned in the response:
+
+* `network_token`
+
+* `masked_network_token_last4`
+
+* `network_token_expiry_month`
+
+* `network_token_expiry_year fields`
+
+The network token value looks the same as a card number but can only be used by you to process transactions. In this case, you can see that the actual card number in the request was _4622943123052970_ and that the corresponding network token to be used for transactions against this card is _4895370019221065_, as shown in the response.
+
+<Code id="JSON" title="JSON" language="json" active contextualLinks={{apiExplorerUrl: "/api/payment-methods-tokenization#/Create/post-payment-method"}}>
+```
+{
+    "id": "PMT_c8b43395-fb61-4698-8b59-5e16a348ceef",
+    "time_created": "2025-02-21T11:46:09.929Z",
+    "status": "ACTIVE",
+    "usage_mode": "USE_NETWORK_TOKEN",
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "merchant_name": "Network Token_merchant",
+    "account_id": "TKA_236d5785e12a4ba380521ddfd9d4a70a",
+    "account_name": "ECOM_TKA",
+    "reference": "TRANS-20221030203649423Z421b8221fc",
+    "card": {
+        "masked_number_last4": "XXXXXXXXXXXX2970",
+        "brand": "VISA",
+        "expiry_month": "12",
+        "expiry_year": "25",
+        "network_token": "4895370019221065",
+        "masked_network_token_last4": "XXXXXXXXXXXX1065",
+        "network_token_expiry_month": "12",
+        "network_token_expiry_year": "30"
+    },
+    "action": {
+        "id": "ACT_YhZydEPsa3UMWj4mYB3rpSDLrUXAOh",
+        "type": "PAYMENT_METHOD_CREATE",
+        "time_created": "2025-02-21T11:46:09.929Z",
+        "result_code": "SUCCESS",
+        "app_id": "wIlGuatIHcO5xk7SHuTiMGbanC0dnzwy",
+        "app_name": "NetworkToken_cert"
+    }
+}
+```
+</Code>
+
+## Step 2: Create a transaction
+
+There are three ways in which network tokens can be processed:
+
+* Merchant-initiated transaction (MIT)
+
+* Customer-initiated transaction (CIT)
+
+* Standalone one-off transaction
+
+Use the tabs below to see the applicable steps.
+
+<Tabs active="mit">  
+<Tab id="mit" title="MIT">
+
+In an MIT transaction, there are three ways to create a transaction using a network token.
+
+* [Method 1](#method-1) – Create a network token as in Step 1 and process it by sending the actual network token to us.  
+* [Method 2](#method-2) – Create a network token as in Step 1 and process it by sending the `PMT_ID` that was returned to us, and set  the `usage_mode` to `USE_NETWORK_TOKEN:`  
+  * `"usage_mode": "USE_NETWORK_TOKEN"`  
+* [Method 3](#method-3) – Process a transaction as normal by sending the original card number but by setting the `payment_method.usage_mode` field to `USE_NETWORK_TOKEN`
+  * For `ON_SUCCESS` storage mode
+
+### Method 1
+
+In this method, you create a network token as in Step 1 and process it by sending the actual network token to us.
+
+#### Sample request
+
+Note that the network token _4895370016970953_ is sent in the request. 
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "500",
+    "currency": "GBP",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "UNSCHEDULED",
+        "reason": "INCREMENTAL",
+        "sequence": "FIRST"
+    },
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "first_name": "James",
+        "last_name": "Mason",
+        "entry_mode": "MOTO",
+        "storage_mode": "always",
+        "card": {
+            "network_token": "4895370016970953",
+            "network_token_expiry_month": "12",
+            "network_token_expiry_year": "30"
+        }
+    }
+}
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_2aDrTOiCUNsCwB56cF3IkOtJeMnZfU_6Z838bc5328f",
+    "time_created": "2025-02-21T11:36:49.609Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "500",
+    "currency": "GBP",
+    "country": "US",
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "merchant_name": "Network Token_merchant",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "account_name": "ECOM_NT",
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] Authorised",
+        "entry_mode": "MOTO",
+        "card": {
+            "masked_network_token_last4": "XXXXXXXXXXXX0953",
+            "network_token_expiry_month": "12",
+            "network_token_expiry_year": "30",
+            "brand": "VISA",
+            "masked_number_last4": "",
+            "authcode": "123456",
+            "brand_reference": "nzwk4W4c8IltAD3U",
+            "brand_time_created": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "U",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "BAT_1500176",
+    "action": {
+        "id": "ACT_2aDrTOiCUNsCwB56cF3IkOtJeMnZfU",
+        "type": "AUTHORIZE",
+        "time_created": "2025-02-21T11:36:49.609Z",
+        "result_code": "SUCCESS",
+        "app_id": "wIlGuatIHcO5xk7SHuTiMGbanC0dnzwy",
+        "app_name": "NetworkToken_cert"
+    }
+}
+```
+</Code>
+
+### Method 2
+
+In this method, you create a network token as in Step 1, and process it by sending the `PMT\_ID` that was returned to us, setting the `usage_mode` to `USE_NETWORK_TOKEN`.
+
+#### Sample request
+
+Note that the `PMT_ID` is sent in the request as opposed to the network token.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Cookie: TS01759047=01e235508837c30bbf6a1caa7a559418e60b45d2f1e4e8c770db066961d0535ff43ae43f3206097755fe0b0bb4b6993cb3e35de3fc' \
+--header 'a: m' \
+--header 'Authorization: Bearer LE1wnLSzvmbptrDWeEbjmw4t6Vsc' \
+--data '{
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "500",
+    "currency": "GBP",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "UNSCHEDULED",
+        "reason": "INCREMENTAL",
+        "sequence": "FIRST"
+    },
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "first_name": "James",
+        "last_name": "Mason",
+        "entry_mode": "MOTO",
+        "usage_mode": "USE_NETWORK_TOKEN",
+        "id": "PMT_8a69a8ba-cd69-4137-8aa3-f5354914bd34"
+    }
+}'
+```
+</Code>
+
+#### Sample response
+
+Note that the transaction was processed with a network token as the `masked_network_token_last4` field was returned in the response as opposed to the `masked_number_last4` field that would be returned if the actual card number was used. 
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_aNcpI8o8Cg9NVIVy3Jx6WlBpdmyHDf_6Z838bc5328f",
+    "time_created": "2025-02-21T11:58:39.857Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "500",
+    "currency": "GBP",
+    "country": "US",
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "merchant_name": "Network Token_merchant",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "account_name": "ECOM_NT",
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] ",
+        "entry_mode": "MOTO",
+        "card": {
+            "masked_network_token_last4": "XXXXXXXXXXXX1065",
+            "network_token_expiry_month": "12",
+            "network_token_expiry_year": "30",
+            "funding": "CREDIT",
+            "brand": "VISA",
+            "masked_number_last4": "",
+            "authcode": "123456",
+            "brand_reference": "XSPCEnJK54uEAF5x",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "NOT_CHECKED",
+            "avs_address_result": "NOT_CHECKED",
+            "avs_postal_code_result": "NOT_CHECKED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "U",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "BAT_1500176",
+    "action": {
+        "id": "ACT_aNcpI8o8Cg9NVIVy3Jx6WlBpdmyHDf",
+        "type": "AUTHORIZE",
+        "time_created": "2025-02-21T11:58:39.857Z",
+        "result_code": "SUCCESS",
+        "app_id": "wIlGuatIHcO5xk7SHuTiMGbanC0dnzwy",
+        "app_name": "NetworkToken_cert"
+    }
+}
+
+```
+</Code>
+
+### Method 3
+
+In this method, you process a transaction as normal by sending the original card number but by setting the `payment_method.usage_mode` field to `USE_NETWORK_TOKEN` (for `ON_SUCCESS` storage mode).
+
+#### Sample request
+
+In this example, you send a card number to us, and we process the transaction as a network token. 
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--header 'Cookie: TS01759047=01e235508837c30bbf6a1caa7a559418e60b45d2f1e4e8c770db066961d0535ff43ae43f3206097755fe0b0bb4b6993cb3e35de3fc' \
+--header 'a: m' \
+--header 'Authorization: Bearer LE1wnLSzvmbptrDWeEbjmw4t6Vsc' \
+--data-raw '{
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "type": "SALE",
+    "channel": "CNP",
+    "amount": "500",
+    "currency": "GBP",
+    "gratuity_amount": "50",
+    "tax_amount": "50",
+    "user_reference": "TA1215",
+    "country": "US",
+    "initiator": "MERCHANT",
+    "stored_credential": {
+        "model": "UNSCHEDULED",
+        "reason": "INCREMENTAL",
+        "sequence": "FIRST"
+    },
+    "capture_mode": "AUTO",
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "first_name": "James",
+        "last_name": "Mason",
+        "entry_mode": "MOTO",
+        "usage_mode": "USE_NETWORK_TOKEN",
+        "card": {
+            "cvv": "999",
+            "brand": "VISA",
+            "number": "4622943123052970",
+            "expiry_month": "12",
+            "expiry_year": "25"
+        }
+    },
+    "order": {
+        "reference": "-.,+@",
+        "shipping_address": {
+            "first_name": "",
+            "last_name": ""
+        },
+        "items": [
+            {
+                "reference": "Bag1",
+                "label": "aa",
+                "description": "aa",
+                "quantity": "1",
+                "unit_amount": "3000",
+                "unit_currency": "EUR",
+                "tax_amount": "750"
+            },
+            {
+                "label": "ab",
+                "description": "ab",
+                "quantity": "1",
+                "unit_amount": "6000",
+                "unit_currency": "EUR",
+                "tax_amount": "750"
+            }
+        ]
+    },
+    "description": "description"
+}'
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "id": "TRN_ujjnZCfiaVzXiUQkopx1NnhYgoJvF5_6Z838bc5328f",
+    "time_created": "2025-02-27T09:48:52.655Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "500",
+    "currency": "GBP",
+    "country": "US",
+    "merchant_id": "MER_5f596365bf7646efafc3f86e299ad25d",
+    "merchant_name": "Network Token_merchant",
+    "account_id": "TRA_2d8a445280104ed5bfffcbf6d1292499",
+    "account_name": "ECOM_NT",
+    "reference": "TRANS-20231012130751186Z838bc5328f",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] ",
+        "entry_mode": "MOTO",
+        "card": {F
+            "masked_network_token_last4": "XXXXXXXXXXXX1065",
+            "network_token_expiry_month": "12",
+            "network_token_expiry_year": "30",
+            "brand": "VISA",
+            "masked_number_last4": "",
+            "authcode": "123456",
+            "brand_reference": "QKi3wnEXQicOdXyR",
+            "brand_time_created": "",
+            "cvv_result": "NOT_CHECKED",
+            "avs_address_result": "NOT_CHECKED",
+            "avs_postal_code_result": "NOT_CHECKED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "U",
+                "avs_address_result": "U",
+                "avs_postal_code_result": "U"
+            }
+        }
+    },
+    "batch_id": "BAT_1502599",
+    "action": {
+        "id": "ACT_ujjnZCfiaVzXiUQkopx1NnhYgoJvF5",
+        "type": "AUTHORIZE",
+        "time_created": "2025-02-27T09:48:52.655Z",
+        "result_code": "SUCCESS",
+        "app_id": "wIlGuatIHcO5xk7SHuTiMGbanC0dnzwy",
+        "app_name": "NetworkToken_cert"
+    }
+}
+```
+</Code>
+
+
+   </Tab> 
+   <Tab id="cit" title="CIT">
+   Coming soon
+   </Tab>
+    <Tab id="standalone" title="Standalone">
+     Coming soon
+   </Tab>
+</Tabs>
+
+## Integration references
+To get a deeper understanding of this product, we’ve provided some references for both API and SDK integrations. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/payment-methods-tokenization#/Create/post-payment-method" title="API /payment-methods" icon="window">
+        Create a payment method.
+    </Card>
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs" icon="code">
+        Integrate via our Java, PHP, or .NET SDKs.
+    </Card>
+</CardsGroup>
+
+## Testing
+Our Network Tokenization solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards#network-tokens---css" title="Test Cards - Network Tokens">
+        Test different transaction outcomes with our test cards for this solution.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services you can enable for your integration.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide#api" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide#hpp" title="Alternative Payment Methods" icon="money-bill-wave">
+        Integrate with alternative and local payment methods.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide#hpp" title="Dynamic Currency Conversion" icon="euro-sign">
+        Let international customers pay in their home currency.
+    </Card>
+</CardsGroup>

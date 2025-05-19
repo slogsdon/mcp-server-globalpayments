@@ -1,0 +1,16 @@
+---
+title: 'TLS Ciphers'
+search_results: 'tls, cipher'
+subtitle: 'Use standard currency codes in your integration'
+tag: 'xml'
+created: '03/21/2025'
+---
+
+Transport Layer Security (TLS) is the protocol that your applications use to make a connection to our services. Our system supports TLS 1.2 and a specific set of approved ciphers within the protocol. The approved ciphers (effective March 12, 2025) are listed in the table below.
+
+| Common Cipher Suite (IANA/RFC) | OpenSSL Cipher Suite | IANA Hex |
+| --- | --- | --- |
+| TLS\_ECDHE\_RSA\_WITH\_AES\_256\_GCM\_SHA384 | ECDHE-RSA-AES256-GCM-SHA384 | 0xC0,0x30 |
+| TLS\_ECDHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256 | ECDHE-RSA-AES128-GCM-SHA256 | 0xC0,0x2F |
+| TLS\_DHE\_RSA\_WITH\_AES\_256\_GCM\_SHA384 | DHE-RSA-AES256-GCM-SHA384 | 0x00,0x9F |
+| TLS\_DHE\_RSA\_WITH\_AES\_128\_GCM\_SHA256 | DHE-RSA-AES128-GCM-SHA256 | 0x00,0x9E |

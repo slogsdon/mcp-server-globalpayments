@@ -1,0 +1,56 @@
+---
+title: 'Dragonpay'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/2022-07/dragonpay-logo_0.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers                   |
+| -------------------------- | -------------------------------- |
+| **Payment Method String**  | dragonpay                        |
+| **Available Countries**    | PH                               |
+| **Available Currencies**   | PHP                              |
+| **Min Transaction Amount** | PHP 50.01                        |
+| **Max Transaction Amount** | Varies based on payment channels |
+| **Supports Refunds**       | No                               |
+| **Chargebacks**            | No                               |
+| **Sandbox**                | Yes (PPRO-hosted)                |
+| **Timeout**                | 48 hrs 20 mins                   |
+
+### Sample request
+
+<Code title="JSON" language="json">
+```
+{
+    "account_name": "transaction_processing",
+    "channel": "CNP",
+    "type": "SALE",
+    "amount": "1000",
+    "currency": "PHP",
+    "reference": "93459c79-f3f9-487c-84df-ca0584bb55bf",
+    "country": "PH",
+    "payment_method": {
+        "entry_mode": "ECOM",
+        "apm": {
+            "provider": "dragonpay"
+        }
+    },
+    "notifications": {
+        "return_url": "<Replace with your own endpoints>",
+        "status_url": "<Replace with your own endpoints>"
+    }
+}
+```
+</Code>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name           | Type | Format                                                                 | Length      | Description                                                                                             |
+| -------------- | ---- | ---------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------- |
+| Customer Email | M    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80        | The email address of the customer.                                                                      |
+| Phone          | M    | \[0-9\]{3}-\[0-9\]{15}                                                 | 3\|15 or 19 | The phone number provided by the cardholder.Format: CountryCallingCode\|Number For example: 1|123456789 |

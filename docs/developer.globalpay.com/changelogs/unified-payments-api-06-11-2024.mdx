@@ -1,0 +1,67 @@
+---
+title: "Unified Payments API - June 11, 2024"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "06-11-2024"
+---
+
+<ReleaseNoteSection title="Reports">
+    <ReleaseNoteDetail type="added">
+        New endpoint for Reports resource to retrieve an aggregated view of all Transactions across all Payment Methods. This endpoint accepts the following query parameters:
+
+        - payment_method.category
+        - type
+        - payment_method.brand
+        - from_time_created
+        - to_time_created
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Response Description">
+    <ReleaseNoteDetail type="changed">
+        Change to the error description when a timeout occurs for the following requests:
+
+        - Sale
+        - Capture
+        - Refund
+
+        Error description:
+        <Code>
+            ```
+            {  
+                "error_code": "ACTION_FAILED",  
+                "detailed_error_code": "50012",  
+                "detailed_error_description": "Action failed unexpectedly. An automatic reversal was successful. Please try original transaction again."  
+            }
+            ```
+        </Code>
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+    
+<ReleaseNoteSection title="Payment Methods">
+    <ReleaseNoteDetail type="changed">
+        **\[Sandbox Only\]** When creating an access token for the use of creating a Single-use Payment token, the following permissions are accepted in the access token creation:
+
+        - PMT_POST_CREATE_SINGLE
+        - ACC_GET_Single_Platform
+
+        If the access token contains another permission that is not allowed, the following error will be returned when attempting to create a Single-use Payment token:
+
+        <Code>
+            ```
+            {  
+                "error_code": "ACTION_NOT_AUTHORIZED",  
+                "detailed_error_code": "40022",  
+                "detailed_error_description": "Access token permissions are not correct for this action. Please ensure the correct permissions only are being used for this action."  
+            }
+            ```
+        </Code>
+    </ReleaseNoteDetail>
+
+    <ReleaseNoteDetail type="changed">
+        **\[Sandbox Only\]** When creating an access token as a partner for the use of creating a Single-use Payment token, the following permission is accepted:
+
+        - MER_PMT_SINGLE_USE
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+

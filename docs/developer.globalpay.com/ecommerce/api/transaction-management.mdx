@@ -1,0 +1,649 @@
+---
+title: "Transaction Management"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/19/2025"
+---
+Using our API, you can manage the complete lifecycle of a transaction in your application, from settlement and refunding to voids. Although all these calls can be managed in our transaction processing and reconciliation tool, Ecommerce Portal, using the API means you don't have to log in to different interfaces.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Transaction Management, see our [main article](/ecommerce/expand-your-integration/transaction-management).
+
+## Capture (Settle)
+This request type is used to capture a Delayed Capture transaction, placing it in the next settlement file to be sent to the acquirer. The amount of time the funds can remain ring-fenced on the customer's card may vary between different card issuers and acquirers. The card brands like Visa and MasterCard also have their own rules around how long transactions can wait to be captured. For more information, contact your account manager with us or your acquirer. 
+
+Transactions can be captured for up to 115% of the original authorization amount.
+
+<Infobox>
+3D Secure transactions must be settled for the original authorization amount to avail of the chargeback protection.
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="settle" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <foreignretailer flag="false"/>
+  <pasref>14611471047824414</pasref>
+  <!-- Optional - supply the amount to settle for
+  <amount>599</amount> 
+  -->
+  <sha1hash>31ee74dfac4e3f40c8e568d416f543fc495f9b4e</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Amount | integer |     | O   | 0-11 | The amount should be in the smallest unit of the required currency For example, 2000 = €20.00 |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <authcode>000000</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>320060</batchid>
+  <message>Successful</message>
+  <pasref>14611472244322341</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank/>
+    <country/>
+    <countrycode/>
+    <region/>
+  </cardissuer>
+  <sha1hash>b9f5ff97f622def43205e18288e419fe8c4f7fcf</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Refund (rebate)
+A refund is a reversal to an existing successfully captured authorization. For the request to be accepted, you must supply the original Order ID, Payments Reference (`pasref`) and Auth Code from the authorization response. Transactions can be refunded for up to 115% of the original authorization amount and the original currency must also be sent in the request.
+
+To process a refund you must supply the Rebate Password, which you can set with a member of our support team (this is a different password than the Refund Password). This password must be hashed using the SHA-1 algorithm before being added to the request.
+
+<Infobox>
+It's possible to process multiple refunds against one transaction. However, this is not enabled by default on your account. It must be requested by one of the primary listed contacts on the account. For more information, contact a member of our support team.
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="rebate" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <foreignretailer flag="false"/>
+  <amount currency="EUR">1999</amount>
+  <pasref>14609958221624162</pasref>
+  <authcode>12345</authcode>
+  <refundhash>fb528c20a04fb494f796591392ede2d36140b471</refundhash>
+  <sha1hash>946435842f5602b9db2a78c1fc983e2960b79c13</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Authcode | string | alphanumeric | M   | 0-10 | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Refund Hash | string | alphanumeric | M   | 40  | The additional signature for this request derived from the Rebate or Refund Password.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <authcode>000000</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>320060</batchid>
+  <message>Successful</message>
+  <pasref>14611472244322341</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank/>
+    <country/>
+    <countrycode/>
+    <region/>
+  </cardissuer>
+  <sha1hash>b9f5ff97f622def43205e18288e419fe8c4f7fcf</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Void (Cancel)
+Before settlement, it is possible to Void an Authorization, Offline, Refund, or Credit request. If the transaction has already been placed in the next settlement file, this will remove it. If using Delayed Capture, this will cancel the initial authorization. If the transaction has been settled or batched, then it cannot be voided. This request requires the Order ID and Payments Reference (`pasref`) from the original transaction.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="void" timestamp="20180613104233">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <foreignretailer flag="false"/>
+  <pasref>14611495995965048</pasref>
+  <sha1hash>6b4b2d2002c308bf85324ec2404d14cf7ae957f3</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Foreign Retailer Flag | boolean | true/false | C   | N/A | Used to identify a foreign retailer under a marketplace. Allowed values:  <br/>**true** - Foreign Retailer  <br/>**false** - For other types of transactions |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Reason Code | string | enum | O   |     | Used to indicate the reason for a transaction action. If no value is supplied the default reason code NOTGIVEN will be applied. Allowed values:  <br/>**FALSEPOSITIVE**  <br/>**INSTOCK**  <br/>**OTHER**  <br/>\> **NOTGIVEN** |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wgH8RjewQ16gIWJ5bqQKGA</orderid>
+  <authcode>000000</authcode>
+  <result>00</result>
+  <cvnresult>U</cvnresult>
+  <avspostcoderesponse>U</avspostcoderesponse>
+  <avsaddressresponse>U</avsaddressresponse>
+  <batchid>320060</batchid>
+  <message>Successful</message>
+  <pasref>14611472244322341</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank/>
+    <country/>
+    <countrycode/>
+    <region/>
+  </cardissuer>
+  <sha1hash>b9f5ff97f622def43205e18288e419fe8c4f7fcf</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Multi-Capture
+Multi-capture (also known as _split-shipment_) is used to process transactions with multiple items that are shipped at different times or from multiple vendors, distribution centers, or store locations. To use this functionality, in the original authorization request, the Autosettle Flag must be set to MULTI. You can capture the transaction any number of times, up to 115% of the original authorization amount.
+
+This service must adhere to compliance rules outlined by the card brands (for example, Visa and Mastercard) to ensure that the merchant qualifies for the optimum interchange rate for their transaction.
+
+In addition, the time the funds can remain ring-fenced on the customer's card varies among different Issuers and Acquirers. The card brands also have their own rules around how long transactions can wait to be captured. For more information, contact your account manager with us or your Acquirer.
+
+<Infobox>
+3D Secure transactions must be settled for the original authorization amount to avail of the chargeback protection. For multi-capture, your final request must not exceed 100% of the original amount.
+</Infobox>
+
+To process a refund against a multi-capture authorization, the following must be sent in the refund request:
+
+* Take the original Order ID of the authorization and add a preceding '_multisettle_' to it. <br/> For example: '_multisettle_wgH8RjewQ16gIWJ5bqQKGA'
+* The Payments Reference (`pasref`) sent in the refund must also be the one returned in the response of the last multi-capture request, ++not++ the original authorization.
+
+Multi-capture works on logic. If you don’t include the estimated number of transactions in your request, our system will default to a maximum of five capture requests for a multi-auth transaction. The fifth capture request will be considered the final one, even if the final flag is not present. Once the transaction counter is reached, even the original amount is not fully settled.
+
+Consider this typical scenario:
+
+1) As usual, after five capture partial amounts, the next capture is not allowed unless we void the previous five that were settled.
+2) Once we void all five previous captures, they are allowed only for the multi-auth's remaining amount. <br/> For example: _multiauthAmt – sum of captures = 100 - 80 = 20_
+3) To set the multi-capture counter equator to counter five, we must bypass the multi-capture transaction five-counters condition if the following field will be sent in the request: `<estnumtxn>`...`</estnumtxn>`
+
+### Authorization
+As mentioned above, in the original authorization you must indicate that this transaction will be captured multiple times; set the Autosettle Flag to MULTI.
+
+To avail of interchange optimization, you must indicate the number of future captures. This can be done either in the initial authorization request or in one of the subsequent multi-capture requests (see below).
+
+We recommend that if at the time of authorization you know the number of captures you intend to process; include it in the request. That way, you don’t have to include any flag in subsequent multi captures. The value can always be modified in the subsequent multi-capture requests.
+
+If you don’t supply this information, we will automatically estimate the number of subsequent captures to be 5. As outlined, this can be overridden in the multi-captures requests themselves.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version='1.0' encoding='UTF-8'?>
+<request type='auth' timestamp='20181023110744'>
+    <merchantid>Merchant ID</merchantid>
+    <account>internet</account>
+    <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+    <amount currency='EUR'>1001</amount>
+    <card>
+        <number>4263970000005262</number>
+        <expdate>0519</expdate>
+        <chname>James Mason</chname>
+        <type>VISA</type>
+        <cvn>
+            <number>123</number>
+            <presind>1</presind>
+        </cvn>
+    </card>
+    <!-- Begin Multi-Capture fields -->
+    <autosettle flag='MULTI'/>
+    <estnumtxn>3</estnumtxn>
+    <!-- End Multi-Capture fields -->
+    <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Estimated Number of Transactions | integer |     | O   | 0-2 | The number of captures estimated for this transaction.  <br/>Must not be a value less than the number of successful captures of this transaction so far. |
+
+#### Multi-capture request
+When you’re ready to capture part of a transaction you can send the specific multi-capture request to us. You can edit the estimated number of captures, or indicate that this is the last capture for this transaction.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version='1.0' encoding='UTF-8'?>
+<request type='multisettle' timestamp='20181023110744'>
+    <merchantid>Merchant ID</merchantid>
+    <account>internet</account>
+    <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+    <amount>250</amount>
+    <pasref>14611471047824414</pasref>
+    <authcode>12345</authcode>
+    <!-- Begin Multi-Capture Fields --> 
+    <txnseq>
+        <final flag="0"/>
+    </txnseq>
+    <!-- End Multi-Capture Fields -->
+    <!-- Optional Estimated Transactions Number
+    <estnumtxn>3</estnumtxn>
+    -->
+    <sha1hash>1a4c4c72a30a71fe056e74693bba1867ea171e82</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Transaction Sequence | boolean |     | O   |     | Indicates whether this is the final capture or not.  <br/>If sent with a value of 1, no more captures can occur unless one of the multi-captures is voided. |
+| Estimated Number of Transactions | integer |     | O   | 0-2 | The number of captures estimated for this transaction.  <br/>Must not be a value less than the number of successful captures of this transaction so far. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Capture, Refund, or Void. 
+
+<Tabs active="capture">  
+<Tab id="capture" title="Capture">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no currency or cardnumber in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+// in this example we are not settling for the full amount
+"20200205093140.Merchant ID.wgH8RjewQ16gIWJ5bqQKGA.500.."
+```
+</Code>
+
+If you choose not to send in an amount, it will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+// in this example we are not settling for the full amount
+// this will settle for the full amount
+"20160420081035.Merchant ID.wgH8RjewQ16gIWJ5bqQKGA..."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 
+
+<Code id="markup" title="" language="markup" active>
+```
+947903969e7aaf996164c680a6669805fe405269
+```
+</Code>
+
+</Tab>
+
+<Tab id="refund" title="Refund">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no cardnumber in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.wgH8RjewQ16gIWJ5bqQKGA.1001.EUR."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+
+<Tab id="void" title="Void">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Since there is no cardnumber, amount or currency in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.wgH8RjewQ16gIWJ5bqQKGA..."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+Use the tabs below to follow the steps for a certain request type: Capture, Refund or Void. After making a selection, the steps on how to check the response hash for that type are provided.
+
+<Tabs active="capture">  
+<Tab id="capture" title="Capture">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Successful.14631546336115597.000000"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="refund" title="Refund">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Successful.14631546336115597.000000"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+
+<Tab id="void" title="Void">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Successful.14631546336115597.000000"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 
+
+<Code id="markup" title="" language="markup" active>
+```
+947903969e7aaf996164c680a6669805fe405269
+```
+</Code>
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+</Tabs>

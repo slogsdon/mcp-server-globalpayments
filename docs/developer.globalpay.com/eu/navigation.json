@@ -1,0 +1,1370 @@
+[
+  {
+    "title": "EU Getting Started Testing",
+    "icon": "rocket",
+    "url": "/docs/getting-started/overview",
+    "subtitle": "How the portal works",
+    "children": [
+      {
+        "title": "Our Portal EU",
+        "heading": "true",
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/getting-started/overview",
+        "children": []
+      },
+      {
+        "title": "Register / Create an App",
+        "url": "/docs/getting-started/register",
+        "children": []
+      },
+      {
+        "title": "Create an Access Token",
+        "url": "/docs/getting-started/generate-token",
+        "children": []
+      },
+      {
+        "title": "Build Your Integration",
+        "url": "/docs/getting-started/your-integration",
+        "children": []
+      },
+      {
+        "title": "Postman Collection",
+        "url": "/docs/getting-started/postman-collection",
+        "children": []
+      },
+      {
+        "title": "Going Live",
+        "url": "/docs/getting-started/going-to-production",
+        "children": []
+      },
+      {
+        "title": "New to Payments",
+        "heading": "true",
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Introduction",
+        "url": "/docs/getting-started/new-to-payments/introduction",
+        "children": []
+      },
+      {
+        "title": "Glossary",
+        "url": "/docs/getting-started/new-to-payments/glossary",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Integration Options",
+    "icon": "shopping-cart",
+    "url": "/docs/integration-options/overview",
+    "subtitle": "Online, In-Store via Plugin, SDK or API",
+    "children": [
+      {
+        "title": "Overview",
+        "url": "/docs/integration-options/overview",
+        "children": []
+      },
+      {
+        "title": "Plugins",
+        "url": "/docs/integration-options/plugins",
+	"children": [
+		{
+		    "title": "Overview",
+		    "url": "/docs/integration-options/plugins"
+		  }, 
+		{
+		    "title": "Adobe Commerce",
+		    "url": "/docs/integration-options/plugins/adobe"
+		  },
+		{
+		    "title": "OpenCart",
+		    "url": "/docs/integration-options/plugins/opencart"
+		  },
+		{
+		    "title": "PrestaShop",
+		    "url": "/docs/integration-options/plugins/prestashop"
+		  },
+		{
+		    "title": "Salesforce B2C Commerce",
+		    "url": "/docs/integration-options/plugins/salesforce"
+		  },
+		{
+		    "title": "WooCommerce",
+		    "url": "/docs/integration-options/plugins/woocommerce"
+		  }
+	]
+      },
+      {
+        "title": "SDKs & Libraries",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/integration-options/sdk/overview"
+          },
+          {
+            "title": "Server-Side SDKs",
+            "url": "",
+            "children": [
+              {
+                "title": "Java",
+                "url": "/docs/integration-options/sdk/java",
+                "children": []
+              },
+              {
+                "title": "PHP",
+                "url": "/docs/integration-options/sdk/php",
+                "children": []
+              },
+              {
+                "title": ".NET",
+                "url": "/docs/integration-options/sdk/net",
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "Client-Side Libraries",
+            "url": "",
+            "children": [
+              {
+                "title": "JavaScript",
+                "url": "/docs/integration-options/sdk/javascript",
+                "children": []
+              },
+              {
+                "title": "Android",
+                "url": "/docs/integration-options/sdk/android",
+                "children": []
+              },
+              {
+                "title": "iOS",
+                "url": "/docs/integration-options/sdk/ios",
+                "children": []
+              }
+            ]
+          },
+          {
+            "title": "SDK Reference",
+            "url": "",
+            "children": [		    
+              {
+                "title": "Overview",
+                "url": "/docs/integration-options/sdk/sdk-reference/overview",
+                "children": []
+              },
+              {
+                "title": "Configuration Code for SDKs",
+                "url": "/docs/sdk/config-code",
+                "children": []
+              },
+              {
+                "title": "Card Payments",
+                "url": "/docs/sdk/card-payments",
+                "children": []
+              },
+              {
+                "title": "Digital Wallets",
+                "url": "/docs/sdk/digital-wallets",
+                "children": []
+              },
+              {
+                "title": "Payment Methods",
+                "url": "/docs/sdk/payment-methods",
+                "children": []
+              },
+              {
+                "title": "3D Secure 2",
+                "url": "/docs/sdk/3DS2",
+                "children": []
+              },		    
+              {
+                "title": "Transaction Management",
+                "url": "/docs/sdk/dcc",
+                "children": []
+              },
+              {
+                "title": "Dynamic Descriptor",
+                "url": "/docs/sdk/dynamic-descriptor",
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "API",
+        "url": "/docs/integration-options/api",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Payments",
+    "icon": "money-check-pen",
+    "url": "/docs/payments/overview",
+    "subtitle": "Online, In-Store, Tokenization, Recurring, Payment Methods",
+    "children": [
+      {
+        "title": "Online",
+        "heading": true,
+        "url": "",
+        "children": []
+      },   
+      {
+        "title": "Overview",
+        "url": "/docs/payments/online/overview",
+        "children": []
+      },     
+      {
+        "title": "Plugins",
+        "url": "/docs/payments/online/plugins",
+        "children": []
+      },
+      {
+        "title": "Pay by Link",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/online/pay-by-link-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/online/pay-by-link-guide"
+          }
+        ]
+      },
+      {
+        "title": "Hosted Payment Page",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/online/hosted-payment-page-overview",
+            "children": []
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/online/hosted-payment-page-guide",
+            "children": []
+          },
+          {
+            "title": "Customization",
+            "url": "/docs/payments/online/hosted-payment-page-customization",
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "Hosted Fields",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/online/hosted-fields-overview",
+            "children": []
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/online/hosted-fields-guide",
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "Drop-In UI",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/online/drop-in-ui-overview",
+            "children": []
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/online/drop-in-ui-guide",
+            "children": []
+          }
+        ]
+      },     
+      {
+        "title": "Direct API",
+        "url": "/docs/payments/online/api-guide",
+        "children": []
+      },
+      {
+        "title": "In-Store",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/payments/in-store/overview",
+        "children": []
+      },
+      {
+        "title": "Standalone Terminals",
+        "url": "/docs/payments/in-store/standalone",
+        "children": []
+      },
+      {
+        "title": "Cloud Integration",
+        "url": "/docs/payments/in-store/cloud",
+        "children": []
+      },
+      {
+        "title": "Semi-Integration",
+        "url": "/docs/payments/in-store/semi-integration",
+        "children": []
+      },
+      {
+        "title": "Full Integration",
+        "url": "/docs/payments/in-store/full-integration",
+        "children": []
+      },
+      {
+        "title": "Recurring Payments",
+        "heading": true,
+        "url": "/docs/payments/recurring/overview"
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/payments/recurring/overview"
+      },
+      {
+        "title": "Guide",
+        "url": "/docs/payments/recurring/recurring-payments-guide"
+      },
+      {
+        "title": "Credentials on File",
+        "url": "/docs/payments/recurring/credentials-on-file"
+      },
+      {
+        "title": "Tokenization",
+        "heading": true,
+        "url": "/docs/payments/tokenization/overview"
+      },
+	    {
+	    "title": "Overview",
+	    "url": "/docs/payments/tokenization/overview"
+	  },
+      {
+        "title": "Card Storage",
+        "url": "",
+        "children": [
+          {
+            "title": "Guide",
+            "url": "/docs/payments/tokenization/card-storage-guide"
+          },
+          {
+            "title": "Payment Method Alias",
+            "url": "/docs/payments/tokenization/payment-method-alias-guide"
+          }
+        ]
+      },
+      {
+        "title": "Payers",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/tokenization/payers-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/tokenization/payers-guide"
+          }
+        ]
+      },
+      {
+        "title": "Payment Methods",
+        "heading": true,
+        "url": "/docs/payments/payment-methods/overview"
+      },
+	    {
+	    "title": "Overview",
+	    "url": "/docs/payments/payment-methods/overview"
+	  },
+      {
+        "title": "Digital Wallets",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/payment-methods/digital-wallets/overview"
+          },
+          {
+            "title": "Apple Pay",
+            "url": "/docs/applepay"
+          },
+          {
+            "title": "Google Pay",
+            "url": "/docs/googlepay"
+          },
+          {
+            "title": "Decrypted Digital Wallets",
+            "url": "/docs/decrypted-wallets"
+          }
+        ]
+      },
+      {
+        "title": "Buy Now Pay Later",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/payment-methods/buy-now-pay-later-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/payment-methods/buy-now-pay-later-guide"
+          }
+        ]
+      },      
+      {
+        "title": "Alternative Payment Methods",
+        "url": "",
+        "children": [
+          {
+            "title": "Guide",
+            "url": "/docs/payments/payment-methods/alternative-payment-methods-guide"
+          }
+        ]
+      }, 
+      {
+        "title": "Open Banking",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/payment-methods/open-banking-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/payment-methods/open-banking-guide"
+          }
+        ]
+      },      
+      {
+        "title": "PayPal",
+        "url": "",
+      	"children": [
+          {
+            "title": "Overview",
+            "url": "/docs/payments/payment-methods/paypal-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/payments/payment-methods/paypal-guide"
+          }
+        ]
+      },
+      {
+        "title": "Dynamic Currency Conversion",
+        "url": "",
+        "children": [
+          {
+            "title": "Guide",
+            "url": "/docs/payments/payment-methods/dynamic-currency-conversion-guide"
+          }
+        ]
+      }, 
+      {
+        "title": "Manage Payments",
+        "heading": true,
+        "icon": "list-check",
+        "url": "/docs/payments/manage-payments/overview",
+        "subtitle": "Captures, Refunds, Voids, Reversals",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/payments/manage-payments/overview",
+        "children": []
+      },
+      {
+        "title": "Adjust",
+        "url": "/docs/payments/manage-payments/adjust-guide",
+        "children": []
+      },
+      {
+        "title": "Batches",
+        "url": "/docs/payments/manage-payments/batches-guide",
+        "children": []
+      },
+      {
+        "title": "Capture",
+        "url": "/docs/payments/manage-payments/capture-guide",
+        "children": []
+      },	    
+      {
+        "title": "Increment",
+        "url": "/docs/payments/manage-payments/increment-guide",
+        "children": []
+      },
+      {
+        "title": "Reauth",
+        "url": "/docs/payments/manage-payments/reauth-guide",
+        "children": []
+      },
+      {
+        "title": "Refund",
+        "url": "/docs/payments/manage-payments/refund-guide",
+        "children": []
+      },
+      {
+        "title": "Reverse",
+        "url": "/docs/payments/manage-payments/reverse-guide",
+        "children": []
+      },
+      {
+        "title": "Verify",
+        "url": "/docs/payments/manage-payments/verify-guide",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Risk Management",
+    "icon": "shield-check",
+    "url": "/docs/risk-management/overview",
+    "subtitle": "3D Secure, Disputes, DCC, Settlement",
+    "children": [
+      {
+        "title": "3D Secure & SCA",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/risk-management/3D-secure/overview",
+        "children": []
+      },
+      {
+        "title": "Browser Authentication",
+        "url": "/docs/risk-management/3D-secure/browser-authentication-guide",
+        "children": []
+      },
+      {
+        "title": "Exemptions",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/risk-management/3D-secure/exemptions/overview",
+            "children": []
+          },
+          {
+            "title": "Transaction Risk Analysis",
+            "url": "/docs/risk-management/3D-secure/exemptions/transaction-risk-analysis",
+            "children": []
+          },
+          {
+            "title": "Low-Value Transactions",
+            "url": "/docs/risk-management/3D-secure/exemptions/low-value-transactions",
+            "children": []
+          },
+          {
+            "title": "Trusted Beneficiary",
+            "url": "/docs/risk-management/3D-secure/exemptions/trusted-beneficiary",
+            "children": []
+          },
+          {
+            "title": "Secure Corporate Payments",
+            "url": "/docs/risk-management/3D-secure/exemptions/secure-corporate-payments",
+            "children": []
+          }
+        ]
+      },    
+	  {
+        "title": "More 3D Secure",
+        "url": "",
+        "children": [
+		  		{
+				"title": "Overview",
+				"url": "/docs/risk-management/3D-secure/3DS-more-overview",
+				"children": []
+			      },
+			      {
+				"title": "In-App Authentication",
+				"url": "/docs/3DS-mobile-sdk",
+				"children": []
+			      },
+			  {
+				"title": "Out of Scope Transactions",
+				"url": "",
+				"children": [
+				  {
+					"title": "Overview",
+					"url": "/docs/out-scope-overview",
+					"children": []
+				  },
+				  {
+					"title": "MOTO",
+					"url": "/docs/moto",
+					"children": []
+				  },
+				  {
+					"title": "Merchant-Initiated Transactions",
+					"url": "/docs/MIT",
+					"children": []
+				  }
+				]
+			  },
+			  {
+				"title": "Merchant-Initiated Authentication (3RI)",
+				"url": "/docs/3DS2-3RI",
+				"children": []
+			  },
+			  {
+				"title": "Decoupled Authentication",
+				"url": "/docs/decoupled-auth",
+				"children": []
+			  },
+			  {
+				"title": "Message Extension",
+				"url": "/docs/message-extension",
+				"children": []
+			  },
+			  {
+				"title": "3DS Validation Table",
+				"url": "/docs/3DS-validation",
+				"children": []
+			  }
+		  ]
+	  },
+      {
+        "title": "Fraud Management",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/docs/risk-management/fraud-management/overview",
+        "children": []
+      },
+      {
+        "title": "Fraud Filter",
+        "url": "/docs/risk-management/fraud-management/fraud-filter",
+        "children": []
+      },
+      {
+        "title": "Address Verification Service",
+        "url": "/docs/risk-management/fraud-management/address-verification-service",
+        "children": []
+      },
+      {
+        "title": "Decision Manager",
+        "url": "/docs/risk-management/fraud-management/decision-manager",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title": "Operations & Reporting",
+    "icon": "solar-system",
+    "url": "/docs/reporting/overview",
+    "subtitle": "DCC, Settlement Reporting, Real-Time Reporting",
+    "children": [
+      {
+        "title": "Operations",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Disputes Management",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/operations/disputes-management-overview",
+            "children": []
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/operations/disputes-management-guide",
+            "children": []
+          },
+          {
+            "title": "Disputes Portal",
+            "url": "https://www.globalpayments.com/en-gb/business-solutions/merchant-portal",
+            "children": []
+          }
+        ]
+      },
+      {
+        "title": "File Processing",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/operations/file-processing-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/operations/file-processing-guide"
+          }
+        ]
+      },
+      {
+        "title": "Insights & Reporting",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Real-Time Data Reporting",
+        "url": "",
+        "children": [
+          {
+            "title": "Guide",
+            "url": "/docs/reporting/real-time-reporting-guide"
+          }
+        ]
+      },
+      {
+        "title": "Settlement Reporting",
+        "url": "",
+        "children": [
+          {
+            "title": "Overview",
+            "url": "/docs/reporting/settlement-reporting-overview"
+          },
+          {
+            "title": "Guide",
+            "url": "/docs/reporting/settlement-reporting-guide"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Partners",
+    "icon": "handshake-angle",
+    "url": "/docs/partners/overview",
+    "subtitle": "Process, Manage payments for your customers",
+    "children": [
+      {
+        "title": "Overview",
+        "url": "/docs/partners/overview",
+        "children": []
+      },
+      {
+	"title": "Merchant Management",
+	"url": "/docs/partners/merchant-mgt",
+	"children": []
+      },
+      {
+	"title": "Transfers & Split Transactions",
+	"url": "/docs/partners-transfers-transactions",
+	"children": []
+      },
+      {
+	"title": "Funds Management",
+	"url": "/docs/partners-funds-mgt",
+	"children": []
+      },
+      {
+	"title": "Disputes Management",
+	"url": "/docs/partners/embedded/disputes-guide",
+	"children": []
+      }
+    ]
+  },
+  {
+    "title": "API References",
+    "subtitle": "Full API Specification with Real Life Examples",
+    "url": "/api/references-overview",
+    "icon": "window",
+    "children": [
+      {
+        "title": "API Definitions",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/api/definitions/overview",
+        "children": []
+      },
+      {
+        "title": "Access Tokens",
+        "url": "/api/definitions/access-tokens",
+        "children": []
+      },
+       {
+        "title": "Account Capabilities",
+        "url": "/api/definitions/account-capabilities",
+        "children": []
+      },
+      {
+        "title": "Data Formats",
+        "url": "/api/definitions/data-formats",
+        "children": []
+      },
+      {
+        "title": "Lists",
+        "url": "/api/definitions/lists",
+        "children": []
+      },
+      {
+        "title": "Performance",
+        "url": "/api/definitions/performance",
+        "children": []
+      },
+      {
+        "title": "Requests",
+        "url": "/api/definitions/requests",
+        "children": []
+      },
+      {
+        "title": "Responses",
+        "url": "/api/definitions/responses",
+        "children": []
+      },
+      {
+        "title": "Resources & Actions",
+        "url": "/api/definitions/resources-actions",
+        "children": [
+	    
+	]
+      },
+      {
+        "title": "Versioning",
+        "url": "/api/definitions/versioning",
+        "children": []
+      },
+      {
+        "title": "Postman Collection",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/api/postman-collection/overview",
+        "children": []
+      },
+      {
+        "title": "API Explorer",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Overview",
+        "url": "/api/overview",
+        "children": []
+      },
+      {
+        "title": "Access Token",
+        "url": "/api/access-token",
+        "children": [
+          {
+            "title": "[POST] Create",
+            "url": "/api/access-token#/Create%20Access%20Token/getAccessToken"
+          }
+        ]
+      },
+      {
+        "title": "Accounts",
+        "url": "/api/accounts",
+        "children": [
+          {
+            "title": "[GET] Accounts",
+            "url": "/api/accounts#/Get%20Merchant's%20Account%20info/getMerchantAccounts"
+          },
+          {
+            "title": "[GET] Account",
+            "url": "/api/accounts#/Get%20info%20about%20a%20Single%20Account/getAccountSingle"
+          },
+          {
+            "title": "[PATCH] Edit Account",
+            "url": "/api/accounts#/Edit%20a%20Merchant's%20Account%20info/editAccountSingle"
+          },
+          {
+            "title": "[GET] FMA Account",
+            "url": "/api/accounts#/Get%20FMA%20Account%20Details/get-accounts-FMA_id"
+          }
+        ]
+      },
+      {
+        "title": "Actions",
+        "url": "/api/actions",
+        "children": [
+          {
+            "title": "[GET] Actions",
+            "url": "/api/actions#/Get%20a%20list%20of%20Actions/getActionList"
+          },
+          {
+            "title": "[GET] Action",
+            "url": "/api/actions#/Get%20a%20Single%20Action/getActionSingle"
+          }
+        ]
+      },
+      {
+        "title": "Authentications",
+        "url": "/api/authentications",
+        "children": [
+          {
+            "title": "[POST] Check Availability",
+            "url": "/api/authentications#/Check%20Availability/check3DSAvailability"
+          },
+          {
+            "title": "[POST] Initiate",
+            "url": "/api/authentications#/Initiate/initiate3DS"
+          },
+          {
+            "title": "[POST] Result",
+            "url": "/api/authentications#/Get%20Result/get3DSResult"
+          },
+          {
+            "title": "[GET] List Authentications",
+            "url": "/api/authentications?id=/Get%20List%20of%20Authentications/get-authentications&requestType=json&jsonWindow=body"
+          },
+          {
+            "title": "[GET] Get Single Authentication",
+            "url": "/api/authentications?id=/Get%20Single%20Authentication/get-authentications-id&requestType=json&jsonWindow=body"
+          }
+        ]
+      },
+      {
+        "title": "Batches",
+        "url": "/api/batches",
+        "children": [
+          {
+            "title": "[GET] Batches",
+            "url": "/api/batches/#/Get%20a%20Batch/getSingleBatch"
+          },
+          {
+            "title": "[POST] Close a Batch",
+            "url": "/api/batches#/Close%20a%20Batch/closeSingleBatch"
+          },
+          {
+            "title": "[POST] Result",
+            "url": "/api/authentications#/Get%20Result/get3DSResult"
+          }
+        ]
+      },
+      {
+        "title": "Currency Conversions",
+        "url": "/api/currency-conversion",
+        "children": [
+          {
+            "title": "[POST] Convert Amount",
+            "url": "/api/currency-conversion#/Convert%20Transaction%20Amount/requestDCC"
+          },
+          {
+            "title": "[GET] BIN Ranges",
+            "url": "/api/currency-conversion#/BIN%20Ranges%20List%20Download/Download-DCC-BIN-Ranges-List"
+          }
+        ]
+      },
+      {
+        "title": "Deposits",
+        "url": "/api/deposits",
+        "children": [
+          {
+            "title": "[GET] Deposits",
+            "url": "/api/deposits#/Get%20a%20list%20of%20Deposit%20information/getDepositList"
+          },
+          {
+            "title": "[GET] Deposit",
+            "url": "/api/deposits#/Get%20a%20Single%20Deposit/getDepositSingle"
+          }
+        ]
+      },
+      {
+        "title": "Disputes",
+        "url": "/api/disputes",
+        "children": [
+          {
+            "title": "[POST] Accept",
+            "url": "/api/disputes#/Accept/acceptDispute"
+          },
+          {
+            "title": "[POST] Challenge",
+            "url": "/api/disputes#/Challenge/challengeDispute"
+          },
+          {
+            "title": "[GET] Dispute",
+            "url": "/api/disputes#/Get%20a%20Dispute/getSingleDispute"
+          },
+          {
+            "title": "[GET] Disputes",
+            "url": "/api/disputes#/List%20Disputes/getDisputes"
+          },
+          {
+            "title": "[GET] Settled",
+            "url": "/api/disputes#/List%20Settled%20Disputes/getSettledDisputes"
+          },
+          {
+            "title": "[GET] Document",
+            "url": "/api/disputes#/Download%20Document/getDisputeDocument"
+          }
+        ]
+      },
+      {
+        "title": "Funds",
+        "url": "/api/funds",
+        "children": [
+          {
+            "title": "[POST] Fund",
+            "url": "/api/699#/Credit%20Or%20Debit%20a%20Funds%20Management%20Account%20(FMA)/fundMerchant"
+          },
+		{
+            "title": "[GET] Get a Fund",
+            "url": "/api/funds#/merchants/{id}/funds/{FND_id}_get_header__authorization"
+          },
+	  {
+            "title": "[GET] List Funds",
+            "url": "/api/funds?id=/List%20Funds/listFunds&requestType=json&jsonWindow=body"
+          }
+        ]
+      },
+      {
+        "title": "Installments",
+        "url": "/api/installments",
+        "children": [
+          {
+            "title": "[POST] Create",
+            "url": "/api/installments#/Create%20an%20Installment"
+          }
+        ]
+      },
+      {
+        "title": "Links",
+        "url": "/api/links",
+        "children": [
+          {
+            "title": "[POST] Create",
+            "url": "/api/links#/Create%20a%20link/post-links"
+          },
+          {
+            "title": "[GET] Link",
+            "url": "/api/links#/Get%20a%20link/get-links-id"
+          },
+          {
+            "title": "[GET] Links",
+            "url": "/api/links#/Get%20a%20list%20of%20Links/get-links"
+          }
+        ]
+      },
+      {
+        "title": "Merchants",
+        "url": "/api/merchants",
+        "children": [
+          {
+            "title": "[POST] Board Merchant",
+            "url": "/api/merchants#/Board%20Merchant/boardMerchant"
+          },
+          {
+            "title": "[GET] Merchants",
+            "url": "/api/merchants#/Get%20Merchants/getMerchants"
+          },
+          {
+            "title": "[PATCH] Edit Merchant",
+            "url": "/api/merchants#/Edit%20Merchant/editMerchant"
+          },
+          {
+            "title": "[GET] Merchant Info",
+            "url": "/api/merchants#/Get%20Merchant%20info/getMerchantSingle"
+          },
+          {
+            "title": "[POST] Upload Merchant Docs",
+            "url": "/api/merchants#/Upload%20Merchant%20Documentation/UploadMerchantDocumentation"
+          },
+          {
+            "title": "[GET] Addresses",
+            "url": "/api/merchants#/Address%20Lookup/AddressLookup"
+          }
+        ]
+      },
+      {
+        "title": "Payers",
+        "url": "/api/payers",
+        "children": [
+          {
+            "title": "[POST] Create a Payer",
+            "url": "/api/payers#/Create%20a%20Payer"
+          },
+          {
+            "title": "[PATCH] Edit a Payer",
+            "url": "/api/payers#/Edit%20a%20Payer"
+          },
+          {
+            "title": "[GET] Get a Payer",
+            "url": "/api/payers#/Get%20a%20Payer"
+          },
+          {
+            "title": "[GET] Get List of Payers",
+            "url": "/api/payers?id=/Get%20Payers%20List/"
+          }
+        ]
+      },
+      {
+        "title": "Reports",
+        "url": "/api/reports",
+        "children": [
+          {
+            "title": "[GET] List of Fees",
+            "url": "/api/reports#/Get%20a%20list%20of%20Monthly%20Fee%20Reports/getMonthlyFeeReportist"
+          },	
+          {
+            "title": "[GET] Transaction Summary Report",
+            "url": "/api/reports?id=/Get%20a%20Transaction%20Summary%20Report/get-reports&requestType=json&jsonWindow=body"
+          }
+        ]
+      },
+      {
+        "title": "Risk Assessments",
+        "url": "/api/risk-assessments",
+        "children": [
+          {
+            "title": "[POST] Assess",
+            "url": "/api/risk-assessments#/Assess/riskAssessment"
+          }
+        ]
+      },
+      {
+        "title": "Payment Methods",
+        "url": "/api/payment-methods-tokenization",
+        "children": [
+          {
+            "title": "[POST] Create",
+            "url": "/api/payment-methods-tokenization#/Create/storePaymentMethod"
+          },
+          {
+            "title": "[GET] List",
+            "url": "/api/payment-methods-tokenization#/List%20Payment%20Methods/get-payment-methods"
+          },
+          {
+            "title": "[GET][POST] Read",
+            "url": "/api/payment-methods-tokenization#/List%20Payment%20Methods/getPaymentMethodList"
+          },
+          {
+            "title": "[PATCH] Edit",
+            "url": "/api/payment-methods-tokenization#/Edit%20a%20Payment%20Method/editPaymentMethod"
+          },
+          {
+            "title": "[POST] Detokenize",
+            "url": "/api/payment-methods-tokenization#/Detokenize%20a%20Payment%20Method/detokenizePaymentMethod"
+          },
+          {
+            "title": "[POST] Delete",
+            "url": "/api/payment-methods-tokenization#/Delete%20a%20Payment%20Method/deletePaymentMethod"
+          },
+          {
+            "title": "[POST] Search",
+            "url": "/api/payment-methods-tokenization#/Search%20for%20a%20Payment%20Method/searchPaymentMethod"
+          }
+        ]
+      },
+      {
+        "title": "Transactions",
+        "url": "/api/transactions",
+        "children": [
+          {
+            "title": "[POST] Create",
+            "url": "/api/transactions#/Create a Sale or Refund/createSaleOrRefundTransaction"
+          },
+          {
+            "title": "[GET] Transaction",
+            "url": "/api/transactions#/Get a Transaction/getSingleSaleOrRefundTransaction"
+          },
+          {
+            "title": "[GET] Transactions",
+            "url": "/api/transactions#/List Transactions/getSaleAndRefundTransactions"
+          },
+          {
+            "title": "[POST] Refund",
+            "url": "/api/transactions#/Refund a Sale/createRefundTransactionFromSale"
+          },
+          {
+            "title": "[POST] Reverse",
+            "url": "/api/transactions#/Reverse a Sale or Refund/reverseExistingTransaction"
+          },
+          {
+            "title": "[POST] Capture",
+            "url": "/api/transactions#/Capture a Sale/captureSaleTransaction"
+          },
+          {
+            "title": "[POST] Increment",
+            "url": "/api/transactions#/Increment%20an%20Auth/incrementExistingTransaction"
+          },
+          {
+            "title": "[POST] Adjust",
+            "url": "/api/transactions#/Adjust%20a%20CP%20Sale/adjustSaleTransaction"
+          },
+          {
+            "title": "[POST] ReAuth",
+            "url": "/api/transactions#/ReAuth a Reversed Sale/reauthSaleTransaction"
+          },
+          {
+            "title": "[POST] Confirm",
+            "url": "/api/transactions#/Confirm a Transaction/confirmTransaction"
+          },
+          {
+            "title": "[POST] Split",
+            "url": "/api/transactions#/Split%20a%20Transaction%20Amount/splitTransaction"
+          },
+          {
+            "title": "[GET] Settled Transactions",
+            "url": "/api/transactions#/List Settled Transactions/getSettledTransactions"
+          },
+          {
+            "title": "[POST] Challenge",
+            "url": "/api/transactions#/Challenge%20a%20Disputed%20Transaction/ChallengeDispute"
+          },
+          {
+            "title": "[POST] Hold",
+            "url": "/api/transactions#/Hold%20a%20Transaction/post-transactions-id-hold"
+          },
+          {
+            "title": "[POST] Release",
+            "url": "/api/transactions#/Release%20a%20Transaction/post-transactions-id-release"
+          }
+        ]
+      },
+      {
+        "title": "Transfers",
+        "url": "/api/transfers",
+        "children": [
+          {
+            "title": "[POST] Transfer",
+            "url": "/api/transfers#/Transfer%20funds/post-transfers-pushfund"
+          },
+          {
+            "title": "[POST] Reverse Transfer",
+            "url": "/api/transfers#/Reverse%20a%20Transfer/reverseExistingTransfer"
+          }
+        ]
+      },
+      {
+        "title": "Verifications",
+        "url": "/api/verifications",
+        "children": [
+          {
+            "title": "[POST] Verify",
+            "url": "/api/verifications#/Verify/createVerification"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Resources",
+    "icon": "toolbox",
+    "url": "/resources/overview",
+    "subtitle": "Get Help With Your Integration",
+    "children": [	    
+      {
+        "title": "Overview",
+        "url": "/resources/overview",
+        "children": []
+      },
+      {
+        "title": "Test Cards",
+        "url": "/resources/test-cards",
+        "children": []
+      },
+      {
+        "title": "API responses",
+        "url": "/resources/responses",
+        "children": []
+      },
+      {
+        "title": "Country Codes",
+        "url": "/resources/codes/country-codes",
+        "children": []
+      },
+      {
+        "title": "Currency Codes",
+        "url": "/resources/codes/currency-codes",
+        "children": []
+      }
+    ]
+  },
+{
+    "title": "NEW PORTAL",
+    "icon": "headset",
+    "url": "/resources/new-portal",
+    "subtitle": "Our portal has changed",
+    "children": [
+    {
+        "title": "What's changed",
+        "url": "/resources/new-portal",
+        "children": []
+      }
+    ]
+},	
+  {
+    "title": "Support",
+    "icon": "headset",
+    "url": "/support/overview",
+    "subtitle": "Get Help With Your Integration",
+    "hidden_in_navbar": true,
+    "children": [
+      {
+        "title": "Contact Us",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Integration Support",
+        "url": "/support/integration-support",
+        "children": []
+      },
+      {
+        "title": "Sales",
+        "url": "/support/sales",
+        "children": []
+      },
+      {
+        "title": "Terminal Support",
+        "url": "/support/terminal",
+        "children": []
+      },
+      {
+        "title": "Integration Validation",
+        "url": "/support/integration-valid",
+        "children": []
+      },
+      {
+        "title": "Help Center",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Frequently Asked Questions",
+        "url": "/support/FAQs",
+        "children": []
+      },
+      {
+        "title": "What's New",
+        "heading": true,
+        "url": "",
+        "children": []
+      },
+      {
+        "title": "Changelog",
+        "url": "/changelog",
+        "children": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+---
+title: 'Paysafe Card'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/paysafecard.png" />
+</div>
+
+| **Payment Type**           | Prepaid Cards & Vouchers                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Payment Method String**  | paysafecard                                                                                                                                        |
+| **Available Countries**    | AT, AU, BE, BG, CA, CH, CY, CZ, DE, DK, ES, FI, FR, GB, GR, GE, GI, HR, HU, IE, IT, LI, LT, LU, MT, MX, NL, NO, NZ, PE, PL, PT, RO, SE, SI, SK, UY |
+| **Available Currencies**   | EUR, AUD, CAD, GBP, NOK, PLN, SEK, USD                                                                                                             |
+| **Min Transaction Amount** | 0.01 EUR (or equivalent)                                                                                                                           |
+| **Max Transaction Amount** | All EU countries: 50; EUR/transaction with classic pins                                                                                            |
+| **Supports Refunds**       | Yes, up to 365 days                                                                                                                                |
+| **Chargebacks**            | No                                                                                                                                                 |
+| **Sandbox**                | Yes                                                                                                                                                |
+| **Timeout**                | 2 Hours                                                                                                                                            |
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name               | Type | Format                          | Length | Description                                                                                                                                                                                                                                                                                            |
+| ------------------ | ---- | ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Customer Number    | M    | \[a-zA-Z0-9\\-\\s\\.,\\+@\_\]\* | 0-50   | A unique reference for this customer; for example, from your CRM system.                                                                                                                                                                                                                               |
+| Min Age            | O    | \[0-9\]{3}                      | 44960  | Restricts payments to my paysafecard customers only, who are equal to or older than the specified age.                                                                                                                                                                                                 |
+| KYC Level          | O    | ascii                           | 45087  | Valid values: SIMPLE or FULL. These values refer to the KYC level of the customer's my paysafecard account.                                                                                                                                                                                            |
+| Restricted Country | O    | ISO 3166                        | 2      | ISO 3166-1 alpha-2 two-letter country code (for example, BR). If passed, the country in the customer's my paysafecard account must match the value of this parameter. If the values don't match, the transaction will be declined. Used to restrict transactions to customers from a specific country. |

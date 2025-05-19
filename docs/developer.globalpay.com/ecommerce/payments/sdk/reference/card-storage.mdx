@@ -1,0 +1,1358 @@
+---
+title: "Card Storage SDK"
+subtitle: ""
+tag: "xml"
+created: "01/24/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Authorization
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply existing customer/payer ref
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+
+// create the payment method object
+RecurringPaymentMethod paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try {
+   // charge the stored card/payment method
+	Transaction response = paymentMethod.charge(new BigDecimal("19.99"))
+	   .withCurrency("EUR")
+		.withCvn("123")
+		.execute();
+
+	String result = response.getResponseCode(); // 00 == Success
+	String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+	// get the response details to save to the DB for future requests
+	String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+	String authCode = response.getAuthorizationCode(); // 12345
+	String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+} 
+
+catch (ApiException exce) {
+	// TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply existing customer/payer ref
+var customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+var paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+var paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try
+{
+   // charge the stored card/payment method
+   Transaction response = paymentMethod.Charge(19.99m)
+      .WithCurrency("EUR")
+      .WithCvn("123")
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref 14622680939731425
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply existing customer/payer ref
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+   // charge the stored card/payment method
+   $response = $paymentMethod->charge(19.99)
+      ->withCurrency("EUR")
+      ->withCvn("123")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+## Validate (OTB)
+
+<Infobox>
+This request type is supported by us. However, it is not supported by all acquirers. Please contact your account manager for more information.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply existing customer/payer ref
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+
+// create the payment method object
+RecurringPaymentMethod paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try {
+// check that a stored card/payment is valid and active without charging an amount
+Transaction response = paymentMethod.verify()
+.execute();
+
+// get the response details to update the DB
+String result = response.getResponseCode(); // 00 == Success
+String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+}
+
+catch (ApiException exce) {
+// TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply existing customer/payer ref
+var customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+var paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+var paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try
+{
+// check that a stored card/payment is valid and active without charging an amount
+Transaction response = paymentMethod.Verify()
+.Execute();
+
+// get the response details to update the DB
+var result = response.ResponseCode; // 00 == Success
+var message = response.ResponseMessage; // [ test system ] AUTHORISED
+var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+
+catch (ApiException exce)
+{
+// TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply existing customer/payer ref
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+// check that a stored card is valid and active without charging an amount
+$response = $paymentMethod->verify()
+->execute();
+} catch (ApiException $e) {
+// TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+   // TODO: save the card to Card Stroage
+}
+```
+</Code>
+</CodeGroup>
+
+## Credit
+<Infobox type="danger">
+For security reasons this request type is not enabled by default. It must be requested by one of the main contacts on the account. The request type cannot be executed using archived Payers.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// existing customer/payer ref
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+String paymentId = "c9e2e78b-7815-4a20-8593-1a0de987d808";
+// create the payment method object
+RecurringPaymentMethod paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try {
+   // refund the stored card/payment method
+   Transaction response = paymentMethod.refund(new BigDecimal("19.99"))
+      .withCurrency("EUR")
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // REFUND ACCEPTED
+
+   // get the response details to save to the DB for future requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// existing customer/payer ref
+var customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+var paymentId = "c9e2e78b-7815-4a20-8593-1a0de987d808";
+// create the payment method object
+var paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try
+{
+   // refund the stored card/payment method
+   var response = paymentMethod.Refund(19.99m)
+      .WithCurrency("EUR")
+      .Execute();
+
+   // get the response details to update the DB
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // REFUND ACCEPTED
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// existing customer/payer ref
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+   // refund the stored card/payment method
+   $response = $paymentMethod->refund(19.99)
+      ->withCurrency("EUR")
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // pasref: 14610544313177922
+}
+```
+</Code>
+</CodeGroup>
+
+## Create a customer
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply the the payer/customer details
+Address address = new Address();
+address.setStreetAddress1("Flat 123");
+address.setStreetAddress2("House 456");
+address.setStreetAddress3("The Cul-De-Sac");
+address.setCity("Halifax");
+address.setProvince("West Yorkshire");
+address.setPostalCode("W6 9HR");
+address.setCountry("United Kingdom");
+
+Customer customer = new Customer();
+customer.setKey(UUID.randomUUID().toString());
+customer.setTitle("Mr.");
+customer.setFirstName("James");
+customer.setLastName("Mason");
+customer.setCompany("Acme Ltd");
+customer.setAddress(address);
+customer.setMobilePhone("+25544778544");
+customer.setEmail("text@example.com");
+customer.setComments("Campaign Ref E7373G");
+
+try {
+   Customer response = customer.create();
+   // get the stored payer/customer reference for future transactions
+   String payerRef = response.getKey();
+   // TODO: add a card/payment method to the payer, see next step
+} 
+
+catch (ApiException exce) {
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply the the payer/customer details
+var customer = new Customer
+{
+   Key = Guid.NewGuid().ToString(),
+   Title = "Mr.",
+   FirstName = "James",
+   LastName = "Mason",
+   Company = "Realex Payments",
+   Address = new Address
+   {
+      StreetAddress1 = "Flat 123",
+      StreetAddress2 = "House 456",
+      StreetAddress3 = "The Cul-De-Sac",
+      City = "Halifax",
+      Province = "West Yorkshire",
+      PostalCode = "W6 9HR",
+      Country = "United Kingdom"
+   },
+   HomePhone = "+35312345678",
+   WorkPhone = "+3531987654321",
+   Fax = "+124546871258",
+   MobilePhone = "+25544778544",
+   Email = "text@example.com",
+   Comments = "Campaign Ref E7373G"
+};
+
+try
+{
+   var response = customer.Create();
+   // get the stored payer/customer reference for future transactions
+   var payerRef = response.Key;
+   // TODO: add a card/payment method to the payer, see next step
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply the the payer/customer details
+$customer = new Customer();
+$customer->key = GenerationUtils::getGuid();
+$customer->title = "Mr.";
+$customer->firstName = "James";
+$customer->lastName = "Mason";
+$customer->company = "Acme Ltd";
+$customer->email = "text@example.com";
+$customer->address = new Address();
+$customer->address->streetAddress1 = "Flat 123";
+$customer->address->streetAddress2 = "House 456";
+$customer->address->city = "Halifax";
+$customer->address->postalCode = "E77 4QJ";
+$customer->address->country = "GB";
+$customer->mobilePhone = "+353123456789";
+
+try {
+   $response = $customer->create();
+   // TODO: add a card/payment method to the payer, see next step
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Edit a customer
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply the the payer/customer details to update
+Address address = new Address();
+address.setStreetAddress1("Flat 456");
+address.setStreetAddress2("House 321");
+address.setStreetAddress3("Basement Flat");
+address.setCity("Chicago");
+address.setState("IL");
+address.setPostalCode("50001");
+address.setCountry("United States");
+
+Customer customer = new Customer();
+customer.setKey("e193c21a-ce64-4820-b5b6-8f46715de931");
+customer.setTitle("Sir");
+customer.setFirstName("Philip");
+customer.setLastName("Marlowe");
+customer.setCompany("Pinkerton");
+customer.setAddress(address);
+customer.setHomePhone("+3538547854");
+customer.setWorkPhone("+3535611177");
+customer.setFax("+12459498488");
+customer.setMobilePhone("+2554457774");
+customer.setEmail("test123@example.com");
+customer.setComments("Subscription Transfer");
+
+try {
+   // update the payer/customer
+   customer.saveChanges();
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply the the payer/customer details to update
+var customer = new Customer
+{
+   Key = "e193c21a-ce64-4820-b5b6-8f46715de931",
+   Title = "Sir",
+   FirstName = "Philip",
+   LastName = "Marlowe",
+   Company = "Pinkerton",
+   Address = new Address
+   {
+      StreetAddress1 = "Flat 456",
+      StreetAddress2 = "House 321",
+      StreetAddress3 = "Basement Flat",
+      City = "Chicago",
+      State = "IL",
+      PostalCode = "50001",
+      Country = "United States"
+   },
+   HomePhone = "+3538547854",
+   WorkPhone = "+3535611177",
+   Fax = "+12459498488",
+   MobilePhone = "+2554457774",
+   Email = "test123@example.com",
+   Comments = "New Subscription",
+};
+
+try
+{
+   // update the payer/customer
+   customer.SaveChanges();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply the the payer/customer details
+$customer = new Customer();
+$customer->key = "e193c21a-ce64-4820-b5b6-8f46715de931";
+$customer->title = "Mr.";
+$customer->firstName = "Philip";
+$customer->lastName = "Matlowe";
+$customer->company = "Pinkerton Agency";
+$customer->email = "text@example.com";
+$customer->address = new Address();
+$customer->address->streetAddress1 = "Flat 456";
+$customer->address->streetAddress2 = "House 321";
+$customer->address->city = "Chicago";
+$customer->address->province = "DuPage County";
+$customer->address->postalCode = "50001";
+$customer->address->country = "US";
+$customer->mobilePhone = "+1554441112255";
+
+try {
+   // update the payer/customer
+   $customer->saveChanges();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Store a card
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply the the existing payer/customer reference
+Customer customer = new Customer();
+customer.setKey("e193c21a-ce64-4820-b5b6-8f46715de931");
+
+// create a new card/payment method reference
+String paymentMethodRef = UUID.randomUUID().toString();
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCardHolderName("James Mason");
+
+// add the card/payment method to the payer/customer
+RecurringPaymentMethod paymentMethod = customer.addPaymentMethod(paymentMethodRef, card);
+
+try {
+   // store the card
+   RecurringPaymentMethod response = paymentMethod.create();
+   // TODO: charge the stored card, see next step
+} 
+
+catch (ApiException exce) {
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply the the existing payer/customer reference
+Customer customer = new Customer();
+customer.setKey("e193c21a-ce64-4820-b5b6-8f46715de931");
+
+// create a new card/payment method reference
+String paymentMethodRef = UUID.randomUUID().toString();
+
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCardHolderName("James Mason");
+
+// add the card/payment method to the payer/customer
+RecurringPaymentMethod paymentMethod = customer.addPaymentMethod(paymentMethodRef, card);
+
+try {
+   // store the card
+   RecurringPaymentMethod response = paymentMethod.create();
+   // TODO: charge the stored card, see next step
+} 
+
+catch (ApiException exce) {
+        // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply the the payer/customer details
+$customer = new Customer();
+$customer->key = "e193c21a-ce64-4820-b5b6-8f46715de931";
+
+// create a new card/payment method reference
+$paymentMethodRef = GenerationUtils::getGuid();
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "5473500000000014";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cardHolderName = "James Mason";
+
+// add the card/payment method to the payer/customer
+$paymentMethod = $customer->addPaymentMethod($paymentMethodRef, $card);
+
+try {
+   // store the card
+   $response = $paymentMethod->create();
+   // TODO: charge the stored card
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Edit a card
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// existing customer/payer ref
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+RecurringPaymentMethod paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+// create the card object with new details
+CreditCardData newCardDetails = new CreditCardData();
+newCardDetails.setNumber("5425230000004415");
+newCardDetails.setExpMonth(6);
+newCardDetails.setExpYear(2023);
+newCardDetails.setCardHolderName("Philip Marlowe");
+
+// add the new card details to the payment method object for updating
+paymentMethod.setPaymentMethod(newCardDetails);
+
+try {
+   // update the card details
+   paymentMethod.saveChanges();
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// existing customer/payer ref
+var customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+var paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+var paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+// create the card object with new details
+var newCardDetails = new CreditCardData
+{
+   CardType = "MC",
+   Number = "5425230000004415",
+   ExpMonth = 6,
+   ExpYear = 2020,
+   CardHolderName = "Philip Marlowe"
+};
+
+// add the new card details to the payment method object for updating
+paymentMethod.PaymentMethod = newCardDetails;
+
+try
+{
+   // update the card details
+   paymentMethod.SaveChanges();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// existing customer/payer ref
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// existing card/payment method ref
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+// create the card object with new details
+$newCardDetails = new CreditCardData();
+$newCardDetails->number = "5425230000004415";
+$newCardDetails->expMonth = 6;
+$newCardDetails->expYear = 2020;
+$newCardDetails->cardHolderName = "Philip Marlowe";
+
+// add the new card details to the payment method object for updating
+$paymentMethod->paymentMethod = $newCardDetails;
+
+try {
+   // update the card details
+   $paymentMethod->SaveChanges();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## Delete a card
+
+<Infobox type="danger">
+There is no ability to UNDO this action so please use with caution.
+</Infobox>
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// supply existing customer/payer ref
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+RecurringPaymentMethod paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try {
+   // delete the stored card/payment method
+   // WARNING! This can't be undone
+   paymentMethod.delete();
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// supply existing customer/payer ref
+var customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+var paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+var paymentMethod = new RecurringPaymentMethod(customerId, paymentId);
+
+try
+{
+   // delete the stored card/payment method
+   // WARNING! This can't be undone
+   paymentMethod.Delete();
+   }
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply existing customer/payer ref
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// supply existing card/payment method ref
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+   // delete the stored card/payment method
+   // WARNING! This can't be undone
+   $paymentMethod->Delete();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+```
+</Code>
+</CodeGroup>
+
+## 3DS2 - Check Version
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Customer or payer reference
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+ThreeDSecure threeDSecureData = null;
+
+try {
+   threeDSecureData = Secure3dService.checkEnrollment(storedCard).execute();
+}
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+
+if (threeDSecureData != null) {
+   
+   Boolean enrolled = threeDSecureData.isEnrolled(); // true
+   // If enrolled, the available response data
+   String serverTransactionId = threeDSecureData.getServerTransactionId(); // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   String dsStartProtocolVersion = threeDSecureData.getDirectoryServerStartVersion(); // 2.1.0
+   String dsEndProtocolVersion = threeDSecureData.getDirectoryServerEndVersion(); // 2.1.0
+   String acsStartProtocolVersion = threeDSecureData.getAcsStartVersion(); // 2.1.0
+   String acsEndProtocolVersion = threeDSecureData.getAcsEndVersion(); // 2.1.0
+   String methodUrl = threeDSecureData.getIssuerAcsUrl(); // https://www.acsurl.com/method
+   String encodedMethodData = threeDSecureData.getPayerAuthenticationRequest(); // Base64 encoded string
+   // TODO: if supported pass the Method URL and Encoded Method Data to the client-side   
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// Customer or payer reference
+string customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+string paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+ThreeDSecure threeDSecureData = null;
+
+try
+{
+   threeDSecureData = Secure3dService.CheckEnrollment(storedCard)
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+if (threeDSecureData != null)
+{
+   var enrolled = threeDSecureData.Enrolled; // True
+   // if enrolled, the available response data
+   var serverTransactionId = threeDSecureData.ServerTransactionId; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   var dsStartProtocolVersion = threeDSecureData.DirectoryServerStartVersion; // 2.1.0
+   var dsEndProtocolVersion = threeDSecureData.DirectoryServerEndVersion; // 2.1.0
+   var acsStartProtocolVersion = threeDSecureData.AcsStartVersion; // 2.1.0
+   var acsEndProtocolVersion = threeDSecureData.AcsEndVersion; // 2.1.0
+   var methodUrl = threeDSecureData.IssuerAcsUrl; // https://www.acsurl.com/method
+   var encodedMethodData = threeDSecureData.PayerAuthenticationRequest; // Base64 encoded string
+   // TODO: if supported pass the Method URL and Encoded Method Data to the client-side
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Customer or payer reference
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+$storedCard = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+   $threeDSecureData = Secure3dService::checkEnrollment($storedCard)->execute(Secure3dVersion::TWO);
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($threeDSecureData)) {
+   $enrolled = $threeDSecureData->enrolled; // TRUE or FALSE
+   // if enrolled, the available response data
+   $serverTransactionId = $threeDSecureData->serverTransactionId; // af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5
+   $dsStartProtocolVersion = $threeDSecureData->directoryServerStartVersion; // 2.1.0
+   $dsEndProtocolVersion = $threeDSecureData->directoryServerEndVersion; // 2.1.0
+   $acsStartProtocolVersion = $threeDSecureData->acsStartVersion; // 2.1.0
+   $acsEndProtocolVersion = $threeDSecureData->acsEndVersion; // 2.1.0
+   $methodUrl = $threeDSecureData->issuerAcsUrl; // https://www.acsurl.com/method
+   $encodedMethodData = $threeDSecureData->payerAuthenticationRequest; // Base64 encoded string
+   // TODO: if supported pass the Method URL and Encoded Method Data to the client-side
+}
+```
+</Code>
+</CodeGroup>
+
+## 3DS2 - Authentication
+
+### Mandatory and recommended fields
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Customer or payer reference
+String customerId = "03e28f0e-4cf0-492e-80bd-20ec318e9334";
+// Card or payment reference
+String paymentId = "cdb398ac-8a0e-49f7-acf0-52a38832cfc9";
+// Stored card details
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+// Add the customer's billing address
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Apartment 852");
+billingAddress.setStreetAddress2("Complex 741");
+billingAddress.setStreetAddress3("Unit 4");
+billingAddress.setCity("Chicago");
+billingAddress.setPostalCode("50001");
+billingAddress.setState("IL");
+billingAddress.setCountryCode("840");
+
+// Add the customer's shipping address
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("Flat 456");
+shippingAddress.setStreetAddress2("House 789");
+shippingAddress.setStreetAddress3("Basement Flat");
+shippingAddress.setCity("Halifax");
+shippingAddress.setPostalCode("W5 9HR");
+shippingAddress.setCountryCode("826");
+
+// Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData();
+browserData.setAcceptHeader("text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,/;q=0.8");
+browserData.setColorDepth(ColorDepth.TwentyFourBit);
+browserData.setIpAddress("123.123.123.123");
+browserData.setJavaEnabled(true);
+browserData.setLanguage("en");
+browserData.setScreenHeight(1080);
+browserData.setScreenWidth(1920);
+browserData.setChallengeWindowSize(ChallengeWindowSize.Windowed_600x400);
+browserData.setTimezone("0");
+browserData.setUserAgent("Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36");
+
+ThreeDSecure threeDSecureData = new ThreeDSecure();
+threeDSecureData.setServerTransactionId("9de5bccf-c438-4024-8961-ec4b3cff15ff");
+
+try {
+   // Initiate the 3D Secure 2 Authentication request
+   threeDSecureData = Secure3dService.initiateAuthentication(storedCard, threeDSecureData)
+      .withAmount(new BigDecimal("10.01"))
+      .withCurrency("USD")
+      .withOrderCreateDate(DateTime.parse("2019-09-09T11:19:12"))
+      .withCustomerEmail("james.mason@example.com")
+      .withAddress(shippingAddress, AddressType.Billing)
+      .withAddress(billingAddress, AddressType.Shipping)
+      .withBrowserData(browserData)
+      .withMethodUrlCompletion(MethodUrlCompletion.Yes)
+      .withMobileNumber("44", "7123456789")
+      .execute();
+}
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+
+String status = threeDSecureData.getStatus(); // for example AUTHENTICATION_SUCCESSFUL or CHALLENGE_REQUIRED
+// Please refer to the main 3D Secure 2 documentation for the different Frictionless or Challenge responses.
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// Customer or payer reference
+string customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+string paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+// Add the customer's billing address
+Address billingAddress = new Address
+{
+   StreetAddress1 = "Apartment 852",
+   StreetAddress2 = "Complex 741",
+   StreetAddress3 = "Unit 4",
+   City = "Chicago",
+   PostalCode = "50001",
+   State = "IL",
+   CountryCode = "840"
+};
+
+// Add the customer's shipping address
+Address shippingAddress = new Address
+{
+   StreetAddress1 = "Flat 456",
+   StreetAddress2 = "House 789",
+   StreetAddress3 = "Basement Flat",
+   City = "Halifax",
+   PostalCode = "W5 9HR",
+   CountryCode = "826"
+};
+
+// Add captured browser data from the client-side and server-side
+BrowserData browserData = new BrowserData
+{
+   AcceptHeader = "text/html,application/xhtml+xml,application/xml;q=9,image/webp,img/apng,/;q=0.8",
+   ColorDepth = ColorDepth.TWENTY_FOUR_BITS,
+   IpAddress = "123.123.123.123",
+   JavaEnabled = true,
+   Language = "en",
+   ScreenHeight = 1080,
+   ScreenWidth = 1920,
+   ChallengeWindowSize = ChallengeWindowSize.FULL_SCREEN,
+   Timezone = "0",
+   UserAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+};
+
+ThreeDSecure threeDSecureData = new ThreeDSecure
+{
+   ServerTransactionId = "9de5bccf-c438-4024-8961-ec4b3cff15ff"
+};
+
+try
+{
+   threeDSecureData = Secure3dService.InitiateAuthentication(storedCard, threeDSecureData)
+      .WithAmount(10.01m)
+      .WithCurrency("USD")
+      .WithOrderCreateDate(DateTime.Parse("2019-09-09T11:19:12"))
+      .WithCustomerEmail("james.mason@example.com")
+      .WithAddress(billingAddress, AddressType.Billing)
+      .WithAddress(shippingAddress, AddressType.Shipping)
+      .WithBrowserData(browserData)
+      .WithMethodUrlCompletion(MethodUrlCompletion.YES)
+      .WithMobileNumber("44", "7123456789")
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+var status = threeDSecureData.Status; // for example AUTHENTICATION_SUCCESSFUL or CHALLENGE_REQUIRED
+// Please refer to the main 3D Secure 2 documentation for the different Frictionless or Challenge responses.
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Add the cardholder data
+$card = new CreditCardData();
+$card->number = "4012001038488884";
+$card->expMonth = "05";
+$card->expYear = "25";
+$card->cvn = "123";
+$card->cardHolderName = "James Mason";
+
+// Add the customer's billing address
+$billingAddress = new Address();
+$billingAddress->streetAddress1 = "Apartment 852";
+$billingAddress->streetAddress2 = "Complex 741";
+$billingAddress->streetAddress3 = "Unit 4";
+$billingAddress->city = "Chicago";
+$billingAddress->state = "IL";
+$billingAddress->postalCode = "50001";
+$billingAddress->countryCode = "840";
+
+// Add the customer's shipping address
+$shippingAddress = new Address();
+$shippingAddress->streetAddress1 = "Flat 456";
+$shippingAddress->streetAddress2 = "House 789";
+$shippingAddress->streetAddress3 = "Basement Flat";
+$shippingAddress->city = "Halifax";
+$shippingAddress->postalCode = "W5 9HR";
+$shippingAddress->countryCode = "826";
+
+// Add captured browser data from the client-side and server-side 
+$browserData = new BrowserData();
+$browserData->acceptHeader = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8";
+$browserData->colorDepth = ColorDepth::TWENTY_FOUR_BITS;
+$browserData->ipAddress = "123.123.123.123";
+$browserData->javaEnabled = TRUE;
+$browserData->language = "en";
+$browserData->screenHeight = "1080";
+$browserData->screenWidth = "1920";
+$browserData->challengWindowSize = ChallengeWindowSize::FULL_SCREEN;
+$browserData->timeZone = "0";
+$browserData->userAgent = "Mozilla/5.0 (Windows NT 6.1; Win64, x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36";
+
+$threeDSecureData = new ThreeDSecure();
+$threeDSecureData->serverTransactionId = "9de5bccf-c438-4024-8961-ec4b3cff15ff";
+
+try {
+   $threeDSecureData = Secure3dService::initiateAuthentication($card, $threeDSecureData)
+      ->withAmount(10.01)
+      ->withCurrency("USD")
+      ->withOrderCreateDate(date("Y-m-d H:i:s"))
+      ->withCustomerEmail("james.mason@example.com")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->withAddress($shippingAddress, AddressType::SHIPPING)
+      ->withBrowserData($browserData)
+      ->withMethodUrlCompletion(MethodUrlCompletion::YES)
+      ->withMobileNumber("44", "7123456789")
+      ->execute(Secure3dVersion::TWO);
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+$status = $threeDSecureData->status;
+```
+</Code>
+</CodeGroup>
+
+## 3DS2 - Authorization
+
+<CodeGroup>
+<Code id="JAVA" title="JAVA" language="java">
+```
+// Customer or payer reference
+String customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+String paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+// Add obtained 3D Secure 2 authentication data
+ThreeDSecure threeDSecureData = new ThreeDSecure();
+threeDSecureData.setAuthenticationValue("ODQzNjgwNjU0ZjM3N2JmYTg0NTM=");
+threeDSecureData.setDirectoryServerTransactionId("c272b04f-6e7b-43a2-bb78-90f4fb94aa25");
+threeDSecureData.setEci("05");
+threeDSecureData.setMessageVersion("2.1.0");
+
+// Add the 3D Secure 2 data to the stored card object
+storedCard.setThreeDSecure(threeDSecureData);
+
+Transaction response = null;
+
+try {
+   response = storedCard.charge(new BigDecimal("10.01"))
+      .withCurrency("USD")
+      .execute();
+}
+
+catch (ApiException exec) {
+   // TODO: add your error handling here
+}
+
+if (response != null) {
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the details to save to the DB for future Transaction Management requests
+   String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+   String authCode = response.getAuthorizationCode(); // 12345
+   String paymentsReference = response.getTransactionId(); // pasref
+   Integer batchId = response.getTransactionReference().getBatchNumber();
+   String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// Customer or payer reference
+string customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+string paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+RecurringPaymentMethod storedCard = new RecurringPaymentMethod(customerId, paymentId);
+
+// Add obtained 3D Secure 2 authentication data
+var threeDSecureData = new ThreeDSecure()
+{
+   AuthenticationValue = "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+   DirectoryServerTransactionId = "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+   Eci = 5,
+   MessageVersion = "2.1.0"
+};
+
+// Add the 3D Secure 2 data to the stored card object
+storedCard.ThreeDSecure = threeDSecureData;
+
+Transaction response = null;
+
+try
+{
+   response = storedCard.Charge(10.01m)
+      .WithCurrency("USD")
+      .Execute();
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+
+if (response != null)
+{
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the response details to save to the DB for future requests
+   var orderId = response.OrderId; // ezJDQjhENTZBLTdCNzNDQw
+   var authCode = response.AuthorizationCode; // 12345
+   var paymentsReference = response.TransactionId; // pasref
+   var schemeReferenceData = response.SchemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// Customer or payer reference
+$customerId = "e193c21a-ce64-4820-b5b6-8f46715de931";
+// Card or payment reference
+$paymentId = "10c3e089-fa98-4352-bc4e-4b37f7dcf108";
+// Create the stored card object
+$storedCard = new RecurringPaymentMethod($customerId, $paymentId);
+
+// Add obtained 3D Secure 2 authentication data
+$threeDSecureData = new ThreeDSecure();
+$threeDSecureData->authenticationValue = "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=";
+$threeDSecureData->directoryServerTransactionId = "c272b04f-6e7b-43a2-bb78-90f4fb94aa25";
+$threeDSecureData->eci = "5";
+$threeDSecureData->messageVersion = "2.1.0";
+// Add the 3D Secure 2 data to the stored card object
+$card->threeDSecure = $threeDSecureData;
+
+try {
+    $response = $storedCard->charge(10.01)
+        ->withCurrency("EUR")
+        ->execute();
+} catch (ApiException $e) {
+    // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+   // get the details to save to the DB for future requests
+   $orderId = $response->orderId; // N6qsk4kYRZihmPrTXWYS6g
+   $authCode = $response->authorizationCode; // 12345
+   $paymentsReference = $response->transactionId; // 14610544313177922
+   $schemeReferenceData = $response->schemeId; // MMC0F00YE4000000715
+}
+```
+</Code>
+</CodeGroup>
+
+## Dynamic Currency Conversion
+
+<Infobox>
+The Order ID used in this request must also be used in the subsequent authorization.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4006097467207025");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCvnPresenceIndicator(CvnPresenceIndicator.Present);
+card.setCardHolderName("James Mason");
+
+try {
+   DccRateData dccRateData = card.getDccRate(DccRateType.Sale, new BigDecimal("10.01"), "EUR", DccProcessor.Fexco);
+   // get the details to present the choice to the customer
+   String cardHolderCurrency = dccRateData.getCurrency(); // AUD
+   BigDecimal cardHolderAmount = dccRateData.getAmount(); // 1722
+   BigDecimal cardHolderRate = dccRateData.getDccRate(); // 1.7203
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+//Define the card information to get DCC data
+CreditCardData card = new CreditCardData();
+ card.Number = "Card number";
+ card.ExpMonth = expMonth;
+ card.ExpYear = expYear;
+ card.CardPresent = true;
+
+ try
+ {
+    var dccDetails = card.GetDccRate()
+    .WithAmount(Amount)
+    .WithCurrency(CURRENCY)
+    .Execute();
+
+     var transaction = card.Charge(Amount)
+     .WithCurrency(CURRENCY)
+     .WithDccRateData(dccDetails.DccRateData)
+     .Execute();
+}
+catch (GatewayException ex)
+{
+	//TO DO
+	//Part to manage exception 
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// supply existing customer/payer ref
+$customerId = "038cb8bc-0289-48cf-a5ad-8bfbe54e204a";
+// supply existing card/payment method ref
+$paymentId = "fe1bb177-0a35-421c-9b0e-c7623712387c";
+
+// create the payment method object
+$paymentMethod = new RecurringPaymentMethod($customerId, $paymentId);
+
+try {
+   // check if Dynamic Currency Conversion is available
+   $response = $paymentMethod->getDccRate("1", "19.99", "EUR", "fexco", GenerationUtils::getGuid());
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $dccResponseResult = $response->dccResponseResult;
+   // get the details to present to the customer
+   $cardHolderCurrency = $dccResponseResult->cardHolderCurrency; // AUD
+   $customerAmount = $dccResponseResult->cardHolderAmount; // 3439
+   $exchangeRate = $dccResponseResult->cardHolderRate; // 1.7203
+   // TODO: update your application and display the conversion option to the customer
+}
+
+```
+</Code>
+</CodeGroup>

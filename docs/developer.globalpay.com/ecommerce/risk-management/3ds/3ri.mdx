@@ -1,0 +1,321 @@
+---
+title: "Merchant-Initiated Authentication (3RI)"
+subtitle: "Generate authentication data without the customer's presence"
+tag: "xml"
+created: "01/28/2025"
+---
+Version 2.2 of 3D Secure (3DS) introduced Requestor-Initiated (3RI) authentications, also known as _merchant-initiated authentications_. With 3RI authentications, merchants can generate the necessary authentication data for authorization without the customer being directly involved with the transaction. They also allow merchants to reference a previous authentication where the customer was involved.
+
+## Use cases
+
+Some of the use cases for 3RI authentications include:
+
+* **Partial split shipment** — Where ordered products are not all available at the same time, and the merchant decides to ship and charge for them separately.
+Agent payment with multiple merchants — This involves one authentication with the customer present and multiple authorizations for each merchant involved in the transaction. For example, a travel agent managing an order of both hotel and airline for different merchants.
+* **Unknown final amount before purchase** — Where the final amount is not known, for example, potential extra costs for a car rental like damages, missed return date, and so forth.
+* **Replacement (re-authorization) of a refunded purchase** — Where a merchant offers free refunds on items the customer does not want. If the returned items do not include everything purchased, the merchant has to charge the customer again.
+
+In this guide, we focus on a partial split shipment use case. We start with an authentication involving the customer for the full amount of the order. The first authorization is then submitted as fully authenticated for the amount of the first shipment. At this point, we are storing the card number with our Card Storage solution. For more information on how to store a card, see [Card Storage](/ecommerce/expand-your-integration/card-storage).
+
+When the next item is to be shipped and charged for, the customer is not present, so we execute a 3RI authentication. The request must include the DS Transaction ID of the initial authentication regardless of whether it was a frictionless or challenge flow. The value must be submitted in the 3DS Requestor Prior Transaction Authentication Data field.
+
+Providing the data from the previous authentication will increase the chances that the Issuer will approve the transaction without requiring additional authentication. If this is required, Decoupled Authentication is used as a method to authenticate the customer. For more information, see [Decoupled Authentication](/ecommerce/risk-management/3ds/decoupled-authentication).
+
+## Step 1: Authentication for the full order amount
+
+In our example, the full order amount is £100 for two items, one of which is in stock while the other is not. We start by processing a standard 3D Secure 2 authentication for the full amount. For more information on the Initiate Authentication request, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two#3ds2-notification).
+
+#### Sample request
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.sandbox.globalpay-ecommerce.com/3ds2/authentications
+-H "Content-type: application/json"
+-H "X-GP-VERSION: 2.2.0"
+-H "Authorization: securehash abafc599cfa60c94b8f41d0668dac5ed6b0a21f7"
+-X POST
+-d '{
+   "request_timestamp": "2019-07-30T08:52:44.991911",
+   "authentication_source": "BROWSER",
+   "authentication_request_type": "PAYMENT_TRANSACTION",
+   "message_category": "PAYMENT_AUTHENTICATION",
+   "message_version": "2.2.0",
+   "challenge_request_indicator":"NO_PREFERENCE",
+   "server_trans_id": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+   "merchant_id": "MerchantId",
+   "account_id": "internet",
+   "card_detail": {
+      "number": "4263970000005262",
+      "scheme": "VISA",
+      "expiry_month": "10",
+      "expiry_year": "25",
+      "full_name": "James Mason"
+   },
+   "order": {
+      "date_time_created": "2019-07-60T08:52:44.991911Z",
+      "amount": "10000",
+      "currency": "GBP",
+      "id": "3400dd37-101d-4940-be15-3c963b6109b3",
+      "address_match_indicator": "false",
+      "shipping_address": {
+         "line1": "Apartment 852",
+         "line2": "Complex 741",
+         "line3": "House 963",
+         "city": "Chicago",
+         "postal_code": "50001",
+         "state": "IL",
+         "country": "840"
+      }
+   },
+   "payer": {
+      "email": "james.mason@example.com",
+      "billing_address": {
+         "line1": "Flat 456",
+         "line2": "House 456",
+         "line3": "Unit 4",
+         "city": "Halifax",
+         "postal_code": "W5 9HR",
+         "country": "826"
+      },
+      "mobile_phone": {
+         "country_code": "44",
+         "subscriber_number": "7123456789"
+      }
+   },
+   "challenge_notification_url": "https://www.example.com/challengeNotificationUrl",
+   "method_url_completion": "YES",
+   "browser_data": {
+      "accept_header": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+      "color_depth": "TWENTY_FOUR_BITS",
+      "ip": "123.123.123.123",
+      "java_enabled": "true",
+      "javascript_enabled": "true",
+      "language": "en-US",
+      "screen_height": "1080",
+      "screen_width": "1920",
+      "challenge_window_size": "FULL_SCREEN",
+      "timezone": "0",
+      "user_agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36"
+   },
+   "merchant_contact_url": "https://www.example.com/about"
+}'
+```
+</Code>
+
+#### Sample response
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "server_trans_id": "ad0fffeb-bfff-44d0-881f-b857fe77c5a2",
+    "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+    "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+    "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+    "eci": "05",
+    "acs_rendering_type": {},
+    "status": "AUTHENTICATION_SUCCESSFUL",
+    "status_reason": "LOW_CONFIDENCE",
+    "authentication_source": "BROWSER",
+    "message_category": "PAYMENT_AUTHENTICATION",
+    "message_version": "2.2.0",
+    "acs_reference_number": "3DS_LOA_ACS_201_13579"
+}
+```
+</Code>
+
+## Step 2: Authorization for the first shipment
+
+When the authentication is complete, we then process an authorization for the amount of the first shipment, which in this example is £50. It is at this point that you would store the card with our Card Storage solution for future use.
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20190730085244">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <amount currency="GBP">5000</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <mpi>
+    <eci>5</eci>
+    <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+    <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+    <message_version>2.2.0</message_version>
+  </mpi>
+  <sha1hash>c87e5fa0858671510a02477d146ef744233e4ba8</sha1hash>
+</request>
+```
+</Code>
+
+#### Sample response
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180731090859">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>AWfoT2k9TzuA0wn8Ze_IIQ</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>319623</batchid>
+  <message>[ test system ] AUTHORISED</message>
+  <pasref>14610544313177922</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <sha1hash>8f4dfe7460ce91f78a144a2ed4f334617feaaab4</sha1hash>
+</response>
+```
+</Code>
+
+## Step 3: 3RI authentication for the remaining shipment
+
+In this step, we process an authentication for the remaining £50 of the order using the card we stored in the previous step. In this request, we specify that we're performing a 3DS Requestor/Merchant-Initiated Authentication. As part of the message body, we must also include the authentication data from Step 1: Prior 3D Secure Authentication Data.
+
+In the response, the Issuer might determine that additional authentication is required. If this is required, decoupled authentication will be used. For more information, see [Decoupled Authentication](/ecommerce/risk-management/3ds/decoupled-authentication).
+
+#### Sample request
+
+<Code id="json" title="JSON" language="json" active>
+```
+curl https://api.sandbox.globalpay-ecommerce.com/3ds2/authentications
+-H "Content-type: application/json"
+-H "X-GP-VERSION: 2.2.0"
+-H "Authorization: securehash abafc599cfa60c94b8f41d0668dac5ed6b0a21f7"
+-X POST
+-d '{
+   "request_timestamp":"2019-08-02T09:43:41",
+   "authentication_source":"STORED_RECURRING",
+   "message_category":"PAYMENT_AUTHENTICATION",
+   "message_version":"2.2.0",
+   "server_trans_id":"485002c2-4975-4d63-aa76-bcc3f3f8ca93",
+   "merchant_id":"MerchantId",
+   "account_id":"internet",
+   "merchant_initiated_request_type":"SPLIT_OR_DELAYED_SHIPMENT",
+   "payer_prior_three_ds_authentication_data":{
+      "authentication_method":"FRICTIONLESS_AUTHENTICATION",
+      "authentication_timestamp":"2019-07-30T08:52:44.991911Z",
+      "acs_transaction_id":"26c3f619-39a4-4040-bf1f-6fd433e6d615",
+      "authentication_data":"string"
+   },
+   "card_detail":{
+      "payer_reference":"e193c21a-ce64-4820-b5b6-8f46715de931",
+      "payment_method_reference":"10c3e089-fa98-4352-bc4e-4b37f7dcf108"
+   },
+   "order":{
+      "date_time_created":"2020-08-24T09:43:41Z",
+      "amount":"5000",
+      "currency":"GBP",
+      "id":"984244bd-29c6-46a2-8b63-cf65a11cee73",
+      "address_match_indicator":false,
+      "shipping_address":{
+         "line1":"Apartment 852",
+         "line2":"Complex 741",
+         "line3":"House 963",
+         "city":"Chicago",
+         "postal_code":"50001",
+         "state":"IL",
+         "country":"840"
+      }
+   },
+   "payer":{
+      "email":"james.mason@example.com",
+      "billing_address":{
+         "line1":"Flat 456",
+         "line2":"House 456",
+         "line3":"Unit 4",
+         "city":"Halifax",
+         "postal_code":"W5 9HR",
+         "country":"826"
+      },
+      "mobile_phone":{
+         "country_code":"44",
+         "subscriber_number":"7123456789"
+      }
+   },
+   "merchant_contact_url":"https://www.example.com/about"
+}
+```
+</Code>
+
+#### Sample response
+
+<Code id="json" title="JSON" language="json" active>
+```
+{
+    "server_trans_id": "485002c2-4975-4d63-aa76-bcc3f3f8ca93",
+    "acs_trans_id": "2ee1649c-1a21-4577-aa67-e76a5fd92baa",
+    "ds_trans_id": "ad10bf43-4fcf-48ac-b180-be971b85d421",
+    "authentication_value": "FaM5882sfRNaccskcC4LNjmhShS=",
+    "eci": "05",
+    "acs_rendering_type": {},
+    "status": "AUTHENTICATION_SUCCESSFUL",
+    "status_reason": "LOW_CONFIDENCE",
+    "authentication_source": "BROWSER",
+    "message_category": "PAYMENT_AUTHENTICATION",
+    "message_version": "2.2.0",
+    "acs_reference_number": "3DS_LOA_ACS_201_13579"
+}
+```
+</Code>
+
+#### Request syntax (specific fields)
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field or regional requirement.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Authentication Source | string | enum | M   | N/A | Indicates the type of channel used to initiate the transaction. Allowed Values:  <br />  <br />**BROWSER**  <br />**MERCHANT\_INITIATED**  <br />**MOBILE\_SDK**  <br />  <br />European merchants: required for SCA. |
+| Merchant Initiated Request Type | string | enum | C   | N/A | For merchant initiated transactions (3RI) informs the ACS of the transaction type. Allowed values:  <br />  <br />**RECURRING\_TRANSACTION,**  <br />**INSTALMENT\_TRANSACTION**  <br />**ADD\_CARD**  <br />**MAINTAIN\_CARD\_INFORMATION**  <br />**ACCOUNT\_VERIFICATION**  <br />**SPLIT\_OR\_DELAYED\_SHIPMENT**  <br />**TOP\_UP**  <br />**MAIL\_ORDER**  <br />**TELEPHONE\_ORDER**  <br />**WHITELIST\_STATUS\_CHECK**  <br />**OTHER\_PAYMENT**  <br />**BILLING\_AGREEMENT**  <br />  <br />European merchants: mandatory for SCA if the transaction is merchant initiated (3RI). |
+| Prior Authentication Method | string | enum | O   |     | Method used by the customer previously to authenticate. Allowed values:  <br />  <br />**FRICTIONLESS\_AUTHENTICATION**  <br />**CHALLENGE\_OCCURRED**  <br />**AVS\_VERIFIED**  <br />**OTHER\_ISSUER\_METHOD**  <br />  <br />European merchants: optional for SCA. |
+| Prior Authentication Transaction ID | string | UUID | O   | 0-36 | ACS Transaction ID for a prior 3DS authenticated transaction.  <br />  <br />European merchants: optional for SCA. |
+| Prior Authentication Timestamp | timestamp | numeric | O   | 0-32 | Date and time in UTC of the prior customer authentication. Minimum of 3 microseconds precision, can be up to 6. Must also include timezone.  <br />  <br />Format: yyyy-MM-ddTHH:mm:ss.SSS(Z\|±hh:mm)  <br />  <br />European merchants: optional for SCA. |
+| Prior Authentication Data | string | alphanumeric | O   | 0-2048 | Data that documents and supports a specific authentication process.  <br />  <br />European merchants: optional for SCA. |
+
+## Step 4: Authorization for remaining shipment
+
+Now that we've completed our 3RI authentication, we can proceed with authorizing the remaining amount of the order for this shipment using the previously stored card.
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="receipt-in" timestamp="20180614095601">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>AiCibJ5UR7utURy_slxhJw</orderid>
+  <amount currency="GBP">5000</amount>
+  <autosettle flag="1"/>
+  <payerref>e193c21a-ce64-4820-b5b6-8f46715de931</payerref>
+  <paymentmethod>10c3e089-fa98-4352-bc4e-4b37f7dcf108</paymentmethod>
+  <mpi>
+    <eci>5</eci>
+    <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+    <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+    <message_version>2.2.0</message_version>
+  </mpi>
+  <sha1hash>f0b45f1d7aed21e7476c11c22c124f5a44a9c59a</sha1hash>
+</request>
+```
+</Code>

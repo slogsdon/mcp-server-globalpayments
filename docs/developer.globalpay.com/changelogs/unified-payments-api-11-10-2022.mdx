@@ -1,0 +1,44 @@
+---
+title: "Unified Payments API - November 10, 2022"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "11-10-2022"
+---
+
+<ReleaseNoteSection title="List Transactions">
+    <ReleaseNoteDetail type="added">
+        * New "platforms" object returned in the response List Transactions:
+            * platforms.type
+            * platforms.transaction_id
+            * platforms.order_id
+            * platforms.authcode
+            * Platforms.pasref
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Funding Report">
+    <ReleaseNoteDetail type="added">
+        * New settlement funding endpoint
+            * Funding reports include a summary of all deposits and withdrawals processed for the past day and month
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Create a Sale or Refund">
+    <ReleaseNoteDetail type="added">
+        * Card Present (Canada) now supports Pre-Authorization and Pre-Authorization Completion for Canada Interac cards
+        * New validation for "encryption.method" field in the Reverse a Sale or Refund method
+        * Click To Pay support
+            * Click To Pay transactions are now supported:
+                * New enum "CLICK_TO_PAY" added for digital_wallet.provider
+                * New field "data" added in "digital_wallet.payment_token object"
+        * Support for individual "charge_items" amount for Card Present (Asia Pacific)
+            * Amounts can be sent for the below "charge_items" type:
+                * RESTAURANT
+                * GIFT_SHOP
+                * MINI_BAR
+                * PHONE
+                * LAUNDRY
+                * OTHER
+                * NO_SHOW
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

@@ -1,0 +1,336 @@
+---
+title: "Dynamic Currency Conversion"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/18/2025"
+---
+
+Dynamic Currency Conversion (DCC) provides point-of-sale exchange rates to customers using a card issued in a currency other than the merchant’s base (or store) currency. For a more detailed explanation and step-by-step instructions, see our [Dynamic Currency Conversion](/ecommerce/expand-your-integration/dcc) article.
+
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them.
+
+<Infobox>
+The DCC feature is currently not available in the United States or Canada. <br/>
+
+The amount of information that must be presented to the customer, such as rate or margin, varies by acquirer and Currency Conversion Processor. For more information, contact your account manager (or your acquirer).
+</Infobox>
+
+## Rate Lookup
+The Rate Lookup request determines if a card is eligible for DCC. If so, it returns the most up-to-date exchange rate, along with additional currency conversion information.
+
+If the card is not eligible for DCC or the currency of the card is the same as the merchant's base, a result code of 105 will be returned. In this case, you can proceed with a regular authorization without including any DCC information.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="dccrate" timestamp="20180613173251">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>HUrD-jsFSniaul_g0_z4YA</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4006097467207025</number>
+    <expdate>1218</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+  </card>
+  <!-- Begin DCC Elements -->
+  <dccinfo>
+    <ccp>Currency Conversion Processor</ccp>
+    <type>1</type>
+    <ratetype>S</ratetype>
+  </dccinfo>
+  <!-- End DCC Elements -->
+  <sha1hash>30e37e11a44ff9eee125933bd48455991820a7d7</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](/resources/test-card-numbers). |
+| CCP | string | enum | M   |     | The name of the Currency Conversion Processor (CCP) the request is to be sent to. Allowed values:  <br/>**FEXCO**  <br/>**EUROCONEX** |
+| Type | integer |     | M   |     | The type of Conversion. Should always be set to 1. |
+| Rate Type | string | enum | M   |     | The type of request the rate is for. Allowed values:  <br/>**S** - Sale  <br/>**R** - Refund |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>HUrD-jsFSniaul_g0_z4YA</orderid>
+  <authcode/>
+  <result>00</result>
+  <message>Success</message>
+  <pasref>14622680939731425</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <cardissuer>
+    <bank>ING BANK (AUSTRALIA) LIMITED</bank>
+    <country>AUSTRALIA</country>
+    <countrycode>AU</countrycode>
+    <region>A/P</region>
+  </cardissuer>
+  <dccinfo>
+    <cardholdercurrency>AUD</cardholdercurrency>
+    <cardholderamount>1674</cardholderamount>
+    <cardholderrate>1.6728</cardholderrate>
+    <merchantcurrency>EUR</merchantcurrency>
+    <merchantamount>1001</merchantamount>
+    <marginratepercentage>03.0000</marginratepercentage>
+    <exchangeratesourcename>Reuters Wholesale Interbank</exchangeratesourcename>
+    <commissionpercentage>00.0000</commissionpercentage>
+    <exchangeratesourcetimestamp>20180802 13:13</exchangeratesourcetimestamp>
+  </dccinfo>
+  <sha1hash>118b9d2dc037dfa5525dbaf409e828c51c2016e7</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Cardholder Currency | string | ISO 4217 | The currency of the cardholder's card. |
+| Cardholder Amount | integer |     | The converted amount to offer the cardholder. |
+| Rate | string | numeric | The exchange rate offered by the Currency Conversion Processor for this transaction. Inclusive of the margin from the DCC provider which is provided in the Margin Percentage field. |
+| Merchant Currency | string | ISO 4217 | The merchant base currency sent in the request. |
+| Merchant Amount | integer |     | The amount in the merchant base currency sent in the request. |
+| Margin Percentage | double |     | The foreign exchange markup in relation to the ECB Daily Rate. |
+| Exchange Rate Source | string | alphanumeric | Source of the exchange rate. European Central Bank. |
+| Commission Percentage | double |     | Currently not used. |
+| Exchange Rate Source Timestamp | string | numeric | Timestamp of the exchange rate source. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Authentication with DCC
+Where the customer is offered a DCC choice, the authentication request requires the currency and amount the customer will pay. This is a requirement of 3D Secure (3DS) whereby the amount and currency authenticated should match the amount and currency authorized.
+
+Where the customer declines the offer or is not offered DCC, the merchant amount and currency is all that is required.
+
+Where the customer accepts the DCC offer, both the merchant amount and currency, and the customer amount and currency are required. 
+
+When 3DS2 is used with an authorization request requiring the customer to authenticate the card used in a transaction, populate the additional fields in the 3DS2 authentication request.
+
+#### Sample request
+
+<Code id="json" title="JSON" language="json" active>
+```
+"order": {
+....
+      "amount": "MerchantAmount",
+      "currency": "MerchantCurrency",
+....
+      }
+"currency_conversion": {
+        "payer_amount": "CustomerChosenCurrencyAmount",
+        "payer_currency": "CustomerChosenCurrency"
+```
+</Code>
+
+## Authorization with DCC
+After the customer decides which currency they want to use, you can send the additional DCC information in your authorization request.
+
+<Infobox>
+To process an authorization with DCC information, you must use the same Order ID as the DCC Rate Lookup request.
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="auth" timestamp="20180613173251">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>HUrD-jsFSniaul_g0_z4YA</orderid>
+  <amount currency="EUR">100</amount>
+  <card>
+    <number>4006097467207025</number>
+    <expdate>0424</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <!-- Begin DCC Elements -->
+  <dccinfo>
+    <ccp>Currency Conversion Processor</ccp>
+    <type>1</type>
+    <rate>1.6728</rate>
+    <ratetype>S</ratetype>
+    <amount currency="AUD">167</amount>
+  </dccinfo>
+  <!-- End DCC Elements -->
+  <sha1hash>0a9256911d62e42058abc0a72ceece3fa7e81ba3</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| Card Number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card. |
+| Expiry Date | string | MMYY | M   | 4   | The expiry date of the card. |
+| Cardholder Name | string | alphanumeric | M   | 1-100 | The cardholder name. |
+| Card Type | string | enum | M   | 0-15 | Please see the list of supported [Card Type Strings](https://developer.globalpay.com/#!/resources/test-card-numbers). |
+| Security Code Number | string | numeric | O   | 0-4 | The 3 digit number on the reverse of the card (known as CVC for Visa and CVV2 for MasterCard). For American Express the code is 4 digits long. |
+| Presence Indicator | integer |     | C   | 0-1 | Used to specify whether the Security Code is being submitted. Allowed values:  <br/>**1** - cvn present  <br/>**2** - cvn illegible  <br/>**3** - cvn not on card  <br/>**4** - cvn not requested |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+| CCP | string | enum | M   |     | The name of the Currency Conversion Processor (CCP) the request is to be sent to. Allowed values:  <br/>**FEXCO**  <br/>**EUROCONEX** |
+| Type | integer |     | M   |     | The type of Conversion. Should always be set to 1. |
+| Rate | string | numeric | M   | 6   | The exchange rate offered by the Currency Conversion Processor for this transaction. Inclusive of the margin from the DCC provider which is provided in the Margin Percentage field. |
+| Rate Type | string | enum | M   |     | The type of request the rate is for. Allowed values:  <br/>**S** - Sale  <br/>**R** - Refund |
+| Currency | string | ISO 4217 | M   | 1-11 | The currency selected by the customer. Can be the merchant base currency or that of the card. |
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Authcode | string | alphanumeric | The authorization code returned by the Issuer.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Batch Id | integer |     | The ID of the batch to be sent to the Acquirer. Returned in the case of AutoSettle (AutoCapture) Authorizations, Capture (Settle) and Refund requests. |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Time Taken | integer |     | The total time taken to process the request in seconds. |
+| Auth Time Taken | integer |     | The total time taken by the Acquirer to process the request in seconds. |
+| Bank | string | alphanumeric | The name of the card Issuer. |
+| Country | string | alphanumeric | The country of the card Issuer. |
+| Country Code | string | alphanumeric | Country code of the card Issuer. |
+| Region | string | enum | The region the card was issued in:  <br/>**MEA** - Middle East/Asia  <br/>**LAT** - Latin America  <br/>**US** - United States  <br/>**EUR** - Europe  <br/>**CAN** - Canada  <br/>**A/P** - Asia/Pacific |
+| Cardholder Currency | string | ISO 4217 | The currency of the cardholder's card. |
+| Cardholder Amount | integer |     | The converted amount to offer the cardholder. |
+| Rate | string | numeric | The exchange rate offered by the Currency Conversion Processor for this transaction. Inclusive of the margin from the DCC provider which is provided in the Margin Percentage field. |
+| Merchant Currency | string | ISO 4217 | The merchant base currency sent in the request. |
+| Merchant Amount | integer |     | The amount in the merchant base currency sent in the request. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Follow the steps for the Rate Lookup request type. 
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.cardnumber"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.4263970000005262"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+Follow the steps to check the response hash for the Rate Lookup request type.
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+So, based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.Success.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.

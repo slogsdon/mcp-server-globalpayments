@@ -1,0 +1,427 @@
+---
+title: 'Alternative Payment Methods'
+search_results: 'Global Payments - Alternative Payment Methods Guide'
+subtitle: 'Learn how to integrate and display other payment methods'
+tag: 'rest'
+created: '14/03/2025'
+---
+
+You can accept transactions from a number of worldwide local and alternative payment methods. This not only widens your customer base to more shoppers across the globe, but also provides the added benefit of managing all your payments through our Reporting tool.
+
+<Tabs active="api">
+  <Tab id="api" title="API">
+   In this guide, we set up the request, which gives you access to over 20 alternative payment methods (APMs).
+
+   At a high level, the majority of APMs work like this: 
+      
+   ![Diagram flow showing interaction between the customer, our API, and the merchant to use an alternative payment method.](/gh-assets/apm_flow.png)    
+   <p style={{textAlign: "center"}}>**Typical API Integration for an APM**</p>
+      
+   ## Prerequisites
+   Before starting the steps in this guide, you must do the following:
+
+   * [Get registered](/docs/getting-started/register)
+   * [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+   * [Create an access token](/docs/getting-started/generate-token)
+      
+   ## Step 1: Initiate the payment
+      
+   In an APM transaction, the first request is a Transactions Create. This is used to advise the payment method of the details of a new transaction and to retrieve the necessary information required to facilitate authentication.
+
+   In this example, we set up a TestPay transaction.
+      
+   #### Sample request
+   <CodeGroup>
+   <Code id="JSON" title="JSON" language="json" active>
+   ```
+   curl -L -X POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+   -H 'Authorization: Bearer NEKp7fES1nBQr8C9OV1ltsaJ9Fmc' \
+   -H 'X-GP-Version: 2021-03-22' \
+   -H 'Accept: application/json' \
+   -H 'Content-type: application/json' \
+   -H 'Accept-Encoding: gzip' \
+
+   -d '{
+      "account_name": "Transaction_Processing",
+      "channel": "CNP",
+      "amount": "1999",
+      "type": "SALE",
+      "currency": "EUR",
+      "reference": "APM-20200417",
+      
+      "country": "IE",
+      "payment_method": {
+         "name": "James Mason",
+         "entry_mode": "ECOM",
+         "apm": {
+            "provider": "testpay"
+         }
+      },
+      "notifications": {
+         "return_url":"https://www.example.com/returnUrl",
+         "status_url": "https://www.example.com/statusUrl"
+      }
+   }'
+   ```
+   </Code>
+
+   <Code id="JAVA" title="JAVA" language="java">
+   ```
+   GpApiConfig config = new GpApiConfig();
+   config
+         .setAppId(APP_ID)
+         .setAppKey(APP_KEY)
+         .setChannel(Channel.CardNotPresent.getValue());
+
+   ServicesContainer.configureService(config);
+
+   AlternativePaymentMethod paymentMethod =
+         new AlternativePaymentMethod()
+                  .setAlternativePaymentMethodType(AlternativePaymentType.TESTPAY)
+                  .setReturnUrl("https://example.com/returnUrl")
+                  .setStatusUpdateUrl("https://example.com/statusUrl")
+                  .setCancelUrl("https://example.com/cancelUrl")
+                  .setDescriptor("Test Transaction")
+                  .setCountry("GB")
+                  .setAccountHolderName("Jane Doe");
+
+   try {
+      Transaction transaction =
+            paymentMethod
+                     .charge(new BigDecimal("19.99"))
+                     .withCurrency("EUR")
+                     .execute();
+   } catch (Exception ex) {
+      // TODO: add your error handling here
+   }
+   ```
+   </Code>
+
+   <Code id="NET" title=".NET" language="dotnet">
+   ```
+   GpApiConfig config = new GpApiConfig();
+               config.AppId = AppId;
+               config.AppKey = AppKey;
+               config.Channel = Channel.CardNotPresent;
+
+               ServicesContainer.ConfigureService(config);
+
+               var paymentMethod = new AlternativePaymentMethod
+               {
+                  AlternativePaymentMethodType = AlternativePaymentType.TESTPAY,
+                  ReturnUrl = "https://example.com/returnUrl",
+                  StatusUpdateUrl = "https://example.com/statusUrl",
+                  CancelUrl = "https://example.com/cancelUrl",
+                  Country = "GB",
+                  AccountHolderName = "Jane Doe"
+               };
+
+               try
+               {
+                  var transaction = paymentMethod.Charge(19.99m)
+                  .WithCurrency("EUR")
+                  .Execute();
+               }
+               catch (Exception ex)
+               {
+                  // TODO: add your error handling here
+               }
+   ```
+   </Code>
+
+
+   <Code id="PHP" title="PHP" language="php">
+   ```
+   $config = new GpApiConfig();
+   $config->appId = APP_ID;
+   $config->appKey = APP_KEY;
+   $config->channel = Channel::CardNotPresent;
+   $config->country = 'GB';
+
+   ServicesContainer::configureService($config);
+
+   $paymentMethod = new AlternativePaymentMethod(AlternativePaymentType::TEST_PAY);
+   $paymentMethod->returnUrl = 'https://example.com/returnUrl';
+   $paymentMethod->statusUpdateUrl = 'https://example.com/statusUrl';
+   $paymentMethod->cancelUrl = 'https://example.com/cancelUrl';
+   $paymentMethod->country = 'GB';
+   $paymentMethod->accountHolderName = 'Jane Doe';
+
+   try {
+      $response = $paymentMethod->charge(19.99)
+         ->withCurrency('EUR')
+         ->withClientTransactionId('APM-20200417')
+         ->execute();
+   } catch (GatewayException $e) {
+      // TODO: add your error handling here
+   }
+
+   $responseCode = $response->responseCode; // SUCCESS
+   $transactionId = $response->transactionId;
+   $transactionStatus = $response->responseMessage; // TransactionStatus::INITIATED
+   $redirectUrl = $response->alternativePaymentResponse->redirectUrl;
+   ```
+   </Code>
+   </CodeGroup>   
+    
+    ## Step 2: Redirect to the payment method
+    Following a successful initiation of the transaction, the next step is to redirect the customer to the payment scheme to facilitate authentication and authorization. This can be achieved, for example, using a simple JavaScript redirect. You could also use a HTTP GET (302 redirect).
+
+   In this example, we redirect the customer to the URL returned in the response using JavaScript.
+   ### Sample redirect code  
+   <Code id="HTML" title="HTML" language="HTML" active>
+   ```html
+   <!DOCTYPE html>
+   <html>
+
+   <head>
+   <title>Sample APM Redirect</title>
+   <meta charset="UTF-8">
+   </head>
+
+   <body>
+   <script>
+      window.location = "https://www.paymentMethodUrl.com/pay";
+   </script>
+   </body>
+
+   </html> 
+   ```
+   </Code>   
+    
+   <br />
+   Once the customer completes their transaction with the payment method, they are redirected to the Return URL of the initial request. The current status of the transaction will also be returned.
+
+   Your application might put the customer on hold for a few seconds while it checks to see if the Status URL was sent a final update. You can then redirect the customer to a final success or failure page.
+    
+   #### Sample Return URL parameters
+
+   <Code id="HTML" title="HTML POST" language="HTML" active>
+   ```html
+   X-GP-Signature=a86a2c3550c4228263fbd8cf0b4bd7c29ca453881495d1236507fe0bab9ce300dfba6dd12b308cc7b0d9d88cfb956a48c5fcd205579fda47e88b83a80fe9030b&
+   id=TRN_JOGrqvzOvbLy4V2n7cHsusYy8aainM&
+   status=PENDING&
+   reference=APM-20200417&
+   payment_method_result=01&
+   payment_method_message=PENDING&
+   provider=testpay&
+   apm_wait_notification=0&
+   apm_optional_redirect=0&
+   apm_fund_status=NOT_EXPECTED&
+   apm_payment_description=2NFQYHC&
+   apm_confirmed_accountholder=Jane Doe&
+   apm_account_number=93722&
+   country=GB&
+   apm_bank_iban=&
+   apm_bank_identifier_code=&
+   apm_bank_name=&
+   apm_bank_code=&
+   action_id=ACT_x0xHTCKj7gLDjJ0Om7r8lJ8lMo7nwy&
+   action_type=RETURN_NOTIFICATION&
+   action_time_created=2020-04-20T13:17:21.914Z
+   ```
+   </Code>  
+    
+   ## Step 3: Receive the final status
+    
+   The URL specified in the Status URL element in the initial request will receive the final status. Depending on the payment method used, this can happen at the same time as the customer is redirected to your Return URL, moments after — or, potentially, the final status update might come days later.
+
+   For payment methods in which you expect the final status update to come days later, your Status URL will need to accept the message sent by us, find the correct order in your application, and update the status accordingly. You may want to inform the customer at this point that their payment was finally accepted. You can also initiate the dispatch of items to the customer.
+    
+   #### Sample status update
+   <Code id="JSON" title="JSON" language="JSON" active>
+   ```json
+   {  
+      "id":"TRN_JOGrqvzOvbLy4V2n7cHsusYy8aainM",
+      "time_created":"2020-04-20T13:17:21.914Z",
+      "type":"SALE",
+      "status":"CAPTURED",
+      "channel":"CNP",
+      "capture_mode":"AUTO",
+      "amount":"1999",
+      "currency":"EUR",
+      "country":"GB",
+      "merchant_id":"MER_c4c0df11039c48a9b63701adeaa296c3",
+      "merchant_name":"Sandbox_merchant_2",
+      "account_id":"TRA_6716058969854a48b33347043ff8225f",
+      "account_name":"Transaction_Processing",
+      "reference":"APM-20200417",
+      "payment_method":{  
+         "result":"00",
+         "message":"SUCCEEDED",
+         "entry_mode":"ECOM",
+         "apm":{  
+            "provider":"testpay",
+            "wait_notification":"",
+            "fund_status":"NOT_EXPECTED",
+            "payment_description":"3K1TRAA",
+            "confirmed_accountholder":"Former Glory",
+            "account_number":"93722",
+            "iban":"DE25700251750322205970",
+            "bank_identifier_code":"HYVEDEMM643",
+            "bank_name":"HypoVereinsbank Penzberg",
+            "bank_address":"",
+            "optional_redirect":""
+         }
+      },
+      "batch_id":"",
+      "action":{  
+         "id":"ACT_mkP7xm9u47kLgTwTKhYfQXRvfynwjP",
+         "type":"STATUS_NOTIFICATION",
+         "time_created":"2020-04-20T14:36:58.193Z",
+         "result_code":"SUCCESS",
+         "app_id":"jrYHwMdYRBDGmFwwAVmi5WufYzxuQIQj",
+         "app_name":"sample_app"
+      }
+   }   
+   ```
+   </Code>  
+
+	## Supported payment methods
+  
+  Browse the APMs we support or search for a specific one. If additional fields are required, these will be documented along with the countries and currencies that are available with the payment method.
+  
+  <div>
+   <FeaturedPaymentMethods />
+  </div>
+  
+  ## Enhance your solution
+  
+  Explore more functionality to enrich your application.
+ 
+	  <CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/api/transactions" title="/transactions - API Explorer" icon="window">
+        Get the full Transaction endpoint.
+    </Card>
+  <Card type="with_icon" link="/docs/3DS-overview" title="3D Secure &amp; SCA" icon="lock-keyhole">
+        Add 3D Secure authentication to reduce fraud risk.
+    </Card>
+</CardsGroup>
+	  
+	  
+  <CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/docs/payments/manage-payments/overview" title="Manage Payments" icon="money-check-pen">
+        Discover additional transaction options.
+    </Card>
+  <Card type="with_icon" link="/docs/payments/payment-methods/digital-wallets/overview" title="Digital Wallets" icon="wallet">
+        Let customers pay with their smartphone.
+    </Card>
+  
+</CardsGroup>
+	
+	</Tab>
+  <Tab id="hpp" title="HPP"> 
+  Alternative payment methods (APMs) available on your account can be displayed on the Hosted Payment Page (HPP). In this guide, we show you how they appear by default and also how to display only those available in certain countries or ones that you consider most relevant to the customer.
+    
+   ## How they display
+   The HPP displays whatever APMs are available on your account. 
+
+   In addition, it displays only those payment methods that are available in the country submitted in the `order.transaction_configuration.country` field.
+
+   <img alt="Hosted Payment Page showing alternative payment methods." src="/gh-assets/apm_hpp-example.png" width="500" height="400" style={{display: "block", margin: "0 auto"}} />  
+   <p style={{textAlign: "center"}}>**Alternative Payment Method Example (HPP)**</p>
+    
+   ## Pre-select most relevant
+    
+   To present the most relevant payment methods to your customer, you can pre-select one or more in the request. To do this, include the optional `allowed_payment_methods` field.
+    
+   #### Sample request
+
+   <Code id="JSON" title="JSON" language="JSON" active>
+      ```json
+      curl 'https://apis.sandbox.globalpay.com/ucp/links' \
+      --header 'Connection: keep-alive' \
+      --header 'Accept: application/json' \
+      --header 'Content-Type: application/json' \
+      --header 'x-gp-version: 2021-03-22' \
+      --header 'Authorization:  Bearer bBj5Bv4RoOz4xTJ7V5XtjLBHLN1h' \
+      --data-raw '{
+         "account_name": "transaction_processing",
+         "type": "HOSTED_PAYMENT_PAGE",
+         "name": "Bill Payment",
+         "description": "February and March Invoice",
+         "reference": "82c2dbd5-549d-4967-aeea-51b3f320046a",
+         "payer": {
+            "name": "James Mason",
+            "language": "en",
+            "email": "jamesmason@example.com",
+            "mobile_phone": {
+               "country_code": "44",
+               "subsriber_number": "1801555888"
+            },
+            "billing_address": {
+               "line_1": "Flat 456",
+               "line_2": "House 456",
+               "line_3": "Unit 4",
+               "city": "Halifax",
+               "postal_code": "44",
+               "country": "GB"
+            }
+         },
+         "order": {
+            "amount": "1000",
+            "currency": "EUR",
+            "reference": "order-645",
+            "transaction_configuration": {
+               "channel": "CNP",
+               "country": "GB",
+               "capture_mode": "AUTO",
+               "allowed_payment_methods": [
+                  "CARD",
+                  "testpay",
+                  "sepapm",
+                  "sofort"
+               ]
+            },
+            "payment_method_configuration": {
+               "authentications": {
+                  "preference": "CHALLENGE_PREFERRED"
+               }
+            }
+         },
+         "notifications": {
+            "return_url": "https://www.example.com/return_url",
+            "status_url": "https://www.example.com/status_url"
+         }
+      }'     
+      ```
+   </Code>
+
+    ## Additional request fields
+   | Element/Field | Category | Format | Type | Length | Description |
+   | --- | --- | --- | --- | --- | --- |
+   | order.transaction_ , configuration.allowed_ , payment_methods | string | alphanumeric | O | 1-50 | Indicates which payment method(s) to offer the customer or route customers to a specific one. For example: cards|paypal|sofort |
+   | payer.first_name | string | alphanumeric | O | 1-50 | The first name of the payer. |
+   | payer.last_name | string | alphanumeric | O | 1-50 | The last name of the payer. |
+   | order.transaction_ , configuration.country | string | ISO-3166-1 | O | | Country code in ISO-3166-1 (alpha-2 code) format. <br /> **minLength: 2 <br />maxLength: 2** |
+    
+   ## Supported payment methods
+  
+  Browse the APMs we support or search for a specific one. If additional fields are required, these will be documented along with the countries and currencies that are available with the payment method.
+  
+  <div>
+   <FeaturedPaymentMethods />
+  </div>
+  
+   ## Enhance your integration
+  
+   Below are value-added services you can enable for the HPP.
+	  
+  <CardsGroup type="with_icon">
+
+  <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+  <Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide" title="Dynamic Currency Conversion" icon="euro-sign">
+        Discover additional transaction options.
+    </Card>
+  <Card type="with_icon" link="/docs/payments/payment-methods/digital-wallets/overview" title="Digital Wallets" icon="wallet">
+        Let customers pay securely with just a scan, tap, or click.
+    </Card>
+</CardsGroup>
+	  
+  </Tab>
+  </Tabs>
+

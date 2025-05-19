@@ -1,0 +1,366 @@
+---
+title: "Real-Time Payments"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/21/2025"
+---
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them for Mastercard Send, Barclay Payment of Winnings (POW), and Visa Direct.
+
+<Infobox>
+Real-time payment platforms and funding types are not supported by all acquirers. To confirm whether yours is supported, contact our support team.
+</Infobox>
+
+<Tabs active="mastercard">  
+<Tab id="mastercard" title="Mastercard Send">
+
+Mastercard Send facilitates the transmission of funds between financial institutions in near real-time across multiple payment networks. For more information, see [Mastercard Send FAQs](https://www.mastercard.us/content/mccom-admin/faq-category-admin/mastercardsend.html).
+
+## Required fields
+This section contains the information you need to remain compliant with Mastercard requirements as new ones emerge.
+
+Mastercard Send transactions require three elements:
+
+* Transaction Type Identifier – This field indicates the type of Mastercard Send transaction you want to process. 
+* Recipient Data – These fields include data of the receiver of the transaction. 
+* Sender Data – These fields include data of the sender (merchant) of the transaction.
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" lineHighlight="2,4,24" active>
+```
+<supplementarydata>
+        <item type="MC-MoneySend-TTI">
+            <field01>04</field01><!--Transaction Type Identifier-->
+        </item>
+   <item type="MoneySendRecipient"> Recipient Data
+   <field01></field01> First Name
+   <field02></field02> Middle Name
+   <field03></field03> Last Name
+   <field04></field04> Address
+   <field05></field05> City
+   <field06></field06> Province Code
+   <field07></field07> Country
+   <field08></field08> Postal Code
+   <field09></field09> Phone Number
+   <field10></field10> Date of Birth
+   <field11></field11> Account Number
+   <field12></field12> Identification Type
+   <field13></field13> Identification Number
+   <field14></field14> Identification Country Code
+   <field15></field15> Identification Expiration Date
+   <field16></field16> Nationality
+   <field17></field17> Country of Birth
+   <field18></field18> Account Number Type
+   </item>
+<item type="MoneySendSender"> Sender Data
+   <field01></field01> First Name
+   <field02></field02> Middle Name
+   <field03></field03> Last Name
+   <field04></field04> Address
+   <field05></field05> City
+   <field06></field06> Province Code
+   <field07></field07> Country
+   <field08></field08> Postal Code
+   <field09></field09> Phone Number
+   <field10></field10> Date of Birth
+   <field11></field11> Account Number
+   <field12></field12> Identification Type
+   <field13></field13> Identification Number
+   <field14></field14> Identification Country Code
+   <field15></field15> Identification Expiration Date
+   <field16></field16> Nationality
+   <field17></field17> Country of Birth
+   <field18></field18> Account Number Type
+   </item>
+   </supplementarydata>
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+##### Transaction Type Identifier
+
+| Element/Field | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- |
+| Transaction Type Identifier | Alphanumeric | M   | 3   | Allowed values:  <br/> **C04 - Gaming Re-pay**  <br/> **C07 - General Person-to-Person**  <br/> **C55 - Business Disbursement**  <br/> **C56 - Government/Non-Profit Disbursement**  <br/> **C65 - General Business to Business Transfer** |
+
+##### Recipient Data
+Two additional fields are now required to maintain compliance with Mastercard Send:
+
+* Recipient First Name
+* Recipient Last Name
+
+These fields include the data of the receiver of the transaction. 
+
+If you don’t send the above fields, you might experience an increase in decline rates.
+
+#### Sample request 
+<Code id="markup" title="XML" language="markup" active>
+```
+<supplementarydata>
+   <item type="MoneySendRecipient"> 
+   <field01>Jane</field01> First Name
+   <field03>Doe</field03> Last Name
+   </item>
+   <item type="MoneySendSender"> 
+   </item>
+   </supplementarydata>
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- |
+| Receiver/Recipient Data | Alphanumeric | M   |     | Static value to indicate what values are related to the recipient data. Allowed values:  <br/> **MoneySendRecipient** |
+| Receiver/Recipient First Name | Alphanumeric | M   | 1-30 | First name of the receiver. Required for cross-border payment transactions. |
+| Receiver/Recipient Middle Name | Alphanumeric | M   | 1   | Middle name initial of the receiver. |
+| Receiver/Recipient Last Name | Alphanumeric | M   | 1-30 | Last name of the receiver. Required for cross-border payment transactions. |
+| Receiver/Recipient Street Address | Alphanumeric | M   | 1-50 | Street address of the receiver. |
+| Receiver/Recipient City | Alphanumeric | M   | 1-25 | City of the receiver. |
+| Receiver/Recipient State / Province Code | Alphanumeric | M   | 3   | State / province code of the receiver. When the country is the U.S. or Canada, no spaces or invalid code are allowed. |
+| Receiver/Recipient Country | Alphanumeric | M   | 3   | Alpha-country code of the receiver. |
+| Receiver/Recipient Postal Code | Alphanumeric | M   | 1-10 | Postal code of the receiver. |
+| Receiver/Recipient Phone Number | Alphanumeric | M   | 1-20 | Phone number of the receiver. |
+| Receiver/Recipient Date of Birth | Numeric | M   | 8   | Date of birth of the receiver in MMDDYYYY format. |
+| Receiver/Recipient Account Number | Alphanumeric | M   | 1-50 | Account number to which the funds will be posted. When this Subfield ID contains a combination of information as specified in Subfield ID 18, the data must be separated by a plus sign (+) and in the order specified.  <br/>For example:  <br/>Bank account number (BAN) + Bank Identification Code (BIC) |
+| Receiver/Recipient Identification Type | Numeric | M   | 2   | Allowed values:  <br/> **00 - Passport**  <br/> **01 - National Identification Card**  <br/> **02 - Driver’s License**  <br/> **03 - Government Issued**  <br/> **04 - Other** |
+| Receiver/Recipient Identification Number | Alphanumeric | M   | 1-35 | Identification number of the receiver. |
+| Receiver/Recipient Identification Country Code | Alphanumeric | M   | 3   | Alpha-country code where the receiver’s identification number was issued. |
+| Receiver/Recipient Identification Expiration Date | Numeric | M   | 8   | Expiration date of the receiver’s identification number in MMDDYYYY format. |
+| Receiver/Recipient Nationality | Alphabetic | M   | 3   | Alpha-country code of the receiver’s country of citizenship. |
+| Receiver/Recipient Country of Birth | Alphabetic | M   | 3   | Alpha-country code of the receiver’s country of birth. |
+| Receiver/Recipient Account Number Type | Numeric | M   | 2   | Receiver’s account number type. Allowed values:  <br/> **00 - Other**  <br/> **01 - RTN + Bank Account**  <br/> **02 - IBAN**  <br/> **03 - Card Account**  <br/> **04 - Email**  <br/> **05 - Phone Number**  <br/> **06 - Bank account number (BAN) + Bank Identification Code (BIC)**  <br/> **07 - Wallet ID**  <br/> **08 - Social Network ID** |
+
+##### Sender Data
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- |
+| Sender Data | Alphanumeric | M   |     | Static value to indicate what values are related to recipient data. Allowed values:  <br/> **MoneySendSender** |
+| Sender First Name | Alphanumeric | M   | 1-35 | First name of the sender. |
+| Sender Middle Name | Alphanumeric | M   | 1   | Middle name initial of the sender. |
+| Sender Last Name | Alphanumeric | M   | 1-35 | Last name of the sender. |
+| Sender Street Address | Alphanumeric | M   | 1-50 | Street address of the sender. |
+| Sender City | Alphanumeric | M   | 1-25 | City of the sender. |
+| Sender State / Province Code | Alphanumeric | M   | 3   | State / province code of the sender. When the country is the U.S. or Canada, no spaces or invalid code are allowed. |
+| Sender Country | Alphanumeric | M   | 3   | Alpha-country code of the sender. |
+| Sender Postal Code | Alphanumeric | M   | 1-10 | Postal code of the sender. |
+| Sender Phone Number | Alphanumeric | M   | 1-20 | Phone number of the sender. |
+| Sender Date of Birth | Numeric | M   | 8   | Date of birth of the sender in MMDDYYYY format. |
+| Sender Account Number | Alphanumeric | M   | 1-50 | Account number to which the funds will be posted. When this Subfield ID contains a combination of information as specified in Subfield ID 18, the data must be separated by a plus sign (+) and in the order specified.  <br/>For example:  <br/>Bank account number (BAN) + Bank Identification Code (BIC) |
+| Sender Identification Type | Numeric | M   | 2   | Identification type of the sender. If present, must contain a valid value. Allowed values:  <br/> **00 - Passport**  <br/> **01 - National Identification Card**  <br/> **02 - Driver’s License**  <br/> **03 - Government Issued**  <br/> **04 - Other** |
+| Sender Identification Number | Alphanumeric | M   | 1-35 | Identification number of the sender. |
+| Sender Identification Country Code | Alphabetic | M   | 3   | Alpha-country code where the sender’s identification number was issued. |
+| Sender Identification Expiration Date | Numeric | M   | 8   | Expiration date of the sender’s identification number in MMDDYYYY format. |
+| Sender Nationality | Alphabetic | M   | 3   | Alpha-country code of sender’s country of citizenship. |
+| Sender Country of Birth | Alphabetic | M   | 3   | Alpha-country code of the sender’s country of birth. |
+| Sender Account Number Type | Numeric | M   | 2   | Contains the sender’s account number type specified in Subfield ID 11. Allowed values:  <br/> **00 - Other**  <br/> **01 - RTN + Bank Account**  <br/> **02 - IBAN**  <br/> **03 - Card Account**  <br/> **04 - Email**  <br/> **05 - Phone Number**  <br/> **06 - Bank account number (BAN) + Bank Identification Code (BIC)**  <br/> **07 - Wallet ID**  <br/> **08 - Social Network ID** |
+
+## Enabling MoneySend
+The following data should be provided when you enable Mastercard MoneySend on your account with us. 
+
+| Element/Field | Format | Length | Description |
+| --- | --- | --- | --- |   
+| Merchant Country | Alpha | 3   | Contains the alpha-country code of the merchant (sender). |
+| Merchant Address | Alphanumeric | 1-30 | Contains the street address of the merchant (sender). |
+| Merchant City | Alphanumeric | 1-25 | Contains the city of the merchant (sender). |
+| Merchant State | Alphanumeric | 2   | Contains the state/province code of the merchant (sender). Cannot contain spaces or an invalid code when the country is U.S. or Canada. |
+| Merchant Postal Code / ZIP | Alphanumeric | 6   | Contains the postal code of the merchant (sender). |
+   </Tab> 
+   <Tab id="barclay" title="Barclay POW">
+
+Mastercard Payment of Winnings (POW) on the Barclay’s platform facilitates the transmission of funds for gaming merchants to pay winnings to customers in near real-time across multiple payment networks.
+
+## Required fields
+This section contains the information you need to remain compliant with Mastercard requirements as new ones emerge. This includes sending additional information in the request when processing gaming transactions on Mastercard credits via Barclays.
+
+Mastercard POW transactions require a separate MC POW merchant ID (MID) for authorization as well as certain recipient data and sender data elements.
+
+* Recipient Data
+  * These fields include data of the receiver of the transaction. 
+* Sender Data
+  * These fields include data of the sender (merchant) of the transaction. 
+  * On behalf of gaming merchants, we add the sender data-field items. <br/>
+++Note++: While onboarding with us, be sure to give these details correctly to your account manager.
+
+If you don’t send the above fields, you might experience an increase in decline rates.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" lineHighlight="1,5" active>
+```
+<supplementarydata>
+    <item type="MoneySendRecipient"> --Recipient Data--
+        <field01></field01> First Name
+        <field03></field03> Last Name
+    </item>
+
+<item type="MoneySendSender">Sender Data//Populated by us
+<field01></field01> First Name
+<field03></field03> Last Name
+<field04></field04> Address
+<field05></field05> City
+<field07></field07> Country
+<field11></field11> Account Number
+<field18></field18> Account Number Type
+</item>
+</supplementarydata>
+```
+</Code>
+
+#### Request syntax 
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+    
+| Element/Field | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- |
+| Sender & Recipient First Name and Surname | Alpha | M   | 1-35 | ANS tags 001 and 003. |
+| Sender Street address | Alphanumeric | M   | 1-50 | Must contain the sender’s street address. ANS tag 004. |
+| Sender City | Alphanumeric | M   | 1-25 | Must contain the sender’s city.  <br/>ANS tag 005. |
+| Sender Country Code | Alpha | M   | 3   | Must contain the sender’s country code, e.g., GBR. Must not contain countries that prohibit gaming. ISO tag 008, ISO 3166. |
+| Sender Account Number | Numeric | M   | 1-50 | Must contain a valid account number of the sender (merchant) used to fund the POW. Type-06 - Bank account number (BAN) 8 digit + Bank Identification Сode (BIC) / Swift code 6 digit. ANS tag 010. |
+
+</Tab>
+    <Tab id="visa" title="Visa Direct">
+
+Visa Direct on the Original Credit Transaction (OCT) platform facilitates the transmission of funds between financial institutions in near real-time across multiple payment networks.
+
+For more information, see the [Visa Developer Center](https://developer.visa.com/capabilities/visa_direct/docs-how-to). 
+
+## Required fields
+This section contains the information you need to remain compliant with Visa Direct requirements as new ones emerge. 
+
+Visa Direct transactions require certain recipient data and sender data elements.
+
+* Recipient Data
+  * Recipient City – Required for all OCT transactions.
+  * Recipient Address – Required for all OCT transactions.
+* Sender Data
+  * Sender Reference Number – Required for all transactions.
+* Other Data
+  * Purpose of Payment – Required for cross-border transactions into Canada, Australia, Chile, Columbia, Mexico, Argentina, Bangladesh, Egypt, and India.
+
+If you don’t send the above fields, you might experience an increase in decline rates.
+
+#### Sample request
+<Code id="markup" title="XML" language="markup" lineHighlight="2-5" active>
+```
+<supplementarydata>
+   <item type="visaDirect"> 
+   <field01>123456789123456b</field01> Sender Reference Number
+   <field11>71 Cherry Court</field11> Recipient Address
+   <field12>London</field12> Recipient City
+   <field16>ISCOMC</field15> Purpose of Payment
+   </item>
+   </supplementarydata>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+    
+| Element/Field | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- |
+| Sender Data | Alphanumeric | M   |     | Static value used to indicate the following values are related to sender (merchant) data. Allowed values:  <br/>**visaDirect** |
+| Sender Reference Number | Alphanumeric | M   | 1-16 | Contains a transaction reference number that is provided by the merchant and can be used to uniquely identify the entity funding the transaction. |
+| Recipient Address | Alphanumeric | M   | 1-50 | Contains the address of the entity receiving the funds. Required for all OCT transactions. Allowed values:  <br/>\[a-zA-Z0-9 ,\\.\\-/\\\|\]{0,50} |
+| Recipient City | Alphanumeric | M   | 1-25 | Contains the city of the entity receiving the funds. Required for all OCT transactions. Allowed values:  <br/>\[a-zA-Z0-9 ,\\.\\-/\\\|\]{0,25} |
+| Purpose of Payment | Alphanumeric | C   | 1-12 | Contains the Purpose of Payment code valid for the recipient country. Required for cross-border transactions into Canada, Australia, Chile, Columbia, Mexico, Argentina, Bangladesh, Egypt, and India.  <br/>For a list of codes, see the [Purpose of Payment codes](#purpose-of-payment-codes) section. |
+
+## Enabling Visa Direct
+The following data should be provided when you enable Visa Direct on your account with us.
+
+| Field | Format | Length | Description |
+| --- | --- | --- | --- |   
+| Merchant Country | Alpha | 3   | Contains the alpha-country code of the merchant (sender). |
+| Merchant Address | Alphanumeric | 1-30 | Contains the street address of the merchant (sender). |
+| Merchant City | Alphanumeric | 1-25 | Contains the city of the merchant (sender). |
+| Merchant State | Alphanumeric | 2   | Contains the state / province code of the merchant (sender). Cannot contain spaces or an invalid code when the country is the U.S. or Canada. |
+| Merchant Postal Code / ZIP | Alphanumeric | 6   | Contains the postal code of the merchant (sender). |
+
+## Purpose of Payment codes
+The following table lists the Visa Purpose of Payment standardized codes.
+
+| Code Description | Code To Be Used |
+| --- | --- |
+| Account management | ISACCT |
+| Air transport related business | ISAIRB |
+| Transaction is the payment of allowance | ISALLW |
+| Settlement of annuity | ISANNI |
+| Unemployment disability benefit | ISBENE |
+| Business expenses | ISBEXP |
+| Bonus payment | ISBONU |
+| Bus transport related business | ISBUSB |
+| Cash management transfer | ISCASH |
+| Payment of cable TV bill | ISCBTV |
+| Government institute issued related to cash compensation, helplessness, disability | ISCCHD |
+| Credit card payment | ISCCRD |
+| Payment of credit card bill | ISCDBL |
+| Payment for charity reasons | ISCHAR |
+| Collection payment | ISCOLL |
+| Commercial payment | ISCOMC |
+| Commission | ISCOMM |
+| Compensation relating to interest loss/value date adjustment and can include fees | ISCOMP |
+| Payment of copyright | ISCPYR |
+| Related to a debit card payment | ISDCRD |
+| Payment of a deposit | ISDEPT |
+| Payment of dividend | ISDIVD |
+| Payment of study / tuition fees | ISEDUC |
+| Payment of electricity bill | ISELEC |
+| Energies | ISENRG |
+| General fees | ISFEES |
+| Payment for ferry related business | ISFERB |
+| Foreign exchange | ISFREX |
+| Payment of gas bill | ISGASB |
+| Compensation to unemployed persons during insolvency procedures | ISGFRP |
+| Government payment | ISGOVT |
+| Health insurance | ISHLTI |
+| Reimbursement of credit card payment | ISICCP |
+| Reimbursement of debit card payment | ISIDCP |
+| Payment of car insurance premium | ISINPC |
+| Transaction is related to the payment of an insurance claim | ISINSC |
+| Instalment | ISINSM |
+| Insurance premium | ISINSU |
+| Payment of mutual funds, investment products and shares | ISINVS |
+| Intra company payment | ISINTC |
+| Interest | ISINTE |
+| Income tax | ISINTX |
+| Investment | ISINVS |
+| Labor insurance | ISLBRI |
+| License fee | ISLICF |
+| Life insurance | ISLIFI |
+| Loan | ISLOAN |
+| Medical services | ISMDCS |
+| Mobile P2B payment | ISMP2B |
+| Mobile P2P payment | ISMP2P |
+| Mobile top up | ISMTUP |
+| Not otherwise specified | ISNOWS |
+| Other | ISOTHR |
+| Transaction is related to a payment of other telecom related bill | ISOTLC |
+| Payroll | ISPAYR |
+| Contribution to pension fund | ISPEFC |
+| Pension payment | ISPENS |
+| Payment of telephone bill | ISPHON |
+| Property insurance | ISPPTI |
+| Transaction is for general rental/lease | ISRELG |
+| The payment of rent | ISRENT |
+| Payment for railway transport related business | ISRLWY |
+| Royalties | ISROYA |
+| Salary payment | ISSALA |
+| Payment to savings / retirement account | ISSAVG |
+| Securities | ISSECU |
+| Social security benefit | ISSSBE |
+| Study | ISSTDY |
+| Subscription | ISSUBS |
+| Supplier payment | ISSUPP |
+| Refund of a tax payment or obligation | ISTAXR |
+| Tax payment | ISTAXS |
+| Transaction is related to a payment of telecommunications related bill | ISTBIL |
+| Trade services operation | ISTRAD |
+| Treasury payment | ISTREA |
+| Payment for travel | ISTRPT |
+| Utility bill payment | ISUBIL |
+| Value added tax payment | ISVATX |
+| With holding | ISWHLD |
+| Payment of water bill | ISWTER |
+   </Tab>
+</Tabs>

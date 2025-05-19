@@ -1,0 +1,40 @@
+---
+title: "Unified Payments API - April 6, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "04-06-2023"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="added">
+        * Enhancements to Buy Now Pay Later (BNPL) solution to support card based BNPL for Card Not Present transactions (UK only)
+            * Support for card based BNPL for Create Sale request
+                * New "installment" object to pass the details of the plan/term chosen to complete the transaction
+            * Support for card based BNPL for Capture Sale request
+            * Support for card based BNPL in List Transactions and Get a Transaction request and response
+                * List Transactions and Get a Transaction returns data for card based BNPL
+                * New query parameters: "installments.id" and "installments.terms.reference"
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Installments">
+    <ReleaseNoteDetail type="added">
+        * Installments resource to support card based BNPL
+            * New API request to Query available plans/terms for a card number
+            * New API request to List Installments
+            * New API request to Get an Installment
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Authentications">
+    <ReleaseNoteDetail type="changed">
+        * Unwanted characters will now be removed for the Initiate request
+            * browser_data.language : allowing only first 5 characters to pass through
+            * browser_data.color_depth : allowing only valid ENUM values but if anything else send TWENTY_FOUR_BITS
+            * order.shipping_address.state : allowing only first 3 characters to pass through
+            * payer.billing_address.state : allowing only first 3 characters to pass through
+            * order.shipping_address.line1 : allowing first 50 characters to pass through
+            * order.shipping_address.line2 : allowing first 50 characters to pass through
+            * payer.billing_address.line1 : allowing first 50 characters to pass through
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

@@ -1,0 +1,116 @@
+---
+title: 'Narvesen'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/2023-03/Narvesen_logo.png" />
+</div>
+
+| **Payment Type**           | Cash Payments |
+| -------------------------- | ------------- |
+| **Payment Method String**  | narvesen      |
+| **Available Countries**    | LT            |
+| **Available Currencies**   | EUR           |
+| **Min Transaction Amount** | EUR 0.28      |
+| **Max Transaction Amount** | No Limit      |
+| **Supports Refunds**       | No            |
+| **Chargebacks**            | No            |
+| **Sandbox**                | No            |
+| **Timeout**                | N/A           |
+
+### Sample request
+<CodeGroup>
+	<Code id="html" title="HTTP POST (HPP)" language="markup" active>
+	```
+	<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+	<input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+	<input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+	<input type="hidden" name="ACCOUNT" value ="internet">
+	<input type="hidden" name="ORDER_ID" value ="20230203164844-63dd3aecb920d">
+	<input type="hidden" name="AMOUNT" value ="100">
+	<input type="hidden" name="CURRENCY" value ="EUR">
+	<input type="hidden" name="SHA1HASH" value ="7e7cb0bffdd2212e9a53398981bc619d0b0d8bc5">
+	<input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+	<input type="hidden" name="HPP_VERSION" value ="2">
+	<input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="LT">
+	<input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+	<input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+	<input type="hidden" name="MERCHANT_RESPONSE_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_TX_STATUS_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+	<input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+	<input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+	<input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+	<input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+	<input type="hidden" name="HPP_LANG" value ="EN">
+	<input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+	<input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+	<input type="hidden" name="COMMENT1" value="Mobile Channel">
+	<input type="hidden" name="COMMENT2" value="Down Payment">
+	<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+	<input type="submit" value="Click here to Purchase">
+	</form>
+	```
+	</Code>
+	<Code id="xml" title="XML" language="markup">
+	```
+	<?xml version='1.0' encoding='UTF-8'?>			
+	<request type='payment-set' timestamp='{{timestamp}}'>			
+		<merchantid>Merchant ID</merchantid>		
+		<account>internet</account>		
+		<amount currency='EUR'>5100</amount>		
+		<autosettle flag='1' />		
+		<orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+		<paymentmethod>narvesen</paymentmethod>		
+		<paymentmethoddetails>		
+			<returnurl>https://www.example.com/returnUrl</returnurl>	
+			<errorurl>https://www.example.com/errorUrl</errorurl>	
+			<statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+			<descriptor>Test Transaction</descriptor>	
+			<country>LT</country>	
+			<accountholdername>James Mason</accountholdername>	
+				
+		</paymentmethoddetails>		
+		<comments>		
+			<comment id='1'>Mobile Channel</comment>	
+			<comment id='2'>Down Payment</comment>	
+		</comments>		
+		<sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+	</request>		
+	```
+	</Code>
+	<Code id="json" title="JSON" language="json">
+	```
+	{                        
+		"account_name": "{{acc_name}}",                
+		"type": "SALE",                
+		"channel": "CNP",                
+		"amount": "5100",                
+		"currency": "EUR",                
+		"reference": "{{reference}}",                
+		"country": "LT",                
+		"payment_method": {                
+			"entry_mode": "ECOM",        
+			"apm": {        
+				"provider": "narvesen"
+			}        
+		},                
+		"notifications": {                
+		"return_url": "<Replace with your own endpoints>",                
+		"status_url": "<Replace with your own endpoints>"                
+		},                
+		"payer": {}                
+	}                     
+	```
+	</Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name           | Type | Format                                                                 | Length | Description                        |
+| -------------- | ---- | ---------------------------------------------------------------------- | ------ | ---------------------------------- |
+| Customer Email | O    | (\[a-zA-Z0-9\_\\-\\.\]+)@(\[a-zA-Z0-9\_\\-\\.\]+)\\.(\[a-zA-Z\]{2,24}) | 0-80   | The email address of the customer. |

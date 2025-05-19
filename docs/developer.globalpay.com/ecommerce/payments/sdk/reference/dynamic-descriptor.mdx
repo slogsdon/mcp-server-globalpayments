@@ -1,0 +1,90 @@
+---
+title: "Dynamic Descriptor SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Set a Descriptor
+
+<Infobox>
+Dynamic Descriptor is currently only supported by acquirers Global Payments North America and Allied Irish Banks. Both the issuer and the acquirer must support this functionality. Consult with your account manager or support agent before using.
+</Infobox>
+
+  If you’re using this functionality and no descriptor is flagged, we’ll use your merchant name as the default. The merchant name is set when you create or update your account with us.
+
+  <CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+  // Create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4111111111111111");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("123");
+card.setCardHolderName("Joe Smith");
+
+try {
+    card
+        .authorize(new BigDecimal("10"))
+        .withCurrency("USD")
+        .withDynamicDescriptor("ALTERNATIVE DBA")
+        .execute();
+} catch (ApiException e) {
+    // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+  // Create the card object
+CreditCardData card = new CreditCardData
+{
+	Number = "4111111111111111",
+	ExpMonth = 12,
+	ExpYear = 2025,
+	Cvn = "123",
+	CardHolderName = "Joe Smith"
+};
+
+try
+{
+	var authorization = card.Authorize(10m)
+		.WithCurrency("USD")
+		.WithDynamicDescriptor("ALTERNATIVE DBA")
+		.Execute();
+}
+catch (Exception ex)
+{
+	// TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+  <?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4111111111111111";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "Joe Smith";
+
+try {
+    $response = $card->authorize(10)
+        ->withCurrency('USD')
+        ->withDynamicDescriptor('ALTERNATIVE DBA')
+        ->execute();
+} catch (ApiException $e) {
+    // TODO: add your error handling here
+}
+```
+</Code>
+</CodeGroup>

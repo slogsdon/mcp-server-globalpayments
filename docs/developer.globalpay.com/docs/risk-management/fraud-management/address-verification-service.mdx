@@ -1,0 +1,109 @@
+---
+title: 'Address Verification Service'
+search_results: 'Global Payments - Fraud Management - Address Verification Service'
+subtitle: 'Verify customer addresses to ensure a smooth transaction'
+tag: 'rest'
+created: '30/09/2024'
+---
+
+<Infobox>
+    This functionality is available only for cardholders in the United States, Canada, and Great Britain and is not supported by all acquirers or issuers. For more information, contact a member of our support team.
+</Infobox>
+
+The Address Verification Service (AVS) verifies the cardholder's address by checking the information provided at the time of sale against the issuer's records. If a transaction fails an AVS check, it will not automatically be declined. Instead, it acts as an advisory service and requires that the details of non-matched transactions be checked by your application.
+
+For more information on Fraud Management, see our [Overview](/docs/risk-management/fraud-management/overview).
+
+For direct API integration, AVS data is passed in the Card Object in the Payment Method Object.
+
+## Sample request
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+curl -L -X POST 'https://apis.sandbox.globalpay.com/ucp/transactions' \
+-H 'Authorization:  Bearer g9msqo3kAb7oTpeSdwzv9CFK0281' \
+-H 'X-GP-Version:  2020-01-20' \
+-H 'Accept:  application/json' \
+-H 'Content-type:  application/json' \
+-H 'Accept-Encoding:  gzip' \
+-H 'Content-Type: application/json' \
+-d '{
+    "account_name": "Transaction_Processing",
+    "account_id":"TRA_6716058969854a48b33347043ff8225f",
+    "merchant_id":"MER_c4c0df11039c48a9b63701adeaa296c3",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "type": "SALE",
+    "amount": "1999",
+    "currency": "EUR",
+    "reference": "My-TRANS-29042020",
+	"payment_method": {
+		"first_name": "James",
+		"last_name": "Mason",
+		"entry_mode": "ECOM",
+		"card":{
+			"number":"4263970000005262",
+			"expiry_month":"11",
+			"expiry_year":"24",
+			"cvv": "123",
+            "cvv_indicator": "PRESENT",
+            "avs_address":"Flat 456 House 123 Halifax",
+            "avs_postal_code":"WB3 A21"
+		}
+	}
+}'
+```
+</Code>
+
+## AVS values
+| Element/Field	 | Format | Description |
+| -------- | -------- | -------- |
+| avs_address_result | String | The result of the AVS address check. <br/> MATCHED <br/> NOT_MATCHED <br/> NOT_CHECKED |
+| avs_postal_code_result | String | The AVS postal code result indicating the result of the postal code check. <br/> MATCHED <br/> NOT_MATCHED <br/> NOT_CHECKED |
+| avs_action | String | The recommended AVS action based on the AVS results. <br/> PROMPT <br/> DECLINE <br/> ACCEPT | 
+
+## Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "TRN_kHlyWelGlIyv2CF0iY630A2Kh6KPEw",
+    "time_created": "2020-04-29T14:33:26.637Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "1999",
+    "currency": "EUR",
+    "country": "US",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_6716058969854a48b33347043ff8225f",
+    "account_name": "Transaction_Processing",
+    "reference": "My-TRANS-29042020",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "card": {
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "12345",
+            "brand_reference": "Qsh3tzI25zqGkpX6",
+            "brand_time_created": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "ACCEPT"
+        }
+    },
+    "batch_id": "BAT_782540",
+    "action": {
+        "id": "ACT_kHlyWelGlIyv2CF0iY630A2Kh6KPEw",
+        "type": "AUTHORIZE",
+        "time_created": "2020-04-29T14:33:26.637Z",
+        "result_code": "SUCCESS",
+        "app_id": "JMe7SYdTSV0mx5dAZI9PSJO5T9SMvL18",
+        "app_name": "sandboxdefault_swaggerapp_v20200120"
+    }
+}
+```
+</Code> 

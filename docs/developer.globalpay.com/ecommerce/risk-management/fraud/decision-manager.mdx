@@ -1,0 +1,286 @@
+---
+title: "Decision Manager"
+subtitle: "Perform risk assessment for transactions"
+tag: "xml"
+created: "02/03/2025"
+---
+<Tabs active="api">  
+<Tab id="api" title="API">
+The Fraud Filter can be used in conjunction with Decision Manager for each authorization request running through 260 global validation checks based on over 60 billion transactions.
+
+## Sample request
+In this example, we include just a subset of the Address, Customer, Product, and Decision Manager specific fields. This is in addition to the API request fields that are automatically mapped, including the Card Data, Order Id, Amount, and Currency.
+
+For the full list of available fields, see the API Reference for [Decision Manager](/ecommerce/api/fraud-management#api-additional-fields).
+
+<Code id="markup" title="XML" language="markup" active>
+   ```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20170414100216" type="auth">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">16400</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <type>VISA</type>
+    <chname>James Mason</chname>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>5245df9edbfc10b6dceb74ca2f616fd9e15271a3</sha1hash>
+  <tssinfo>
+    <address type="billing">
+      <street1>Flat 123</street1>
+      <street2>House 456</street2>
+      <city>Halifax</city>
+      <postalcode>W6 9HR</postalcode>
+      <state>West Yorkshire</state>
+      <country>GB</country>
+    </address>
+  </tssinfo>
+  <customer>
+    <customerid>0f357b45-9aa4-4453-a685-c69232e9024f</customerid>
+    <firstname>James</firstname>
+    <lastname>Mason</lastname>
+    <email>james.mason@example.com</email>
+    <phonenumber>+3535611177</phonenumber>
+  </customer>
+  <products>
+    <product>
+      <productid>SKU251584</productid>
+      <productname>Magazine Subscription</productname>
+      <quantity>12</quantity>
+      <unitprice>1200</unitprice>
+      <gift>true</gift>
+      <type>subscription</type>
+      <risk>low</risk>
+    </product>
+  </products>
+  <fraud>
+    <dm>
+      <billtohttpbrowsercookiesaccepted>true</billtohttpbrowsercookiesaccepted>
+      <billtohttpbrowsertype>Mozilla</billtohttpbrowsertype>
+      <billtoipnetworkaddress>123.123.123.123</billtoipnetworkaddress>
+      <itemvelocityhedge>High</itemvelocityhedge>
+    </dm>
+  </fraud>
+</request>
+   ```
+</Code>
+
+## Sample response
+You can set Fraud Filter rules to Block, Hold or Pass transactions based on the response from Decision Manager (Accept, Reject, Review, Error).
+
+<Code id="markup" title="XML" language="markup" active>
+   ```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <authcode>12345</authcode>
+  <result>00</result>
+  <cvnresult>M</cvnresult>
+  <avspostcoderesponse>M</avspostcoderesponse>
+  <avsaddressresponse>M</avsaddressresponse>
+  <batchid>412875</batchid>
+  <message>[ test system ] Authorised</message>
+  <pasref>14921661523925307</pasref>
+  <timetaken>1</timetaken>
+  <authtimetaken>0</authtimetaken>
+  <srd>MMC0F00YE4000000715</srd>
+  <cardissuer>
+    <bank>AIB BANK</bank>
+    <country>IRELAND</country>
+    <countrycode>IE</countrycode>
+    <region>EUR</region>
+  </cardissuer>
+  <fraudresponse mode="ACTIVE">
+    <result>PASS</result>
+    <rules>
+      <rule name="Decision Manager Rule" id="015c449d-c146-4b9b-b4c0-77437b40de59">
+        <action>PASS</action>
+      </rule>
+    </rules>
+    <thirdpartyresponse>
+      <dm>
+        <rawresponse>
+          <!-- Full Response Here, See Sample Below -->
+        </rawresponse>
+      </dm>
+    </thirdpartyresponse>
+  </fraudresponse>
+  <sha1hash>aad1b04f623f1d3a64e7142e86d764c4cbca7fb5</sha1hash>
+</response>
+   ```
+</Code>
+
+## Raw response
+The full response from Decision Manager is also returned in the Raw Response field.
+
+<Code id="markup" title="XML" language="markup" active>
+   ```
+<c:replyMessage xmlns:c="urn:schemas-cybersource-com:transaction-data-1.118">
+  <c:merchantReferenceCode>N6qsk4kYRZihmPrTXWYS6g</c:merchantReferenceCode>
+  <c:requestID>4921661527746095104010</c:requestID>
+  <c:decision>ACCEPT</c:decision>
+  <c:reasonCode>100</c:reasonCode>
+  <c:requestToken>Ahjz7wSTCs3GO2ecVEAKEQFLlcJIrX9IjhqBvAhk0ky3SA7TWIDCTCs3GO2ecVEAKAAA8g0Y</c:requestToken>
+  <c:afsReply>
+    <c:reasonCode>100</c:reasonCode>
+    <c:afsResult>99</c:afsResult>
+    <c:hostSeverity>1</c:hostSeverity>
+    <c:consumerLocalTime>11:35:52</c:consumerLocalTime>
+    <c:afsFactorCode>F^H^V^Y</c:afsFactorCode>
+    <c:addressInfoCode>MM-A^MM-C^MM-CO^MM-ST^MM-Z^UNV-ADDR</c:addressInfoCode>
+    <c:hotlistInfoCode>NEG-ASUSP^NEG-BIN^NEG-CC^NEG-EM^NEG-SA^NEG-SUSP</c:hotlistInfoCode>
+    <c:suspiciousInfoCode>MUL-EM^RISK-TS</c:suspiciousInfoCode>
+    <c:velocityInfoCode>VEL-NAME^VELI-CC^VELI-EM^VELI-SA^VELL-CC^VELL-EM^VELL-SA^VELS-CC^VELS-EM^VELS-SA^VELV-CC^VELV-EM</c:velocityInfoCode>
+    <c:scoreModelUsed>default_eu</c:scoreModelUsed>
+    <c:cardBin>426397</c:cardBin>
+  </c:afsReply>
+  <c:decisionReply>
+    <c:casePriority>3</c:casePriority>
+    <c:activeProfileReply/>
+    <c:velocityInfoCode>MVEL-R5007</c:velocityInfoCode>
+  </c:decisionReply>
+</c:replyMessage>
+   ```
+</Code>
+
+  </Tab> 
+   <Tab id="hpp" title="HPP">
+
+The Fraud Filter can be used in conjunction with Decision Manager for each authorization or validation (OTB) request, running through 260 global validation checks based on over 60 billion transactions.
+
+## Sample request
+In this example, we include just a subset of the Address, Customer, Product, and Decision Manager specific fields. This is in addition to the HPP fields that are automatically mapped, including the Card Data, Order Id, Amount, and Currency.
+
+For the full list of available fields, see the HPP Reference for [Decision Manager](/ecommerce/hpp-reference/fraud-management#hpp-dm-additional-fields). 
+
+<Code id="markup" title="HTML POST" language="markup" active>
+   ```
+<form action="https://pay.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180913154639">
+  <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="16400">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="3ee9c9e0e35b8cd95f7dc9bca43e024e1074c3dc">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Begin Decision Manager Fields -->
+  <!-- Billing Address -->
+  <input type="hidden" name="HPP_BILLING_STREET1" value="Flat 123">
+  <input type="hidden" name="HPP_BILLING_STREET2" value="House 456">
+  <input type="hidden" name="HPP_BILLING_CITY" value="Halifax">
+  <input type="hidden" name="HPP_BILLING_POSTALCODE" value="W6 9HR">
+  <input type="hidden" name="HPP_BILLING_STATE" value="West Yorkshire">
+  <input type="hidden" name="BILLING_CO" value="GB">
+  <!-- Customer -->
+  <input type="hidden" name="HPP_CUSTOMER_ID" value="0f357b45-9aa4-4453-a685-c69232e9024f">
+  <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="james.mason@example.com">
+  <input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value="James">
+  <input type="hidden" name="HPP_CUSTOMER_LASTNAME" value="Mason">
+  <input type="hidden" name="HPP_CUSTOMER_PHONENUMBER" value="+3535611177">
+  <!-- Product -->
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTID_1" value="SKU251584">
+  <input type="hidden" name="HPP_PRODUCTS_PRODUCTNAME_1" value="Magazine Subscription">
+  <input type="hidden" name="HPP_PRODUCTS_RISK_1" value="low">
+  <input type="hidden" name="HPP_PRODUCTS_QUANTITY_1" value="12">
+  <input type="hidden" name="HPP_PRODUCTS_UNITPRICE_1" value="1200">
+  <input type="hidden" name="HPP_PRODUCTS_GIFT_1" value="true">
+  <input type="hidden" name="HPP_PRODUCTS_TYPE_1" value="subscription">
+  <!-- Decision Manager Specific Fields -->
+  <input type="hidden" name="HPP_FRAUD_DM_BILLHTTPBROWSERCOOKIESACCEPTED" value="true">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOHTTPBROWSERTYPE" value="Mozilla">
+  <input type="hidden" name="HPP_FRAUD_DM_BILLTOIPNETWORKADDRESS" value="123.123.123.123">
+  <input type="hidden" name="HPP_FRAUD_DM_ITEMVELOCITYHEDGE" value="High">
+  <!-- End Decision Manager Fields -->
+  <input type="submit" value="Click To Pay">
+</form>
+   ```
+</Code>
+
+## Sample response
+You can set Fraud Filter rules to Block, Hold or Pass transactions based on the response from Decision Manager (Accept, Reject, Review, Error).
+
+<Code id="markup" title="HTTP POST" language="markup" active>
+   ```
+[RESULT=00,
+ AUTHCODE=12345,
+ MESSAGE=[ test system ] Authorised,
+ PASREF=14631546336115597,
+ AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M,
+ CVNRESULT=M,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20180613113227,
+ AMOUNT=1001,
+ CARD_PAYMENT_BUTTON=Pay Now,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ SHIPPING_CODE=R90|ZQ7,
+ SHIPPING_CO=GB,
+ BILLING_CODE=E77|4QJ,
+ BILLING_CO=GB,
+ COMMENT1=Mobile Channel,
+ COMMENT2=Down Payment,
+ ECI=5
+ AUTHENTICATION_VALUE=ODQzNjgwNjU0ZjM3N2JmYTg0NTM=,
+ DS_TRANS_ID=c272b04f-6e7b-43a2-bb78-90f4fb94aa25,
+ MESSAGE_VERSION=2.1.0,
+ SRD=MMC0F00YE4000000715,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61
+ HPP_FRAUDFILTER_MODE=PASSIVE,
+ HPP_FRAUDFILTER_RESULT=PASS,
+ HPP_FRAUDFILTER_RULE_478a55db-5430-4c2a-afca-7dde181eb9f4=PASS,
+ HPP_FRAUDFILTER_RULE_NAME=Decision Manager Rule,
+ HPP_DM_RAW_RESPONSE=<!-- Full Response Here, See Sample Below -->]
+   ```
+</Code>
+
+## Raw response
+The full response from Decision Manager is also returned in the HPP_DM_RAW_RESPONSE field.
+
+<Code id="markup" title="XML" language="markup" active>
+   ```
+<c:replyMessage xmlns:c="urn:schemas-cybersource-com:transaction-data-1.118">
+  <c:merchantReferenceCode>N6qsk4kYRZihmPrTXWYS6g</c:merchantReferenceCode>
+  <c:requestID>4921661527746095104010</c:requestID>
+  <c:decision>ACCEPT</c:decision>
+  <c:reasonCode>100</c:reasonCode>
+  <c:requestToken>Ahjz7wSTCs3GO2ecVEAKEQFLlcJIrX9IjhqBvAhk0ky3SA7TWIDCTCs3GO2ecVEAKAAA8g0Y</c:requestToken>
+  <c:afsReply>
+    <c:reasonCode>100</c:reasonCode>
+    <c:afsResult>99</c:afsResult>
+    <c:hostSeverity>1</c:hostSeverity>
+    <c:consumerLocalTime>11:35:52</c:consumerLocalTime>
+    <c:afsFactorCode>F^H^V^Y</c:afsFactorCode>
+    <c:addressInfoCode>MM-A^MM-C^MM-CO^MM-ST^MM-Z^UNV-ADDR</c:addressInfoCode>
+    <c:hotlistInfoCode>NEG-ASUSP^NEG-BIN^NEG-CC^NEG-EM^NEG-SA^NEG-SUSP</c:hotlistInfoCode>
+    <c:suspiciousInfoCode>MUL-EM^RISK-TS</c:suspiciousInfoCode>
+    <c:velocityInfoCode>VEL-NAME^VELI-CC^VELI-EM^VELI-SA^VELL-CC^VELL-EM^VELL-SA^VELS-CC^VELS-EM^VELS-SA^VELV-CC^VELV-EM</c:velocityInfoCode>
+    <c:scoreModelUsed>default_eu</c:scoreModelUsed>
+    <c:cardBin>426397</c:cardBin>
+  </c:afsReply>
+  <c:decisionReply>
+    <c:casePriority>3</c:casePriority>
+    <c:activeProfileReply/>
+    <c:velocityInfoCode>MVEL-R5007</c:velocityInfoCode>
+  </c:decisionReply>
+</c:replyMessage>
+     ```
+</Code>
+
+   </Tab>
+   
+</Tabs>

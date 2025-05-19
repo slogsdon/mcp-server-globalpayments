@@ -1,0 +1,389 @@
+---
+title: "Card Storage"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/25/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on Card Storage, see our [main article](/ecommerce/expand-your-integration/card-storage).
+
+## Create a payer and store a card
+To enable Card Storage, you need to add three fields to the HPP request. If you don't want to charge the card before storing it, you can process an Open-To-Buy (OTB) transaction. This request type checks that it is a valid and active card and that the customer provided the correct security code, address details and 3D Secure authentication.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613141207">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Card Storage Fields -->
+  <input type="hidden" name="CARD_STORAGE_ENABLE" value="1">
+  <input type="hidden" name="OFFER_SAVE_CARD" value="1">
+  <input type="hidden" name="PAYER_EXIST" value="0">
+  <input type="hidden" name="PAYER_REF" value="376a2598-412d-4805-9f47-c177d5605853">
+  <input type="hidden" name="PMT_REF" value="ca46344d-4292-47dc-9ced-e8a42ce66977">
+  <!-- End Card Storage Fields -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click here to purchase">
+</form>
+```
+</Code>
+
+#### Additional request fields syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Card Storage Enable | boolean |     | M   |     | Determines whether Card Storage is activated or not:  <br/>TRUE - Enabled  <br/>FALSE - Disabled |
+| Offer Save Card | boolean |     | M   |     | This field determines whether or not to show the “Save Card Details” tick box to the customer on the HPP:  <br/>TRUE - The tick box is shown  <br/>FALSE - The tick box is not shown and the card will be automatically saved  <br/>  <br/>Note: If you choose not to display the tick box, you are obliged to inform the customer in your application that their card details are being stored. |
+| Payer Exist | string | enum | M   |     | Allowed values:  <br/>**0** - create a new payer  <br/>**1** - use an existing payer  <br/>**2** - if the payer supplied exists, use it, otherwise create a new one |
+| Payer Reference | string | alphanumeric | M   | 1-50 | A unique reference for this customer in Card Storage, known as the Payer.  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+
+#### Sample response
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[REALWALLET_CHOSEN=1,
+ PAYER_SETUP=00,
+ PAYER_SETUP_MSG=Successful,
+ SAVED_PAYER_REF=376a2598-412d-4805-9f47-c177d5605853,
+ PMT_SETUP=00,
+ PMT_SETUP_MSG=Successful,
+ SAVED_PMT_TYPE=VISA,
+ SAVED_PMT_REF=cd46344a-4292-47dc-9ced-e8a42ce66977,
+ SAVED_PMT_DIGITS=426397xxxx5262,
+ SAVED_PMT_EXPDATE=1025,
+ SAVED_PMT_NAME=James Mason]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| RealWallet Chosen | boolean |     | Indicates whether the customer chose to save their card or not:  <br/>1 - Customer requested their card be stored  <br/>0 - Customer did not choose to store their card |
+| Payer Setup | string | numeric | Returned only when a new payer is set up. A value of '00' implies a successful setup, any other value indicates an error – usually a 508. |
+| Payer Setup Message | string | alphanumeric | Returned only when a new payer is set up. The result message text of the payer setup attempt. |
+| Saved Payer Ref | string | alphanumeric | The payer reference given to the customer. If the PAYER\_REF field was included in the request HPP, the same value will be returned. Otherwise, this field will contain an automatically generated alphanumeric value. |
+| Payment Setup | string | numeric | Indicates whether or not the customer's card was successfully stored. A value of '00' indicates a successful setup, any other value indicates an error. |
+| Payment Setup Message | string | alphanumeric | Result message text of the payment reference (card) setup attempt. |
+| Saved Payment Reference | string | alphanumeric | The Payment Method reference assigned to the card. If the PMT\_REF field was included in the request to HPP, the same value will be returned. Otherwise this field will contain an automatically generated alphanumeric value. |
+| Saved Payment Digits | string | alphanumeric | The first six and last four digits of the card stored. We recommend only storing the last four digits for reference. |
+| Saved Payment Expiry Date | string | numeric | The expiry date of the stored card. This can also be used to alert cardholders to the impending expiration of their saved card. It will be in the format MMYY |
+| Saved Payment Name | string | alphanumeric | The name of the person associated with the payment – the cardholder name entered on the HPP. |
+
+## Display stored cards to the customer
+
+This request type sends the customer reference to the HPP to display all of the customer’s stored cards for subsequent transactions. The security code is captured on the HPP and included in the authorization.
+
+The reference is returned in the response field `SAVED_PAYER_REF`. You can then add it to the request when the customer returns to checkout.
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="19.99">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Card Storage Fields -->
+  <input type="hidden" name="HPP_SELECT_STORED_CARD" value="376a2598-412d-4805-9f47-c177d5605853">
+  <input type="hidden" name="PAYER_EXIST" value="1">
+  <input type="hidden" name="OFFER_SAVE_CARD" value="1">
+  <!-- End Card Storage Fields -->
+  <input type="submit" value="Click here to Purchase">
+</form>
+```
+</Code>
+
+#### Additional request fields syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Select Stored Card | string | alphanumeric | M   | 1-50 | This field accepts the Payer reference as a value and will display the list of stored cards for that customer on the HPP. If this field is supplied CARD\_STORAGE\_ENABLE cannot be also sent in the POST.  <br/>  <br/>Allowed characters: \[a-zA-Z0-9\_-.\] |
+| Offer Save Card | boolean |     | M   |     | This field determines whether or not to show the “Save Card Details” tick box to the customer on the HPP:  <br/>TRUE - The tick box is shown  <br/>FALSE - The tick box is not shown and the card will be automatically saved  <br/>  <br/>Note: If you choose not to display the tick box, you are obliged to inform the customer in your application that their card details are being stored. |
+| Payer Exist | string | enum | M   |     | Allowed values:  <br/>**0** - create a new payer  <br/>**1** - use an existing payer  <br/>**2** - if the payer supplied exists, use it, otherwise create a new one |
+
+
+#### Sample response
+
+The reference of the card the customer chooses to pay with will be returned in the HPP response. Any cards they choose to delete or edit will also be returned.
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<!-- Additional Response Fields -->
+[HPP_CHOSEN_PMT_REF=ca46344d-4292-47dc-9ced-e8a42ce66977,
+HPP_EDITED_PMT_REF=078c6d4a-03df-4716-a8ae-dd266f3d041a,
+HPP_DELETED_PMT_REF: f80d04d7-bb27-4bf2-a8ac-571deb5222e9]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Chosen Payment Reference | string | alphanumeric | The unique identifier (Payment Method reference) for the card used by the customer for the transaction. |
+| Edited Payment Reference | string | alphanumeric | The Payment Method reference for any cards the customer edited while on the HPP. If multiple cards are edited, each reference will be separated by a comma. |
+| Deleted Payment Reference | string | alphanumeric | The Payment Method reference for any cards the customer deleted while on the HPP. If multiple cards are deleted, each reference will be separated by a comma. |
+
+## Credential on File
+To override the default Credential on File (COF) behavior of the HPP, you will need to pass the Type, Initiator, and Sequence fields. The SRD field is optional.
+
+COF can be used in Authorization and Validation (Open-to-Buy/OTB) with Card Storage.
+
+For a full description of COF fields and use cases, see our [Credential on File](/ecommerce/risk-management/3ds/COF) article.
+
+The Type, Initiator and Sequence fields must be populated to be considered valid. If any of these fields are not populated, it will be considered invalid and an error will occur.
+
+#### Sample request
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613141207">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Card Storage Fields -->
+  <input type="hidden" name="CARD_STORAGE_ENABLE" value="1">
+  <input type="hidden" name="OFFER_SAVE_CARD" value="1">
+  <input type="hidden" name="PAYER_EXIST" value="0">
+  <input type="hidden" name="PAYER_REF" value="376a2598-412d-4805-9f47-c177d5605853">
+  <input type="hidden" name="PMT_REF" value="ca46344d-4292-47dc-9ced-e8a42ce66977">
+  <!-- End Card Storage Fields -->
+  <!-- Credential on File Fields -->
+  <input type="hidden" name="HPP_STORED_CREDENTIAL_TYPE" value="oneoff">
+  <input type="hidden" name="HPP_STORED_CREDENTIAL_INITIATOR" value="cardholder">
+  <input type="hidden" name="HPP_STORED_CREDENTIAL_SEQUENCE" value="first">
+  <!-- End Credential on File Fields -->
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click here to Purchase">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| type | string | enum | C   | N/A | The conditions of the payment under which the stored card details are being used. Allowed values:  <br/>  <br/>**oneoff** - payment is unscheduled and not part of a prearranged plan.  <br/>**installment** - payment is part of a pre-arranged installment plan.  <br/>**recurring** - payment is being processed for an undefined period.  <br/>  <br/>Must be included if the stored credential element is included in the request. |
+| initiator | string | enum | C   | N/A | Whether the payment was initiated by the customer or the merchant. Allowed values:  <br/>  <br/>**cardholder** - customer is actively participating in the payment.  <br/>**merchant** - merchant initiates a payment request where the customer is aware, but does not actively participate in the payment.  <br/>**scheduled** - merchant and customer agree to a payment plan. The payment is initiated by the merchant.  <br/>  <br/>Must be included if the stored credential element is included in the request. |
+| sequence | string | enum | C   | N/A | Where in the sequence of transactions the payment appears. Allowed values:  <br/>  <br/>**first** - this is the first time the card details are being used to facilitate a payment between the customer and the merchant. This must only be used in transactions where COF initiator is set to cardholder.  <br/>**subsequent** - the request is for payment is using previously stored card details.  <br/>  <br/>Must be included if the stored credential element is included in the request. |
+| Scheme Reference Data | string | enum | C   | 30  | This is the Scheme ID provided by Visa and Mastercard. Provides a link to the payment history between a customer and a merchant. |
+
+#### Sample response
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+[REALWALLET_CHOSEN=1,
+ PAYER_SETUP=00,
+ PAYER_SETUP_MSG=Successful,
+ SAVED_PAYER_REF=376a2598-412d-4805-9f47-c177d5605853,
+ PMT_SETUP=00,
+ PMT_SETUP_MSG=Successful,
+ SAVED_PMT_TYPE=VISA,
+ SAVED_PMT_REF=cd46344a-4292-47dc-9ced-e8a42ce66977,
+ SAVED_PMT_DIGITS=426397xxxx5262,
+ SAVED_PMT_EXPDATE=1025,
+ SAVED_PMT_NAME=James Mason
+ SRD=MMC0F00YE4000000715]
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Scheme Reference Data | string | enum | This is the Scheme ID provided by Visa and Mastercard. Provides a link to the payment history between a customer and a merchant. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: "Create a payer and store a card" or "Display stored cards to the customer" 
+
+<Tabs active="create">  
+<Tab id="create" title="Create a payer and store a card">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.payer.paymentmethod"
+```
+</Code>
+
+Based on the POST example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.376a2598-412d-4805-9f47-c177d5605853.ca46344d-4292-47dc-9ced-e8a42ce66977"
+```
+</Code>
+
+If you choose not to supply your own references, it will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab> 
+  <Tab id="display" title="Display stored cards to the customer"> 
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.amount.currency.payer."
+```
+</Code>
+
+Based on the POST example above our initial string will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.MerchantId.N6qsk4kYRZihmPrTXWYS6g.1001.EUR.376a2598-412d-4805-9f47-c177d5605853."
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab> 
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the Response hash
+Use the tabs below to follow the steps for a certain request type: "Create a payer and store a card" or "Display stored cards to the customer"
+
+<Infobox>
+The Timestamp returned in the response will be identical to the one sent in the request POST. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables, for example the Amount, against what was stored in your application at the time the request POST was sent.
+</Infobox>
+
+<Tabs active="create">  
+<Tab id="create" title="Create a payer and store a card">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string and check the output against what was returned in the HPP response
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab> 
+  <Tab id="display" title="Display stored cards to the customer"> 
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="xml" title="" language="xml">
+```
+"timestamp.merchantid.orderid.result.message.pasref.authcode"
+```
+</Code>
+
+Based on the above example, the initial string to check the hash of the response will be:
+
+<Code id="xml" title="" language="xml">
+```
+"20200205093140.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1 you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="xml" title="" language="xml">
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+</Tab> 
+</Tabs>

@@ -1,0 +1,476 @@
+---
+title: "Fraud Management SDK"
+subtitle: ""
+tag: "xml"
+created: "01/27/2025"
+---
+## Configuration
+For configuration code samples, see our [Configuration Code for SDKs](/ecommerce/payments/sdk/reference/config-code) article.
+
+## Fraud Filter and data submission
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+// supply the customer's billing country and post code for avs checks
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("Flat 123");
+billingAddress.setPostalCode("E77 4QJ");
+billingAddress.setCountry("GB");
+
+// supply the customer's shipping country and post code
+Address shippingAddress = new Address();
+shippingAddress.setStreetAddress1("House 456");
+shippingAddress.setPostalCode("50001");
+shippingAddress.setCountry("US");
+
+FraudRuleCollection rules = new FraudRuleCollection();
+rules.addRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.Off);
+
+try {
+    // process the authorization with fraud data
+    Transaction response = card.charge(new BigDecimal("19.99"))
+            .withCurrency("EUR")
+            .withAddress(billingAddress, AddressType.Billing)
+            .withAddress(shippingAddress, AddressType.Shipping)
+            .withProductId("SID9838383") // prodid
+            .withClientTransactionId("Car Part HV") // varref
+            .withCustomerId("E8953893489") // custnum
+            .withCustomerIpAddress("123.123.123.123")
+            .withFraudFilter(FraudFilterMode.Passive, rules)
+            .execute();
+			
+    String result = response.getResponseCode(); // 00 == Success
+    String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+	
+    // get the details to save to the DB for future requests
+    String orderId = response.getOrderId(); // ezJDQjhENTZBLTdCNzNDQw
+    String authCode = response.getAuthorizationCode(); // 12345
+    String paymentsReference = response.getTransactionId(); // pasref 14622680939731425
+    String schemeReferenceData = response.getSchemeId(); // MMC0F00YE4000000715
+	// get the details about fraud filter
+    FraudFilterMode fraudResponseMode = response.getFraudResponse().getMode(); // Passive
+    String fraudResponseResult = response.getFraudResponse().getResult(); // PASS
+
+} catch (ApiException exce) {
+    // TODO: add your error handling here
+    // String message = exce.getMessage(); 107 - Fails Fraud Checks
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+FraudRuleCollection fraudRuleCollection = new FraudRuleCollection();
+fraudRuleCollection.AddRule("e5964ac0-ace0-477a-98ef-f467772d6a76", FraudFilterMode.OFF);
+
+// data to be passed to the HPP along with transaction level settings
+var hostedPaymentData = new HostedPaymentData 
+{
+	CustomerNumber = "E8953893489",
+	ProductId = "SID9838383"
+};
+
+// billing address
+var billingAddress = new Address 
+{
+	PostalCode = "50001|Flat 123",
+	Country = "US"
+};
+
+// shipping address
+var shippingAddress = new Address 
+{
+	PostalCode = "654|123",
+	Country = "GB"
+};
+
+var variableReference = "Car Part HV";
+
+try
+{
+   var hppJson = service.Charge(19.99m)
+	  .WithCurrency("EUR")
+	  .WithHostedPaymentData(hostedPaymentData)
+	  .WithAddress(billingAddress, AddressType.Billing)
+	  .WithAddress(shippingAddress, AddressType.Shipping)
+	  .WithClientTransactionId(variableReference)
+	  .Serialize();
+	// TODO: pass the HPP JSON to the client-side
+}
+catch (ApiException e) 
+{
+	// TODO: Add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cvnPresenceIndicator = CvnPresenceIndicator::PRESENT;
+$card->cardHolderName = "James Mason";
+
+// supply the customer's billing country and post code for avs checks
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+// supply the customer's shipping country and post code
+$shippingAddress = new Address();
+$shippingAddress->postalCode = "654|123";
+$shippingAddress->country = "GB";
+
+$rules = new FraudRuleCollection();
+$rules->addRule('e5964ac0-ace0-477a-98ef-f467772d6a76', FraudFilterMode::OFF);
+		
+try {
+   // create the delayed settle authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->withAddress($shippingAddress, AddressType::SHIPPING)
+      ->withProductId("SID9838383") // prodid
+      ->withClientTransactionId("Car Part HV") // varref
+      ->withCustomerId("E8953893489") // custnum
+      ->withCustomerIpAddress("123.123.123.123")
+      // Configure the Fraud Filter - can be set to PASSIVE or OFF
+      ->withFraudFilter(FraudFilterMode::PASSIVE, $rules)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+   
+   $fraudFilterResponse = $response->fraudFilterResponse;
+   // get the Fraud Filter mode, can be ACTIVE or PASSIVE (no response when set to OFF)
+   $fraudResponseMode = $fraudFilterResponse->fraudResponseMode;
+   // overall Fraud Filter Result can be PASS, HOLD or BLOCK
+   $fraudResponseOverallResult = $fraudFilterResponse->fraudResponseResult;
+   
+   /* each rule action can be PASS,NOT_EXECUTED, HOLD or BLOCK
+   $fraudFilterRules = $fraudFilterResponse->fraudResponseRules;
+   foreach ($fraudFilterRules as $rule) {
+      echo $rule["id"] . "\n";
+      echo $rule["name"] . "\n";
+      echo $rule["action"] . "\n";
+   }
+   */
+}
+```
+</Code>
+</CodeGroup>
+
+## Address Verification Service
+
+<Infobox>
+This functionality is not supported by all card issuers and is only available for cardholders in the United States, Canada, and the United Kingdom. We support this functionality, but not all acquirers do. For more information, contact a member of our support team.
+</Infobox>
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// create the card object
+CreditCardData card = new CreditCardData();
+card.setNumber("4263970000005262");
+card.setExpMonth(12);
+card.setExpYear(2025);
+card.setCvn("131");
+card.setCardHolderName("James Mason");
+
+// supply the customer's billing country and post code for avs checks
+Address billingAddress = new Address();
+billingAddress.setStreetAddress1("House 456");
+billingAddress.setPostalCode("50001");
+billingAddress.setCountry("US");
+
+try {
+   // process the authorization with fraud data
+   Transaction response = card.charge(new BigDecimal("19.99"))
+      .withCurrency("USD")
+      .withAddress(billingAddress, AddressType.Billing)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   String avsCheck = response.getAvsResponseCode(); // M ==  Matched
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// create the card object
+var card = new CreditCardData
+{
+   Number = "4263970000005262",
+   ExpMonth = 12,
+   ExpYear = 2025,
+   Cvn = "131",
+   CardHolderName = "James Mason"
+};
+
+// supply the customer's billing country and post code for avs checks
+var billingAddress = new Address
+{
+   Country = "US",
+   StreetAddress1 = "House 456",
+   PostalCode = "50001"
+};
+
+try
+{
+   // process the authorization with fraud data
+   Transaction response = card.Charge(199.99m)
+      .WithCurrency("USD")
+      .WithAddress(billingAddress, AddressType.Billing)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   var avsCheck = response.AvsResponseCode; // M ==  Matched
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// create the card object
+$card = new CreditCardData();
+$card->number = "4263970000005262";
+$card->expMonth = 12;
+$card->expYear = 2025;
+$card->cvn = "131";
+$card->cardHolderName = "James Mason";
+
+// supply the customer's billing country and post code for avs checks
+$billingAddress = new Address();
+$billingAddress->postalCode = "50001|Flat 123";
+$billingAddress->country = "US";
+
+try {
+   // create the capture authorization
+   $response = $card->charge(19.99)
+      ->withCurrency("EUR")
+      ->withAddress($billingAddress, AddressType::BILLING)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+
+   // get the result of the AVS check
+   $avsPostCodeCheck = $response->avsResponseCode; // M = Matched
+   $avsAddressLineCheck->avsAddressResponse; // M = Matched
+}
+```
+</Code>
+</CodeGroup>
+
+## Hold
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// a hold request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the hold transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.hold()
+      .withReasonCode(ReasonCode.Fraud)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Held Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// a hold request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the hold transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the hold request, we can choose to specify a reason why we're holding it
+   Transaction response = transaction.Hold()
+      .WithReasonCode(ReasonCode.FRAUD)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Held Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// a hold request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the hold transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the hold request, we can choose to specify a reason why we're holding it
+   $response = $transaction->hold()
+      ->withReasonCode(ReasonCode::FRAUD)
+      ->execute();
+
+   $result = $response->responseCode; // 00 == Success
+   $message = $response->responseMessage; // [ test system ] AUTHORISED
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+}
+```
+</Code>
+</CodeGroup>
+
+## Release
+
+<CodeGroup>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+// a release request requires the original order id
+String orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+String paymentsReference = "15113583374071921";
+// create the release transaction object
+Transaction transaction = Transaction.fromId(paymentsReference, orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction response = transaction.release()
+      .withReasonCode(ReasonCode.FalsePositive)
+      .execute();
+
+   String result = response.getResponseCode(); // 00 == Success
+   String message = response.getResponseMessage(); // Released Successfully
+} 
+
+catch (ApiException exce) {
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+// a release request requires the original order id
+var orderId = "QAhN4YFrJEWP6Vc-N68u-w";
+// and the payments reference (pasref) from the authorization response
+var paymentsReference = "15113583374071921";
+// create the release transaction object
+var transaction = Transaction.FromId(paymentsReference, orderId);
+
+try
+{
+   // send the release request, we can choose to specify a reason why we're releasing it
+   Transaction = transaction.Release()
+      .WithReasonCode(ReasonCode.FALSEPOSITIVE)
+      .Execute();
+
+   var result = response.ResponseCode; // 00 == Success
+   var message = response.ResponseMessage; // Released Successfully
+}
+
+catch (ApiException exce)
+{
+   // TODO: add your error handling here
+}
+```
+</Code>
+
+<Code id="PHP" title="PHP" language="php">
+```
+<?php
+
+// a release request requires the original order id
+$orderId = "xd4JTHE0ZEqudur_q1pB1w";
+// and the payments reference (pasref) from the authorization response
+$paymentsReference = "15113583374071921";
+// create the release transaction object
+$transaction = Transaction::fromId($paymentsReference, $orderId);
+
+try {
+   // send the release request, we can choose to specify a reason why we're releasing it
+   $response = $transaction->release()
+      ->withReasonCode(ReasonCode::FALSE_POSITIVE)
+      ->execute();
+} catch (ApiException $e) {
+   // TODO: Add your error handling here
+}
+
+if (isset($response)) {
+   $result = $response->responseCode; // 00 == Success
+}
+```
+</Code>
+</CodeGroup>
+

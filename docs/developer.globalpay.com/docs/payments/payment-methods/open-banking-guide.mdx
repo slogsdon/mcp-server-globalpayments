@@ -1,0 +1,1032 @@
+---
+title: 'Open Banking - Guide'
+search_results: 'Open Banking Guide'
+subtitle: 'Learn how to let customers pay using their bank account'
+tag: 'rest'
+created: '06/08/2024'
+---
+
+<Tabs active="api">
+    <Tab id="api" title="API">
+
+In this guide, you’ll learn how to process a transaction with the Bank Payment payment method via direct API integration or Hosted Fields using our Open Banking infrastructure.
+        
+For more information about Open Banking, see our [Overview](/docs/payments/payment-methods/open-banking-overview).
+        
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+        
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+        
+## Step 1: Initiate the payment
+First, we submit a mandatory request to initiate an Open Banking transaction. It needs to include the transaction’s core parameters so that we have enough information to create the payment with our technology partner and the customer’s bank.
+
+A successful transaction request will return a unique transaction identifier `TRN_ID` and a redirect URL, which you’ll use to facilitate the customer confirmation of the transaction [Step 2](#step-2-redirect-the-customer).
+        
+At a high level, initiating an Open Banking transaction works like this:
+        
+![Diagram flow between the customer, merchant, and our API to initiate an Open Banking transaction](/gh-assets/open-banking_flow1.png)
+      
+The first step is to create a transaction using the Initiate call. This will specify the amount, currency, and data elements needed to process an Open Banking transaction. 
+
+Where the payment.scheme is FASTER PAYMENTS, the available `payment_method` fields (the destination bank account fields) will be:
+* payment_method.bank_transfer.account_number
+* payment_method.bank_transfer.bank.code 
+* payment_method.bank_transfer.bank.name 
+
+Where the `payment.scheme` is SEPA, the available `payment.destination` fields will be:
+* `payment_method.bank_transfer.iban`
+* `name`
+      
+#### Sample request      
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+   "merchant_id":"MER_43d5c7b98fe44d8c80d915c6422e83ee",
+   "account_id":"TRA_956309a58ea14d75839ca8b1cfa48ff4",
+   "channel":"CNP",
+   "amount":"10000",
+   "type":"SALE",
+   "currency":"GBP",
+   "reference":"becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+   "country":"GB",
+   "payment_method":{
+      "name":"Jane Doe",
+      "entry_mode":"ECOM",
+      "apm":{
+         "provider":"OPEN_BANKING"
+           "countries": [
+                "GB",
+                "IE"
+            ]
+      },
+      "bank_transfer":{
+           "account_number": "99999999",
+            "bank": {
+                "code": "407777",
+                "name": "Merchant Name"
+            },
+         "remittance_reference":{
+            "type":"TEXT",
+            "value":"Product Name"
+         }
+      }
+   },
+   "notifications":{
+      "return_url":"https://www.example.com/return",
+      "status_url":"https://www.example.com/status/"
+   }
+}
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId("APP_ID");
+config.setAppKey("APP_KEY");
+config.setChannel(Channel.CardNotPresent);
+config.setCountry("GB");
+ServicesContainer.configureService(config);
+
+BankPayment bankPayment = new BankPayment();
+bankPayment.setAccountNumber("99999999");
+bankPayment.setSortCode("407777");
+bankPayment.setAccountName("Merchant Name");
+List<String> countryList = new ArrayList<>();
+countryList.add("GB");
+countryList.add("IE");
+bankPayment.setCountries(countryList);
+bankPayment.setReturnUrl("https://www.example.com/return");
+bankPayment.setStatusUpdateUrl("https://www.example.com/status");
+
+Transaction response = null;
+try {
+    response = bankPayment.charge(new BigDecimal(100))
+            .withCurrency("GBP")
+            .withRemittanceReference(RemittanceReferenceType.TEXT, "Product Name")
+            .execute();
+} catch (GatewayException ex) {
+    // TODO: Add your exception handling here
+}
+
+String responseCode = response.getResponseCode(); // SUCCESS
+String trnStatus = response.getResponseMessage(); // INITIATED
+String trnId = response.getTransactionId();
+String redirectUrl = response.getBankPaymentResponse().getRedirectUrl();
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+config.AppId = "APP_ID";
+config.AppKey = "APP_KEY";
+config.Channel = Channel.CardNotPresent;
+config.Country = "GB";
+ServicesContainer.ConfigureService(config);
+
+BankPayment bankPayment = new BankPayment();
+bankPayment.AccountNumber = "99999999";
+bankPayment.SortCode = "407777";
+bankPayment.AccountName = "Merchant Name";
+bankPayment.Countries = new List<string>() {"GB", "IE"};
+bankPayment.ReturnUrl = "https://www.example.com/return";
+bankPayment.StatusUpdateUrl = "https://www.example.com/status";
+
+try
+{
+    var response = bankPayment.Charge(100)
+        .WithCurrency("GBP")
+        .WithRemittanceReference(RemittanceReferenceType.TEXT, "Product Name")
+        .Execute();
+
+    var responseCode = response.ResponseCode; // SUCCESS
+    var trnStatus = response.ResponseMessage; // INITIATED
+    var trnId = response.TransactionId;
+    var redirectUrl = response.BankPaymentResponse.RedirectUrl;
+}
+catch (GatewayException ex){
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'APP_ID';
+$config->appKey = 'APP_KEY';
+$config->channel = Channel::CardNotPresent;
+$config->country = 'GB';
+ServicesContainer::configureService($config);
+
+$bankPayment = new BankPayment();
+$bankPayment->accountNumber = '99999999';
+$bankPayment->sortCode = '407777';
+$bankPayment->accountName = 'Merchant Name';
+$bankPayment->countries = ['GB', 'IE'];
+$bankPayment->returnUrl = 'https://www.example.com/return';
+$bankPayment->statusUpdateUrl = 'https://www.example.com/status';
+
+try {
+    $response = $bankPayment->charge(100)
+        ->withCurrency('GBP')
+        ->withRemittanceReference(RemittanceReferenceType::TEXT, 'Product Name')
+        ->execute();
+} catch (GatewayException $ex){
+    // TODO: Add your exception handling here
+}
+
+$responseCode = $response->responseCode; // SUCCESS
+$trnStatus = $response->responseMessage; // INITIATED
+$trnId = $response->transactionId;
+$redirectUrl = $response->bankPaymentResponse->redirectUrl;
+```
+</Code>
+</CodeGroup>
+
+#### Request syntax
+| Name | Format | Type | Description | 
+| -------- | ------- | ------- | ------- |
+| channel | string | M | Describes whether the transaction was processed in a customer present (CP) or customer not present (CNP) scenario. Must always be CNP for Open Banking. |
+| type | string | M | Describes whether the transaction is a SALE or REFUND.<br />**SALE** indicates the movement of funds (or attempt to) from payer to merchant.<br />**REFUND** indicates the movement of funds (or attempt to) from merchant to payer. |
+| reference | string | O | Information that some banks may record and display on the account of the customer or merchant. |
+| **payment_method** | | | |
+| name | string | M | Name of the payer. |
+| **bank_transfer** | | | |
+| account_number | string | C | Number of the destination account where the funds will be transferred to. Optional for Direct Settlement transactions (if not saved during boarding with us) and if the method type is FASTERPAYMENTS. |
+| bank.code | string | C | Sort code of the destination account. Optional for Direct Settlement transactions (if not saved during boarding with us) and if the method type is FASTERPAYMENTS. |
+| iban | string | C | International Bank Account Number (IBAN) of the destination account. Optional for Direct Settlement transactions (if not saved during boarding with us ) and if the method type is SEPA. |
+| **remittance_reference** | | | |
+| type | string | M | Type of remittance reference. Allowed values: TEXT |
+| value | string | M | If type is <strong>TEXT</strong>: a description for the transaction. Most banks will record and display this reference on the customer’s account. For Direct Settlement, it will also show on the customer’s bank statement when the funds are received.<br />If type is <strong>PAN</strong>: allows the cardholder’s Primary Account Number (PAN) to be securely passed depending on the merchant use case. |
+| **bank** | | | |
+| name | string | M | Name of the merchant. Underscore character [ _ ] not permitted. Spaces are allowed, and acceptable special characters are -. ,'’‘`()*&amp;@/. |
+| **apm** | | | |
+| provider | string&nbsp; | M | Used to identify the payment method provider being used to execute this transaction. For example: OPEN_BANKING |
+| countries | array | O | The countries’ banks that are displayed to the payer. |
+| **notifications** | | | |
+| return_url | string | M | URL to return the customer’s browser to once the transaction is complete. |
+| status_url | string | O | Webhook URL that an asynchronous webhook will be sent to by some banks after the initial transaction is carried out to update the status of the transaction. |
+    
+## Step 2: Redirect the customer
+Once the transaction is initiated, the customer must be redirected to the Open Banking checkout flow using the URL returned in the Initiate response to facilitate authorization and authentication. To do this, use a simple JavaScript redirect or HTTP GET (302 redirect).
+    
+At a high level, redirecting the customer works like this:
+    
+    ![Diagram flow between the customer, merchant, and our API to redirect the customer](/gh-assets/open-banking_flow2.png)
+    
+In our example, we redirect the customer to the URL returned in the Initiate response using JavaScript.
+<Code id="javascript" language="xml" title="JavaScript" active>
+    ```
+<script>
+    window.location = "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_IDhttps://apis.globalpay.com/ucp/postback/transactions/TRN_CJtYAlPtbhbikIfcZCNTy3CVCBwfUK_sdgpoh123456/redirect/eyJtbWEiOm51bGwsIm1pZCI6Ik1FUl80M2Q1YzdiOThmZTQ0ZDhjODBkOTE1YzY0MjJlODNlZSIsInhnIjoiMjAyMS0wMy0yMiJ9";
+  </script>
+    ```
+</Code>
+
+## Step 3: Handle the redirect and check the status
+Once the customer completes the transaction with the Open Banking provider, they are redirected back to your app or website based on transaction success/failure using the Return URL specified in the Initiate request. 
+
+The unique transaction identifier is also returned as part of the parameters in the URL. You should use this to check the status of the payment (see [Step 4](#step-4-get-transaction-status)).
+
+The ID that is passed as a URL parameter is the `TRN_ID` and should be used to check the status of the transaction (see example below).
+
+#### Sample Return URL parameters
+    <Code id="html" language="xml" title="HTML" active>
+       ```
+    https://www.example.com/return?X-GP-Signature=399af8063773573040b3d1e76ccf313ed40491e61b3fe768390d7a1da925506c3908405f17be8fb82b978ab4790f76cdeb7b292b48dce716903c36eab57580a9&id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD
+    ```
+    </Code>
+    
+#### Checking the signature
+The Return URL contains a signature made up of the key transaction fields. This includes the Transaction ID (`TRN_ID`), Payer Reference, Action Type, and Action ID. Your application must construct and check the signature to ensure the response wasn’t tampered with.
+
+To construct the signature, take the string containing the above fields from the Return URL, excluding the signature itself.
+
+
+    <Code>
+       ```
+id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD
+```
+    </Code>
+Concatenate your app key to the end of this string.
+
+    <Code>
+       ```
+id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD.app_key
+  ```
+    </Code>
+The signature should be a Sha512 hash of the concatenated string. For example:
+
+    <Code>
+       ```
+399af8063773573040b3d1e76ccf313ed40491e61b3fe768390d7a1da925506c3908405f17be8fb82b978ab4790f76cdeb7b292b48dce716903c36eab57580a9
+   ```
+    </Code>
+    
+    ## Step 4: Get transaction status
+In this step, we get the transaction details and receive the webhook notification. As mentioned previously, the `TRN_ID` field should be used to check the status of the transaction.
+    
+At a high level, getting the transaction status works like this:
+    
+    ![Diagram flow between the customer, merchant, and our API to get the transaction status.](/gh-assets/open-banking_flow3.png)
+    
+#### Sample request
+The following sample is for the GET request.
+    
+    <CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456' \
+--header 'x-gp-version: 2021-03-22' \
+--header 'Authorization: Bearer pJ2An7thGclc8UUVZSntPRmsAUrR' \
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID); // config.setAppId("APP_ID");
+config.setAppKey(APP_KEY); // config.setAppKey("APP_KEY");
+config.setChannel(Channel.CardNotPresent);
+
+ServicesContainer.configureService(config);
+
+// the id of the transaction to fetch its details
+String transactionId = "TRN_2mz2U86WWSEWSgV5HUN25LrzpbdBIU_a2417fd45ea4";
+
+TransactionSummary response = null;
+try {
+    response = ReportingService.transactionDetail(transactionId)
+            .execute();
+} catch (GatewayException ex) {
+    // TODO: Add your exception handling here
+}
+
+transactionId = response.getTransactionId();
+String trnStatus = response.getTransactionStatus();
+DateTime trnDate = response.getTransactionDate();
+String trnType = response.getTransactionType();
+BigDecimal trnAmount = response.getAmount();
+String trnCurrency = response.getCurrency();
+String sortCode = response.getBankPaymentResponse().getSortCode();
+String accountNumberLast4 = response.getAccountNumberLast4();
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+config.AppId = "APP_ID";
+config.AppKey = "APP_KEY";
+config.Channel = Channel.CardNotPresent;
+ServicesContainer.ConfigureService(config);
+
+var transactionId = "TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456";
+try
+{
+    var response = ReportingService.TransactionDetail(transactionId)
+            .Execute();
+
+    var transId = response.TransactionId;
+    var trnStatus = response.TransactionStatus;
+    var trnDate = response.TransactionDate;
+    var trnType = response.TransactionType;
+    var trnAmount = response.Amount;
+    var trnCurrency = response.Currency;
+    var sortCode = response.BankPaymentResponse.SortCode;
+    var accountNumberLast4 = response.AccountNumberLast4;
+}
+catch (GatewayException ex){
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'APP_ID';
+$config->appKey = 'APP_KEY';
+$config->channel = Channel::CardNotPresent;
+
+ServicesContainer::configureService($config);
+
+$transactionId = 'TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456';
+try {
+    $response = ReportingService::transactionDetail($transactionId)
+            ->execute();
+} catch (GatewayException $ex){
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId;
+$trnStatus = $response->transactionStatus;
+$trnDate = $response->transactionDate->format("d/m/Y H:i:s");
+$trnType = $response->transactionType;
+$trnAmount = $response->amount;
+$trnCurrency = $response->currency;
+$sortCode = $response->bankPaymentResponse->sortCode;
+$accountNumberLast4 = $response->accountNumberLast4;
+```
+</Code>
+</CodeGroup>
+    
+
+## Testing Open Banking
+Our Open Banking solution is available for testing in our Sandbox environment for registered users of this developer portal. For Open Banking, we provide "test banks" instead of test cards. Each one provides a different outcome. For more information, see the [Open Banking](/resources/test-cards#open-banking) section of our Test Cards article. 
+        </Tab>
+    
+<Tab id="hosted" title="Drop-In UI">
+This guide focuses on integrating Open Banking with our Drop-In User Interface (UI), which is a ready-made payment form using our Hosted Fields solution. You’ll learn how to add Open Banking to your payment form using our JavaScript Library.
+        
+To learn how to use the Hosted Fields components on their own with your existing payment form, see our [Hosted Fields Guide](/docs/payments/online/hosted-fields-guide).
+    
+For more information about Open Banking, see our [Overview](/docs/payments/payment-methods/open-banking-overview).
+        
+## Prerequisites
+    Before starting the steps in this guide, you must do the following:
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+* [Create an access token](/docs/getting-started/generate-token)
+                     
+
+## Step 1: Configure with Open Banking
+Once you’ve created the access token, you can now configure the JavaScript Library to enable Open Banking in your payment form.
+
+Add a `<div>` tag to render the Drop-In UI payment form to the customer.
+<Code id="html" language="xml" title="HTML" active>
+```
+<div id="payment-form"></div>    
+```
+</Code>
+<br></br>    
+Next, we configure our JavaScript Library with the transaction details required for Open Banking.
+<Code id="javascript" language="javascript" title="Javascript" active>
+```
+GlobalPayments.configure({
+   accessToken: "accessToken",
+   env: "sandbox",
+   apiVersion: "2021-03-22",
+   language: "en",
+   account: "accountId",
+   apms: {
+      currencyCode: "GBP",
+      countryCode: "GB",
+      nonCardPayments: {
+         allowedPaymentMethods: [{
+            provider: GlobalPayments.enums.ApmProviders.OpenBanking,
+         }]
+      }
+   },
+});
+
+const cardForm = GlobalPayments.creditCard.form(
+   '#credit-card-form',
+   {
+      amount: "800",
+      style: "gp-default",
+      apms: [ GlobalPayments.enums.Apm.OpenBankingPayment],
+   }
+);
+
+cardForm.on(GlobalPayments.enums.ApmEvents.PaymentMethodSelection, paymentProviderData => {
+   const { provider } = paymentProviderData;
+   console.log('Selected provider: ' + provider);
+
+   if (provider === GlobalPayments.enums.ApmProviders.OpenBanking) {
+      const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+         detail: {
+            provider,
+            redirect_url: "https://fluentlenium.com/",
+         }
+      });
+      window.dispatchEvent(merchantCustomEventProvideDetails);
+   }
+});
+```
+</Code>
+<br></br>
+<br></br>
+<br></br>    
+<img src="/gh-assets/open_banking.png" style={{display: "block", margin: "0 auto"}} />    
+**<p style={{textAlign: "center"}}>Drop-In UI with Open Banking button</p>**
+<br></br>
+#### JavaScript configuration (Open Banking specific parameters)
+*Type* indicates whether the element is Mandatory (M), Optional (O), or Conditional (C)—dependent on another field or regional requirement.
+| Name | Format | Type | Description |
+| -------- | -------- | -------- | -------- |
+| currencyCode | string | M | Currency of the amount in ISO-4217 (alpha-3). |
+| countryCode | string | M | The country in ISO-3166-1(alpha-2 code) format. |
+| provider | string | M | The string used to identify the payment method provider being used to execute this transaction. |          
+
+## Step 2: Capture customer selection   
+Now that we have configured Open Banking and it's displayed on the Drop-In UI, when a customer selects Open Banking as the payment method, the Drop-In UI returns this selection in an event. For example, the Drop-In UI returns: _Selected provider: OpenBanking_.
+    
+Below is the code snippet of how the Drop-In UI returns this event.    
+
+<Code id="javascript" language="javascript" title="Javascript" active>
+```
+cardForm.on(GlobalPayments.enums.ApmEvents.PaymentMethodSelection, paymentProviderData => {
+        const { provider } = paymentProviderData;
+        console.log('Selected provider: ' + provider);
+
+...
+//continued in Step 4 - Redirect customer to Open Banking
+```
+</Code>
+    
+## Step 3: Initiate the Open Banking transaction
+Now that we know what payment method the customer has selected, we can initiate the payment to complete the transaction. First, we submit a mandatory request to initiate an Open Banking transaction. It needs to include the transaction’s core parameters so that we have enough information to create the payment with our technology partner and the customer’s bank.
+
+A successful transaction request returns a unique transaction identifier (`TRN_ID`) and a redirect URL, which you’ll use to facilitate the customer confirmation of the transaction ([Step 4](#step-4-redirect-customer-to-open-banking)).
+    
+#### Sample request
+<CodeGroup>        
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+   "merchant_id":"MER_43d5c7b98fe44d8c80d915c6422e83ee",
+   "account_id":"TRA_956309a58ea14d75839ca8b1cfa48ff4",
+   "channel":"CNP",
+   "amount":"10000",
+   "type":"SALE",
+   "currency":"GBP",
+   "reference":"becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+   "country":"GB",
+   "payment_method":{
+      "name":"Jane Doe",
+      "entry_mode":"ECOM",
+      "apm":{
+         "provider":"OPEN_BANKING"
+           "countries": [
+                "GB",
+                "IE"
+            ]
+      },
+      "bank_transfer":{
+           "account_number": "99999999",
+            "bank": {
+                "code": "407777",
+                "name": "Merchant Name"
+            },
+         "remittance_reference":{
+            "type":"TEXT",
+            "value":"Product Name"
+         }
+      }
+   },
+   "notifications":{
+      "return_url":"https://www.example.com/return",
+      "status_url":"https://www.example.com/status/"
+   }
+}
+```
+</Code>
+<Code id="java" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID);
+config.setAppKey(APP_KEY);
+config.setChannel(Channel.CardNotPresent);
+config.setEnvironment(Environment.TEST);
+config.setCountry("GB");
+
+ServicesContainer.configureService(config);
+
+BankPayment bankPayment = new BankPayment();
+bankPayment.setAccountNumber("99999999");
+bankPayment.setSortCode("407777");
+bankPayment.setAccountName("Merchant Name");
+bankPayment.setCountries(Arrays.asList("GB", "IE"));
+bankPayment.setReturnUrl("https://www.example.com/return");
+bankPayment.setStatusUpdateUrl("https://www.example.com/status");
+
+try {
+    Transaction response = bankPayment.charge(new BigDecimal("100"))
+            .withCurrency("GBP")
+            .withRemittanceReference(RemittanceReferenceType.TEXT, "Product Name")
+            .execute();
+
+    BankPaymentResponse bankPaymentResponse = response.getBankPaymentResponse();
+
+    // API raw response key "id"
+    String transactionId = response.getTransactionId();
+    // API raw response key "amount"
+    BigDecimal amount = response.getBalanceAmount();
+    // capture_mode == "MULTIPLE"
+    boolean multiCapture = response.isMultiCapture();
+    // API raw response key "reference"
+    String referenceNumber = response.getReferenceNumber();
+    // API raw response key "action->result_code"
+    String responseCode = response.getResponseCode();
+    // API raw response key "status"
+    String transactionStatus = response.getResponseMessage();
+    // API raw response key "time_created"
+    String timeCreated = response.getTimestamp();
+    // API raw response key "payment_method->redirect_url"
+    String redirectUrl = bankPaymentResponse.getRedirectUrl();
+    // API raw response key "payment_method->message"
+    String paymentStatus = bankPaymentResponse.getPaymentStatus();
+    // API raw response key "payment_method->bank_transfer->bank->code"
+    String sortCode = bankPaymentResponse.getSortCode();
+    // API raw response key "payment_method->bank_transfer->bank->name"
+    String accountName = bankPaymentResponse.getAccountName();
+    // API raw response key "payment_method->bank_transfer->masked_account_number_last4"
+} catch (ApiException e) {
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig {
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST,
+	Country = "GB",
+};
+ServicesContainer.ConfigureService(config);
+
+BankPayment bankPayment = new BankPayment {
+	AccountNumber = "99999999",
+	SortCode = "407777",
+	AccountName = "Merchant Name",
+	Countries = new List<string>() { "GB", "IE" },
+	ReturnUrl = "https://www.example.com/return",
+	StatusUpdateUrl = "https://www.example.com/status"
+};
+
+try
+{
+	Transaction response = bankPayment.Charge(100m)
+		.WithCurrency("GBP")
+		.WithRemittanceReference(RemittanceReferenceType.TEXT, "Product Name")
+		.Execute();
+	
+	// API raw response key "id"
+	var id = response.TransactionId; 
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	// capture_mode === 'MULTIPLE'
+	var multiCapture = response.MultiCapture; 
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode;
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp;
+	//API raw response key "payment_method->redirect_url"
+	var redirectUrl = response.BankPaymentResponse.RedirectUrl; 
+	//API raw response key "payment_method->message"
+	var paymentStatus = response.BankPaymentResponse.PaymentStatus; 
+	//API raw response key "payment_method->bank_transfer->bank->code"
+	var sortCode = response.BankPaymentResponse.SortCode; 
+	//API raw response key "payment_method->bank_transfer->bank->name"
+	var accountName = response.BankPaymentResponse.AccountName; 
+}
+catch (GatewayException ex)
+{
+	Console.WriteLine(ex);
+	throw;
+}
+```
+</Code>
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->country = 'GB';
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$bankPayment = new BankPayment();
+$bankPayment->accountNumber = '99999999';
+$bankPayment->sortCode = '407777';
+$bankPayment->accountName = 'Merchant Name';
+$bankPayment->countries = ['GB', 'IE'];
+$bankPayment->returnUrl = 'https://www.example.com/return';
+$bankPayment->statusUpdateUrl = 'https://www.example.com/status/';
+
+try {
+    /** @var \GlobalPayments\Api\Entities\Transaction $response */
+    $response = $bankPayment->charge(100)
+        ->withCurrency('GBP')
+        ->withRemittanceReference(RemittanceReferenceType::TEXT, 'Product Name')
+        ->execute();
+} catch (GatewayException $ex) {
+    // TODO: Add your exception handling here
+}
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->balanceAmount; // API raw response key "amount"
+$multiCapture = $response->multiCapture; // capture_mode === 'MULTIPLE'
+$referenceNumber = $response->referenceNumber; // API raw response key "reference"
+// API raw response key "action->result_code"
+$responseCode = $response->responseCode; 
+$trnStatus = $response->responseMessage;// API raw response key "status"
+$timeCreated = $response->timestamp; // API raw response key "time_created"
+//API raw response key "payment_method->redirect_url"
+$redirectUrl = $response->bankPaymentResponse->redirectUrl; 
+//API raw response key "payment_method->message"
+$paymentStatus = $response->bankPaymentResponse->paymentStatus; 
+//API raw response key "payment_method->bank_transfer->bank->code"
+$sortCode = $response->bankPaymentResponse->sortCode; 
+//API raw response key "payment_method->bank_transfer->bank->name"
+$accountName = $response->bankPaymentResponse->accountName; 
+//API raw response key "payment_method->bank_transfer->masked_account_number_last4"
+$accountNumberLast4 = $response->accountNumberLast4;
+```
+</Code>
+</CodeGroup>        
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "TRN_1NwUgkvbEcNUJhymCk96ON9HDu0HkY_sdgpoh123456",
+    "time_created": "2023-07-13T16:17:55.251Z",
+    "type": "SALE",
+    "status": "INITIATED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "10000",
+    "currency": "GBP",
+    "country": "GB",
+    "merchant_id": "MER_461194d8057842708ca360e252da8270",
+    "merchant_name": "QA_Sandbox_Merchant_02",
+    "account_id": "TRA_08e5bac604954796ad0d633ee223fbba",
+    "account_name": "Open_Banking_Testing_account",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "payment_method": {
+        "message": "PAYMENT_INITIATED",
+        "entry_mode": "ECOM",
+        "redirect_url": "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_1NwUgkvbEcNUJhymCk96ON9HDu0HkY_sdgpoh123456/redirect/eyJtbWEiOm51bGwsIm1pZCI6Ik1FUl80NjExOTRkODA1Nzg0MjcwOGNhMzYwZTI1MmRhODI3MCIsInhnIjoiMjAyMS0wMy0yMiJ9",
+        "apm": {
+            "provider": "open_banking"
+        },
+        "bank_transfer": {
+            "masked_account_number_last4": "XXXX9999",
+            "bank": {
+                "name": "Merchant Name",
+                "code": "407777"
+            }
+        }
+    },
+    "action": {
+        "id": "ACT_1NwUgkvbEcNUJhymCk96ON9HDu0HkY",
+        "type": "INITIATE",
+        "time_created": "2023-07-13T16:17:55.251Z",
+        "result_code": "SUCCESS",
+        "app_id": "JtivfTN6wN6lPLDA0eiRlbuqIB5AkKl7",
+        "app_name": "testing_app"
+    }
+}
+
+```
+    </Code>
+
+#### Open Banking statuses
+The following table describes the various Open Banking statuses.
+| Status | Description |
+| -------- | ------- |
+| INITIATED | Payment was created. All Open Banking payments are set to this initially. |
+| CAPTURED | Funds have been sent. |
+| DECLINED | Payment was declined or failed.  |
+| PENDING | Payment is being processed by the bank. Whether it appears depends on the bank. |
+    
+    
+## Step 4: Redirect customer to Open Banking
+The next step is to redirect the customer to Open Banking using the URL provided in the response field of the previous step (`payment_method.redirect_url`) to facilitate authentication with Open Banking. To do this, we pass the `redirect_url` return in the response to the Drop-In UI.
+
+#### Sample redirect             
+<Code id="javascript" title="JavaScript" language="javascript" active>
+```
+...
+// Continuation from Step 2 - Capture Customer Selection
+
+    if (provider === GlobalPayments.enums.Apm.OpenBankingPayment) {
+        const merchantCustomEventProvideDetails = new CustomEvent(GlobalPayments.enums.ApmEvents.PaymentMethodActionDetail, {
+            detail: {
+                provider,
+                redirect_url: "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_I559ttj6HiSaE99u0Th7jptJNthLN5_sdgpoh123456/redirect/eyJtbWEiOm51bGwsIm1pZCI6Ik1FUl80NjExOTRkODA1Nzg0MjcwOGNhMzYwZTI1MmRhODI3MCIsInhnIjoiMjAyMS0wMy0yMiJ9",
+            }
+        });
+        window.dispatchEvent(merchantCustomEventProvideDetails);
+    }
+});
+```
+</Code>
+
+## Step 5: Handle the redirect and check the status
+Once the customer completes the transaction with the Open Banking provider, they are redirected back to your app or website based on transaction success/failure using the Return URL specified in the Initiate request. 
+
+The unique transaction identifier is also returned as part of the parameters in the URL. You should use this to check the status of the payment (see [Step 6](#step-6-get-transaction-status)).
+
+The ID that is passed as a URL parameter is the `TRN_ID` and should be used to check the status of the transaction (see example below).
+
+#### Sample Return URL parameters
+    <Code id="html" language="xml" title="HTML" active>
+       ```
+    https://www.example.com/return?X-GP-Signature=399af8063773573040b3d1e76ccf313ed40491e61b3fe768390d7a1da925506c3908405f17be8fb82b978ab4790f76cdeb7b292b48dce716903c36eab57580a9&id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD
+    ```
+    </Code>
+    
+#### Checking the signature
+The Return URL contains a signature made up of the key transaction fields. This includes the Transaction ID (`TRN_ID`), Payer Reference, Action Type, and Action ID. Your application must construct and check the signature to ensure the response wasn’t tampered with.
+
+To construct the signature, take the string containing the above fields from the Return URL, excluding the signature itself.
+
+
+    <Code>
+       ```
+id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD
+```
+    </Code>
+<br></br>   
+Concatenate your app key to the end of this string.
+
+    <Code>
+       ```
+id=TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456&payer_reference=asdgpoh123456&action_type=REDIRECT_FROM&action_id=ACT_J8pXg8cjUuOltUHovOAGpqUooy7XZD.app_key
+  ```
+    </Code>
+<br></br>       
+The signature should be a Sha512 hash of the concatenated string. For example:
+
+    <Code>
+       ```
+399af8063773573040b3d1e76ccf313ed40491e61b3fe768390d7a1da925506c3908405f17be8fb82b978ab4790f76cdeb7b292b48dce716903c36eab57580a9
+   ```
+    </Code>        
+    
+## Step 6: Get transaction status
+In this step, we get the transaction details and receive the webhook notification. As mentioned previously, the `TRN_ID` field should be used to check the status of the transaction.
+
+At a high level, getting the transaction status works like this:
+    
+    ![Diagram flow between the customer, merchant, and our API to get the transaction status.](/gh-assets/open-banking_flow3.png)
+    
+#### Sample request  
+<CodeGroup>
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/transactions/TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456' \
+--header 'x-gp-version: 2021-03-22' \
+--header 'Authorization: Bearer pJ2An7thGclc8UUVZSntPRmsAUrR' \
+```
+</Code>
+
+<Code id="JAVA" title="JAVA" language="java">
+```
+GpApiConfig config = new GpApiConfig();
+config.setAppId(APP_ID); // config.setAppId("APP_ID");
+config.setAppKey(APP_KEY); // config.setAppKey("APP_KEY");
+config.setChannel(Channel.CardNotPresent);
+
+ServicesContainer.configureService(config);
+
+// the id of the transaction to fetch its details
+String transactionId = "TRN_2mz2U86WWSEWSgV5HUN25LrzpbdBIU_a2417fd45ea4";
+
+TransactionSummary response = null;
+try {
+    response = ReportingService.transactionDetail(transactionId)
+            .execute();
+} catch (GatewayException ex) {
+    // TODO: Add your exception handling here
+}
+
+transactionId = response.getTransactionId();
+String trnStatus = response.getTransactionStatus();
+DateTime trnDate = response.getTransactionDate();
+String trnType = response.getTransactionType();
+BigDecimal trnAmount = response.getAmount();
+String trnCurrency = response.getCurrency();
+String sortCode = response.getBankPaymentResponse().getSortCode();
+String accountNumberLast4 = response.getAccountNumberLast4();
+```
+</Code>
+
+<Code id="NET" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig();
+config.AppId = "APP_ID";
+config.AppKey = "APP_KEY";
+config.Channel = Channel.CardNotPresent;
+ServicesContainer.ConfigureService(config);
+
+var transactionId = "TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456";
+try
+{
+    var response = ReportingService.TransactionDetail(transactionId)
+            .Execute();
+
+    var transId = response.TransactionId;
+    var trnStatus = response.TransactionStatus;
+    var trnDate = response.TransactionDate;
+    var trnType = response.TransactionType;
+    var trnAmount = response.Amount;
+    var trnCurrency = response.Currency;
+    var sortCode = response.BankPaymentResponse.SortCode;
+    var accountNumberLast4 = response.AccountNumberLast4;
+}
+catch (GatewayException ex){
+    // TODO: Add your exception handling here
+}
+```
+</Code>
+
+
+<Code id="PHP" title="PHP" language="php">
+```
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+ServicesContainer::configureService($config);
+
+$trnId = 'TRN_qBh60Xxj5zLDyGWSSqCtjLqFCdiitN_1703ec14a76d';
+try {
+    /** @var \GlobalPayments\Api\Entities\Reporting\TransactionSummary $response */
+    $response = ReportingService::transactionDetail($trnId)
+        ->execute();
+} catch (GatewayException $ex) {
+    // TODO: Add your exception handling here
+}
+
+$transactionId = $response->transactionId; // API raw response key "id"
+$amount = $response->amount; //API raw response key "amount"
+$currency = $response->currency; // "currency"
+$merchantName = $response->merchantName; // "system->mid"
+$channel = $response->channel; // "channel"
+$reference = $response->referenceNumber; // "reference"
+$gatewayResponseMessage = $response->gatewayResponseMessage; // "payment_method->message"
+$transactionType = $response->transactionType; // "type"
+$transactionDate = $response->transactionDate; // "time_created"
+$transactionStatus = $response->transactionStatus; // "status"
+$country = $response->country; // "country"
+$entryMode = $response->entryMode; // "payment_method->entry_mode"
+$redirectUrl = $response->bankPaymentResponse->redirectUrl; //API raw response key "payment_method->redirect_url"
+//API raw response key "payment_method->bank_transfer->masked_account_number_last4"
+$accountNumberLast4 = $response->accountNumberLast4;
+//API raw response key "payment_method->bank_transfer->bank->code"
+$sortCode = $response->bankPaymentResponse->sortCode;
+//API raw response key "payment_method->bank_transfer->bank->name"
+$accountName = $response->bankPaymentResponse->accountName;
+//API raw response key "payment_method->bank_transfer->remittance_reference->value"
+$remittanceReferenceValue = $response->bankPaymentResponse->remittanceReferenceValue;
+//API raw response key "payment_method->bank_transfer->remittance_reference->type"
+$remittanceReferenceType = $response->bankPaymentResponse->remittanceReferenceType;
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456",
+    "time_created": "2023-07-13T16:23:02.138Z",
+    "time_last_updated": "2023-07-13T16:23:30.552Z",
+    "status": "CAPTURED",
+    "type": "SALE",
+    "merchant_id": "MER_461194d8057842708ca360e252da8270",
+    "merchant_name": "QA_Sandbox_Merchant_02",
+    "account_id": "TRA_08e5bac604954796ad0d633ee223fbba",
+    "account_name": "Open_Banking_Testing_account",
+    "channel": "CNP",
+    "amount": "10000",
+    "merchant_amount": "",
+    "partner_amount": "",
+    "surcharge_amount": "",
+    "surcharge_type": "",
+    "currency": "GBP",
+    "reference": "becf9f3e-4d33-459c-8ed2-0c4affc9555e",
+    "description": "",
+    "order_reference": "",
+    "order": {
+        "reference": ""
+    },
+    "time_created_reference": "",
+    "batch_id": "",
+    "initiator": "",
+    "country": "GB",
+    "language": "",
+    "ip_address": "11.111.11.111",
+    "site_reference": "",
+    "payment_method": {
+        "result": "",
+        "message": "SUCCESS",
+        "entry_mode": "ECOM",
+        "name": "Jane Doe",
+        "redirect_url": "https://apis.sandbox.globalpay.com/ucp/postback/transactions/TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456/redirect/eyJtbWEiOm51bGwsIm1pZCI6Ik1FUl80NjExOTRkODA1Nzg0MjcwOGNhMzYwZTI1MmRhODI3MCIsInhnIjoiMjAyMS0wMy0yMiJ9",
+        "apm": {
+            "provider": "open_banking",
+            "countries": [
+                "GB",
+                "IE"
+            ]
+        },
+        "bank_transfer": {
+            "masked_account_number_last4": "XXXX9999",
+            "bank": {
+                "code": "407777",
+                "name": "Merchant Name"
+            },
+            "remittance_reference": {
+                "type": "TEXT",
+                "value": "Product Name"
+            }
+        }
+    },
+        "mode": "",
+        "count": "",
+        "grace_period_count": ""
+    },
+    "action_create_id": "ACT_Knt3NHCqUlifGAcYaUje62hRzTK7V1",
+    "parent_resource_id": "TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123455",
+    "platforms": [
+        {
+            "type": "ECOM",
+            "transaction_id": "oNorLmfYiphynluhAF",
+            "order_id": "TRN_U5cRgH1nfubpsDSlrM67iz8hNj7cF9_sdgpoh123456",
+            "authcode": "",
+            "pasref": ""
+        }
+    ],
+    "system": {
+        "mid": "",
+        "tid": "0187842062175448386901265234938560244584",
+        "name": ""
+    },
+    "action": {
+        "id": "ACT_DuT6lBQW9UdgovvqfxLX0GOZyqgZ4x",
+        "type": "TRANSACTION_SINGLE",
+        "time_created": "2023-07-13T16:26:23.131Z",
+        "result_code": "SUCCESS",
+        "app_id": "JtivfTN6wN6lPLDA0eiRlbuqIB5AkKl7",
+        "app_name": "test_app"
+    }
+}
+```
+</Code>
+
+## Testing Open Banking
+Our Open Banking solution is available for testing in our Sandbox environment for registered users of this developer portal. For Open Banking, we provide "test banks" instead of test cards. Each one provides a different outcome. For more information, see the [Open Banking](/resources/test-cards#open-banking) section of our Test Cards article. 
+</Tab>
+</Tabs>

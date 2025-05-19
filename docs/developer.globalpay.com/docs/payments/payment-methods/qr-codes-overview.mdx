@@ -1,0 +1,82 @@
+---
+title: "QR Code Payments for Alipay and WeChat Pay - Overview"
+subtitle: "Let customers use these payment methods via QR code"
+tag: "rest"
+created: "03/26/2025"
+---
+
+<Infobox>
+This feature is currently only available in the Asia Pacific region. For more information, check with your account manager.
+</Infobox>
+
+Alipay and WeChat Pay are the two most prominent digital wallets in China, both of which have become integral parts of daily life for Chinese customers and are widely used across Asia, with more than 2 billion users combined worldwide. They enable customers to make payments with QR codes through their mobile app. This provides a fast, secure, and convenient checkout experience. Our solution provides various ways to use both Alipay and WeChat Pay in-store and online. 
+
+For merchants, the benefits of Alipay and WeChat Pay include:
+
+* Highly popular payment method trusted by users
+* Simplified checkout process with QR-code scanning
+* User-friendly mobile interface that can reduce friction and boost conversion rates
+* An extensive user base, including both the local market in China and tourists traveling abroad 
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our QR Code Payment solution. Keep in mind that this section doesn’t cover all use cases.
+
+##### Use case #1: Expand to new markets
+
+An international airline is looking to expand its routes and wants to include China as a new destination. They want to make sure that their online checkout experience is inclusive of local payment methods that will attract and enable customers to pay with ease. For this reason, they include Alipay and WeChat Pay as payment options on their online website, as this is a popular payment method in the Chinese market. 
+
+##### Use case #2: Quick payments
+
+A merchant with a physical store wants to allow customers to quickly make payments due to the very high demand at peak hours. They decide to include Alipay and WeChat Pay as payment options due to the quick QR-scanning process making payments easier and faster. 
+
+##### Use case #3: Convenient
+
+A merchant wants to allow their customers to complete online transactions regardless of whether they have their credit card or not. If their customers urgently need to complete an online transaction, they can select Alipay or WeChat Pay and simply scan the QR code with their mobile device. 
+
+## Supporting countries
+
+Alipay and WeChat Pay are currently supported in the following countries.
+
+| Country | Currency | Supported Channel(s) |
+| :---- | :---- | :---- |
+| Hong Kong SAR | HKD | In-Store, Online |
+| Macau | MOP | In-Store, Online |
+| Singapore | SGD | In-Store |
+| Malaysia | MYR | In-Store |
+| Philippines | PHP | In-Store |
+| Maldives | MVR | In-Store |
+| Sri Lanka | LKR | In-Store |
+
+## How does it work?
+
+There are two main modes in which Alipay and WeChat Pay payments can be made: customer presented and merchant presented. This section describes each one and presents a typical flow diagram.
+
+The following table shows how each mode can be used in different payment scenarios.
+
+| Mode  | In-Store | Online |
+| :---- | :---- | :---- |
+| Customer presented | ✅ |  |
+| Merchant presented | ✅ | ✅ |
+
+### Customer-presented mode (in-store)
+
+With this mode, the customer presents their wallet QR code on their mobile device for the merchant to scan and therefore make the payment. This is only applicable in an in-store scenario.  
+
+![Diagram flow showing the in-store payment flow between the customer, merchant, our API, and Alipay.](/gh-assets/qr-code_flow-in-store.png)
+<p style={{textAlign: "center"}}>**QR Code Payment Flow - Customer-Presented (In-Store)**</p>
+
+### Merchant-presented mode (online) 
+
+With this mode, the merchant generates and displays a dynamic QR code for the customer to scan and make a payment on their own device.
+
+![Diagram flow showing the online payment flow between the customer, merchant, our API, and Alipay.](/gh-assets/qr-code_flow-online.png)
+<p style={{textAlign: "center"}}>**QR Code Payment Flow - Merchant-Presented (Online)**</p>
+
+## Ready to get started?
+
+To get started with adding Alipay and WeChat Pay as payment methods, see the steps and code samples in our [guide](/docs/payments/payment-methods/qr-codes-guide).
+
+<Infobox>
+Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>
+

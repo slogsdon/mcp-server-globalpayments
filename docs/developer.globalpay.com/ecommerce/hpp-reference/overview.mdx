@@ -1,0 +1,38 @@
+---
+title: "HPP Reference - Overview"
+subtitle: "See the full HPP specification for our solutions"
+tag: "xml"
+created: "02/24/2025"
+---
+The Hosted Payment Page (HPP) Reference section expands on our guides. Under each solution, such as Card Payments or Card Storage, you'll find the full range of request types, along with the values that can be submitted in each field. We also provide each response and the values your application can expect to receive.
+
+If you're not using one of the SDKs, we show you how to build and check the request and response security hashes.
+
+For more information on the HPP, see our [overview](/ecommerce/payments/hosted-solution/overview).
+
+<Infobox>
+Customers must have JavaScript enabled on their browser for the HPP to function correctly. 
+</Infobox>
+
+## How an HPP transaction works
+To help you get started, here's an overview of how processing a payment using the HPP works.
+
+1) Send us a request with your Client ID and the transaction information.
+2) Display the HPP to the customer using your custom design. You can either embed it in your application or website or use a standard redirect.
+3) The customer chooses from the payment methods enabled on your account. For example, Cards, Local Payment Methods, or Wallets.
+4) Once the customer completes payment, the HPP returns the response to your application or website. Alternatively, it can return the response to the parent frame/window or to a nominated URL sent in the POST.
+5) Your application or website validates the response, including the digital signature.
+6) Redirect the customer to the appropriate success or failure page. Alternatively, you can output HTML on the HPP (using your custom design).
+
+## Endpoints
+When you first create an account with us, your account is set to Sandbox mode. We recommend that you process several transactions in this mode to confirm you are happy with how they are processing before setting your account live.
+
+Once you have a Client ID with us, the URL endpoints to send transactions to are as follows:
+
+| Environment | URL |
+| --- | --- |
+| Production | https://pay.realexpayments.com/pay |
+| Sandbox | https://pay.sandbox.realexpayments.com/pay |
+
+## Digital signatures (hashes)
+Each request and response is signed with a hash of certain transaction elements using your unique Shared Secret. In addition, we ensure that requests originate only from IP addresses on your account's allowlist. Combined, these checks help ensure that we only accept valid requests using your Client ID. **It is therefore very important to keep your Shared Secret secure and protected.**

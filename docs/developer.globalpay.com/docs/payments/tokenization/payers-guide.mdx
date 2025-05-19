@@ -1,0 +1,694 @@
+---
+title: 'Payers - Guide'
+search_results: 'Global Payments - Payers Guide'
+subtitle: 'Learn how to store customer details for future use'
+tag: 'rest'
+created: '06/08/2024'
+---
+In this guide, you’ll learn how to create and edit a payer, as well as make a charge to a payer. 
+
+For more information on our Payers solution, see our [Overview](/docs/payments/tokenization/payers-overview).
+
+## Step 1: Create a payer
+We provide two ways to create a payer. 
+
+* **Create a token first** – Use if you’ve already tokenized a customer’s payment methods and you just need to establish them as a payer on our system and associate their payment tokens.
+* **Create a payer first** – Use if you haven’t already tokenized a customer’s payment methods. Steps include creating a payer on our system, tokenizing a customer’s payment method, and then associating the payment token to the payer.
+
+<br />
+
+<Tabs active="token_first">
+    <Tab id="token_first" title="Create a token first">    
+        
+### Create a token first
+This step assumes that you’ve already tokenized your customer’s payment methods and you just need to create a payer and associate those payment tokens with the other payer information. For information on tokenizing payment cards, see [Card Storage](/docs/payments/tokenization/card-storage-overview). 
+
+To create a payer on our system, you need to send a request. This will establish the relevant payer information and return a unique payer identifier (`PYR_ID`) in the response. While creating a payer, you can specify which payment card should be used as the default.
+  
+#### Sample request
+        
+        <Code id="JSON" language="JSON" title="JSON" active contextualLinks={{apiExplorerUrl: "/api/payers#/Create%20a%20Payer/post-payer"}}>
+```
+{
+    "first_name": "John",
+    "last_name": "James",
+    "reference": "payer-123",
+    "payment_methods": [
+        {
+            "id": "PMT_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "YES"
+        }
+    ]
+}
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "time_last_updated": "2021-05-03T21:23:39.718Z",
+    "merchant_id": "MER_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "merchant_name": "merchant_1",
+    "account_id": "TKA_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "account_name": "Tokenization",
+    "first_name": "John",
+    "last_name": "James",
+    "reference": "payer-123",
+    "payment_methods": [
+        {
+            "id": "PMT_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "YES"
+        }
+    ],
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "PAYER_CREATE",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>       
+</Tab>
+    <Tab id="payer_first" title="Create a payer first">
+    ### Create a payer first
+    These steps assume that you haven’t already tokenized your customer’s payment methods and need to do so, but you want to create a payer first. 
+
+    ### Create a payer
+    First, we create a payer on our system.
+
+    #### Sample request
+        <CodeGroup contextualLinks={{apiExplorerUrl: "/api/payers#/Create%20a%20Payer/post-payer"}}>
+        <Code id="JSON" language="JSON" title="JSON" active>
+```      
+{
+    "first_name": "John",
+    "last_name": "James",
+    "reference": "payer-123"
+}    
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+CreditCardData card = new CreditCardData {
+	Token = "PMT_7554986a-1e77-4c75-a80f-5889d0621c13"
+};
+Customer newCustomer = new Customer
+{
+	Key = "payer-123",
+	FirstName = "John",
+	LastName = "James"
+};
+ 
+try
+{
+	newCustomer.AddPaymentMethod(card.Token, card);
+	Customer payer = newCustomer.Create(); 
+	
+	// API raw response "id"
+	var payerId = payer.Id; 
+	// API raw response "reference"
+	var payerRef = payer.Key; 
+	//API raw response "first_name"
+	var payerFirstName = payer.FirstName; 
+	//API raw response "last_name"
+	var payerLastName = payer.LastName; 
+	//API raw response "payment_methods"
+	var paymentMethods = payer.PaymentMethods; 
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+} 
+</Code>
+<Code id="php" title="PHP" language="PHP">
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+$card->token = "PMT_oOAH6BClraQWS3Qy07dh7tZAN3X2nW";
+
+$newCustomer = new Customer();
+$newCustomer->key = 'payer-123';
+$newCustomer->firstName = "John";
+$newCustomer->lastName = "James";
+
+try {
+    $newCustomer->addPaymentMethod($tokenizeResponse->token, $card);
+    /** @var \GlobalPayments\Api\Entities\Customer $payer */
+    $payer = $newCustomer->create();
+} catch (GatewayException $ex){
+    // TODO: Add your exception handling here
+}
+
+$payerId = $payer->id; // API raw response "id"
+$payerRef = $payer->key; // API raw response "reference"
+$payerFirstName = $payer->firstName; //API raw response "first_name"
+$payerLastName = $payer->lastName; //API raw response "last_name"
+$paymentMethods = $payer->paymentMethods; //API raw response "payment_methods"
+```
+</Code>
+</CodeGroup>
+
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```    
+{
+    "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "time_last_updated": "2021-05-03T21:23:39.718Z",
+    "merchant_id": "MER_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "merchant_name": "merchant_1",
+    "account_id": "TKA_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "account_name": "Tokenization",
+    "first_name": "John",
+    "last_name": "James",
+    "reference": "string",
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "PAYER_CREATE",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}
+```
+</Code>        
+
+### Create a token and assign it to a payer
+Next, we tokenize the customer’s payment method and then associate the payment token to the payer.
+
+#### Sample request
+
+        <Code id="JSON" language="JSON" title="JSON" active contextualLinks={{apiExplorerUrl: "/api/payers#/Create%20a%20Payer/post-payer"}}>
+```  
+{
+    "account_name": "Tokenization",
+    "reference": "CustABC_Card_1",
+    "usage_mode": "SINGLE",
+    "fingerprint_mode": "ALWAYS",
+    "name": "John's payment method",
+    "payer": {
+        "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW"
+    },
+    "card": {
+        "number": "4263970000005262",
+        "expiry_month": "05",
+        "expiry_year": "25",
+        "cvv": "852"
+    }
+}     
+```
+</Code> 
+        
+#### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```  
+{
+    "id": "PMT_31087d9c-e68c-4389-9f13-39378e166ea5",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "status": "ACTIVE",
+    "merchant_id": "MER_c4c0df11039c48a9b63701adeaa296c3",
+    "merchant_name": "Sandbox_merchant_2",
+    "account_id": "TRA_86920f927028745yt34d077d88beb29b",
+    "account_name": "Tokenization",
+    "fingerprint_presence_indicator": "NEW",
+    "fingerprint": "string",
+    "reference": "CustABC_Card_1",
+    "usage_mode": "SINGLE",
+    "name": "John's payment method",
+    "payer": {
+        "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW"
+    },
+    "card": {
+        "masked_number_last4": "string",
+        "expiry_month": "05",
+        "expiry_year": "25",
+        "brand": "VISA",
+        "network_token": "string",
+        "masked_network_token_last4": "string",
+        "network_token_expiry_month": "05",
+        "network_token_expiry_year": "25"
+    },
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "PAYMENT_METHOD_CREATE",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+    }
+}    
+```
+</Code> 
+    </Tab>
+</Tabs>  
+
+<Infobox>
+    Whether you decide to create a token first or create a payer first in Step 1, Step 2, testing and enhancements below are the same for the Payer capability.
+</Infobox>
+    
+## Step 2: Edit a payer
+You can edit a payer, which allows you to update their details and add or remove stored cards. For more information, see [Payers](/api/payers) in the API Explorer.
+
+#### Sample request
+    <CodeGroup contextualLinks={{apiExplorerUrl: "/api/payers#/Edit%20a%20Payer/patch-payer-id"}}>
+    <Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "payment_methods": [
+        {
+            "id": "PMT_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "NO"
+        },
+
+        {
+            "id": "PMT_CHnAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "YES"
+        }
+    ]
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+Customer newCustomer = new Customer
+{
+	Key = "payer-123",
+	Id = "PYR_f29f4f6981114f4ab4a96bd813615e79"
+};
+
+try
+{
+	newCustomer.AddPaymentMethod("PMT_7554986a-1e77-4c75-a80f-5889d0621c13", new CreditCardData
+	{
+		Token = "PMT_7554986a-1e77-4c75-a80f-5889d0621c13"
+	});
+	newCustomer.AddPaymentMethod("PMT_60aac707-e04d-4998-a1c8-1f5b759be389", new CreditCardData
+	{
+		Token = "PMT_60aac707-e04d-4998-a1c8-1f5b759be389"
+	});
+	
+	Customer payer = newCustomer.SaveChanges(); 
+	
+	// API raw response "id"
+	var payerId = payer.Id; 
+	// API raw response "reference"
+	var payerRef = payer.Key; 
+	//API raw response "first_name"
+	var payerFirstName = payer.FirstName; 
+	//API raw response "last_name"
+	var payerLastName = payer.LastName; 
+	//API raw response "payment_methods"
+	var paymentMethods = payer.PaymentMethods; 
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+</Code>
+<Code id="php" title="PHP" language="php">
+$config = new GpApiConfig();
+$config->appId = 'AppId';
+$config->appKey = 'AppKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$newCustomer = new Customer();
+$newCustomer->id = "PYR_f29f4f6981114f4ab4a96bd813615e79";
+$newCustomer->key = "payer-123";
+$card1 = new CreditCardData();
+$card1->token = "PMT_60aac707-e04d-4998-a1c8-1f5b759be389";
+$newCustomer->addPaymentMethod($card1->token, $card1);
+$card2 = new CreditCardData();
+$card2->token = 'PMT_7554986a-1e77-4c75-a80f-5889d0621c13';
+$newCustomer->addPaymentMethod($card1->token, $card2);
+
+try {
+    $newCustomer->addPaymentMethod($card1->token, $card1);
+    $newCustomer->addPaymentMethod($card2->token, $card2);
+
+    /** @var Customer $payer */
+    $payer = $newCustomer->saveChanges();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+// API raw response "id"
+$payerId = $payer->id;
+// API raw response "reference"
+$payerRef = $payer->key;
+//API raw response "first_name"
+$payerFirstName = $payer->firstName;
+//API raw response "last_name"
+$payerLastName = $payer->lastName;
+//API raw response "payment_methods"
+$paymentMethods = $payer->paymentMethods;
+```
+</Code>
+</CodeGroup>
+
+### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "time_created": "2021-05-03T21:23:39.718Z",
+    "time_last_updated": "2021-05-03T21:23:39.718Z",
+    "merchant_id": "MER_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "merchant_name": "merchant_1",
+    "account_id": "TKA_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+    "account_name": "Tokenization",
+    "first_name": "John",
+    "last_name": "James",
+    "reference": "payer-123",
+    "payment_methods": [
+         {
+            "id": "PMT_oOAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "NO"
+        },
+
+        {
+            "id": "PMT_CHnAH6BClraQWS3Qy07dh7tZAN3X2nW",
+            "default": "YES"
+        }
+    ],
+    "action": {
+        "id": "ACT_uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "type": "PAYER_EDIT",
+        "time_created": "2021-05-03T21:23:39.718Z",
+        "result_code": "SUCCESS",
+        "app_id": "uzFr7t4VOqxdLDI44hHmXIjHtOOE8d",
+        "app_name": "my_lovely_app"
+}
+```
+</Code>       
+
+## Step 3: Charge a payer
+Once you’ve created a payer, you can use the returned unique identifier (`PYR_ID`) to charge the payer. This request uses the default payment method stored for a payer to authorize the transaction. Or, you can use a new payment method.
+
+#### Sample request
+<CodeGroup active contextualLinks={{apiExplorerUrl: "/api/transactions#/Create%20a%20Sale%20or%20Refund/createSaleOrRefundTransaction"}}>    
+<Code id="JSON" language="JSON" title="JSON" active>
+```
+{
+    "account_name": "transaction_processing",
+    "type": "SALE",
+    "channel": "CNP",
+    "country": "US",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "USD",
+    "payer": {
+        "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW"
+    },
+    "payment_method": {
+        "entry_mode": "ECOM"
+    }
+}
+```
+</Code>
+<Code id="net" title=".NET" language="dotnet">
+```
+GpApiConfig config = new GpApiConfig
+{
+	AppId = "AppId",
+	AppKey = "AppKey",
+	Channel = Channel.CardNotPresent,
+	Environment = Environment.TEST
+};
+ServicesContainer.ConfigureService(config);
+
+CreditCardData card = new CreditCardData();
+            
+try
+{
+	Transaction response = card.Charge(1m)
+		.WithCurrency("USD")
+		.WithCustomerId("PYR_f29f4f6981114f4ab4a96bd813615e79")
+		.Execute();
+	
+	// API raw response key "id"
+	var transactionId = response.TransactionId; 
+	// API raw response key "amount"
+	var amount = response.BalanceAmount; 
+	//API raw response key "batch_id"
+	var batchId = response.BatchSummary.BatchReference;
+	//API raw response key "payment_method->card->avs_postal_code_result"
+	var avsResponseCode = response.AvsResponseCode;
+	//API raw response key "payment_method->card->avs_address_result"
+	var avsAddressResponse  = response.AvsAddressResponse;
+	// API raw response key "payment_method->card->cvv_result"
+	var cvnResponseMessage = response.CvnResponseCode;
+	// API raw response key "payment_method->card->brand";
+	var cardType = response.CardDetails.Brand;
+	// API raw response key "payment_method->card->masked_number_last4"
+	var maskedNumberLast4 = response.CardDetails.MaskedNumberLast4;
+	// capture_mode === 'MULTIPLE'
+	var multiCapture = response.MultiCapture; 
+	// API raw response key "reference"
+	var referenceNumber = response.ReferenceNumber; 
+	// API raw response key "action->result_code"
+	var responseCode = response.ResponseCode; 
+	// API raw response key "status"
+	var transactionStatus = response.ResponseMessage;
+	// API raw response key "time_created"
+	var timeCreated = response.Timestamp; 
+	// API raw response key "payment_method->card->authcode"
+	var authCode = response.AuthorizationCode;
+	//API raw response key "risk_assessment->mode"
+	var fraudResponseMode = response.FraudFilterResponse.FraudResponseMode;
+	//API raw response key "risk_assessment->result"
+	var fraudResponseResult = response.FraudFilterResponse.FraudResponseResult;
+	//API raw response key "risk_assessment->rules"
+	var fraudResponseRules = response.FraudFilterResponse.FraudResponseRules;
+	//API raw response key "payment_method->card->brand_reference"
+	var brandReference = response.CardBrandTransactionId;
+	//API raw response key "payment_method->card->provider->result"
+	var cardIssuerResult = response.CardIssuerResponse.Result;
+	//API raw response key "payment_method->card->provider->cvv_result"
+	var cardIssuerCvv = response.CardIssuerResponse.CvvResult;
+	//API raw response key "payment_method->card->provider->avs_address_result"
+	var cardIssuerAvsAddressResult = response.CardIssuerResponse.AvsAddressResult;
+	//API raw response key "payment_method->card->provider->avs_postal_code_result"
+	var cardIssuerAvsPostalCodeResult = response.CardIssuerResponse.AvsPostalCodeResult;
+	//API raw response key "payer->id"
+	var payerId = response.PayerDetails.Id;
+}
+catch (GatewayException e)
+{
+	Console.WriteLine(e);
+	throw;
+}
+</Code>
+<Code id="php" title="PHP" language="php">
+$config = new GpApiConfig();
+$config->appId = 'appId';
+$config->appKey = 'appKey';
+$config->channel = Channel::CardNotPresent;
+$config->environment = Environment::TEST;
+$config->requestLogger = new SampleRequestLogger(new Logger("logs"));
+
+ServicesContainer::configureService($config);
+
+$card = new CreditCardData();
+
+try {
+    $response = $card->charge(1)
+        ->withCurrency("USD")
+        ->withCustomerId('PYR_f29f4f6981114f4ab4a96bd813615e79')
+        ->execute();
+} catch (GatewayException $ex) {
+    echo $ex->getMessage();
+    exit();
+    // TODO: Add your exception handling here
+}
+
+// API raw response key "id"
+$transactionId = $response->transactionId; 
+// API raw response key "amount"
+$amount = $response->authorizedAmount; 
+//API raw response key "batch_id"
+$batchId = $response->batchSummary->batchReference;
+//API raw response key "type"
+$transactionType = $response->originalTransactionType;
+//API raw response key "payment_method->card->avs_postal_code_result"
+$avsResponseCode = $response->avsResponseCode;
+//API raw response key "payment_method->card->->avs_address_result"
+$avsAddressResponse  = $response->avsAddressResponse;
+// API raw response key "payment_method->card->cvv_result"
+$cvnResponseMessage = $response->cvnResponseMessage;
+// API raw response key "payment_method->card->brand";
+$cardType = $response->cardDetails->brand;
+// API raw response key "payment_method->card->masked_number_last4"
+$maskedNumberLast4 = $response->cardDetails->maskedNumberLast4;
+// capture_mode === 'MULTIPLE'
+$multiCapture = $response->multiCapture; 
+// API raw response key "reference"
+$referenceNumber = $response->referenceNumber; 
+// API raw response key "action->result_code"
+$responseCode = $response->responseCode; 
+// API raw response key "status"
+$transactionStatus = $response->responseMessage;
+// API raw response key "time_created"
+$timeCreated = $response->timestamp; 
+// API raw response key "payment_method->card->authcode"
+$authCode = $response->authorizationCode;
+//API raw response key "risk_assessment->mode"
+$fraudResponseMode = $response->fraudFilterResponse->fraudResponseMode;
+//API raw response key "risk_assessment->result"
+$fraudResponseResult = $response->fraudFilterResponse->fraudResponseResult;
+//API raw response key "risk_assessment->rules"
+$fraudResponseRules = $response->fraudFilterResponse->fraudResponseRules;
+//API raw response key "payment_method->card->brand_reference"
+$brandReference = $response->cardBrandTransactionId;
+//API raw response key "payment_method->card->provider->result"
+$cardIssuerResult = $response->cardIssuerResponse->result;
+//API raw response key "payment_method->card->provider->cvv_result"
+$cardIssuerCvv = $response->cardIssuerResponse->cvvResult;
+//API raw response key "payment_method->card->provider->avs_address_result"
+$cardIssuerAvsAddressResult = $response->cardIssuerResponse->avsAddressResult;
+//API raw response key "payment_method->card->provider->avs_postal_code_result"
+$cardIssuerAvsPostalCodeResult = $response->cardIssuerResponse->avsPostalCodeResult;
+//API raw response key "payer->id"
+$payerId = $response->payerDetails->id;
+```
+</Code>
+</CodeGroup>
+        
+### Sample response
+<Code id="JSON" language="JSON" title="JSON" active>
+```       
+{
+    "id": "TRN_7WxrYwWH0xCFZOh2BiK8UG3NDKeDot_67708081",
+    "time_created": "2024-03-19T01:52:30.848Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "USD",
+    "country": "US",
+    "merchant_id": "MER_7e3e2c7df34f42819b3edee31022ee3f",
+    "merchant_name": "Sandbox_merchant_3",
+    "account_id": "TRA_c9967ad7d8ec4b46b6dd44a61cde9a91",
+    "account_name": "transaction_processing",
+    "reference": "67708081",
+    "payer": {
+        "id": "PYR_oOAH6BClraQWS3Qy07dh7tZAN3X2nW"
+    },
+    "payment_method": {
+        "result": "00",
+        "message": "(00)[ test system ] Authorised",
+        "entry_mode": "ECOM",
+        "card": {
+            "funding": "CREDIT",
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX4242",
+            "authcode": "123456",
+            "brand_reference": "EgS4QRX08g1QT0sF",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "risk_assessment": [
+        {
+            "mode": "ACTIVE",
+            "result": "ACCEPTED",
+            "rules": [
+                {
+                    "reference": "0c93a6c9-7649-4822-b5ea-1efa356337fd",
+                    "description": "Cardholder Name Rule",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "a539d51a-abc1-4fff-a38e-b34e00ad0cc3",
+                    "description": "CardNumber block",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                },
+                {
+                    "reference": "d023a19e-6985-4fda-bb9b-5d4e0dedbb1e",
+                    "description": "Amount test",
+                    "mode": "ACTIVE",
+                    "result": "ACCEPTED"
+                }
+            ]
+        }
+    ],
+    "batch_id": "BAT_1369395",
+    "action": {
+        "id": "ACT_7WxrYwWH0xCFZOh2BiK8UG3NDKeDot",
+        "type": "AUTHORIZE",
+        "time_created": "2024-03-19T01:52:30.848Z",
+        "result_code": "SUCCESS",
+        "app_id": "rAprmx5lKNheCe5T1LKYjdNiCPLOi0bG",
+        "app_name": "payers_test"
+    }
+}
+```
+</Code>
+
+## Testing Payers
+Our Payers solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing different scenarios.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>

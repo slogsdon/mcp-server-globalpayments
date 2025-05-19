@@ -1,0 +1,27 @@
+{
+    "links": [
+        {
+            "title": "Policies",
+            "children": [
+                { "title": "Developer's Agreement", "url": "/developers-agreement" },
+                { "title": "Terms of Use", "url": "https://www.globalpayments.com/en-eu/terms-of-use", "data": { "link_target": "_blank" } },
+                { "title": "Privacy", "url": "https://www.globalpaymentsinc.com/privacy-statement", "data": { "link_target": "_blank" } }
+            ]
+        },
+        {
+            "title": "Company",
+            "children": [
+                { "title": "About Us", "url": "/about-us" }
+            ]
+        },
+        {
+            "title": "Connect",
+            "children": [
+                { "title": "Contact Us", "url": "/support/integration-support" },
+                { "title": "Blog", "url": "/blog/overview" },
+                { "title": "Stack Overflow", "url": "https://stackoverflow.com/questions/tagged/global-payments-api", "data": { "link_target": "_blank" } },
+                { "title": "GitHub", "url": "https://github.com/globalpayments", "data": { "link_target": "_blank" } }
+            ]
+        }
+    ]
+}

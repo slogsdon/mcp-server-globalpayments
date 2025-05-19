@@ -1,0 +1,59 @@
+---
+title: "Unified Payments API - September 05, 2023"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "09-05-2023"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="changed">
+        * The field "brand_reference" no longer has the dependency on the "stored_credential" object.
+        * Updated the error message when stored_credential object is sent incorrectly in the Create a Sale request. Updated error message is now:
+            * "error_code": "INVALID_REQUEST_DATA"
+            * "detailed_error_code": "40007"
+            * "detailed_error_description": "Request expects the following conditionally mandatory fields initiator, model and sequence."
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+
+<ReleaseNoteSection title="Funds">
+    <ReleaseNoteDetail type="added">
+        * New optional fields added for the "Credit Or Debit a Funds Management Account" request. New optional fields are:
+            * sender.reference
+            * sender.description
+            * sender.account_reference_type
+            * sender.account_reference
+            * sender.name
+            * sender.address.line1
+            * sender.address.city
+            * sender.address.postal_code
+            * sender.address.state
+            * sender.address.country
+            * sender.contact_phone.country_code
+            * sender.contact_phone.subscriber_number
+            * sender.date_of_birth
+            * sender.identification.type
+            * sender.identification.reference
+            * sender.identification.country
+            * sender.identification.expiry_date
+            * sender.identification.nationality
+            * sender.identification.country_of_birth
+            * recipient.reference
+            * recipient.account_reference_type
+            * recipient.account_reference
+            * recipient.name
+            * recipient.address.line1
+            * recipient.address.city
+            * recipient.address.postal_code
+            * recipient.address.state
+            * recipient.address.country
+            * recipient.contact_phone.country_code
+            * recipient.contact_phone.subscriber_number
+            * recipient.date_of_birth
+            * recipient.identification.type
+            * recipient.identification.reference
+            * recipient.identification.country
+            * recipient.identification.expiry_date
+            * recipient.identification.nationality
+            * recipient.identification.country_of_birth
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>

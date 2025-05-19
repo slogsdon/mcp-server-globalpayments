@@ -1,0 +1,168 @@
+---
+title: "Authentication Reporting"
+subtitle: "Get details on authentication outcomes"
+tag: "xml"
+created: "02/03/2025"
+---
+Our 3D Secure 2 solution provides complete flexibility for reporting transaction authentications. The search request returns a summary object allowing you to see a high-level outcome of the authentication. You can then follow the standard Obtain Authentication Data step to get more detail, including the data required for authorization.
+
+## Authentication search
+Using the search endpoint, you can pull a list of authentication records based on the following criteria:
+
+**Start and End Timestamp**
+Allows you to pull a list of records based on a set timeframe (the max being 48 hours). Providing a Start Timestamp is mandatory and, if no End Timestamp is specified, the 3D Secure 2 solution will automatically return all the records from 48 hours after it.
+
+**Card BIN**
+Search for all the authentications from a particular BIN (the first 6 digits of the card number). The BIN can be used to identify the type of card used, the Issuer, and the country of origin.
+
+**Directory Server (DS) Transaction ID**
+Find the authentication(s) associated with the unique identifier assigned by the Directory Server (DS) - Card Scheme.
+
+**Order ID**
+Find the authentication(s) associated with a particular merchant-generated Order ID.
+
+#### Sample request
+In our sample request, we search by a fixed timeframe of two hours to return all the authentication records. If you don’t specify a page size, the default is **100**.
+
+For more information on this functionality, including the full syntax of the request/response and how to build the digital signature or hash, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two).
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl https://api.sandbox.globalpay-ecommerce.com/3ds2/authentications/search
+-H "Content-type: application/json"
+-H "Authorization: securehash 0204a841510d67a46fbd305a60253d7bade32c6e"
+-X POST
+-d '{
+   "request_timestamp": "2019-11-28T13:00:00.000000",
+   "merchant_id": "MerchantId",
+   "account_id": "ecom",
+   "start_timestamp": "2019-11-28T10:40:00.000000",
+   "end_timestamp": "2019-11-28T12:40:00.000000"
+}'
+```
+</Code>
+
+#### Sample response
+The response will indicate the number of records returned so your application can iterate through each page as appropriate. For each authentication, a summary object is returned. This includes the unique identifier in the 3D Secure 2 solution (Server Transaction ID), the merchant supplied Order ID, and the Transaction Status.
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+  "page_size": 100,
+  "page_number": 1,
+  "total_records_available": 4,
+  "start_timestamp": "2019-11-28T10:40:00.000000",
+  "end_timestamp": "2019-11-30T00:00",
+  "transactions": [
+    {
+      "merchant_id": "MerchantId",
+      "account_name": "ecom",
+      "order_id": "20191128104036-868",
+      "server_trans_id": "9eabbfdf-fa41-4e20-a253-245b712b14f7",
+      "bin": 401200,
+      "scheme": "VISA",
+      "authentication_source": "BROWSER",
+      "acs_trans_id": "2a623324-0026-47c4-ae49-40e05d9c1307",
+      "trans_status": "AUTHENTICATION_FAILED",
+      "trans_status_reason": "LOW_CONFIDENCE"
+    },
+    {
+      "merchant_id": "MerchantId",
+      "account_name": "ecom",
+      "order_id": "20191128104059-134",
+      "server_trans_id": "9db9eccd-c5b5-44be-b171-43c31957cd82",
+      "bin": 426397,
+      "scheme": "VISA",
+      "authentication_source": "BROWSER",
+      "acs_trans_id": "fa7faed7-e09e-43b7-8aaa-726480e302b6",
+      "trans_status": "AUTHENTICATION_SUCCESSFUL",
+      "trans_status_reason": "LOW_CONFIDENCE"
+    },
+    {
+      "merchant_id": "MerchantId",
+      "account_name": "ecom",
+      "order_id": "20191128104119-735",
+      "server_trans_id": "7ab4c7f7-d39d-4fe4-b1fe-f31e30d9361a",
+      "bin": 401200,
+      "scheme": "VISA",
+      "authentication_source": "BROWSER",
+      "acs_trans_id": "bace7cbd-bf14-4e8f-9feb-d5c0192ddc15",
+      "acs_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+      "trans_status": "AUTHENTICATION_SUCCESSFUL",
+      "trans_status_reason": "HIGH_CONFIDENCE"
+    },
+    {
+      "merchant_id": "MerchantId",
+      "account_name": "ecom",
+      "order_id": "20191128104146-12",
+      "server_trans_id": "5fd2858e-2977-416c-ad96-5039fea420bd",
+      "bin": 401200,
+      "scheme": "VISA",
+      "authentication_source": "BROWSER",
+      "acs_trans_id": "47063433-dec0-496c-b711-63678271153a",
+      "acs_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+      "trans_status": "AUTHENTICATION_FAILED",
+      "trans_status_reason": "HIGH_CONFIDENCE"
+    }
+  ]
+}
+```
+</Code>
+
+## Obtain authentication data
+Using the Server Transaction ID, you can now request the detailed authentication data that the issuer has returned to us. The important information we need for an authorization is also included, such as the ECI, Authentication Value, and Directory Server (DS) Transaction ID.
+
+The blueprint of the request to obtain authentication data is:
+
+<Code id="JSON" title="" language="json" active>
+```
+https://api.sandbox.globalpay-ecommerce.com/3ds/authentications/{server_trans_id}?merchant_id={merchant_id}&request_timestamp={request_timestamp}
+```
+</Code>
+
+#### Sample request
+For more information on this functionality, including the full syntax of the request/response and how to build the digital signature or hash, see the API Reference for [3D Secure 2](/ecommerce/api/3d-secure-two).
+
+<Code id="JSON" title="JSON" language="json" active>
+```
+curl "https://api.sandbox.globalpay-ecommerce.com/3ds2/authentications/ad0fffeb-bfff-44d0-881f-b857fe77c5a2?merchant_id=MerchantId&request_timestamp=2019-07-30T08:52:44.991911"
+-H "Content-type: application/json"
+-H "Authorization: securehash 3acf61a9f49ee7a57fb57d710b97dd00399342a4"
+-X GET
+```
+</Code>
+
+#### Sample response
+<Code id="JSON" title="JSON" language="json" active>
+```
+{
+    "server_trans_id": "af65c369-59b9-4f8d-b2f6-7d7d5f5c69d5",
+    "acs_trans_id": "13c701a3-5a88-4c45-89e9-ef65e50a8bf9",
+    "ds_trans_id": "c272b04f-6e7b-43a2-bb78-90f4fb94aa25",
+    "authentication_type": "DYNAMIC_CHALLENGE",
+    "authentication_value": "ODQzNjgwNjU0ZjM3N2JmYTg0NTM=",
+    "eci": "05",
+    "challenge_mandated": true,
+    "status": "AUTHENTICATION_SUCCESSFUL",
+    "status_reason": "HIGH_CONFIDENCE",
+    "challenge_request_url": "https://test.portal.gpwebpay.com/pay-sim-gpi/sim/acs",
+    "authentication_source": "BROWSER",
+    "message_category": "PAYMENT_AUTHENTICATION",
+    "message_version": "2.1.0",
+    "message_extension": [
+        {
+            "name": "Sample Extension",
+            "id": "B000000009-sampleExtension",
+            "criticality_indicator": "false",
+            "data": {
+                "B000000009-sampleExtension": {
+                    "sampleData": "sampleValue"
+                }
+            }
+        }
+    ],
+    "encoded_creq": "eyJ0aHJlZURTU2VydmVyVHJhbnNJRCI6ImFmNjVjMzY5LTU5YjktNGY4ZC1iMmY2LTdkN2Q1ZjVjNjlkNSIsImFjc1RyYW5zSUQiOiIxM2M3MDFhMy01YTg4LTRjNDUtODllOS1lZjY1ZTUwYThiZjkiLCJjaGFsbGVuZ2VXaW5kb3dTaXplIjoiNjAweDQwMCIsIm1lc3NhZ2VUeXBlIjoiQ3JlcSIsIm1lc3NhZ2VWZXJzaW9uIjoiMi4xLjAifQ"
+}
+```
+</Code>
+

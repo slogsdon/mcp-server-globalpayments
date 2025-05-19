@@ -1,0 +1,273 @@
+---
+title: "Credential on File"
+subtitle: "Flag COF transactions to adhere to card brand mandates"
+tag: "xml"
+created: "01/28/2025"
+---
+Credential on File (COF) is a way of identifying stored card transactions. The location of the stored card details doesn't matter—the details could be held within Global Payments card storage or stored securely by the merchant or by a third party for merchant use. 
+
+## COF mandate explained
+The purpose of the COF mandate from the card brands, such as Visa or Mastercard, is to help reduce fraud by requiring merchants to include certain fields in the authorization message when using a customer’s stored credentials for payments. These COF fields indicate to Issuers and Acquirers that the merchant has a prior arrangement with the customer to store their card details and potentially to make subsequent payments on their behalf. This benefits the merchant and cardholder by identifying a more trusted transaction, which can enable scenarios like one-click checkout or recurring transactions.
+
+## Use cases
+Transactions using stored card details may be customer-initiated or merchant-initiated. 
+
+* **Customer-initiated transaction (CIT)** – The customer actively participates in a payment transaction with the merchant, where their card details have previously been stored. This could be the initial transaction before a sequence of recurring payments or where the customer makes a subsequent payment using their merchant-stored card details (one-click checkout). 
+
+* **Merchant-initiated transaction (MIT)** – The merchant uses stored card details to raise a payment for which the customer has previously given consent, e.g. a monthly gym membership or subscription. No involvement from the cardholder is required for an MIT. For more information on MITs, see our [Merchant-Initiated Transactions](/ecommerce/risk-management/3ds/MIT) article.
+
+The following table describes the required COF fields.
+
+|     |     |
+| --- | --- | 
+| Required COF Field | Description |
+| Type | The relationship type the customer agreed to with the merchant and the category of transaction being processed. Allowed values:<br/><br/>**recurring** \- Payment with no fixed duration that continues until the customer cancels.   <br/>**installment** \- Payment of an agreed amount on the same day each month until the fixed duration ends.   <br/>**oneoff** \- Unscheduled payment with no fixed duration. |
+| Initiator | The initiator of the transaction. Allowed values:<br/><br/>**cardholder  <br/>merchant** |
+| Sequence | Indicates the stage of card storage. Allowed values:<br/><br/>**first  <br/>subsequent** |
+| Scheme Reference Data (SRD) | Unique identifier provided by a card scheme, such as Visa or Mastercard, that links to the payment history between the customer and merchant. Also referred to as Transaction ID or Trace ID, depending on the card scheme. This will appear in the response message of an initial transaction. |
+
+These fields can be used together in the following ways:
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Example | Customer Signup | Online Retail: One-Click Checkout | Gym Membership | Car Payments | Account Auto Top-up |
+| Scenario | CIT: Customer agrees to store a card for the first time | CIT: Unscheduled payments triggered by the cardholder | MIT: Subscription or variable amount billing agreement | MIT: Regular payments for a fixed term | MIT: Unscheduled payments triggered by the merchant |
+| Type | oneoff | oneoff | recurring | installment | oneoff |
+| Initiator | cardholder | cardholder | merchant | merchant | merchant |
+| Sequence | first**\*** | subsequent | subsequent | subsequent | subsequent |
+| SRD | not required | not required | required | required | required |
+| _\*The cardholder must successfully complete a challenge on all COF initial (Initiator:cardholder Sequence:first) transactions to confirm the merchant has authority to process subsequent MITs. To ensure this happens, set the “Challenge Mandated” flag (see [Initiate Authentication](/api/3d-secure-two#3ds2-initiate "Initiate Section of 3D Secure Article") in our 3D Secure article) when going through 3D Secure for all CIT First authentications._ |     |     |     |     |     |
+
+<Infobox>
+In the following sections, we provide information on flagging COF transactions whether you’re using direct API calls or our Hosted Payment Page (HPP) and whether you’re using our Card Storage solution or a third-party card storage.
+</Infobox>
+
+For any payment type and any card storage method you choose, you can still manage all of the messaging yourself, as outlined above. 
+
+### Flag a COF
+
+#### First payment - CIT
+
+Use the flags below for a CIT first payment. In this example the customer and card have already been stored, and we use a receipt-in request as the CIT first, taking a payment from the stored card. It is also possible to store the card and process a receipt-in-OTB as the CIT first, or to carry out a CIT first authorization or OTB just before storing the card with a card-new request, as outlined in our [Merchant-Initiated Transactions](/node/513 "Merchant-Initiated Transactions") article.
+
+1)  3D Secure flags to indicate that SCA was performed:
+    *   ECI
+    *   Directory server transaction ID
+    *   Authentication value
+    *   Message version
+2)  Stored credential information:
+    *   Type - set to **oneoff**
+    *   Initiator - set to **cardholder**
+    *   Sequence - set to **first**
+
+##### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<request type="receipt-in" timestamp="20200614095601">
+    <merchantid>MerchantId</merchantid>
+    <account>internet</account>
+    <channel>ECOM</channel>
+    <orderid>AiCibJ5UR7utURy_slxhJw</orderid>
+    <amount currency="EUR">1001</amount>
+    <autosettle flag="1" />
+    <payerref>03e28f0e-492e-80bd-20ec318e9334</payerref>
+    <paymentmethod>3c4af936-483e-a393-f558bec2fb2a</paymentmethod>
+    <paymentdata>
+        <cvn>
+            <number>123</number>
+        </cvn>
+    </paymentdata>
+    <storedcredential>
+        <type>oneoff</type>
+        <initiator>cardholder</initiator>
+        <sequence>first</sequence>
+    </storedcredential>
+    <mpi>
+        <eci>5</eci>
+        <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+        <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+        <message_version>2.1.0</message_version>
+    </mpi>
+    <sha1hash>f0b45f1d7aed21e7476c11c22c124f5a44a9c59a</sha1hash>
+</request>
+```
+</Code>
+
+#### Subsequent payment - MIT Example
+
+For a receipt-in request, use the flags below for an MIT recurring subsequent payment. Other types of MITs are also possible within the scenarios outlined in the Use Cases section above.
+
+1.  3D Secure flags to indicate that SCA was performed:
+    *   Not applicable. The request is merchant initiated and out of scope for SCA.
+2.  Stored credential information:
+    *   Type - must be set to **recurring**
+    *   Initiator - must be set to **merchant**
+    *   Sequence - must be set to **subsequent**
+    *   Scheme reference data (SRD) - the SRD provided by card scheme in the initial CIT payment response must be included in a subsequent MIT. If a successful authorization has already taken place on the stored card, the SRD from that transaction will have been stored against the card by Global Payments. In that case you can omit this field as that stored SRD will automatically be added during transaction processing.
+
+##### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<request type="receipt-in" timestamp="20200614095601">
+	<merchantid>MerchantId</merchantid>
+	<account>internet</account>
+	<channel>ECOM</channel>
+	<orderid>AiCibJ5UR7utURy_slxhJw</orderid>
+	<amount currency="EUR">1001</amount>
+	<autosettle flag="1" />
+	<payerref>03e28f0e-492e-80bd-20ec318e9334</payerref>
+	<paymentmethod>3c4af936-483e-a393-f558bec2fb2a</paymentmethod>
+	<paymentdata>
+		<cvn>
+			<number>123</number>
+		</cvn>
+	</paymentdata>
+	<storedcredential>
+       	<type>recurring</type>
+		<initiator>merchant</initiator>
+		<sequence>subsequent</sequence>
+		<srd>MMC0F00YE4000000715</srd>
+	</storedcredential>
+	<sha1hash>f0b45f1d7aed21e7476c11c22c124f5a44a9c59a</sha1hash>
+</request>
+```
+</Code>
+
+## HPP and our card storage
+
+When using the Hosted Payment Page (HPP) with our Card Storage solution for one-off and recurring transactions, we automatically populate the required fields for you. 
+
+Regardless of payment types or if you’re using our Card Storage solution, you can still manage all of the messaging yourself. For a complete guide on how to do this for the HPP, see [Card Storage](/ecommerce/expand-your-integration/card-storage).
+
+### Flag a COF
+
+As mentioned above, the HPP automatically handles COF flagging for you, but you can override the default HPP flag settings if necessary.
+
+#### First payment - CIT
+
+When a customer is making a first payment and storing their card, the HPP sets the CoF flags by default to:
+
+*   Sequence = first
+*   Type = oneoff
+*   Initiator = cardholder
+
+#### Subsequent payment - CIT
+
+When a customer is making a subsequent payment and storing their card, the HPP sets the CoF flags by default to:
+
+*   Sequence = subsequent
+*   Type = oneoff
+*   Initiator = cardholder
+
+You can override the default and use what’s applicable instead within the scenarios defined under the "Use cases" section, using this format:
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<input type="hidden" name="HPP_STORED_CREDENTIAL_SEQUENCE" value="subsequent">
+<input type="hidden" name="HPP_STORED_CREDENTIAL_TYPE" value="oneoff">
+<input type="hidden" name="HPP_STORED_CREDENTIAL_INITIATOR" value="cardholder">
+```
+</Code>
+
+## API and third-party card storage
+
+When using third-party card storage for one-off and recurring transactions, you must populate all COF values, as we don’t have access to the appropriate values. 
+
+### Flag a COF
+
+#### First payment - CIT
+
+Use the flags below to correctly flag a CIT first payment.
+
+1)  3D Secure flags to indicate that SCA was performed:
+    *   ECI
+    *   Directory server transaction ID
+    *   Authentication value
+    *   Message version
+2)  Stored credential information:
+    *   Type - **oneoff**
+    *   Initiator - must be set to **cardholder**
+    *   Sequence - must be set to **first**
+
+##### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<request type="auth" timestamp="20200613141207">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <channel>ECOM</channel>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">1001</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>0425</expdate>
+    <chname>James Mason</chname>
+    <type>VISA</type>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1" />
+  <storedcredential>
+    <type>oneoff</type>
+    <initiator>cardholder</initiator>
+    <sequence>first</sequence>
+  </storedcredential>
+  <mpi>
+    <eci>5</eci>
+    <ds_trans_id>c272b04f-6e7b-43a2-bb78-90f4fb94aa25</ds_trans_id>
+    <authentication_value>ODQzNjgwNjU0ZjM3N2JmYTg0NTM=</authentication_value>
+    <message_version>2.1.0</message_version>
+  </mpi>
+  <sha1hash>87707637a34ba651b6185718c863abc64b673f20</sha1hash>
+</request>
+```
+</Code>
+
+#### Subsequent payment - MIT
+
+Use the flags below for an MIT recurring subsequent payment MIT. Other types of MITs are also possible within the scenarios outlined in the "Use cases" section.
+
+1.  3D Secure flags to indicate that SCA was performed:
+    *   Not applicable. The request is merchant initiated and out of scope for SCA.
+2.  Stored credential information:
+    *   Type - must be set to **recurring**
+    *   Initiator - must be set to **merchant**
+    *   Sequence - must be set to **subsequent**
+    *   Scheme reference data (SRD) - include the SRD provided in the response of the initial CIT payment 
+
+##### Sample request
+
+<Code id="xml" title="XML" language="xml" active>
+```
+<request type="auth" timestamp="20200717131101">
+    <merchantid>MerchantId</merchantid>
+    <account>internet</account>
+    <channel>ECOM</channel>
+    <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+    <amount currency="EUR">1001</amount>
+    <card>
+        <number>4263970000005262</number>
+        <expdate>0425</expdate>
+        <chname>James Mason</chname>
+        <type>VISA</type>
+        <cvn>
+            <number>123</number>
+            <presind>1</presind>
+        </cvn>
+    </card>
+    <autosettle flag="1" />
+    <storedcredential>
+        <type>recurring</type>
+        <initiator>merchant</initiator>
+        <sequence>subsequent</sequence>
+        <srd>5RRH9LmrvUVbRI6l</srd>
+    </storedcredential>
+    <sha1hash>72823f0924b0e9e2ad4fa486cb00907b5a92b660</sha1hash>
+</request>
+```
+</Code>

@@ -1,0 +1,16 @@
+---
+title: "Unified Payments API - January 05, 2024"
+tags: ["Rest API"]
+version: "Version 2021-03-22"
+date: "01-05-2024"
+---
+
+<ReleaseNoteSection title="Transactions">
+    <ReleaseNoteDetail type="changed">
+        Update to the behavior when payment_method.storage_mode and payment_method.usage_mode fields are added in a Create a Sale request:
+
+        * When a Create a Sale request is sent with a PMT_ID, payment_method.storage_mode as ALWAYS or ON_SUCCESS and payment_method.usage_mode as USE_NETWORK_TOKEN, the request will be processed using Network Token and request the creation of a new PMT_ID and a new Network Token.
+        * When a Create a Sale request is sent with a PMT_ID, payment_method.storage_mode as ALWAYS or ON_SUCCESS and payment_method.usage_mode as USE_CARD_NUMBER, the request will be processed using the card number and request the creation of a new PMT_ID.
+    </ReleaseNoteDetail>
+</ReleaseNoteSection>
+

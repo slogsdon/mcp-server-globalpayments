@@ -1,0 +1,597 @@
+---
+title: 'Hosted Fields - Guide'
+search_results: 'Global Payments - Hosted Fields Guide'
+subtitle: 'Learn how to use tokens to customize your payment form.'
+tag: 'rest'
+created: '06/08/2024'
+---
+This guide focuses on how to use tokenization to create a highly customized payment page for your website or application. First, we create an access token, which contains the allowable actions for your integration. Next, we set up Hosted Fields for your payment form, including generating a single-use token, which we then use to process a Create Transaction request and can later store by changing the usage mode. Finally, we provide sample CSS code to customize your page, including custom fonts.
+
+For an overview of Hosted Fields, see our [Overview](/docs/payments/online/hosted-fields-overview) page.
+
+## Prerequisites
+Before starting the steps in this guide, you must do the following:
+
+* [Get registered](/docs/getting-started/register)
+* [Create an app (generate keys)](/docs/getting-started/register#create-an-app-generate-keys)
+
+## Step 1: Create a single permission access token
+First need to create an access token. This is required to execute any API requests and contains the actions that are permitted for your app, including creating single-use tokens.
+
+For added security and integrity, you need to create one access token for each user session. This access token must only contain the single permission to create a single-use payment token and its 'time to expire' must be set to '10 minutes'.
+
+Additionally, you can create a `restricted_token` to mask fields returned from the Create Payment Methods response. Although no sensitive information is returned in the response, restricted access tokens ensure that information pertaining to your account will not be visible in the browser.
+
+The request below requires an `appid`, `nonce` and `secret`. Our guide on [creating an access token](/docs/getting-started/generate-token) shows how to get these values.
+
+<Code id="JSON" language="json" title="JSON" active contextualLinks={{apiExplorerUrl: "/api/access-token"}}>
+```
+curl --location 'https://apis.sandbox.globalpay.com/ucp/accesstoken' \
+--header 'Content-Type: application/json' \
+--header 'X-GP-Version: 2021-03-22' \
+--data '{
+    "app_id": "{{appid}}",
+    "secret": "{{secret - from step 3 on create an access token link above}}",
+    "grant_type": "client_credentials",
+    "nonce": "{{nonce - from step 2 on create an access token link above}}",
+    "interval_to_expire": "10_MINUTES",
+    "restricted_token": "YES",
+    "permissions": [
+             "PMT_POST_Create_Single"
+    ]
+}'
+```
+</Code>
+
+
+When passing the `restricted_token` field, the response returned from the JavaScript library for the tokenization request will be masked.
+
+<Code id="JSON" language="json" title="JSON">
+```
+{
+    "token": "GZ9nUu2zK9RAFo6rRcAFckaNUBGl",
+    "type": "Bearer",
+    "scope": {
+        "merchant_id": "MER_c5d37eaf0e3841e083c232b2318af55c",
+        "merchant_name": "Sandbox_Merchant_4",
+        "accounts": [
+            {
+                "id": "TKA_c1de85a8a5844c56abd9ca07bbd792c8",
+                "name": "tokenization",
+                "permissions": [
+                    "PMT_POST_Create_Single"
+                ]
+            }
+        ]
+    },
+    "app_id": "T6og1tbECpHFeO104qUM383oq5bOJ12r",
+    "app_name": "Postman_Collection_Test",
+    "time_created": "2024-12-20T13:01:16.632Z",
+    "seconds_to_expire": 599,
+    "interval_to_expire": "10_MINUTES",
+    "email": "firstname.lastname@email.com"
+}
+```
+</Code>
+
+## Step 2: Set up payment form
+Once you’ve created the access token, you can now generate the Hosted Fields for your payment form and generate a single-use payment token.
+
+Our Hosted Fields integration allows you to use your own existing payment form while lowering your PCI Compliance overhead. To achieve this, the card data elements of your form will be replaced by the Hosted Fields, including: Card Number, Expiry Date, Security Code (CVV), and Cardholder Name.
+
+<Infobox>
+    The Hosted Fields setup example in this section assumes that you already have a payment form.
+</Infobox>
+
+<CodeGroup>
+<Code id="HTML" language="xml" title="HTML" active contextualLinks={{apiExplorerUrl: "/api/links"}}>
+```
+<!DOCTYPE html>
+   <form id="payment-form" method="post" action="process_payment">
+   <h3>Payment Details</h3>
+   <label for="card-number">Card Number</label>
+   <div id="card-number"></div>
+   <label for="card-expiration">Expiry Date</label>
+   <div id="card-expiration"></div>
+   <label for="card-cvv">Security Code</label>
+   <div id="card-cvv"></div>
+   <label for="card-holder-name">Cardholder Name</label>
+   <div id="card-holder-name"></div>
+   <div id="submit-button"></div>
+   </form>
+```
+</Code>
+</CodeGroup>
+<br></br>
+<br></br>
+
+In the example shown, it’s assumed that your payment form has the following field IDs:
+* card-number
+* card-expiration
+* card-cvv
+* card-holder-name
+
+<img src="/gh-assets/payment_form.png" style={{display: "block", margin: "0 auto"}} />
+
+
+## Step 3: Add Hosted Fields
+Once you have the base of a payment form with the field IDs, we can target these IDs to place the Hosted Fields to the appropriate form fields. To do this you will invoke the JavaScript Library and add it to your application. Add the below script tag to access the JavaScript Library:
+
+<Code id="javascript" language="javascript" title="JavaScript" active>
+```javascript
+  <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+```
+  </Code>
+
+<br />
+The below example shows how to use our JavaScript Library to target the payment fields and convert them to Hosted Fields.
+
+The field object is contained in `GlobalPayments.ui.form`. This has the field configurations, including the target ID.
+
+<Code id="Javascript" title="Javascript" language="javascript">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   const cardForm = GlobalPayments.ui.form({
+      fields: {
+         "card-number": {
+            placeholder: "•••• •••• •••• ••••",
+            target: "#card-number"
+         },
+         "card-expiration": {
+            placeholder: "MM / YYYY",
+            target: "#card-expiration"
+         },
+         "card-cvv": {
+            placeholder: "•••",
+            target: "#card-cvv"
+         },
+         "card-holder-name": {
+            placeholder: "Jane Smith",
+            target: "#card-holder-name"
+         },
+         "submit": {
+            text: "Pay Now", // Change the text of the button
+            target: "#submit-button",
+            value: "Pay Now"
+         }
+      },
+      styles: {
+      // add custom CSS styling
+      }
+   });
+   </script>
+</form>
+```
+</Code>
+
+<br></br>
+After you have specified where the Hosted Fields will be placed, when the JavaScript initializes, the fields will render and be displayed on your payment form.
+
+<img src="/gh-assets/hosted_fields.png" style={{display: "block", margin: "0 auto"}} />
+
+
+## Step 4: Configure environment
+Continue setting up the form by configuring the environment and passing the access token created in the previous step. Once the JavaScript is successful in initializing the Hosted Fields, the input fields will be rendered in your payment form.
+
+The below configuration within `GlobalPayments.configure` is the minimum required to enable Hosted Fields. However, this [table](#allowable-configurations) contains all allowable configurations.
+
+<Code id="Javascript" title="Javascript" language="javascript">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      // configuring Hosted Fields
+      GlobalPayments.configure({
+         accessToken: "access-token",
+         apiVersion: "2021-03-22",
+         env: "sandbox" // or "production"
+      });
+      // method to notify that hosted fields have been initialized
+      cardForm.ready(() => {
+         console.log("Registration of all credit card fields occurred");
+         //TODO: Add your successful message
+      });
+   
+      // appending the token to the form as a hidden field and
+      // submitting it to the server-side
+      cardForm.on("token-success", (resp) => {
+         // add payment token to form as a hidden input
+         const token = document.createElement("input");
+         token.type = "hidden";
+         token.name = "payment-reference";
+         token.value = resp.paymentReference;
+         const form = document.getElementById("payment-form");
+         form.appendChild(token);
+         form.submit();
+      });
+
+      // add error handling if token generation is not successful
+      cardForm.on("token-error", (resp) => {
+         // TODO: Add your error handling
+      });
+
+      // field-level event handlers. example:
+      cardForm.on("card-number", "register", () => {
+         console.log("Registration of Card Number occurred");
+      });
+   </script>
+</form>
+```
+</Code>
+
+<br></br>
+The registration of the card number and card fields is confirmed:
+<img src="/gh-assets/hosted-fields_card-reg.png" style={{display: "block", margin: "0 auto"}} />
+
+## [Optional] Add styling
+Hosted Fields are easily customized to maintain the design of your website or application using CSS.
+
+The Hosted Fields example below was customized using the following CSS.
+
+<Infobox>
+    When applying styling to our JavaScript, the CSS must be in JSON format.
+</Infobox>
+<br></br>
+<br></br>
+
+<Code id="CSS" title="CSS" language="css">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      styles: {
+      //adding a radius on all text inputs
+         "input[type=text]": {
+         "margin-bottom": "20px",
+         "padding": "12px",
+         "border": "1px solid #ccc",
+         "border-radius": "10px",
+      },
+   
+      //adding focus on the fields when selected
+         "input[type=text]:focus-visible, input[type=tel]:focus-visible": {
+         "outline": "none !important",
+         "border": "1px solid #71C5E8",
+         "box-shadow": "0 0 4px 0 #71C5E8 inset",
+      },
+
+      //adding a radius on all number inputs
+         "input[type=tel]": {
+         "margin-bottom": "20px",
+         "padding": "12px",
+         "border": "1px solid #ccc",
+         "border-radius": "10px"
+      },
+   
+      //adding focus on the fields when selected
+         "button[type=button]:focus-visible": {
+         "background-color": "#71C5E8",
+         "outline": "none !important",
+         "border": "1px solid gray",
+         "box-shadow": "0 -1px 4px 0 gray inset",
+      },
+
+      //adding styling to the submit button
+         "button[type=button]": {
+         "background-color": "#00AEEF",
+         "color": "white",
+         "padding": "12px",
+         "margin": "10px",
+         "border": "none",
+         "border-radius": "10px",
+         "cursor": "pointer",
+         "font-size": "17px",
+      },
+
+      //adding hover color
+         "button[type=button]:hover": {
+         "background-color": "#71C5E8",
+      },
+      }
+   });
+      // configuring Hosted Fields
+      ...
+   </script>
+</form>
+```
+</Code>
+<br></br>
+<img src="/gh-assets/form_styling.png" style={{display: "block", margin: "0 auto"}} />
+
+
+## [Optional] Add custom fonts
+You can also add custom fonts to your Hosted Fields integration. By default, Hosted Fields uses the GP-Font. However, if your business requires custom fonts, you can do so through the JavaScript Library by following the font-face CSS rule.
+
+<Code id="CSS" title="CSS" language="css">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      styles: {
+      ...
+            //add custom fonts
+            "@font-face": {
+               "font-family": "'Roboto Mono'",
+               "font-style": "normal",
+               "font-weight": "200",
+               "font-display": "swap ",
+               "src": "url(https://fonts.gstatic.com/s/robotomono/v22/L0xuDF4xlVMF-BfR8bXMIhJHg45mwgGEFl0_Xvq_ROW4.woff2) format('woff2')",
+               "unicode-range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+            },
+            "#secure-payment-field": {
+               "font-family": "'Roboto Mono', monospace"
+            },
+
+      }
+   });
+      // configuring Hosted Fields
+      ...
+   </script>
+</form>
+```
+</Code>
+
+
+## Step 5: Generate the payment token
+Once the JavaScript is successful in initializing the Hosted Fields, the input fields will be rendered on your payment form.  When the cardholder enters their card details and submits the form, a single-use payment token (`PMT_ID`) is returned. You can append this payment token as a hidden field and pass it to the server side to process a transaction using it.
+
+<Code id="Javascript" title="Javascript" language="javascript">
+```
+<form id="payment-form" method="post" action="process_payment">
+...
+   <script src="https://js.globalpay.com/4.1.6/globalpayments.js"></script>
+   <script>
+   ...
+      styles: {
+      ...
+      // configuring Hosted Fields
+      GlobalPayments.configure({
+         accessToken: "nv0CIVcehBHQzZedIpEmR2QGOeMe",
+         apiVersion: "2021-03-22",
+         env: "sandbox" // or "production"
+      });
+      // method to notify that hosted fields have been initialized
+      cardForm.ready(() => {
+         console.log("Registration of all credit card fields occurred");
+         //TODO: Add your successful message
+      });
+   
+      // appending the token to the form as a hidden field and
+      // submitting it to the server-side
+      cardForm.on("token-success", (resp) => {
+         // add payment token to form as a hidden input
+         console.log(resp);
+         const token = document.createElement("input");
+         token.type = "hidden";
+         token.name = "payment-reference";
+         token.value = resp.paymentReference;
+         const form = document.getElementById("payment-form");
+         form.appendChild(token);
+         form.submit();
+      });
+
+      // add error handling if token generation is not successful
+      cardForm.on("token-error", (resp) => {
+         // TODO: Add your error handling
+      });
+
+      // field-level event handlers. example:
+      cardForm.on("card-number", "register", () => {
+         console.log("Registration of Card Number occurred");
+      });
+   </script>
+</form>
+```
+</Code>
+
+<br></br>
+
+Use [test cards](/resources/test-cards) to fill in the card details.
+<img src="/gh-assets/form_styling_filled.png" style={{display: "block", margin: "0 auto"}} />
+<br></br>
+<br></br>
+Click **Submit** to see the PMT response:
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+  details: {
+    account_id: "TKA_8dd84277223440cia420745c7f5b1c81",
+    accountName: "tokenisation",
+    cardBin: "426397",
+    cardholderName: "Jane smith",
+    cardLast4: "5262",
+    cardNumber: "426397******5262",
+    cardSecurityCode: true,
+    cardType: "visa",
+    expiryMonth: "10",
+    expiryYear: "2026",
+    merchantId: "MER_2584caaa4b5b4f77a90e7f2582ef53dd",
+    merchantName: "jasonbajariastest",
+    reference: "b1b9dc2a-dc7c-11c0-3c6e-bafe17d36628"
+  },
+  paymentReference: "PMT_96065232-83c3-4e1f-969a-c594c6de8f7e"
+}
+  ```
+</Code>
+
+
+## Step 6: Charging the payment token
+<Infobox>
+  Before you can charge the payment token, you will first need to [create a new access token with permissions](/docs/getting-started/generate-token) to process a transaction.
+</Infobox>
+
+To charge the single-use token, you will need to process a Create Transaction request. Instead of submitting the customer’s card information in the request, you can simply pass the payment token.
+
+This single-use token expires after 30 minutes. You can also assign a reference number to the payment transaction to help reconcile it later.
+
+For more information, see [Transactions](/api/transactions) in the API Explorer.
+
+<Infobox>
+  If 3D Secure 2 Strong Customer Authentication is part of your integration, see [Browser Authentication for 3D Secure](/docs/browser-auth-3DS#single-use-token) for steps and code samples.
+</Infobox>
+
+<br></br>
+Copy `PMT_ID` (`paymentReference`) from the PMT response (generated in Step 4) and paste it into the transaction request.
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "account_name": "{{acc_name}}",
+    "channel": "CNP",
+    "capture_mode":"AUTO",
+    "type": "SALE",
+    "amount": "100",
+    "currency": "EUR",
+    "reference": "{{reference}}",
+    "country": "IE",
+    "payment_method": {
+        "name": "Jane",
+        "entry_mode": "ECOM",
+        "id": "PMT_3f94e565-99a0-4cbf-9a32-aad3e19034df"
+    }
+}
+  ```
+</Code>
+
+<br></br>
+Send this request to see a response like the below.
+
+<Code id="JSON" language="JSON" title="JSON" active>
+  ```
+{
+    "id": "TRN_fE2jAsiNCCQ3NzTOE71Qt8OCHSiDNE_39194581",
+    "time_created": "2024-09-04T15:39:29.765Z",
+    "type": "SALE",
+    "status": "CAPTURED",
+    "channel": "CNP",
+    "capture_mode": "AUTO",
+    "amount": "100",
+    "currency": "EUR",
+    "country": "IE",
+    "merchant_id": "MER_2584caaa4b5b4f77a90e7f2582ef53dd",
+    "merchant_name": "jasonbajariastest",
+    "account_id": "TRA_f1300075c09246428aaf06d159b3f4f9",
+    "account_name": "transaction_processing_2",
+    "reference": "39194581",
+    "payment_method": {
+        "result": "00",
+        "message": "[ test system ] AUTHORISED",
+        "entry_mode": "ECOM",
+        "card": {
+            "funding": "CREDIT",
+            "brand": "VISA",
+            "masked_number_last4": "XXXXXXXXXXXX5262",
+            "authcode": "123456",
+            "brand_reference": "cjEx3A2v00X4hZvR",
+            "brand_time_created": "",
+            "tag_response": "",
+            "cvv_result": "MATCHED",
+            "avs_address_result": "MATCHED",
+            "avs_postal_code_result": "MATCHED",
+            "avs_action": "",
+            "provider": {
+                "result": "00",
+                "cvv_result": "M",
+                "avs_address_result": "M",
+                "avs_postal_code_result": "M"
+            }
+        }
+    },
+    "batch_id": "BAT_1432801",
+    "action": {
+        "id": "ACT_fE2jAsiNCCQ3NzTOE71Qt8OCHSiDNE",
+        "type": "AUTHORIZE",
+        "time_created": "2024-09-04T15:39:29.765Z",
+        "result_code": "SUCCESS",
+        "app_id": "O25QaOrOlCkGRLs7OUtPzhzocF1bGoyS",
+        "app_name": "jason_baj_test_2"
+    }
+}
+  ```
+</Code>
+
+
+
+#### Allowable configurations
+| Field Name | Allowable Value | Description |
+| -------- | ------- | ------- |
+| accessToken | string | An access token created for an application. |
+| accountName | string | The tokenization account name for the given merchant account. Required only if there is more than one tokenization account associated with the merchant account. |
+| apiVersion | string | The target API version. Default is *2021-03-22*. |
+| reference | string | The reference for the tokenization request. If not provided, a globally unique identifier (GUID) is created and sent in the request. |
+| enableAutocomplete | boolean | Enables autocomplete/autofill features. Default is *false*. |
+| language | string | Value for the HTML element's *lang* attribute within the iFrames and dictates the language used to display on Hosted Fields. Default is *en*. |
+| enableTwoDigitExpirationYear | boolean | Changes the placeholder of the expiry year to two digits (YY). Applicable only if using the default placeholder. |
+| enableCardFingerPrinting | boolean | Enables the use of the fingerprint mode with the *ALWAYS* value. |
+| requireCardHolderName | boolean | Enables the cardholder name field to be mandatory. |
+| fieldValidation.enabled | boolean | Enables the display of a validation message for user input on the card form. |
+| fieldValidation.characterValidation | string | Configuration for the validation used on the Cardholder Name field. |
+| allowedCardTypes | array; string | Configuration to allow specific card types on Hosted Fields. |
+
+#### Event handlers
+| Event | Description |
+| -------- | ------- | 
+| cardForm.on("card-number-test", (resp)); | Returns an event with a validity of the card number entered. Returns *true* or *false*. |
+| cardForm.on("card-expiration-test", (resp)); | Returns an event with a validity of the expiration date entered. Returns *true* or *false*. |
+| cardForm.on("card-cvv-test", (resp)); | Returns an event with a validity of the CVV/CVC entered. Returns *true* or *false*. |
+| cardForm.on("card-type", (resp)); | Returns the card type entered in the Card Number field. Returns *visa*, *mastercard*, *amex*, *diners*, *discover*, *jcb*, or *unknown*. |
+| cardForm.on("submit", "click", (resp)); | Returns a click event to indicate that the Submit button was clicked. |
+
+
+## Integration references
+To get a deeper understanding of Hosted Fields, we recommend that you use our provided integration references for both API and SDK integrations. For the full detailed API specification, see the [API Explorer](/api/overview). 
+
+To get a deeper understanding of this product, we’ve provided some references for both API and SDK integrations. 
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/api/access-token" title="API /accesstoken" icon="window">
+        Generate an access token.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/integration-options/sdk/overview" title="SDKs & Libraries" icon="code">
+        Payment link integration can be completed via our JAVA, PHP and .NET SDKs.
+    </Card>
+</CardsGroup>
+
+## Testing Hosted Fields
+Our Hosted Fields solution is available for testing in our free Sandbox environment for registered users of this developer portal. Use our resources below to start testing. 
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/resources/test-cards" title="Test Cards">
+        Test different transaction outcomes with simulated cards or banks.
+    </Card>
+
+    <Card type="with_icon" link="/api/postman-collection/overview" title="Postman Collection">
+        View, import, or fork our API collection in Postman.
+    </Card>
+        
+    <Card type="with_icon" link="/resources/responses" title="Responses">
+        View successful responses, HTTP status codes, action response data, and errors.
+    </Card>
+</CardsGroup>
+
+## Enhance your integration
+Below are value-added services that you can enable for Hosted Fields.
+
+<CardsGroup type="with_icon">
+    <Card type="with_icon" link="/docs/payments/tokenization/card-storage-guide#api" title="Card Storage" icon="coin">
+        Tokenize card details to charge customers later.
+    </Card>
+
+    <Card type="with_icon" link="/docs/payments/payment-methods/alternative-payment-methods-guide#hpp" title="Alternative Payment Methods" icon="piggy-bank">
+        Integrate with alternative and local payment methods.
+    </Card>
+        
+    <Card type="with_icon" link="/docs/payments/payment-methods/dynamic-currency-conversion-guide#hpp" title="Dynamic Currency Conversion" icon="euro-sign">
+        Let international customers pay in their home currency.
+    </Card>
+</CardsGroup>

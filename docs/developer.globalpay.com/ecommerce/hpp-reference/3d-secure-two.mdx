@@ -1,0 +1,264 @@
+---
+title: "3D Secure 2"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/26/2025"
+---
+In this Hosted Payment Page (HPP) reference, we present a request type, along with examples of request and response values. For more information on 3D Secure, see the [HPP tab](/ecommerce/risk-management/3ds/browser-authentication#hpp) of our main article.
+
+For information on the available exemptions requests and when to use them, see our main [Exemptions](/ecommerce/risk-management/psd2-sca-exemptions) article.
+
+## HPP request
+
+### Mandatory and recommended fields
+
+#### Sample request
+In this request, we pass mandatory fields along with some recommended ones. The more optional fields you send and data you supply, the more likely the authentication for the transaction will be frictionless. For the full list of optional fields and the allowed values in each, please see the section below.
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<form action="https://pay.sandbox.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180613110737">
+  <input type="hidden" name="MERCHANT_ID" value="MerchantId">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="1999">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="COMMENT1" value="Mobile Channel">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="HPP_CHANNEL" value="ECOM">
+  <!-- Begin 3D Secure 2 Mandatory and Recommended Fields -->
+  <input type="hidden" name="HPP_CUSTOMER_EMAIL" value="test@example.com">
+  <input type="hidden" name="HPP_CUSTOMER_PHONENUMBER_MOBILE" value="44|789456123">
+  <input type="hidden" name="HPP_BILLING_STREET1" value="Flat 123">
+  <input type="hidden" name="HPP_BILLING_STREET2" value="House 456">
+  <input type="hidden" name="HPP_BILLING_STREET3" value="Unit 4">
+  <input type="hidden" name="HPP_BILLING_CITY" value="Halifax">
+  <input type="hidden" name="HPP_BILLING_POSTALCODE" value="W5 9HR">
+  <input type="hidden" name="HPP_BILLING_COUNTRY" value="826">
+  <input type="hidden" name="HPP_SHIPPING_STREET1" value="Apartment 852">
+  <input type="hidden" name="HPP_SHIPPING_STREET2" value="Complex 741">
+  <input type="hidden" name="HPP_SHIPPING_STREET3" value="House 963">
+  <input type="hidden" name="HPP_SHIPPING_CITY" value="Chicago">
+  <input type="hidden" name="HPP_SHIPPING_STATE" value="IL">
+  <input type="hidden" name="HPP_SHIPPING_POSTALCODE" value="50001">
+  <input type="hidden" name="HPP_SHIPPING_COUNTRY" value="840">
+  <input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value="FALSE">
+  <input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value="NO_PREFERENCE">
+  <!-- End 3D Secure 2 Mandatory and Recommended Fields -->
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <input type="hidden" name="SHA1HASH" value="308bb8dfbbfcc67c28d602d988ab104c3b08d012">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| AutoSettle/AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| HPP Version | integer |     | M   | 1   | This must be set to 2. |
+| Channel | string | enum | O   | N/A | Used to specify the type of transaction. Allowed values:  <br/>  <br/>**ECOM** - E-commerce transaction  <br/>**MOTO** - Mail Order/Telephone Order transaction  <br/>  <br/>Compatible with us and certain other acquirers. |
+| Payer Email Address | string | alphanumeric | M\* | 1-254 | Customer’s email address, including the full domain name. The field must be submitted in the form name@host.domain (for example, james.mason@example.com). The domain can be between 2-24 characters.  <br/>Allowed characters: [a-zA-Z0-9_-.]@[a-zA-Z0-9_-.].[a-zA-Z]  <br/>European merchants: mandatory for SCA.  <br/>  <br/>\*Unless Customer Phone Number is being sent. |
+| Mobile Phone Number | string | numeric | C   | 3\|15 or 19 | The mobile phone number provided by the Cardholder. Should be In format of 'CountryCallingCode\|Number' for example, '1\|123456789'.  <br/>  <br/>European merchants: mandatory for SCA if captured by your application or website. We recommend that you send at least one phone number (Mobile, Home or Work). |
+| Billing Address Line 1 | string | alphanumeric | M   | 1-50 | First line of the customer's billing address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Line 2 | string | alphanumeric | M   | 1-50 | Second line of the customer's billing address. Can be submitted as blank if not relevant for the particular customer.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Line 3 | string | alphanumeric | M   | 1-50 | Third line of the customer's billing address. Can be submitted as blank if not relevant for the particular customer.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#` <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address City | string | alphanumeric | M   | 1-40 | The city of the customer's billing address.  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address State | string | ISO 3166-2 | C   | 0-3 | The state of the customer's billing address. Should be the country subdivision code defined in ISO 3166-2 minus the country code itself. For example, Illinois = IL. Applicable for US and CA addresses.  <br/>  <br/>For each country’s ISO 3166-2 codes, see the [ISO Online Browsing Platform](https://www.iso.org/obp/ui/#search). See codes for [Ireland](https://www.iso.org/obp/ui/#iso:code:3166:IE) or [Great Britain](https://www.iso.org/obp/ui/#iso:code:3166:GB).  <br/>European merchants: if state applicable for the billing address country, required for SCA. |
+| Billing Address Postal Code | string | alphanumeric | M   | 1-16 | ZIP or other postal code customer's billing address.  <br/>Allowed characters: [a-zA-Z0-9-␣]  <br/>  <br/>European merchants: mandatory for SCA. |
+| Billing Address Country | string | ISO 3166-1 | M   | 3   | The country of the customer's billing address. ISO 3166-1 numeric three-digit country code. For example, US = 840.  <br/>  <br/>European merchants: mandatory for SCA. |
+| Shipping Address Line 1 | string | alphanumeric | O   | 0-50 | First line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Line 2 | string | alphanumeric | O   | 0-50 | Second line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Line 3 | string | alphanumeric | 0   | 0-50 | Third line of the customer's shipping address.  <br/>Allowed characters for API: <br/> `^[\p{L}\p{M}\p{Blank}\p{N}.-_'’,&\#]*$`  <br/>Allowed characters for HPP: `.-_'’,&\#`  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address City | string | alphanumeric | O   | 0-50 | The city of the customer's shipping address.  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address State | string | ISO 3166-2 | O   | 0-3 | The state of the customer's shipping address. Should be the country subdivision code defined in ISO 3166-2 minus the country code itself. For example: Illinois = IL. Applicable for US and CA addresses.  <br/>  <br/>For each country’s ISO 3166-2 codes, see the [ISO Online Browsing Platform](https://www.iso.org/obp/ui/#search). See codes for [Ireland](https://www.iso.org/obp/ui/#iso:code:3166:IE) or [Great Britain](https://www.iso.org/obp/ui/#iso:code:3166:GB).  <br/>European merchants: if state applicable for the billing address country, required for SCA. |
+| Shipping Address Postal Code | string | alphanumeric | O   | 0-16 | ZIP or other postal code customer's shipping address.  <br/>Allowed characters: [a-zA-Z0-9-␣]  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Country | string | ISO 3166-1 | O   | 0-3 | The country of the customer's shipping address. Numeric three-digit country code. For example, US = 840.  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Match Indicator | Boolean | N/A | O   | N/A | Indicates whether the shipping address matches the billing address.  <br/>  <br/>European merchants: optional for SCA. |
+| Challenge Request Indicator | string | enum | O   | N/A | Indicates whether a challenge is requested for this transaction. The Issuer may override whatever preference is specified in this field. Allowed values:  <br/>  <br/>**NO\_PREFERENCE** - No preference as to whether the customer is challenged  <br/>**NO\_CHALLENGE\_REQUESTED** - Preference is for the customer not to be challenged.  <br/>**CHALLENGE\_PREFERRED** - Preference is for the customer to be challenged.  <br/>**CHALLENGE\_MANDATED** - A challenge is required for the transaction to be authorized due to local/regional mandates or other variables.  <br/>**NO\_CHALLENGE\_REQUESTED\_TRANSACTION\_RISK\_ANALYSIS\_PERFORMED**  <br/>**NO\_CHALLENGE\_REQUESTED\_DATA\_SHARE\_ONLY**  <br/>**NO\_CHALLENGE\_REQUESTED\_SCA\_ALREADY\_PERFORMED**  <br/>**NO\_CHALLENGE\_REQUESTED\_WHITELIST**  <br/>**CHALLENGE\_REQUESTED\_PROMPT\_FOR\_WHITELIST**  <br/>  <br/>European merchants: optional for SCA. |
+| Merchant Response URL | string | Standard URL Format | O   | 0-255 | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+
+### Optional fields
+3D Secure 2 allows submission of a much greater data set than its predecessor, the more data submitted the more information the card issuer will have when making the decision whether the transaction authentication should proceed through a Frictionless or a Challenge flow. For more information on these flows, see the [HPP tab]((/ecommerce/risk-management/3ds/browser-authentication#hpp)) of our main article.
+
+The types of data available to submit include:
+
+* Customer account with the merchant (creation date and history)
+* Gift card
+* Recurring and installment information
+* Prior 3D Secure 2 authentication
+* Merchant authentication of the customer
+
+#### Sample request
+
+<Code id="markup" title="HTML POST" language="markup" active>
+```
+<input type="hidden" name="HPP_CUSTOMER_PHONENUMBER_HOME" value="44|789456123">
+<input type="hidden" name="HPP_CUSTOMER_PHONENUMBER_WORK" value="44|1801555888">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_AGE_DATE" value="20190110">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_AGE_INDICATOR" value="LESS_THAN_THIRTY_DAYS">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_CHANGE_DATE" value="20190128">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_CHANGE_INDICATOR" value="THIS_TRANSACTION">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_PASSWORD_CHANGE_DATE" value="20190115">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_PASSWORD_CHANGE_INDICATOR" value="LESS_THAN_THIRTY_DAYS">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_PURCHASE_COUNT" value="3">
+<input type="hidden" name="HPP_TRANSACTION_TYPE" value="GOODS_SERVICE_PURCHASE">
+<input type="hidden" name="HPP_CARDHOLDER_ACCOUNT_IDENTIFIER" value="1f0aae6b-0bac-479f-9ee5-29b9b6cf3aa0">
+<input type="hidden" name="HPP_SUSPICIOUS_ACTIVITY" value="NO_SUSPICIOUS_ACTIVITY">
+<input type="hidden" name="HPP_PROVISION_ATTEMPTS_DAY" value="1">
+<input type="hidden" name="HPP_PAYMENT_ACCOUNT_AGE" value="201901101">
+<input type="hidden" name="HPP_PAYMENT_ACCOUNT_AGE_INDICATOR" value="LESS_THAN_THIRTY_DAYS">
+<input type="hidden" name="HPP_DELIVERY_EMAIL" value="test@example.com">
+<input type="hidden" name="HPP_DELIVERY_TIMEFRAME" value="TWO_DAYS_OR_MORE">
+<input type="hidden" name="HPP_SHIP_INDICATOR" value="UNVERIFIED_ADDRESS">
+<input type="hidden" name="HPP_SHIPPING_ADDRESS_USAGE" value="20190128">
+<input type="hidden" name="HPP_SHIPPING_ADDRESS_USAGE_INDICATOR" value="THIS_TRANSACTION">
+<input type="hidden" name="HPP_SHIPPING_NAME_INDICATOR" value="TRUE">
+<input type="hidden" name="HPP_PREORDER_DATE" value="20190212">
+<input type="hidden" name="HPP_PREORDER_PURCHASE_INDICATOR" value="MERCHANDISE_AVAILABLE">
+<input type="hidden" name="HPP_REORDER_ITEM_INDICATOR" value="FIRST_TIME_ORDER">
+<input type="hidden" name="HPP_TRANSACTION_ACTIVITY_DAY" value="1">
+<input type="hidden" name="HPP_TRANSACTION_ACTIVITY_YEAR" value="3">
+<input type="hidden" name="HPP_GIFT_CARD_AMOUNT" value="250">
+<input type="hidden" name="HPP_GIFT_CARD_COUNT" value="1">
+<input type="hidden" name="HPP_GIFT_CARD_CURRENCY" value="EUR">
+<input type="hidden" name="HPP_RECURRING_MAX_INSTALLMENTS" value="5">
+<input type="hidden" name="HPP_RECURRING_EXPIRY" value="20190205">
+<input type="hidden" name="HPP_RECURRING_FREQUENCY" value="25">
+<input type="hidden" name="HPP_PRIOR_TRANSACTION_AUTHENTICATION_METHOD" value="FRICTIONLESS_AUTHENTICATION">
+<input type="hidden" name="HPP_PRIOR_TRANSACTION_AUTHENTICATION_IDENTIFIER" value="26c3f619-39a4-4040-bf1f-6fd433e6d615">
+<input type="hidden" name="HPP_PRIOR_TRANSACTION_AUTHENTICATION_TIMESTAMP" value="20190110125733">
+<input type="hidden" name="HPP_PRIOR_TRANSACTION_AUTHENTICATION_DATA" value="string">
+<input type="hidden" name="HPP_CARDHOLDER_LOGIN_AUTHENTICATION_TYPE" value="MERCHANT_SYSTEM_AUTHENTICATION">
+<input type="hidden" name="HPP_CARDHOLDER_LOGIN_AUTHENTICATION_TIMESTAMP" value="20180613110212">
+<input type="hidden" name="HPP_CARDHOLDER_LOGIN_AUTHENTICATION_DATA" value="string">
+<input type="hidden" name="HPP_WHITELIST_STATUS" value="FALSE">
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field. Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Home Phone Number | string | numeric | C   | 3\|15 or 19 | The home phone number provided by the Cardholder. Should be In format: of 'CountryCallingCode\|Number' for example, '1\|123456789'.  <br/>  <br/>European merchants: mandatory for SCA if captured by your application or website. We recommend that you send at least one phone number (Mobile, Home or Work). |
+| Work Phone Number | string | numeric | C   | 3\|15 or 19 | The work phone number provided by the Cardholder. Should be In format: of 'CountryCallingCode\|Number' for example, '1\|123456789'.  <br/>  <br/>European merchants: mandatory for SCA if captured by your application or website. We recommend that you send at least one phone number (Mobile, Home or Work). |
+| Gift Card Count | integer |     | O   | 0-2 | The total number of prepaid or gift cards purchased.  <br/>  <br/>European merchants: optional for SCA. |
+| Gift Card Currency | string | ISO 4217 | O   | 0-3 | The currency code of prepaid or gift cards purchased. For example, Euro should be submitted as EUR.  <br/>  <br/>European merchants: optional for SCA. |
+| Gift Card Amount | integer |     | O   | 0-15 | The total amount of prepaid or gift cards purchased. Format: major units, for example, USD 123.45 = 123.  <br/>European merchants: optional for SCA. |
+| Delivery Email | string | alphanumeric | C   | 0-254 | For ELECTRONIC\_DELIVERY, the email address to which the merchandise was delivered. The field must be submitted in the form name@host.domain (for example, james.mason@example.com ).  <br/>  <br/>European merchants: optional for SCA. |
+| Delivery Timeframe | string | enum | O   | N/A | Indicates the delivery timeframe for the order. Allowed values:  <br/>  <br/>**ELECTRONIC\_DELIVERY**  <br/>**SAME\_DAY**  <br/>**OVERNIGHT**  <br/>**TWO\_DAYS\_OR\_MORE**  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Method | string | enum | O   | N/A | Indicates shipping method chosen for the transaction. Must be specific to this transaction, not generally to the merchant. If one or more items are included in the sale, use the Shipping Indicator code for the physical goods. If all the goods are digital, use the Shipping Method code that describes the most expensive item. Allowed values:  <br/>  <br/>**BILLING\_ADDRESS**  <br/>**ANOTHER\_VERIFIED\_ADDRESS** **UNVERIFIED\_ADDRESS**  <br/>**SHIP\_TO\_STORE**  <br/>**DIGITAL\_GOODS**  <br/>**TRAVEL\_AND\_EVENT\_TICKETS**  <br/>**OTHER**  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Name Matches Cardholder Name | Boolean | N/A | O   | N/A | Indicates whether the account customer name matches the shipping address name.  <br/>  <br/>European merchants: optional for SCA. |
+| Preorder Indicator | string | enum | O   | N/A | Indicates whether the customer is paying for merchandise that will be available at a future date.  <br/>Allowed values:  <br/>  <br/>**MERCHANDISE\_AVAILABLE**  <br/>**FUTURE\_AVAILABILITY**  <br/>  <br/>European merchants: optional for SCA. |
+| Preorder Availability Date | string | YYYY-MM-DD | O   | 0-10 | In the case of a preorder, the expected date when the merchandise will be available.  <br/>  <br/>European merchants: optional for SCA. |
+| Reorder Indicator | string | enum | O   | N/A | Indicates whether the customer is reordering previous purchased items.  <br/>Allowed values:  <br/>  <br/>**FIRST\_TIME\_ORDER**  <br/>**REORDER**  <br/>  <br/>European merchants: optional for SCA. |
+| Transaction Type | string | enum | O   | N/A | The type of transaction being authenticated. Allowed values:  <br/>  <br/>**GOODS\_SERVICE\_PURCHASE**  <br/>**CHECK\_ACCEPTANCE**  <br/>**ACCOUNT\_FUNDING**  <br/>**QUASI\_CASH\_TRANSACTION**  <br/>**PREPAID\_ACTIVATION\_AND\_LOAD**  <br/>  <br/>European merchants: optional for SCA. |
+| Payer Account Identifier | string | alphanumeric | O   | 0-64 | Optional field to pass additional information about the customer  <br/>  <br/>European merchants: optional for SCA. |
+| Account Age Indicator | string | enum | O   |     | Length of time the customer has had an account with the merchant. Allowed values:  <br/>  <br/>**NO\_ACCOUNT**  <br/>**THIS\_TRANSACTION**  <br/>**LESS\_THAN\_THIRTY\_DAYS**  <br/>**THIRTY\_TO\_SIXTY\_DAYS**  <br/>**MORE\_THAN\_SIXTY\_DAYS**  <br/>  <br/>European merchants: optional for SCA. |
+| Account Creation Date | string | YYYY-MM-DD | O   | 0-10 | Date the customer opened their account with the merchant.  <br/>  <br/>European merchants: optional for SCA. |
+| Account Change Date | string | YYYY-MM-DD | O   | 0-10 | Date the customer's account with the merchant was last changed. For example, if the billing or shipping details changed, new payment account or new users added.  <br/>  <br/>European merchants: optional for SCA. |
+| Account Change Indicator | string | enum | O   |     | Length of time since the account has changed.  <br/>Allowed values:  <br/>  <br/>**THIS\_TRANSACTION**  <br/>**LESS\_THAN\_THIRTY\_DAYS**  <br/>**THIRTY\_TO\_SIXTY\_DAYS**  <br/>**MORE\_THAN\_SIXTY\_DAYS**  <br/>  <br/>European merchants: optional for SCA. |
+| Password Change Date | string | YYYY-MM-DD | O   | 0-10 | Date the customer's account with the merchant had a password change or account reset.  <br/>  <br/>European merchants: optional for SCA. |
+| Password Change Indicator | string | enum | O   |     | Length of time since the customer's account with the merchant has had a password change or account reset. Allowed values:  <br/>  <br/>**NO\_CHANGE**  <br/>**THIS\_TRANSACTION**  <br/>**LESS\_THAN\_THIRTY\_DAYS**  <br/>**THIRTY\_TO\_SIXTY\_DAYS**  <br/>**MORE\_THAN\_SIXTY\_DAYS**  <br/>  <br/>European merchants: optional for SCA. |
+| Payment Account Creation Date | string | YYYY-MM-DD | O   | 0-10 | Date the payment account was associated with the customer's account.  <br/>  <br/>European merchants: optional for SCA. |
+| Payment Account Age Indicator | string | enum | O   |     | Length of time the customer has had an account with the merchant. Allowed values:  <br/>  <br/>**NO\_ACCOUNT** - The customer does not have an account, for example, guest checkout  <br/>**THIS\_TRANSACTION**  <br/>**LESS\_THAN\_THIRTY\_DAYS**  <br/>**THIRTY\_TO\_SIXTY\_DAYS**.  <br/>**MORE\_THAN\_SIXTY\_DAYS**  <br/>  <br/>European merchants: optional for SCA. |
+| Previous Suspicious Activity | string | enum | O   | N/A | Indicates whether there has been suspicious activity on this customer's account, including fraudulent activity. (Note this is a boolean in the SDK). Allowed values:  <br/>  <br/>**SUSPICIOUS\_ACTIVITY**.  <br/>**NO\_SUSPICIOUS\_ACTIVITY**  <br/>  <br/>European merchants: optional for SCA. |
+| Purchases in the last six months | integer |     | O   | 0-4 | Number of purchases with this customer's account during the previous six months.  <br/>  <br/>European merchants: optional for SCA. |
+| Number of Transactions in the Last 24 Hours | integer |     | O   | 0-3 | Number of transactions (successful and abandoned) for this customer account with the merchant in the previous 24 hours.  <br/>  <br/>European merchants: optional for SCA. |
+| Number of Transactions in the Last Year | integer |     | O   | 0-3 | Number of transactions (successful and abandoned) for this customer account with the merchant in the previous year.  <br/>  <br/>European merchants: optional for SCA. |
+| Add Card Attempts | integer |     | O   | 0-3 | Number of Add Card attempts in the last 24 hours.  <br/>  <br/>European merchants: optional for SCA. |
+| Shipping Address Creation Date | string | YYYY-MM-DD | O   | 0-10 | Date the shipping address was first used with the merchant.  <br/>European merchants: optional for SCA. |
+| Shipping Address Usage Indicator | string | enum | O   | N/A | When the shipping address was first used with the merchant.  <br/>Allowed values:  <br/>  <br/>**THIS\_TRANSACTION**  <br/>**LESS\_THAN\_THIRTY\_DAYS**  <br/>**THIRTY\_TO\_SIXTY\_DAYS**  <br/>**MORE\_THAN\_SIXTY\_DAYS**  <br/>  <br/>European merchants: optional for SCA. |
+| Prior Authentication Method | string | enum | O   |     | Method used by the customer previously to authenticate. Allowed values:  <br/>  <br/>**FRICTIONLESS\_AUTHENTICATION**  <br/>**CHALLENGE\_OCCURRED**  <br/>**AVS\_VERIFIED**  <br/>**OTHER\_ISSUER\_METHOD**  <br/>  <br/>European merchants: optional for SCA. |
+| Prior Authentication Transaction ID | string | UUID | O   | 0-36 | ACS Transaction ID for a prior 3DS authenticated transaction.  <br/>  <br/>European merchants: optional for SCA. |
+| Prior Authentication Timestamp | timestamp | numeric | O   | 0-32 | Date and time in UTC of the prior customer authentication. Minimum of 3 microseconds precision, can be up to 6. Must also include timezone.  <br/>  <br/>Format: yyyy-MM-ddTHH:mm:ss.SSS(Z\|±hh:mm)  <br/>  <br/>European merchants: optional for SCA. |
+| Prior Authentication Data | string | alphanumeric | O   | 0-2048 | Data that documents and supports a specific authentication process.  <br/>  <br/>European merchants: optional for SCA. |
+| Max Number of Instalments | integer |     | C   | 0-3 | Indicates the maximum number of authorizations permitted for instalment payments.  <br/>  <br/>European merchants: required for instalment transactions for SCA. |
+| Recurring Authorization Frequency | integer |     | C   | 0-4 | The minimum number of days between recurring authorizations.  <br/>  <br/>European merchants: required for recurring transactions for SCA. |
+| Recurring Authorization Expiry Date | timestamp | numeric | C   | 0-10 | Date after which no further recurring authorizations shall be performed.  <br/>  <br/>European merchants: required for recurring transactions for SCA. |
+| Customer Authentication Data | string | alphanumeric | O   | 0-2048 | Not currently in use.  <br/>  <br/>European merchants: optional for SCA. |
+| Customer Authentication Timestamp | timestamp | numeric | O   | 0-32 | The timestamp of the authentication with the merchant. Minimum of 3 microseconds precision, can be up to 6. Must also include timezone.  <br/>  <br/>Format: yyyy-MM-ddTHH:mm:ss.SSS(Z\|±hh:mm)  <br/>  <br/>European merchants: optional for SCA. |
+| Customer Authentication Method | string | enum | O   |     | Method used by the customer previously to authenticate with the merchant. Allowed values:  <br/>  <br/>**NOT\_AUTHENTICATED**  <br/>**MERCHANT\_SYSTEM\_AUTHENTICATION**  <br/>**FEDERATED\_ID\_AUTHENTICATION**  <br/>**ISSUER\_CREDENTIAL\_AUTHENTICATION**  <br/>**THIRD\_PARTY\_AUTHENTICATION**  <br/>**FIDO\_AUTHENTICATION**  <br/>  <br/>European merchants: optional for SCA. |
+| Whitelist Status | Boolean | N/A | O   | N/A | Allows you to communicate the status of trusted beneficiary/whitelist between the Issuer ACS. Values accepted:  <br/>  <br/>**TRUE** = Merchant is whitelisted by cardholder  <br/>**FALSE** = Merchant is not whitelisted by cardholder  <br/>  <br/>European merchants: optional for SCA. |
+
+## HPP response
+
+The Timestamp returned in the response will be identical to the one sent in the request JSON. This, combined with the Order ID and other transaction variables, can be used to definitively link the response received with the transaction request and order created in your application. You should also check the other transaction variables, for example the Amount, against what was stored in your application at the time the request JSON was sent.
+
+<Infobox>
+A 111 result code indicates that the issuer requires Strong Customer Authentication (SCA) for a transaction. To avoid this outcome, ensure that you enable 3D Secure 2 on the HPP. 
+</Infobox>
+
+#### Sample response
+<Code id="markup" title="HTTP POST" language="markup" active>
+```
+[RESULT=00,
+ AUTHCODE=12345,
+ MESSAGE=[ test system ] Authorised,
+ PASREF=14631546336115597,
+ AVSPOSTCODERESULT=M,
+ AVSADDRESSRESULT=M,
+ CVNRESULT=M,
+ ACCOUNT=internet,
+ MERCHANT_ID=MerchantId,
+ ORDER_ID=N6qsk4kYRZihmPrTXWYS6g,
+ TIMESTAMP=20180613113227,
+ AMOUNT=1001,
+ BATCHID=691175,
+ CARD_PAYMENT_BUTTON=Pay Invoice,
+ MERCHANT_RESPONSE_URL=https://www.example.com/responseUrl,
+ HPP_LANG=GB,
+ BILLING_CODE=59|123,
+ BILLING_CO=GB,
+ SHIPPING_CODE=50001|Apartment 852,
+ SHIPPING_CO=US,
+ COMMENT1=Mobile Channel,
+ ECI=5
+ AUTHENTICATION_VALUE=ODQzNjgwNjU0ZjM3N2JmYTg0NTM=,
+ DS_TRANS_ID=c272b04f-6e7b-43a2-bb78-90f4fb94aa25,
+ MESSAGE_VERSION=2.1.0,
+ SRD=MMC0F00YE4000000715,
+ SHA1HASH=8ab81d4437e24a88a08cffb51c15151846bd7b61]
+<input type="hidden" name="HPP_WHITELIST_STATUS" value="FALSE">
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| AVS Postcode Response | string | enum | The result of the Address Verification Service (AVS) check on the postcode and first line of the billing address:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Problem with check  <br/>U - Unable to check - Issuer not certified, for example  <br/>P - Partial Match  <br/>Available for US, CA and GB cardholders only. |
+| AVS Address Response | string | enum | See AVS Postcode Response |
+| CVN Result | string | enum | The result of the Security Code (CVN, CVV) check:  <br/>M - Matched  <br/>N - Not Matched  <br/>I - Not checked due to circumstances  <br/>U - Not checked - issuer not certified  <br/>P - Not Processed |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Amount | integer |     | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Card Payment Button | string | alphanumeric | Used to set what text is displayed on the payment button for card transactions. If this field is not sent in, “Pay Now” is displayed on the button by default. |
+| Merchant Response URL | string | Standard URL Format | Used to set which URL in your application the transaction response will be sent to. A fixed URL can also be added to your account by our support team. |
+| HPP Lang | string | enum | Used to set what language HPP is displayed in. If the field is not sent, the default language set on your account will be displayed. This can be configured by your account manager. Please see the list of [HPP Language Codes](/ecommerce/hpp-reference/language-codes). |
+| Billing or Shipping Code | string | alphanumeric | The Postal Code concatenated with the first line of the billing or shipping address. The billing code can be used for the Address Verification Service (AVS).  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| Billing or Shipping Country | string | alphanumeric | The country of the billing or shipping address.  <br/>Allowed characters: [a-zA-Z0-9.-] |
+| Comment | string | alphanumeric | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Eci | string | alphanumeric | The E-Commerce Indicator indicates whether chargeback protection is available for the transaction or not. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: [0-9a-fA-F] |
+| Directory Server Transaction ID | string | alphanumeric | Unique identifier for the authentication assigned by the DS (Card Scheme). |
+| Authentication Value | string | alphanumeric | Unique value for the authentication provided by the ACS. Must be used to provide proof of authentication. |
+| Message Version | string | numeric | 3DS protocol version identifier set by us. |
+| Scheme Reference Data | string | enum | This is the Scheme ID provided by Visa and Mastercard. Provides a link to the payment history between a customer and a merchant. |

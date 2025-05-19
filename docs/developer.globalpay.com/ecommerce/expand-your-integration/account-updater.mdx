@@ -1,0 +1,400 @@
+---
+title: "Account Updater"
+subtitle: "Keep stored card information up to date"
+tag: "xml"
+created: "03/13/2025"
+---
+<Infobox>
+Use of Account Updater requires specific agreements with us (or your acquirer). For more information, contact a member of our support team.
+</Infobox>
+
+Account Updater uses Visa’s VAU (Visa Account Updater) and Mastercard’s ABU (Automatic Billing Updater) services to allow merchants to update stored cards. This includes updating the current card number and expiry date for cardholders and making merchants aware when a card has been canceled. 
+
+This guide provides information to help you with the request process for updating cards manually as well as how to handle the API responses and what to expect when receiving report details from us.
+
+<Infobox>
+There are two ways to use Account Updater: manually or automatically. To explore which one is best for your purposes, contact your account manager.
+</Infobox>
+
+## Configurations
+
+Account Updater supports one of the following top-level configurations: Update or Insert.
+
+| Operation | Action | Example |
+| --- | --- | --- |  
+| Update | Card updates override existing card details stored against the original Payment Method reference. | A new future-dated Expiry Date is returned by the issuer. We will update the data stored against the provided Payment Method reference and the new date will be returned in the report. |
+| Insert | Card updates are stored against a new Payment Method reference. This new reference will be returned in the report. The existing Payment Method reference and associated card details remain unaltered. | A new future-dated Expiry Date is returned by the issuer. We will create a new Payment Method reference to store the card details against, along with the new Expiry Date. The new Payment Method reference and Expiry Date are returned in the report. |
+
+## Sending requests
+This section focuses on the process for updating cards manually. In this case, you submit a request to us containing the list of stored references for Payer (customer) and Payment Method (card) to be updated.
+
+### Authenticate
+
+You must use basic HTTP authentication with each request to the update and status endpoints. The Client ID (Merchant ID) and Shared Secret must be submitted in a specific format:
+
+1) Concatenate your Client ID and Shared Secret with a colon. For example: `MerchantId:Secret`
+2) Encode this string using a Base64 encoder tool like [this one](https://www.base64encode.org/). The result will look something like this: <br/><br/>_cmVhbGV4c2FuZGJveDpPTXNvTFpuRXZN_<br/><br/>
+3) The resulting string should be sent as part of the header of your request. It must conform to the <br/> `key : value` format as shown below.
+
+So, using our example, the header will be:
+
+<Code id="markup" title="" language="markup" active>
+   ```
+Authorization : Basic cmVhbGV4c2FuZGJveDpPTXNvTFpuRXZN
+```
+</Code>
+
+<Infobox>
+Before using the Production environment, the IP addresses of servers that may submit requests must be added to our allowlist. To do this, contact your account manager or a member of our support team. This is not a requirement for the Sandbox environment.
+</Infobox>
+
+### Upload a CSV file
+
+Update requests are submitted by CSV file and are sent as part of a multipart POST request. The file should be attached as follows:
+
+<Code id="markup" title="" language="markup" active>
+   ```
+Type: File
+Content-type: multipart/form-data; charset=UTF-8
+Name: file
+Part: {Local location of file being uploaded e.g. C:\pathToFile\file.csv}
+```
+</Code>
+<br/>
+If using Postman, the best approach is to use the `form-data` option and upload the CSV directly to Postman, as shown below.
+
+![CSV File Upload to Postman](/gh-assets/ecommerce/account-updater_postman.png)
+
+The request must be submitted to one of the following update endpoints where `{currency}` is replaced by the currency of the future transactions.
+
+<Code id="markup" title="" language="markup" active>
+   ```
+<!-- Live URL for update requests -->
+https://api.realexpayments.com/card-updater/jobs/{currency}
+<!-- Sandbox URL for test update requests --> 
+https://api.sandbox.realexpayments.com/card-updater/jobs/{currency}
+```
+</Code>
+<br/>
+
+The default setting is to allow **one** successful request to be submitted per currency, per day, to the update endpoint.
+
+* Supported currencies: GBP, EUR, USD, CAD
+* Supported card types: Visa, Mastercard
+
+### Send the update request
+
+<Infobox>
+Only cards saved using our [Card Storage](/ecommerce/expand-your-integration/card-storage) can be updated.
+</Infobox>
+
+The first step in the process is to send an update request containing the references of Payers and Payment Method to be updated. Files can be submitted to us daily. We will process the enquiry file or submit it to your acquirer on each day (or each weekday, if daily operation is not supported by the acquirer). The Payer and Payment Method references in the request will be used to retrieve the associated card data stored with us, which is then added to the enquiry file.
+
+<Infobox>
+For the requested data to be included in the relevant acquirer enquiry file on the same day, the update request must be fully received and validated before 11.29.59 AM GMT.
+</Infobox>
+
+The update file consists of a comma-separated list of Payer and Payment Method references, predicted amounts, and future transaction dates. If the amount and date are not known, we recommend using an amount of zero and a date of seven days in the future. Payment Method references associated with Visa or Mastercard cards can be submitted in the same request.
+
+<Infobox>
+The maximum size of an update is 15 MB, and the maximum row count per request is 100,000 records.
+</Infobox>
+
+#### Sample update file format
+
+##### Production
+
+<Code id="markup" title="" language="markup" active>
+   ```
+<!-- Blueprint
+<Payer Reference>,<Payment Method Reference>,<Amount>,<Transaction Date>
+-->
+03e28f0e-492e-80bd-20ec318e9334, 3c4af936-483e-a393-f558bec2fb2a ,0 , 20251006
+0f357b45-9aa4-4453-a685-c69232e9024f, 10c6a2c7-be7b-a13f-12638937a012 ,200 , 20251004
+376a2598-412d-4805-9f47-c177d5605853,ca46344d-4292-47dc-9ced-e8a42ce66977,1000,20251005
+```
+</Code>
+<br/>
+
+##### Sandbox
+
+In the Sandbox environment, you **must** use the data below to receive a response file. Using any other data, even if correct, will not provide a response file. This response file will be typically returned within 1 hour. The transaction date **must** be in the future.
+
+<Code id="markup" title="" language="markup" active>
+   ```
+testpayer,realex_test_001,100,20240731
+testpayer,realex_test_002,100,20240731
+testpayer,realex_test_003,100,20240731
+testpayer,realex_test_004,100,20240731
+testpayer,realex_test_007,100,20240731
+testpayer,realex_test_006,100,20240731
+testpayer,realex_test_007,100,20240731
+testpayer,realex_test_008,100,20240731
+testpayer,realex_test_009,100,20240731
+testpayer,realex_test_010,100,20240731
+testpayer,realex_test_011,100,20240731
+testpayer,realex_test_012,100,20240731
+testpayer,realex_test_013,100,20240731
+testpayer,realex_test_014,100,20240731
+```
+</Code>
+
+<Infobox>
+If the transfer is reported as being successful but you don’t receive a response file, contact our support team to ensure that the correct email address is associated with the card management service.
+</Infobox>
+
+#### Update file syntax
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| Payer Reference | M   | string | 1-50 | The Payer Reference identifying the customer in Card Storage. |
+| Payment Method | O   | string | 1-50 | The Payment Method reference identifying the card in Card Storage to be submitted for an update. If not present, the Payer must have a default card set up. |
+| Amount | M   | integer | 1-9 | The predicted amount of the future transaction in the minor unit of the currency (e.g., €100.00 should be submitted as "10000"). If unknown, submit as 0. |
+| Transaction Date | M   | string | 8   | The predicted date of the future transaction. If unknown, submit as today's date + 7 days (e.g., if today is 1st of March 2017 - 20170301, submit as 20170308 - 8th of March 2017). |
+
+  ## Handling responses
+
+This section focuses on handling the responses you receive when using Account Updater, including sample success/error messages and responses from status requests. We also provide a full explanation of response codes from Visa and Mastercard, along with the actions we take and what you can do if you receive them. 
+
+<Infobox>
+API responses are the same regardless of whether you send the requests manually or have them automatically sent using our service.
+</Infobox>
+
+### Sample update response
+
+After initial validation of an update request, a `JobID` is returned in the response. This can be used to track the request through the update lifecycle using the status endpoint. In the event of validation errors occurring, the response will contain additional information on why the request failed.
+
+#### Successful response
+
+<Code id="markup" title="" language="markup" active>
+   ```
+{"jobId":649,"timeStamp":"2016-10-03T14:02:22.852","clientId":"Merchant ID","resultCode":"TRANSFER_COMPLETE"}
+```
+</Code>
+
+#### Sample error scenarios
+
+<Code id="markup" title="" language="markup" active>
+   ```
+{"timestamp":"2016-11-30T11:49:57.896","clientId":"Merchant ID","message":"Invalid Data","resultCode":"INVALID_DATA"}
+
+{"timestamp":"2016-11-30T11:54:31.600+0000","status":401,"error":"Unauthorized","message":"Full authentication is required to access this resource","path":"/card-updater/jobs/GBP"}
+```
+</Code>
+
+#### Response message syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| jobId | C   | integer | 0-50 | Included if the request is successful. A unique identifier created by us for the submitted job. |
+| timeStamp | M   | timestamp | 20-28 | Timestamp in the format YYYY-MM-DDT:HH:MM:SS.MMM, including timezone adjustment. For example: +0000 |
+| clientId | C   | string | 1-20 | Included if the request is successful. The Client ID (Merchant ID) associated with the request. |
+| message | C   | string | 0-200 | Included for more information if the file encounters a validation error. Responses returned can include:<br/> **Badly formed Request**  <br/> **Empty File**  <br/> **Invalid Format**  <br/> **Invalid Data**  <br/> **Access Denied**  <br/> **Transfer Fail**  <br/> **Internal Error**  <br/> **Card Management Service is currently experiencing technical difficulties. Please retry later.**  <br/> **Maximum daily client limit reached. Please resubmit the file tomorrow.**  <br/> **Another transaction for the same currency is being processed.**  <br/> **Client limit of one job per currency per day reached.**  <br/> **Invalid basic authentication token.**  <br/> **Full authentication is required to access this resource.** |
+| resultCode | C   | string | 1-50 | Result indicating the status of the request. Included if the request is successful. |
+| status | C   | integer | 0-3 | HTTP response code. Returned if the file encounters a validation error. |
+| error | C   | string | 0-50 | Short description of the error. Returned if the file encounters a validation error. |
+| path | C   | string | 0-50 | The path the file was submitted to. Returned if the file encounters a validation error. |
+
+### Status request
+
+The Status request allows you to query the current status for a particular `JobID`. We provide a status for each `JobID` as it goes through the request lifecycle. Each status that can be returned is described in the table below.
+
+| Job Status | Description |
+| --- | --- | 
+| VALIDATING | When you submit an update message and the request passes the initial credential authentication, the file itself will then go through basic format validation. The following checks are performed:<br/> **Message Format**  <br/>**File Size**  <br/>**Length and character validation of all fields** |
+| VALIDATION FAILED | One or more Client ID, Payer, or Card reference combinations do not exist. Please note that no cards from a file that failed validation will be submitted for update. If this status occurs, all errors in the file must be corrected and the revised version submitted in a new request. |
+| AWAITING SUBMISSION | All Client ID, Payer, and Card reference combinations exist. The file to be sent to the acquirer is being built. |
+| SUBMITTED | The enquiry file was submitted to the acquirer for update. |
+| PROCESSING RESPONSE | The response file was received from the acquirer, and the card updates are in progress. |
+
+### Send the status request
+
+The status request must be sent to one of the below endpoints. These endpoints will accept an HTTP GET request. If the content of the initial update request passed validation, the status will be returned (see below). If validation of the initial update request failed, the details of the validation error are returned.
+
+<Infobox>
+In the Sandbox environment, a status of _Validating_ will always be returned.
+</Infobox>
+
+<Code id="markup" title="" language="markup" active>
+   ```
+<!-- URL for live status requests -->
+https://api.realexpayments.com/card-updater/jobs/{jobid}
+
+<!-- URL for sandbox status requests -->
+https://api.sandbox.realexpayments.com/card-updater/jobs/{jobid}
+```
+</Code>
+
+#### Sample status response
+##### Success
+<Code id="markup" title="" language="markup" active>
+   ```
+{"status":"AWAITING_SUBMISSION"}
+```
+</Code>
+##### Error
+<Code id="markup" title="" language="markup" active>
+   ```
+{"status":"VALIDATION_FAILED","errors":[{"errorType":"CARD_NOT_FOUND","errorDescription":"The payer ref / card ref combination provided does not match any card in our system.","payerRef":"TestPayer","cardRef":"TestCard"}]}
+```
+</Code>
+
+#### Response message syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| status | M   | string | 1-36 | Result indicating the status of the request. |
+| errors | O   |     |     | Parent element containing error details if appropriate. |
+| errorType | C   | string | 0-50 | Type of error encountered. Included if parent element "errors" is present. |
+| errorDescription | C   | string | 0-50 | Description of error encountered. Included if parent element "errors" is present. |
+| payerRef | C   | string | 0-50 | Payer that encountered an error. Included if parent element "errors" is present. |
+| cardRef | C   | string | 0-50 | Card that encountered an error. Included if parent element "errors" is present. |
+
+### Response codes by card brand
+The following tables define the response codes of Visa and Mastercard and provide details on our actions as well as actions you can take.
+
+#### Mastercard response codes
+
+| Response Code | Description | Our Action | Merchant Action |
+| --- | --- | --- | --- |   
+| MT  | Mastercard - Card update from Visa to Mastercard | Update card number and expiry date. | Optional: Store partial card number and expiry date for reference. |
+| MA  | Mastercard - Match made and update provided | Update card number and optional expiry. | Optional: Store partial card number and expiry for reference. |
+| MC  | Mastercard - Match made account closed |     | Delete card and contact cardholder if required. |
+| ME  | Mastercard - Match made and expiry date update provided | Update expiry date if date is in the future; no action if date is in the past. | Optional: Store expiry for reference. |
+| MN  | Mastercard - BIN not Participating in ABU |     |     |
+| MP  | Mastercard - Cardholder Account not in ABU |     |     |
+| MV  | Mastercard - Valid ABU match; no change |     |     |
+| MX  | Mastercard - Matches Issuer Account |     |     |
+| M4  | Mastercard - Error on submission - merchant not registered |     | Contact acquirer regarding registration for VAU/ABU. |
+| ZZ  | Unknown response code - no action available |     |     |
+
+#### Visa response codes
+
+| Response Code | Description | Our Action | Merchant Action |
+| --- | --- | --- | --- |   
+| V1  | Visa - New Details found | Update card number and optional expiry. | Optional: Store partial card number and expiry for reference. |
+| V2  | Visa - No Change to PAN |     |     |
+| V3  | Visa - Merchant Identity Invalid |     | Contact acquirer regarding registration for VAU/ABU. |
+| V4  | Visa - Card update from Mastercard to Visa | Update card number and expiry date. | Optional: Store partial card number and expiry date for reference. |
+| V7  | Visa - Issuer not subscribed |     |     |
+| V8  | Visa - C/H Account not found in VAU |     |     |
+| V9  | Visa - Closed account or temporarily unavailable for transactions |     | Delete card and contact cardholder if required. |
+| VA  | Visa - BIN not participating in VAU |     |     |
+| VC  | Visa - Payment to be stopped (PAN Level) |     | Delete card and contact cardholder if required. |
+| VD  | Visa - Payment to be stopped (Merchant Level) |     | Delete card and contact cardholder if required. |
+| VE  | Visa - Payment to be stopped |     | Delete card and contact cardholder if required. |
+| VF  | Visa - New Expiry date found | Update expiry if date is in the future, no action if date is in the past. | Optional: Store expiry for reference. |
+| VI  | Visa - PAN found but is no longer valid due to an account switch to another scheme | Update card number and optional expiry. | Optional: Store partial card number and expiry for reference. |
+| VJ  | Visa - PAN found and an account switch is currently being processed |     | Optional: Retry in 48 hours. |
+| VK  | Visa - New Expiry Date found in VAU | Update expiry if date is in the future; no action if date is in the past. | Optional: Store expiry for reference. |
+| VL  | Visa - Older Expiry Date found in VAU |     |     |
+| VM  | Visa - More recent PAN found, but it is expired |     |     |
+| VN  | Visa - More recent Expiry found, but it is expired |     |     |
+| VP  | Visa - Transaction Currency invalid |     |     |
+| VQ  | Visa - Acquirer Proprietary Information invalid |     |     |
+| VR  | Visa - Expiry Date invalid format |     |     |
+| VS  | Visa - Cardholder opted out of VAU |     |     |
+| ZZ  | Unknown response code - no action available |     |     |
+| 41  | Visa - Error - Resubmit |     | Resubmit the file. |
+
+## Reporting
+
+After successful submission of a request in the live Production environment, the update process will usually take several business days to complete. This includes us submitting the data to the card brands (that is, Visa and Mastercard) and updates from the relevant issuers. Once the update information is received by us, the Payment Method references will be updated as indicated by the response codes received in the file from the acquirer. 
+
+We will then email a report to notify you of the completed updates and any cards that were notified as deactivated by the issuer. If required, your application may then submit a Card Delete request for cards notified as deactivated. Alternatively, you can contact the customer to request updated card details and send a Card Edit request.
+
+For cards notified as updated, if your application stores part of the card data (for example, the last four digits of the number), the updated versions of these can be retrieved from the report. Otherwise, no further action is needed.
+
+<Code id="markup" title="" language="markup" active>
+   ```
+Client Card Update Report
+
+Summary
+Client ID,Date,Time,Total Records,Total Card Updates,Total Card Numbers Changed,Total Expiry Dates Changed,Total Cards Cancelled
+myclientid,01/01/2017,09:00,350,199,30,153,5
+
+Report Detail:
+
+Job ID,Payer Ref,Card Ref,Old Cardnumber,Old Expiry,New Cardnumber,New Expiry,Response Code
+1234,PayerRef1,CardRef00001,512345XXXXXX7712,1216,512345XXXXXX9159,0718,MA
+1234,PayerRef2,CardRef05115,512345XXXXXX5801,1215,,1119,ME
+1234,PayerRef4,CardRef47774,412345XXXXXX6872,1218,412345XXXXXX6872,,V9
+1234,PayerRef55,CardRef2880,512345XXXXXX2880,0117,512345XXXXXX2880,0619,MA
+1234,PayerRef75,CardRef4974,412345XXXXXX6353,1216,,0420,VF
+1234,PayerRef777,CardRef9318,412345XXXXXX9318,0219,412345XXXXXX9318,,V9
+1234,PayerRef94165456,CardRef1486,412345XXXXXX1486,0916,412345XXXXXX1294,0318,V1
+1235,PayerRef1a2a5q5e6,CardRef84847,512345XXXXXX4242,0817,512345XXXXXX4242,,MF
+1235,PayerRef554888,CardRef7547854,512345XXXXXX4415,0916,,,MC
+...
+
+Validation Failures
+Job ID,Payer Ref,Card Ref,Error code
+1234,PayerRef1,CardRef848825,INVALID_RESPONSE_CODE
+1234,PayerRef2,CardRef745896,INVALID_CARD_NUMBER
+1234,PayerRef3,CardRef445787,INVALID_EXPIRY_DATE
+1234,PayerRef4,CardRef669874,INVALID_CARD_AND_EXPIRY_DATE
+1235,PayerRef4,CardRef4787487,PM_METHODS_DOESNT_EXIST
+...
+```
+</Code>
+
+### Report format
+
+##### Title
+The title of the report will always be as follows:
+
+<Code id="markup" title="" language="markup" active>
+   ```
+Client Card Update Report
+```
+</Code>
+
+##### Summary
+A summary of the report's contents.
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – depending on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| Client ID | M   | string | 1-50 | Your Client ID assigned by us. |
+| Date | M   | string | 10  | Date of report, returned in the form of DD/MM/YYYY. |
+| Time | M   | string | 5   | Time of report, returned in the form of HH:MM. |
+| Total Records | M   | integer | 1-6 | Total number of records in the report. |
+| Total Card Updates | M   | integer | 1-6 | Total number of card updates in the report. |
+| Total Card Numbers Changed | M   | integer | 1-6 | Total number of card numbers changed in the report. |
+| Total Expiry Dates Changed | M   | integer | 1-6 | Total number of expiry dates changed in the report. |
+| Total Cards Cancelled | M   | integer | 1-6 | Total number of cards cancelled in the report. |
+
+#### Report detail
+
+Details of the updates carried out.
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – depending on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| Job ID | M   | integer | 1-19 | The identifier created by us for the submitted job. |
+| Payer Ref | M   | string | 1-50 | The Payer reference stored with us identifying the cardholder. |
+| Card Ref | M   | string | 1-50 | The Payment Method reference stored with us identifying the card that was updated. |
+| Old Cardnumber | M   | string | 12-19 | The previous card number. |
+| Old Expiry | M   | string | 4   | The previous expiry date. |
+| New Cardnumber | M   | string | 0-19 | The new card number. This field might not be populated. |
+| New Expiry | M   | string | 0-4 | The new expiry date. This field might not be populated. |
+| Response Code | M   | string | 2   | Response code received in acquirer file. For descriptions, see the [response codes](#response-codes-by-card-brand) section. |
+
+#### Validation failures
+Details of the errors encountered.
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – depending on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| Job ID | M   | integer | 1-19 | The identifier created by us for the submitted job. |
+| Payer Ref | M   | string | 1-50 | The Payer reference identifying the cardholder stored with us that encountered an error. |
+| Card Ref | M   | string | 1-50 | The Payment Method reference stored with us identifying the card that encountered an error. |
+| Error Code | M   | string | 1-200 | The error code returned. Can include:<br/><br/>**INVALID\_RESPONSE\_CODE**  – The response code received is in an invalid format (e.g., incorrect length).<br/>  **INVALID\_CARD\_NUMBER** – The new card number received failed the Luhn and/or length check (i.e., it cannot be used).<br/>  **INVALID\_EXPIRY\_DATE** – Expiry date received is invalid (e.g., in the past).<br/> **INVALID\_CARD\_AND\_EXPIRY\_DATE** – Both the expiry date and the card number received are invalid.<br/> **PM\_METHODS\_DOESNT\_EXIST** – The _payerref/cardref_ combination is not present in stored data (e.g., tokens are incorrect or were deleted by the client since file submission). |
+

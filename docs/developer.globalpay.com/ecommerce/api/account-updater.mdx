@@ -1,0 +1,160 @@
+---
+title: "Account Updater"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/20/2025"
+---
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on using Account Updater, see our [main article](/ecommerce/expand-your-integration/account-updater).
+
+## Update card
+
+<Infobox>
+Only cards saved using our [Card Storage](/ecommerce/expand-your-integration/card-storage) can be updated.
+</Infobox>
+
+<Infobox>
+For the requested data to be included in the relevant acquirer enquiry file on the same day, the update request must be fully received and validated before 11.29.59 AM GMT.
+</Infobox>
+
+<Infobox>
+The maximum size of an update is 15 MB, and the maximum row count per request is 100,000 records.
+</Infobox>
+
+#### Sample update file format
+
+##### Production
+
+<Code id="markup" title="" language="markup" active>
+   ```
+<!-- Blueprint
+<Payer Reference>,<Payment Method Reference>,<Amount>,<Transaction Date>
+-->
+03e28f0e-492e-80bd-20ec318e9334, 3c4af936-483e-a393-f558bec2fb2a ,0 , 20251006
+0f357b45-9aa4-4453-a685-c69232e9024f, 10c6a2c7-be7b-a13f-12638937a012 ,200 , 20251004
+376a2598-412d-4805-9f47-c177d5605853,ca46344d-4292-47dc-9ced-e8a42ce66977,1000,20251005
+```
+</Code>
+<br/>
+
+##### Sandbox
+
+In the Sandbox environment, you **must** use the data below to receive a response file. Using any other data, even if correct, will not provide a response file. This response file will be typically returned within 1 hour. The transaction date **must** be in the future.
+
+<Code id="markup" title="" language="markup" active>
+   ```
+testpayer,realex_test_001,100,20240731
+testpayer,realex_test_002,100,20240731
+testpayer,realex_test_003,100,20240731
+testpayer,realex_test_004,100,20240731
+testpayer,realex_test_007,100,20240731
+testpayer,realex_test_006,100,20240731
+testpayer,realex_test_007,100,20240731
+testpayer,realex_test_008,100,20240731
+testpayer,realex_test_009,100,20240731
+testpayer,realex_test_010,100,20240731
+testpayer,realex_test_011,100,20240731
+testpayer,realex_test_012,100,20240731
+testpayer,realex_test_013,100,20240731
+testpayer,realex_test_014,100,20240731
+```
+</Code>
+
+<Infobox>
+If the transfer is reported as being successful but you don’t receive a response file, contact our support team to ensure that the correct email address is associated with the card management service.
+</Infobox>
+
+#### Update file syntax
+
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| Payer Reference | M   | string | 1-50 | The Payer Reference identifying the customer in Card Storage. |
+| Payment Method | O   | string | 1-50 | The Payment Method reference identifying the card in Card Storage to be submitted for an update. If not present, the Payer must have a default card set up. |
+| Amount | M   | integer | 1-9 | The predicted amount of the future transaction in the minor unit of the currency (e.g., €100.00 should be submitted as "10000"). If unknown, submit as 0. |
+| Transaction Date | M   | string | 8   | The predicted date of the future transaction. If unknown, submit as today's date + 7 days (e.g., if today is 1st of March 2017 - 20170301, submit as 20170308 - 8th of March 2017). |
+
+### Sample update response
+
+After initial validation of an update request, a `JobID` is returned in the response. This can be used to track the request through the update lifecycle using the status endpoint. In the event of validation errors occurring, the response will contain additional information on why the request failed.
+
+#### Successful response
+
+<Code id="markup" title="" language="markup" active>
+   ```
+{"jobId":649,"timeStamp":"2016-10-03T14:02:22.852","clientId":"Merchant ID","resultCode":"TRANSFER_COMPLETE"}
+```
+</Code>
+
+#### Sample error scenarios
+
+<Code id="markup" title="" language="markup" active>
+   ```
+{"timestamp":"2016-11-30T11:49:57.896","clientId":"Merchant ID","message":"Invalid Data","resultCode":"INVALID_DATA"}
+
+{"timestamp":"2016-11-30T11:54:31.600+0000","status":401,"error":"Unauthorized","message":"Full authentication is required to access this resource","path":"/card-updater/jobs/GBP"}
+```
+</Code>
+
+#### Response message syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| jobId | C   | integer | 0-50 | Included if the request is successful. A unique identifier created by us for the submitted job. |
+| timeStamp | M   | timestamp | 20-28 | Timestamp in the format YYYY-MM-DDT:HH:MM:SS.MMM, including timezone adjustment. For example: +0000 |
+| clientId | C   | string | 1-20 | Included if the request is successful. The Client ID (Merchant ID) associated with the request. |
+| message | C   | string | 0-200 | Included for more information if the file encounters a validation error. Responses returned can include:<br/> **Badly formed Request**  <br/> **Empty File**  <br/> **Invalid Format**  <br/> **Invalid Data**  <br/> **Access Denied**  <br/> **Transfer Fail**  <br/> **Internal Error**  <br/> **Card Management Service is currently experiencing technical difficulties. Please retry later.**  <br/> **Maximum daily client limit reached. Please resubmit the file tomorrow.**  <br/> **Another transaction for the same currency is being processed.**  <br/> **Client limit of one job per currency per day reached.**  <br/> **Invalid basic authentication token.**  <br/> **Full authentication is required to access this resource.** |
+| resultCode | C   | string | 1-50 | Result indicating the status of the request. Included if the request is successful. |
+| status | C   | integer | 0-3 | HTTP response code. Returned if the file encounters a validation error. |
+| error | C   | string | 0-50 | Short description of the error. Returned if the file encounters a validation error. |
+| path | C   | string | 0-50 | The path the file was submitted to. Returned if the file encounters a validation error. |
+
+## Status
+
+The Status request allows you to query the current status for a particular `JobID`. We provide a status for each `JobID` as it goes through the request lifecycle. 
+
+#### Sample request
+
+The status request must be sent to one of the below endpoints. These endpoints will accept an HTTP GET request. If the content of the initial update request passed validation, the status will be returned. If validation of the initial update request failed, the details of the validation error are returned.
+
+<Infobox>
+In the Sandbox environment, a status of _Validating_ will always be returned.
+</Infobox>
+
+<Code id="markup" title="" language="markup" active>
+   ```
+<!-- URL for live status requests -->
+https://api.realexpayments.com/card-updater/jobs/{jobid}
+
+<!-- URL for sandbox status requests -->
+https://api.sandbox.realexpayments.com/card-updater/jobs/{jobid}
+```
+</Code>
+
+#### Sample response
+##### Success
+<Code id="markup" title="" language="markup" active>
+   ```
+{"status":"AWAITING_SUBMISSION"}
+```
+</Code>
+
+##### Error
+<Code id="markup" title="" language="markup" active>
+   ```
+{"status":"VALIDATION_FAILED","errors":[{"errorType":"CARD_NOT_FOUND","errorDescription":"The payer ref / card ref combination provided does not match any card in our system.","payerRef":"TestPayer","cardRef":"TestCard"}]}
+```
+</Code>
+
+#### Response message syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) – dependent on another field.
+
+| Element/Field | Type | Format | Length | Description |
+| --- | --- | --- | --- | --- |    
+| status | M   | string | 1-36 | Result indicating the status of the request. |
+| errors | O   |     |     | Parent element containing error details if appropriate. |
+| errorType | C   | string | 0-50 | Type of error encountered. Included if parent element "errors" is present. |
+| errorDescription | C   | string | 0-50 | Description of error encountered. Included if parent element "errors" is present. |
+| payerRef | C   | string | 0-50 | Payer that encountered an error. Included if parent element "errors" is present. |
+| cardRef | C   | string | 0-50 | Card that encountered an error. Included if parent element "errors" is present. |

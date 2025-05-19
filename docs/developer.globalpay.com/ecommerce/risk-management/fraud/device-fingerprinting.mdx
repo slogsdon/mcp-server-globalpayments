@@ -1,0 +1,123 @@
+---
+title: "Device Fingerprinting"
+subtitle: "Recognize returning customers regardless of device"
+tag: "xml"
+created: "02/03/2025"
+---
+The Decision Manager Device Fingerprinting service gathers information about the devices that are used to place orders on your site or while using your mobile app. This unique identifier can be used as a consistent way to identify a device or customer and their location, despite whatever identity masking techniques they may use (for example, a Virtual Private Network or proxy).
+
+<Tabs active="api">  
+<Tab id="api" title="API">
+This guide focuses on using Device Fingerprinting for direct API integration. The examples in this article show the One-Pixel Image and JavaScript Code for websites. The functionality is also available for Android and iOS apps.
+
+## Sample embedded scripts
+The scripts should be embedded on the checkout page that initiates the transaction. The value you pass in the request will be the Session ID included in the scripts. It is supplied as part of the Customer fields.
+
+Here, we use a random 32-character string.
+
+<Code id="XML" title="HTML/JS" language="xml" active>
+```
+<!-- One-Pixel Image -->
+<p style="background:url('https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&ampsession_id=<MERCHANT ID><SESSION ID>&amp;m=1')"></p>
+<img src="https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>&m=2" alt="">
+
+<!-- JavaScript -->
+<script src="https://www.fingerprintingserver.com/fp/check.js?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>"></script>
+```
+</Code>
+
+## Sample request
+The information provided by the Device Fingerprint and available in Decision Manager includes:
+
+* Date Device First Seen
+* Application Type
+* Time on Page
+* True IP Address
+
+For apps, Device Longitude and Latitude are available as well as whether the device is Jailbroken.
+
+<Code id="XML" title="XML" language="xml" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20170414100216" type="auth">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>
+  <amount currency="EUR">16400</amount>
+  <card>
+    <number>4263970000005262</number>
+    <expdate>1025</expdate>
+    <type>VISA</type>
+    <chname>James Mason</chname>
+    <cvn>
+      <number>123</number>
+      <presind>1</presind>
+    </cvn>
+  </card>
+  <autosettle flag="1"/>
+  <sha1hash>5245df9edbfc10b6dceb74ca2f616fd9e15271a3</sha1hash>
+  <customer>
+    <customerid>0f357b45-9aa4-4453-a685-c69232e9024f</customerid>
+    <firstname>James</firstname>
+    <lastname>Mason</lastname>
+    <email>james.mason@example.com</email>
+    <phonenumber>+3535611177</phonenumber>
+    <devicefingerprint>kyhb-hc1sa5jdf-tjbqec-uz19a-5n5b</devicefingerprint>
+  </customer>
+</request>
+```
+</Code>
+
+   </Tab> 
+   <Tab id="hpp" title="HPP">
+This guide focuses on using Device Fingerprinting for the Hosted Payment Page (HPP). The examples show the One-Pixel Image and JavaScript Code for websites. The functionality is also available for Android and iOS apps.
+
+Sample embedded scripts
+The scripts should be embedded on the checkout page that initiates the transaction. The value you pass in the POST request will be the Session ID included in the scripts. It is supplied as part of the Customer fields.
+
+Here, we use a random 32-character string.
+
+<Code id="XML" title="HTML/JS" language="xml" active>
+```
+<!-- One-Pixel Image -->
+<p style="background:url('https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&ampsession_id=<MERCHANT ID><SESSION ID>&amp;m=1')"></p>
+<img src="https://www.fingerprintingserver.com/fp/clear.png?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>&m=2" alt="">
+
+<!-- JavaScript -->
+<script src="https://www.fingerprintingserver.com/fp/check.js?org_id=<ORG ID>&session_id=<MERCHANT ID><SESSION ID>"></script>
+```
+</Code>
+
+## Sample request
+The information provided by the Device Fingerprint and available in Decision Manager includes:
+
+* Date Device First Seen
+* Application Type
+* Time on Page
+* True IP Address
+
+For apps, Device Longitude and Latitude are available as well as whether the device is Jailbroken.
+
+<Code id="XML" title="HTML POST" language="xml" active>
+```
+<form action="https://pay.realexpayments.com/pay" method="POST" target="iframe">
+  <input type="hidden" name="TIMESTAMP" value="20180913154639">
+  <input type="hidden" name="MERCHANT_ID" value="Merchant ID">
+  <input type="hidden" name="ACCOUNT" value="internet">
+  <input type="hidden" name="ORDER_ID" value="N6qsk4kYRZihmPrTXWYS6g">
+  <input type="hidden" name="AMOUNT" value="16400">
+  <input type="hidden" name="CURRENCY" value="EUR">
+  <input type="hidden" name="SHA1HASH" value="3ee9c9e0e35b8cd95f7dc9bca43e024e1074c3dc">
+  <input type="hidden" name="AUTO_SETTLE_FLAG" value="1">
+  <input type="hidden" name="HPP_VERSION" value="2">
+  <input type="hidden" name="MERCHANT_RESPONSE_URL" value="https://www.example.com/responseUrl">
+  <!-- Device Fingerprint Session Id -->
+  <input type="hidden" name="HPP_CUSTOMER_DEVICEFINGERPRINT" value="kyhb-hc1sa5jdf-tjbqec-uz19a-5n5b">
+  <input type="submit" value="Click To Pay">
+</form>
+```
+</Code>
+
+   </Tab>
+
+</Tabs>

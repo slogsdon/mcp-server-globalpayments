@@ -1,0 +1,1087 @@
+---
+title: "PayPal"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/17/2025"
+---
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on PayPal, see our [main article](/ecommerce/expand-your-integration/paypal).
+
+## Payment-Set
+A mandatory request used to initiate a PayPal payment, the `payment-set` is used to advise PayPal of the details of a new transaction and to retrieve the necessary details required to facilitate authentication. The request must contain the following two URLs:
+
+* **Return URL** – The URL on your website to which the customer should be redirected if the PayPal authentication attempt is successful
+* **Cancel URL** – The URL on your website to which the customer should be redirected in the event of the customer cancelling the transaction.
+ 
+After redirecting the customer to PayPal they will be redirected to the appropriate URL depending on the outcome of the authentication.
+
+#### Sample request
+
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<request type="payment-set" timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <autosettle flag="1"/>
+  <orderid>IgGjoyQSRXqRyIvG30S5zQ</orderid>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails>
+    <ReturnURL>https://www.example.com/success</ReturnURL>
+    <CancelURL>https://www.example.com/failure</CancelURL>
+  </paymentmethoddetails>
+  <sha1hash>2d630f0d401ee62c711db6ab37b79f2ad43f201e</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+|     |     |     |     |     |     |
+| --- | --- | --- | --- | --- | --- |     
+| Element/Field | Category | Format | Type | Length | Description |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS. If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us. Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through. Allowed characters: \[a-zA-Z0-9.\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. See [Currency Codes](https://developer.globalpay.com/resources/currency-codes "Currency Codes"). |
+| AutoSettle/  <br/>AutoCapture Flag | string | enum | M   |     | Used to specify the settlement/capture type. Allowed values:  <br/>**0** - Delayed Settle (Capture) / Authorize, don't automatically add to the settlement file.  <br/>**1** - Auto Settle (Capture) / Charge, automatically added to the next settlement file.  <br/>**MULTI** - Multi Settle (Capture), don't automatically add to the settlement file. Enables multiple settlement/capture requests up to 115% of the original transaction value. |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt. Allowed characters: \[a-zA-Z0-9\_-\] |
+| Return URL | string | URL | M   | 1-2083 | The endpoint to which the customer should be redirected after a payment has been attempted or successfully completed on the payment method's site. |
+| CancelURL | string | URL | M   | 1-2083 | The endpoint to which the customer should be redirected if they cancel the transaction. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK. |
+
+## Redirect to PayPal
+Following a successful `payment-set` request, the next step is to redirect the customer to PayPal to facilitate authentication. The customer will log into their PayPal account, confirm the details of the transaction and will then be redirected back to your application to continue shopping.
+
+This can be achieved, for example, using a simple JavaScript redirect. Here, we are using the token returned in the `payment-set` response.
+
+#### Sample redirect code
+
+<Infobox type="danger">
+The sample code below is given as an example. You may need to modify it to suit your particular needs.
+</Infobox>
+
+<Code id="markdown" title="HTML" language="markdown" active>
+```
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Sample PayPal Redirect</title>
+      <meta charset="UTF-8">
+   </head>
+   <body>
+      <script>
+         window.location = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=TOKEN";
+         <!-- Production URL https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=TOKEN -->
+      </script>
+   </body>
+</html>
+```
+</Code>
+
+### Conditional Parameters
+For Express Checkout ‘Mark’ integrations (i.e. where PayPal is presented as an additional payment method at the end of the checkout flow) buyers should be redirected to PayPal using a redirect URL including the string `useraction=commit`.
+
+<Code id="markdown" title="" language="markdown" active>
+```
+https://www.paypal.com/cgi-bin/webscr?cmd=_express-checkout&useraction=commit&token=TOKEN
+```
+</Code>
+
+For Express Checkout "Shortcut" integrations (where the PayPal payment option is presented on the basket before the user has entered any details), the ‘useraction=commit’ should not be included. This will ensure that the Continue to Review Order button is displayed on the PayPal payment authorization page, making it clear to the buyer that there will be an additional page on your site (where shipping charges and potential up-sells may apply) before a payment attempt is initiated.
+
+## Response from PayPal
+There are two possible outcomes of the authentication process:
+
+* **Successful Authentication/Authorization** - Customer successfully authenticates and authorizes the transaction. They are then returned to the `ReturnURL` set in the `payment-set` request
+* **Cancelled Transaction** - Customer cancels the transaction on the PayPal page and is returned to the `CancelURL` set in the `payment-set` request
+ 
+The response from PayPal for a completed transaction will encode additional transaction data in the URL query string which you'll need for the next request.
+
+<Code id="markdown" title="" language="markdown" active>
+```
+https://<ReturnURL>?pasref=<pasref>&token=<token>&PayerID=<PayerID>
+<!-- Sample -->
+https://www.example.com/success?pasref=14627849160897986&token=EC-1RR24128VW167394F&PayerID=LPLWNMTBWMFAY
+```
+</Code>
+
+### Parameters
+
+| Element/Field | Description |
+| --- | --- |
+| ReturnURL | Provided in the payment-set request. |
+| pasref | The unique Payments Reference for the transaction. |
+| token | The PayPal transaction token. |
+| PayerID | A unique identifier for the customer returned by PayPal. |
+
+For successfully authenticated/authorized transactions, where the customer has been redirected to the `ReturnURL`, your application should proceed to process the `payment-get` (optional) and `payment-do` (mandatory) requests.
+
+## Payment-Get
+The `payment-get` is an optional request used to retrieve the shipping details selected by the customer during the authorization process with PayPal. The same **Order ID** as the initial `payment-set` must be used in addition to the following elements:
+
+* **Payments Reference (`pasref`)** – Must be equal to the `pasref` returned in `payment-set` response.
+* **Token** – Must be equal to the token returned in `payment-set` response.
+
+#### Sample request
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request timestamp="20180802120019" type="payment-get">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>IgGjoyQSRXqRyIvG30S5zQ</orderid>
+  <pasref>14627849160897986</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails>
+    <Token>EC-8U990772BK865951U</Token>
+  </paymentmethoddetails>
+  <sha1hash>3aa4eca698b9099d28641991476e9d4a07313afa</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Token | string | alphanumeric | M   | 1-20 | The authentication token returned from the payment method. Note that it expires after three hours.  <br/>Allowed characters: \[A-Z0-9-\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>IgGjoyQSRXqRyIvG30S5zQ</orderid>
+  <pasref>14634909040688498</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <result>00</result>
+  <message>SUCCESS</message>
+  <paymentmethoddetails>
+    <GetExpressCheckoutDetailsResponse>
+      <Timestamp>2016-05-09T20:24:25Z</Timestamp>
+      <Ack>Success</Ack>
+      <CorrelationID>9dff7c868f6ef</CorrelationID>
+      <Version>98.0</Version>
+      <Build>22120179</Build>
+      <Token>EC-8U990772BK865951U</Token>
+      <PayerInfo>
+        <Payer>payer@example.com</Payer>
+        <PayerID>RY2X8...GE4YY</PayerID>
+        <PayerStatus>verified</PayerStatus>
+        <PayerName>
+          <Salutation>Mr</Salutation>
+          <FirstName>James</FirstName>
+          <MiddleName>Thomas</MiddleName>
+          <LastName>Mason</LastName>
+          <Suffix/>
+        </PayerName>
+        <PayerCountry>GB</PayerCountry>
+        <PayerBusiness/>
+        <Address>
+          <Name>James Mason</Name>
+          <Street1>Flat 123</Street1>
+          <Street2>House 456</Street2>
+          <CityName>Halifax</CityName>
+          <StateOrProvince>West Yorkshire</StateOrProvince>
+          <Country>GB</Country>
+          <CountryName>United Kingdom</CountryName>
+          <PostalCode>W6 9HR</PostalCode>
+          <AddressStatus>Confirmed</AddressStatus>
+        </Address>
+      </PayerInfo>
+      <PaymentDetails>
+        <ShipToAddress>
+          <Name>James Mason</Name>
+          <Street1>Flat 123</Street1>
+          <Street2>House 456</Street2>
+          <CityName>Halifax</CityName>
+          <StateOrProvince>West Yorkshire</StateOrProvince>
+          <Country>GB</Country>
+          <CountryName>United Kingdom</CountryName>
+          <Phone>123456789</Phone>
+          <PostalCode>W6 9HR</PostalCode>
+          <AddressStatus>Confirmed</AddressStatus>
+        </ShipToAddress>
+        <SellerDetails>
+          <PayPalAccountID>merchant@example.com</PayPalAccountID>
+        </SellerDetails>
+      </PaymentDetails>
+    </GetExpressCheckoutDetailsResponse>
+  </paymentmethoddetails>
+  <sha1hash>0aa43f1d647819efd238e46fe3301d80076a8648</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](https://developer.globalpay.com/#!/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Set Express Checkout Response Timestamp | string | alphanumeric | The date and time that the requested API was performed on the PayPal system |
+| Ack | string | enum | The acknowledgement status:  <br/>Success - transaction completed successfully  <br/>SuccessWithWarning - transaction completed successfully, however, there is a warning.  <br/>Failure - operation failed.  <br/>FailureWithWarning - The operation failed with a warning message. |
+| Correlation ID | string | alphanumeric | Contains information about the PayPal application that processed the request. |
+| Token | string | alphanumeric | The authentication token returned from the payment method. Note that it expires after three hours |
+| Version | string | alphanumeric | Version of the PayPal API used. |
+| Build | string | alphanumeric | Sub-version of the PayPal API used. |
+| Payer | string | alphanumeric | Email address of payer. |
+| PayerID | string | alphanumeric | Unique PayPal customer account identification number. |
+| Payer Status | string | enum | Status of payer. Valid values are: verified unverified. |
+| Salutation | string | alphanumeric | Payer’s salutation. |
+| First Name | string | alphanumeric | Payer’s First Name. |
+| Middle Name | string | alphanumeric | Payer’s Middle Name. |
+| Last Name | string | alphanumeric | Payer’s Last Name. |
+| Suffix | string | alphanumeric | Payer’s Suffix. |
+| Payer Country | string | ISO 3166-1 alpha-2 | Payer’s country of residence in the form of two-character country code. |
+| Payer Business | string | alphanumeric | Payer’s business name. |
+| Name | string | alphanumeric | Customer's name associated with this address. |
+| Street 1 | string | alphanumeric | First line of the street address. |
+| Street 2 | string | alphanumeric | Second line of the street address. |
+| City Name | string | alphanumeric | Name of the city. |
+| State or Province | string | alphanumeric | U.S. addresses only. |
+| Country | string | ISO 3166-1 alpha-2 | Address country in the form of two-character country code. |
+| Country Name | string | alphanumeric | The country name of the fulfillment address. |
+| Postal Code | string | alphanumeric | U.S. ZIP code or other country-specific postal code. |
+| Address Status | string | enum | Status of street address on file with PayPal. Valid values are:  <br/>None  <br/>Confirmed  <br/>Unconfirmed |
+| Ship To Address | string | alphanumeric | Contains nested information about the customer’s selected shipping address for this transaction. Same address fields as listed above. |
+| PayPal Account ID | string | alphanumeric | Unique identifier for the merchant. |
+
+## Payment-Do
+The `payment-do` request is a mandatory request used to execute a previously initiated PayPal transaction. The request is used to commit a successfully authenticated and authorized transaction. The same **Order ID** as the `payment-set` request must be used, in addition to the following elements:
+
+* **Payments Reference (`pasref`)** – returned in the response to the payment-set request
+* **Token** – returned in the response to the payment-set request
+* **PayerID** – returned by PayPal to the ReturnURL following successful authentication/authorization
+
+#### Sample request
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-do" timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <orderid>IgGjoyQSRXqRyIvG30S5zQ</orderid>
+  <pasref>14627849160897986</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails>
+    <Token>EC-8U990772BK865951U</Token>
+    <PayerID>RR2X8...GE4YY</PayerID>
+  </paymentmethoddetails>
+  <sha1hash>1f670bb08e62cb33e42ec69dd1c0e8809a129db7</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS. If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us. Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through. Allowed characters: \[a-zA-Z0-9.\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/resources/currency-codes "Currency Codes"). |
+| orderid | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt. Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction. Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Token | string | alphanumeric | M   | 1-20 | The authentication token returned from the payment method. Note that it expires after three hours. Allowed characters: \[A-Z0-9-\] |
+| Payer ID | string | alphanumeric | M   | 13  | A unique identifier for the payer on the PayPal system. Allowed characters: \[a-z0-9\] |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK. Allowed characters: \[0-9a-fA-F\] |
+
+## Payment-Settle
+The `payment-settle` request can be used to settle all or part of the authorized amounts for transactions where the `auto-settl` flag has been set to FALSE or MULTI.
+
+The Payments Reference (`pasref`) returned in the `payment-set` response must be included in this request.
+
+<Infobox type="danger">
+If the transaction has been initiated with the `auto-settle` flag set to 0 or MULTI, the `payment-settle` request must be used to ensure that the funds are transferred. In this case `payment-settle`, rather than the `payment-do`, is considered the executing transaction (remember nevertheless that `payment-do` is a mandatory request and needs to be sent before any `payment-settle` request). If no `payment-settle` request is processed successfully, no funds will be transferred.
+</Infobox>
+
+#### Sample request
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-settle" timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <orderid>IMtf620rRQTTaT1TDc</orderid>
+  <invoiceid>20160509100836-941-1</invoiceid>
+  <pasref>14627849160897986</pasref>
+  <multisettle type="complete"/>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails>
+    <note>Items Shipped</note>
+  </paymentmethoddetails>
+  <comments>
+    <comment id="1">Recurring Customer</comment>
+    <comment id="2">Mobile Channel</comment>
+  </comments>
+  <sha1hash>9ede29ec94458325ec1a74a6274b008de369b3ad</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Order Id | string | alphanumeric | M   | 1-50 | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Invoice ID | string | alphanumeric | O   | 0-127 | Your invoice number or other identification number that is displayed to the merchant and customer in the transaction history.  <br/>Allowed characters: \[a-zA-Z0-9-\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Multisettle Type | string | enum | O   |     | Flag that indicates whether a partial or full settlement is being made. Allowed values:  <br/>**partial** - the amount specified will be settled with the option available to process further settlements.  <br/>**complete** - the amount specified will be settled and no further settlements will be allowed. |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Note | string | alphanumeric | O   | 0-255 | An informational note about this settlement that is displayed to the payer in email and in his transaction history. |
+| Comment | string | alphanumeric | O   | 0-255 | You can submit up to two comments about this request. This information will be displayed under the transaction in Ecommerce Portal. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">1001</amount>
+  <orderid>IMtf620rRQTTaT1TDc</orderid>
+  <pasref>14627849160897986</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <result>00</result>
+  <message>SUCCESS</message>
+  <paymentmethoddetails>
+    <DoCaptureResponse>
+      <Timestamp>2016-04-17T12:53:19Z</Timestamp>
+      <Ack>Success</Ack>
+      <CorrelationID>403aac67980</CorrelationID>
+      <Version>98.0</Version>
+      <Build>5691908</Build>
+      <PaymentInfo>
+        <TransactionID>67D09401L6055593P</TransactionID>
+        <ParentTransactionID>O-4GY94707WM982074G</ParentTransactionID>
+        <ReceiptID>69-5898287WM982094G</ReceiptID>
+        <TransactionType>express-checkout</TransactionType>
+        <PaymentType>instant</PaymentType>
+        <PaymentDate>2016-04-17T12:53:19Z</PaymentDate>
+        <GrossAmount currencyID="EUR">5.00</GrossAmount>
+        <FeeAmount currencyID="EUR">0.50</FeeAmount>
+        <TaxAmount currencyID="EUR">0.00</TaxAmount>
+        <ExchangeRate/>
+        <PaymentStatus>Completed</PaymentStatus>
+        <PendingReason>none</PendingReason>
+        <ReasonCode>none</ReasonCode>
+        <ProtectionEligibility>Eligible</ProtectionEligibility>
+        <ProtectionEligibilityType>UnauthorizedPaymentEligible</ProtectionEligibilityType>
+      </PaymentInfo>
+      <MsgSubID>af5624791acf4533ab6f023739d17248</MsgSubID>
+    </DoCaptureResponse>
+  </paymentmethoddetails>
+  <sha1hash>48b42c90c731e286b282356e9d93b12db225a661</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Currency | string | ISO 4217 | The processing currency of the transaction. Please see the list of [Currency Codes](/resources/currency-codes). |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Set Express Checkout Response Timestamp | string | alphanumeric | The date and time that the requested API was performed on the PayPal system |
+| Ack | string | enum | The acknowledgement status:  <br/>Success - transaction completed successfully  <br/>SuccessWithWarning - transaction completed successfully, however, there is a warning.  <br/>Failure - operation failed.  <br/>FailureWithWarning - The operation failed with a warning message. |
+| Correlation ID | string | alphanumeric | Contains information about the PayPal application that processed the request. |
+| Version | string | alphanumeric | Version of the PayPal API used. |
+| Build | string | alphanumeric | Sub-version of the PayPal API used. |
+| Transaction ID | string | alphanumeric | Identifier for the transaction on the PayPal system. Required for payment-credit. |
+| Parent Transaction ID | string | alphanumeric | Parent or related transaction identification number. |
+| Receipt ID | string | alphanumeric | Receipt identification number. |
+| Transaction Type | string | enum | The type of transaction, will always be - **express-checkout**.**** |
+| Payment Type | string | enum | Indicates whether the payment is instant or delayed. Valid values:  <br/>none  <br/>echeck  <br/>instant |
+| Payment Date | string | alphanumeric | Date and timestamp of the payment. |
+| Gross Amount Currency ID | string | alphanumeric | The final currency charged. |
+| Fee Amount Currency ID | string | alphanumeric | The final currency charged. |
+| Tax Amount Currency ID | string | alphanumeric | The final currency charged. |
+| Exchange Rate | string | numeric | Exchange rate if a currency conversion occurred. Relevant only if you are billing in their non-primary currency. If the customer chooses to pay with a currency other than the non-primary currency, the conversion occurs in the buyer's account. |
+| Payment Status | string | enum | The status of the transaction at the time of execution. Values include: Completed - The payment has been completed and the funds have been added successfully to your account balance.  <br/>Expired - The authorization period for this payment has been reached.  <br/>Pending - The payment is pending. See the PendingReason field for more information.  <br/>Voided - The authorization for this transaction has been voided. |
+| Pending Reason | string | alphanumeric | Where a transaction has a payment status of pending, this field will be populated with a brief description of the pending reason.  <br/>Note: You should take note if a pending reason is returned – this indicates that the transaction funds will not be transferred without further action being taken. |
+| Protection Eligibility | string | enum | The kind of seller protection in force for the transaction, can be one of the following values:  <br/>Eligible - Seller is protected by PayPal's Seller Protection Policy for Unauthorized Payments and Item Not Received.  <br/>PartiallyEligible - Seller is protected by PayPal's Seller Protection Policy for Item Not Received.  <br/>Ineligible - Seller is not protected under the Seller Protection Policy |
+| Message Sub ID | string | alphanumeric | Unique ID passed for each API request to help prevent duplicate payments. This ID is passed directly back in the response. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Payment-Void
+Where a transaction has been initiated with the `auto-settle` flag set to FALSE or MULTI, the `payment-void` request may be used to cancel the transaction without settling any funds. The Payments Reference (`pasref`) returned in the `payment-set` response must be included in this request.
+
+<Infobox type="danger">
+A transaction that has been initiated with the `auto-settle` flag set to TRUE and has been subsequently executed, cannot be voided – the transfer of funds will be initiated by the `payment-do` request. In this case, a `payment-credit` should be used to return funds to the customer.
+</Infobox>
+
+#### Sample request
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-void" timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>71KMOgTzn3G2cjCdgt</orderid>
+  <pasref>14627849160897986</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails>
+    <Note>Voiding Transaction</Note>
+  </paymentmethoddetails>
+  <sha1hash>51ba0e6313f4d9892807dd60a7c65eb341b13fb2</sha1hash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Note | string | alphanumeric | O   | 0-255 | An informational note about this settlement that is displayed to the payer in email and in his transaction history. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>71KMOgTzn3G2cjCdgt</orderid>
+  <pasref>13666535995814033</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <result>00</result>
+  <message>SUCCESS</message>
+  <paymentmethoddetails>
+    <DoVoidResponse>
+      <Timestamp>2017-02-22T13:19:37Z</Timestamp>
+      <Ack>Success</Ack>
+      <CorrelationID>960d6d4f30397</CorrelationID>
+      <Version>98.0</Version>
+      <Build>5715372</Build>
+      <TransactionID>8HK926385C490842M</TransactionID>
+    </DoVoidResponse>
+  </paymentmethoddetails>
+  <sha1hash>3881b800e23492abf867580d37ff048777d87005</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](https://developer.globalpay.com/#!/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Set Express Checkout Response Timestamp | string | alphanumeric | The date and time that the requested API was performed on the PayPal system |
+| Ack | string | enum | The acknowledgement status:  <br/>Success - transaction completed successfully  <br/>SuccessWithWarning - transaction completed successfully, however, there is a warning.  <br/>Failure - operation failed.  <br/>FailureWithWarning - The operation failed with a warning message. |
+| Correlation ID | string | alphanumeric | Contains information about the PayPal application that processed the request. |
+| Version | string | alphanumeric | Version of the PayPal API used. |
+| Build | string | alphanumeric | Sub-version of the PayPal API used. |
+| Transaction ID | string | alphanumeric | Identifier for the transaction on the PayPal system. Required for payment-credit. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Payment-Credit
+If you want to refund a transaction that has been initiated, executed, and captured you can set a `payment-credit`. This request also requires the Refund Password for the account, hashed with the SHA-1 algorithm. The Payments Reference (`pasref`) returned in the `payment-do` response must be included in this request.
+
+#### Sample request
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<request type="payment-credit" timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <amount currency="EUR">500</amount>
+  <orderid>wZLVqHNnbZKBJhbeiW</orderid>
+  <pasref>95427846660897986</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <paymentmethoddetails/>
+  <comments>
+    <comment id="1">Returned item</comment>
+    <comment id="2">Break in transit</comment>
+  </comments>
+  <sha1hash>d9216de9d8304acbe42a75344bed57b243f9a3a1</sha1hash>
+  <refundhash>8347589234572387502457230459827345</refundhash>
+</request>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| Timestamp | string | numeric | M   | 14  | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | M   | 1-50 | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | O   | 0-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency. For example: 2000 = €20.00 |
+| Currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. Please see the list of [Currency Codes](https://developer.globalpay.com/#!/resources/currency-codes). |
+| Payments Reference | string | alphanumeric | M   | 0-50 | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | M   |     | Specifies the payment method for this transaction. |
+| Sha1hash | string | alphanumeric | M   | 40  | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+#### Sample response
+<Code id="markdown" title="XML" language="markdown" active>
+```
+<response timestamp="20180802120019">
+  <merchantid>MerchantId</merchantid>
+  <account>internet</account>
+  <orderid>wZLVqHNnbZKBJhbeiW</orderid>
+  <pasref>18634718560685523</pasref>
+  <paymentmethod>paypal</paymentmethod>
+  <result>00</result>
+  <message>SUCCESS</message>
+  <paymentmethoddetails>
+    <RefundTransactionResponse>
+      <Timestamp>2016-04-22T13:33:00Z</Timestamp>
+      <Ack>Success</Ack>
+      <CorrelationID>17fe89d299d73</CorrelationID>
+      <Version>98.0</Version>
+      <Build>5715372</Build>
+      <RefundTransactionID>4CT42441JA1416044</RefundTransactionID>
+      <NetRefundAmount currencyID="GBP">0.98</NetRefundAmount>
+      <FeeRefundAmount currencyID="GBP">0.03</FeeRefundAmount>
+      <GrossRefundAmount currencyID="GBP">1.01</GrossRefundAmount>
+      <TotalRefundedAmount currencyID="GBP">1.01</TotalRefundedAmount>
+      <RefundInfo>
+        <RefundStatus>Instant</RefundStatus>
+        <PendingReason>none</PendingReason>
+      </RefundInfo>
+      <MsgSubID>5d4bd48363d34217a281a528ddc3af37</MsgSubID>
+    </RefundTransactionResponse>
+  </paymentmethoddetails>
+  <sha1hash>4c513cabeaaee5fa0714f304ca9a40da350747b5</sha1hash>
+</response>
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| Timestamp | string | numeric | Entered in the following format: YYYYMMDDHHMMSS.  <br/>If the timestamp is more than a day (86400 seconds) away from the current time, the request will be rejected. Automatically set if using the SDK. |
+| Merchant ID | string | alphanumeric | Your Client ID assigned by us.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Account | string | alphanumeric | The sub-account for this request to be processed through.  <br/>Allowed characters: \[a-zA-Z0-9.\] |
+| Order Id | string | alphanumeric | A merchant supplied reference to identify this transaction. Must be unique for each attempt.  <br/>Allowed characters: \[a-zA-Z0-9\_-\] |
+| Payments Reference | string | alphanumeric | A unique reference assigned by us for the transaction.  <br/>Allowed characters: \[a-zA-Z0-9␣\] |
+| Payment Method | string | enum | Specifies the payment method for this transaction. |
+| Result | string | numeric | The result code indicating the outcome of the transaction. Please see the list of [Messages & Error Codes](https://developer.globalpay.com/#!/resources/messages). |
+| Message | string | alphanumeric | Text of the response from the Gateway, Acquirer, Issuer or Payment Method. |
+| Set Express Checkout Response Timestamp | string | alphanumeric | The date and time that the requested API was performed on the PayPal system |
+| Ack | string | enum | The acknowledgement status:  <br/>Success - transaction completed successfully  <br/>SuccessWithWarning - transaction completed successfully, however, there is a warning.  <br/>Failure - operation failed.  <br/>FailureWithWarning - The operation failed with a warning message. |
+| Correlation ID | string | alphanumeric | Contains information about the PayPal application that processed the request. |
+| Version | string | alphanumeric | Version of the PayPal API used. |
+| Build | string | alphanumeric | Sub-version of the PayPal API used. |
+| Refund Transaction ID | string | alphanumeric | Unique transaction ID of the refund |
+| Net Refund Amount Currency ID | string | alphanumeric | Currency of the amount subtracted from PayPal balance of original recipient of payment to make this refund. |
+| Fee Refund Amount Currency ID | string | alphanumeric | Currency of the fee refunded to original recipient of payment. |
+| Gross Refund Amount Currency ID | string | alphanumeric | Currency of the gross amount refunded to original payer. |
+| Total Refunded Amount | string | numeric | Total refund amount. |
+| Total Refunded Amount Currency ID | string | alphanumeric | Currency of the Total refund amount. |
+| Refund Status | string | enum | Status of the refund. Can be one of the following values:  <br/>instant  <br/>delayeds |
+| Pending Reason | string | enum | Reason that the refund payment status is delayed. Can be one of the following values:  <br/>none – The refund status is instant.  <br/>echeck – The refund status is delayed.  <br/>Regulatory-review - The payment is pending while PayPal make sure it meets regulatory requirements. PayPal will contact you again in 24-72 hours with the outcome of the review. |
+| Message Sub ID | string | alphanumeric | Unique ID passed for each API request to help prevent duplicate payments. This ID is passed directly back in the response. |
+| Sha1hash | string | alphanumeric | The signature for this request is made up of transaction elements and your Shared Secret. Automatically set by the SDK.  <br/>Allowed characters: \[0-9a-fA-F\] |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+<Infobox>
+In addition to SHA-1, you can also generate your hash using SHA-256. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team.
+</Infobox>
+
+### Build the request hash
+Use the tabs below to follow the steps for a certain request type: Payment-Set, Payment-Get, Payment-Do, Payment-Settle, Payment-Void, or Payment-Credit. 
+
+<Tabs active="set">  
+<Tab id="set" title="Payment-Set">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.1001.EUR.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="get" title="Payment-Get">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Since there is no amount or currency sent in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ...paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="do" title="Payment-Do">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Since there is no amount or currency sent in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ...paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="settle" title="Payment-Settle">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.1001.EUR.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="void" title="Payment-Void">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Since there is no amount or currency sent in this request, based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ...paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+</Tab>
+<Tab id="credit" title="Payment-Credit">
+
+##### 1. Create a SHA-1 hash made up of request values
+The blueprint of the hash for this request is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.amount.currency.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802120019.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.500.EUR.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+</Tab>
+</Tabs>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-1 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request.
+
+### Check the response hash
+Use the tabs below to follow the steps for a certain request type: Payment-Set, Payment-Get, Payment-Do, Payment-Settle, Payment-Void or Payment-Credit. 
+
+<Tabs active="set">  
+<Tab id="set" title="Payment-Set">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the XML example above our initial string will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="get" title="Payment-Get">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="do" title="Payment-Do">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="settle" title="Payment-Settle">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="void" title="Payment-Void">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+
+</Tab>
+<Tab id="credit" title="Payment-Credit">
+
+##### 1. Create a SHA-1 hash made up of response values
+The blueprint of the hash for this response is:
+
+<Code id="markup" title="" language="markup" active>
+```
+"timestamp.merchantid.orderid.result.message.pasref.paymentmethod"
+```
+</Code>
+
+Based on the above example the initial string to check the hash of the response will be:
+
+<Code id="markup" title="" language="markup" active>
+```
+"20180802170128.Merchant ID.IgGjoyQSRXqRyIvG30S5zQ.00.Success.14631546336115597.paypal"
+```
+</Code>
+
+##### 2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: 28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882
+
+You'll need to concatenate this with your Shared Secret, for example:
+
+<Code id="markup" title="" language="markup" active>
+```
+"28b85cd34d0e0d6b243d58f0e9f7f4bf7da1b882.Po8lRRT67a"
+```
+</Code>
+
+##### 3. SHA-1 hash the concatenated string
+
+Our final string that we add to the request should be a hash, using the SHA-1 algorithm, of your concatenated string. For example: 947903969e7aaf996164c680a6669805fe405269
+
+We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha1hash` element.
+</Tab>
+</Tabs>

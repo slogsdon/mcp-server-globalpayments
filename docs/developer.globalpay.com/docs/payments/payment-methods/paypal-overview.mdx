@@ -1,0 +1,86 @@
+---
+title: 'PayPal - Overview'
+search_results: 'Global Payments - Digital Wallets Paypal'
+subtitle: 'Allow customers to pay using this popular payment method'
+tag: 'rest'
+created: '06/08/2024'
+---
+PayPal is a digital wallet that can store a customer’s payment and personal information on an app or browser for quick payments in-person, online, or on a mobile device. Customers use saved funding sources to pay securely online or to “top up” their wallet balance. We offer merchants several ways to integrate PayPal into their app or website to make the checkout experience secure, fast, and convenient.
+
+For merchants, the benefits of PayPal include:
+
+* One of the most recognized and trusted names in the digital payment industry. Its brand reputation instills confidence in users.
+* Allows you to easily take international payments, since it’s available in more than 200 countries and can accept payments using more than 20 currencies.
+* Provides a seller protection program. Merchants are protected against fraudulent chargebacks.
+* A simplified checkout process by reducing friction and boosting conversion rates.
+
+## Use cases
+In this section, we present some “real world” examples that can be enabled through our PayPal solution. Keep in mind that this section doesn’t cover all of the use cases.
+
+##### Use Case #1: Secure
+A merchant wants to accommodate their customers who are worried about sharing their credit card information. For this reason, they include PayPal as a payment method because it encrypts the bank information.
+
+##### Use Case #2: Fast
+A merchant wants to enable their customers to complete their online transaction quickly and efficiently. For this reason, they include PayPal as a payment method because customers will not have to fill in all of their credit card details in the form.
+
+##### Use Case #3: Convenient
+A merchant wants to allow their customers to complete online transactions regardless of if they have their credit card or not. If their customer urgently needs to complete an online transaction they can select PayPal as an alternative payment method.
+
+## Product details
+##### Advantages of using PayPal
+* A recognised and trusted name
+* Seller protection program
+* 200+ countries and 20+ currencies
+* Simplified checkout
+
+##### Integration options
+* SDK or API
+* Drop-In UI
+* Shopping Carts and Platforms
+
+##### Regions where you can use PayPal
+* Europe
+* Middle East
+* Africa
+* North America
+* Latin America
+* Asia-Pacific
+
+## How does it work?
+When a customer chooses to pay using PayPal at checkout, they are redirected to the PayPal portal (or PayPal app) to authenticate and authorize the transaction.
+Within the PayPal portal or app, the customer can choose between a variety of payment methods to make the payment. The choices depend on a number of factors, such as the transaction amount and the funding sources that the customer has linked to their PayPal account. These payment methods might include:
+* Debit card
+* Credit card
+* Bank account
+* PayPal balance
+* Buy Now Pay Later
+* PayPal credit
+
+The funds are deposited into your PayPal Business account. You can then transfer the funds to your bank account through the PayPal portal. You can also set up automatic (periodic) transfers within the PayPal portal.
+
+There are several PayPal transaction types. Their use cases are described in the table below.
+ 
+| PayPal Transaction Type | Use Case |
+| --- | --- |
+| AUTO | You want to charge the customer right after they authorized the payment. |
+| LATER | You want to charge the customer at a later time after their authorization, e.g., when your product is ready to be shipped. |
+| MULTI | You want to charge the customer at a later time after their authorization and in multiple installments, e.g., if an order is composed of multiple items that you will ship separately, and you want to charge for each item individually as it is shipped. |
+
+AUTO capture is the most common PayPal transaction type. It has four mandatory steps and one optional one:
+1. Initiate the transaction
+2. Redirect the customer to PayPal
+3. Receive the PayPal response
+4. [OPTIONAL] Retrieve transaction information
+5. Confirm the transaction
+
+At a high level, a typical flow for a PayPal AUTO capture transaction works like this:
+
+![Diagram flow of how PayPal works at a high level.](/gh-assets/paypal_flow.png)
+<p style={{textAlign: "center"}}>**PayPal Typical Flow**</p>
+
+## Next steps
+To try PayPal, follow the steps and code samples in our [guide](/docs/payments/payment-methods/paypal-guide). We provide steps for both direct API integration and for our hosted solution, Drop-In User Interface (UI).
+
+<Infobox>
+ Remember to first register for a developer account if you don't already have one. Once logged in, you can request Sandbox credentials from your account.
+</Infobox>

@@ -1,0 +1,289 @@
+---
+title: "Installment Service"
+subtitle: "See the full range of request types and field values for this solution"
+tag: "xml"
+created: "02/21/2025"
+---
+In this API reference, we present an overview of each request type, examples of request and response values, as well as how to handle them. For more information on our Installment Service, see our [Overview](/ecommerce/expand-your-integration/installments).
+
+## Retrieve installment plans
+
+<Infobox>
+Installment Service endpoints: <br/>
+Sandbox: https://api.sandbox.globalpay-ecommerce.com/installments/plans/match  <br/>
+Production: https://api.globalpay-ecommerce.com/installments/plans/match
+</Infobox>
+
+The `GetEligiblePlans` request is used to retrieve the eligible plans that match the card issuer’s criteria for the transaction.
+
+#### Sample request
+<Code id="json" title="JSON" language="json" active>
+```
+curl https://api.sandbox.globalpay-ecommerce.com/installments/plans/match
+-H "Content-type: application/json"
+-H "Authorization: sha256hash ff90a189d9ba5a23eec8578ddffba350fbd701faaba7428c59b65ca2c83e1bdd" 
+-X POST 
+-d '{
+  "partner": "GPECOM",
+  "provider": "VIS",
+  "merchant_id": "MerchantId",
+  "account_id": "accountId",
+  "card": {
+    "number": "4263970000005262" 
+   },  
+  "amount": "1000",
+  "currency": "CAD",
+  "channel": "ECOM",
+  "request_timestamp": "2023-01-01T12:00:00.000Z",
+  "filter": {
+    "enabled": true,
+    "max_term_months_merchant_funded": 24,
+    "plan_type": "MERCHANT_FUNDED"
+    "amount_threshold": 1000
+  }
+}'
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+
+     
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| partner | string | enum | M   |     | Allowed values:  <br/>**GPECOM** |
+| provider | string | enum | M   |     | Installment provider to be used. Allowed values:  <br/>**VIS** |
+| merchant\_id | string | alpha-  <br/>numeric | M   | 1-50 | Your Client ID assigned by Global Payments. Allowed characters: [a-zA-Z0-9.] |
+| account\_id | string | alpha-  <br/>numeric | M   | 1-30 | The sub-account for this request to be processed through.  <br/>Allowed characters: [a-zA-Z0-9.] |
+| **card**\* |     |     |     |     |  _\*Should only send one “number" OR "payer\_reference & payment\_method\_reference(Optional)" OR "token"_   |
+| number | string | numeric | M   | 12-19 | The full Primary Account Number (PAN) of the card.  <br/>Allowed characters:[0-9] |
+| payer\_  <br/>reference | string | alpha-numeric | M   | 1-50 | A unique reference for this customer in Card Storage, known as the _Payer_.  <br/>Allowed characters: [a-zA-Z0-9\_-.\] |
+| payer\_method\_  <br/>reference | string | alpha-numeric | O   | 1-50 | A unique reference for this card in Card Storage, known as the _Payment Method_.  <br/>Allowed characters: \[a-zA-Z0-9_-.] |
+| token | string | alpha-numeric | M   | 1-56 | A unique reference for this card in Card Storage, known as the token and begins with the three letters “PMT\_”  <br/>Allowed characters: [a-zA-Z0-9_-] |
+| amount | integer |     | M   | 1-11 | The amount should be in the smallest unit of the required currency.  <br/>Example: 2000 = €20.00 |
+| currency | string | ISO 4217 | M   | 3   | The processing currency of the transaction. See the list of [Currency Codes](/resources/currency-codes). |
+| channel | string | enum | O   |     | Specify how a transaction is to be processed. Allowed values:  <br/>**ECOM** – Ecommerce (default)  <br/>**CARD\_PRESENT** – Card Present  <br/>Note: If not present, request will be sent with default value. |
+| request\_  <br/>timestamp | string | UTC time zone | O   |     | Only required for direct merchant authentication. Example:  <br/>2023-01-01T12:00:00.000Z |
+| **filter** |     |     |     |     |     |
+| enabled | boolean |     | O   |     | Used to retrieve two installment plans only. Allowed values:  <br/>**TRUE** - Retrieves two plans (default).  <br/>**FALSE** - Retrieves all available plans.  <br/>Note: If not present, request will be sent with default value. |
+| max\_term\_  <br/>months\_  <br/>merchant\_  <br/>funded | integer | `<int32>` | O   | 1-32 | Used to retrieve installment plans with specific tenure. Applicable to merchant-funded plans only. Example: _max\_term\_months\_merchant\_funded = 12_ — Means that only plans with tenure ≤ 12 months will be retrieved. Merchant-funded plans with tenure > 12 months will not be returned.  <br/>Default: 1000  <br/>Note: If not present, request will be sent with default value. |
+| plan\_type | string | enum | O   |     | Used to filter out installment plans based on plan type. Allowed values:  <br/>**MERCHANT\_FUNDED** (if sent, will return merchant funded plans only)  <br/>**CONSUMER\_FUNDED** (if sent, will return consumer funded plans only) <br/>**HYBRID_FUNDED** (if sent, will return both merchant and consumer funded plans) <br/> **BILATERAL** (if sent, will return BILATERAL plans only) <br/> **ANY** (if sent, will return all available plans) (default) <br/>Note: If not present, request will be sent with default value. |
+| amount\_  <br/>threshold | integer | `<int32>` | O   | 1-11 | Used to determine whether to return the longest or shortest tenure/duration plans depending on the amount sent.  <br/>The amount should be sent in the smallest unit of the required currency.  <br/>Example: 2000 = €20.00  <br/>Ex value sent 50000 will mean that:   <br/>For transactions with an amount **less or equal than €500.00**, the plans with the shortest tenure will be displayed first.   <br/>For transactions with an amount **greater than €500.00**, the plans with the longest tenure will be displayed first.  <br/><br/>Note: If not present, request will be sent with default value: plans with the longest tenure. |
+
+#### Sample response
+<Code id="json" title="JSON" language="json" active>
+```
+{
+  "amount": 1000000,
+  "currency": "CAD",
+  "matched_plans": [
+    {
+      "name": "plan24CwAPR",
+      "type": "ISSUER_DEFAULT",
+      "number_of_installments": 24,
+      "installment_frequency": "MONTHLY",
+      "terms_and_conditions": [
+        {
+          "url": "http://www.myurl.com",
+          "version": "25798469",
+          "text": "You are selecting a 24-month installment plan. The total purchase amount will be deducted from your available credit limit. As set forth in your terms, your installment fee will be 13.99% APR calculated for 24 months. If you miss an installment payment, the standard rate of purchases will apply to the remaining installment balance.",
+          "language_code": "ENG"
+        }
+      ],
+      "cost_info": {
+        "annual_percentage_rate": 13.99,
+        "fee_info": [
+          {
+            "type": "CONSUMER",
+            "rate_percentage": 5,
+            "flat_fee": 0
+          }
+        ],
+        "total_plan_cost": 1130500,
+        "total_fees": 130500,
+        "total_upfront_fees": 100000,
+        "total_recurring_fees": 30500,
+        "first_installment": {
+          "upfront_fee": 100000,
+          "installment_fee": 1270,
+          "amount": 41666
+        },
+        "last_installment": {
+          "installment_fee": 1270,
+          "amount": 41666
+        },
+        "currency": "CAD"
+      },
+      "plan_id": "7533d4f7-6a10-5557-2e92-132d06157502"
+    }
+  ]
+}
+```
+</Code>
+
+#### Response syntax
+
+| Element/Field | Category | Format | Description |
+| --- | --- | --- | --- |
+| amount | integer |     | The amount should be in the smallest unit of the required currency.  <br/>Example: 2000 = €20.00 |
+| currency | string | ISO 4217 | The processing currency of the transaction. See list of [Currency Codes](https://developer.globalpay.com/resources/currency-codes "Currency Codes"). Example: CAD |
+| matched\_plans name | string | 1-255 | Name of the installment plan. |
+| Matched\_plans type | string | enum | Type of the installment plan:   <br/>**ISSUER\_PROMOTION**   <br/>**BI\_LATERAL** (not currently supported)  <br/>**ISSUER\_DEFAULT**  <br/>**MARKET**   <br/>For more information, see [Installment Service](https://developer.globalpay.com/ecommerce/installments#what-is-installment-service "Installment Service"). |
+| Matched\_plans number\_of\_installments | integer | 1-4 | Maximum number of installments that can be in the plan acceptance created from this plan. |
+| Matched\_plans installment\_frequency | string | enum | Supported tenure types for a plan:  <br/>**WEEKLY** (not currently supported)  <br/>**BIWEEKLY** (not currently supported)  <br/>**MONTHLY  <br/>BIMONTHLY** (not currently supported) |
+| Matched\_plans  terms\_and\_conditions url | string |     | Terms and conditions (T&C) HTTPS URL hosted by the Issuer for displaying to the cardholder for acceptance when initiating a plan acceptance for this plan. Must not invoke an executable script and must point to an HTML page containing T&C text in a displayable manner. When provided during onboarding, the URL is checked for validity.  <br/>Pattern: `^(http)(s?)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&amp;%\$#_=]*)?$`  <br/>Example: http://www.myurl.com |
+| Matched\_plans  terms\_and\_conditions version | string | 1 - 10 | Installment plan terms and conditions (T&Cs) version that is accepted by the customer. The version is auto-incremented every time an update is made to the plan by the Issuer in the Visa Developer Center/Portal UI. |
+| Matched\_plans  terms\_and\_conditions text | string | 1 - 2000 | Text of the terms and conditions for the installment plan. |
+| Matched\_plans  terms\_and\_conditions language\_code | string | 3   | ISO 639-2 language code for the terms and conditions text. For more information, see [ISO 639-2](https://www.loc.gov/standards/iso639-2/php/code_list.php "Codes for the Representation of Names of Languages"). |
+| Matched\_plans  cost\_info annual\_percentage\_rate | Number | 1-5 | Annual percentage rate (APR) as configured by the Issuer during plan creation. Not used for calculations but used only for display purposes.   <br/>Interest-fee rate in percentage applied on installment payment.   <br/>Percentage rate is a non-negative value.   <br/>The percentage value is represented with two implicit decimals. Example: 13.99% |
+| Matched\_plans  cost\_info  fee\_info type | String | enum | Fee type(s) with the associated r_atePercentage_ or _flatFee_.   <br/>**CONSUMER** – Fee for Consumer-funded plan.  <br/>**CONSUMER\_UPFRONT** – Upfront fee that Consumer must pay to Issuer.  <br/>**MERCHANT\_FUNDING** – Fee for Merchant-funded plan must pay to Issuer.    <br/>**MERCHANT\_SERVICE** – Service fee charged to the Merchant by Visa. |
+| Matched\_plans  cost\_info  fee\_info rate\_percentage | Number | 1-5 | (Conditional) Interest fee rate in percentage applied on Installment payment.   <br/>Percentage rate is a non-negative value.  <br/>The percentage value is represented with two implicit decimals. Example: 2.5%   <br/>Should _flatFee_ be provided, then _ratePercentage_ is not required and becomes an optional field. |
+| Matched\_plans  cost\_info  fee\_info flat\_fee | integer | 1-15 | (Conditional) Flat fee applied on the first installment payment in Issuer currency.   <br/>The amount is only represented in minor units. Example: in cents for USD currency   <br/>There are no fractional minor units; they are rounded to a whole number in minor units.  <br/>The currency field contains the number of minor units (per ISO 4217).  <br/>Example: “123112” in USD represents the amount, USD 1231.12.   <br/>Should _ratePercentage_ be provided, then _flatFee_ is not required and becomes an optional field. |
+| Matched\_plans  cost\_info  total\_plan\_cost | integer | 1 - 15 | (Required) It is calculated as _totalFees_ + (_numberOfInstallments_ x _installmentAmount_). |
+| Matched\_plans  cost\_info  total\_fees | integer | 1 - 15 | (Required) Total fees charged calculated as _totalUpfrontFees_ + _totalRecurringFees._ |
+| Matched\_plans  cost\_info  total\_upfront\_fees | integer | 1 - 15 | (Required) Total upfront fees charged to the consumer for this installment plan. This is the amount charged upfront along with the first installment principal only. |
+| Matched\_plans  cost\_info  total\_recurring\_fees | integer | 1 - 15 | (Required) Total recurring fees for this installment plan. This is calculated as _numberOfInstallments_ \* _feePerInstallmentPeriod_. |
+| Matched\_plans  cost\_info first\_installment upfront\_fee | integer | 1 - 15 | (Required) The consumer upfront fee for this installment plan and is included only on the first installment.   <br/>This fee corresponds to the _feeType_, **CONSUMER\_UPFRONT**   <br/>Conditionality – This is available only on the first installment. |
+| Matched\_plans  cost\_info first\_installment installment\_fee | integer | 1 - 15 | (Required) The consumer fee for every installment period, including the first one.   <br/>This fee corresponds to the _feeType_ – **CONSUMER** |
+| Matched\_plans  cost\_info first\_installment amount | integer | 1 - 15 | The principal amount for this Installment calculated as _total\_purchase\_amount_ / _number\_of\_installments_. |
+| Matched\_plans  cost\_info last\_installment installment\_fee | integer | 1 - 15 | (Required) The consumer fee for every installment period, including the last one.   <br/>This fee corresponds to the _feeType_ – **CONSUMER** |
+| Matched\_plans  cost\_info last\_installment amount | integer | 1 - 15 | (Required) The principal amount for this Installment calculated as _total\_purchase\_amount_ / _number\_of\_installments_. |
+| Matched\_plans  cost\_info currency | String | ISO 4217 | The processing currency of the transaction. See list of [Currency Codes](/resources/currency-codes).  <br/>Example: CAD |
+| Matched\_plans  plan\_id | String | 36  | Allowed characters: [0-9a-fA-F]  <br/>Example: 7533d4f7-6a10-5557-2e92-132d06157502 |
+
+## Confirm selected plan
+Send the plan details in the Authorization request to confirm the selected installment plan by the user. After the cardholder selects an installment plan, the merchant should provide installment plan details in the Auth and Receipt-in requests under the optional XML tag.
+
+For the full Authorization request, see [Authorization](/api/card-payments#api-authorization) in the API Reference.
+
+<Infobox>
+Installment Service Confirm Selected Plans endpoints: <br/>
+Sandbox: https://api.sandbox.globalpay-ecommerce.com/installments/confirmations <br/>
+Production: https://api.globalpay-ecommerce.com/installments/confirmations
+</Infobox>
+
+#### Sample request
+
+<Code id="markup" title="XML" language="markup" active>
+```
+<installment>
+           <provider>VIS</provider>
+           <planid>3fa85f64-5717-4562-b3fc-2c963f66afa6</planid>
+           <tcversion>2</tcversion>
+           <tclang>eng</tclang>
+</installment>
+```
+</Code>
+
+#### Request syntax
+_Type_ indicates whether the element is Mandatory (M), Optional (O), or Conditional (C) - dependent on another field.
+
+Unless otherwise stated in the description, the allowed special characters in an alphanumeric string field are [/.-_‘,␣]
+     
+| Element/Field | Category | Format | Type | Length | Description |
+| --- | --- | --- | --- | --- | --- |
+| provider | string | enum | M   |     | Installment provider to be used. Allowed values:  <br/>**VIS** |
+| planid | string | alphanumeric | M   | 1-50 | Plan id value returned in the Get Eligible Plans response. |
+| tcversion | string | alphanumeric | M   | 1-10 | Installment Plan Terms and Conditions Version accepted by the consumer returned in the Get Eligible Plans response. |
+| tclang | string | alphanumeric | M   | 3   | ISO 639-2 language code for the Terms and Conditions text returned in the Get Eligible Plans response. |
+
+## Error codes
+The following table contains errors that are specific to the Installment Service. For the full list of errors, see [Messages & Errors](/resources/messages).
+  
+| Error No. | Integration Type | Description |
+| --- | --- | --- |
+| 205 | API/HPP | Comms Error - Installment connection error. |
+| 508 | API | Installment is not allowed for this account. |
+| 508 | API | Installment is not allowed for this acquirer. |
+| 508 | API | Installment is not supported for this transaction. |
+| 508 | API | Can't settle for more than 105% of that which you authorized. |
+| 508 | API | You may only settle up to 105% of the original amount. |
+| 508 | API | Can't settle a settled transaction for Installment. |
+| 508 | API | Invalid data for installment request. |
+| 508 | API | Can't void a rebate for Installment. |
+| 512 | API | You may only refund up to 105% of the original amount. |
+
+## Generate hash
+Follow the steps in this section to build the request security hash, concatenate the specified fields and hash them using the SHA-256 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request. 
+
+<Infobox>
+In addition to SHA-256, you can also generate your hash using SHA-1. The resulting hash should be placed in the `<sha256hash>` tag instead of the `<sha1hash>` tag. For more information, contact our support team. 
+</Infobox>
+
+  ### Build the request hash
+1. Using the SHA-256 algorithm, hash a string made up of the request values
+    The blueprint of the hash for this request is shown below: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "request_timestamp.merchant_id.cardnumber"
+    ```
+    </Code> <br/>
+    Based on the request above, our initial string will be: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "2019-04-26T10:16:10.154248.MerchantId.4263970000005262"
+    ```
+    </Code> <br/>
+2. Concatenate the hashed string with your Shared Secret
+After step 1, you'll have a string like: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    f6d5f2950c49e85bee09119d50de7ca76243de9c4f4ca340175b563162868e2e
+    ```
+    </Code> <br/>
+    You'll need to concatenate this with your Shared Secret. For example: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "f6d5f2950c49e85bee09119d50de7ca76243de9c4f4ca340175b563162868e2e.Po8lRRT67a"
+    ```
+    </Code> <br/>
+3. SHA-256 hash the concatenated string
+    Our final string that we add to the request should be a hash using the SHA-256 algorithm of your concatenated string. For example: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    8f2436777317085a3442286315f69532592222fc4e325b69559559179ce6120c
+    ```
+    </Code>
+
+## Check hash
+Follow the steps in this section to build the response security hash, concatenate the specified fields and hash them using the SHA-256 algorithm, concatenate the hashed string with your Shared Secret, hash it again, and add the resulted string to the request. 
+
+### Check the response hash
+
+1. Create a SHA-256 hash string made up of response values
+    The blueprint of the hash for the response is shown below: <br/><br/>
+
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "timestamp.merchantid.orderid.result.message.pasref.authcode"
+    ```
+    </Code> <br/><br/>
+    So, based on the above example, the initial string to check the hash of the response will be: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "20200204155942.Merchant ID.N6qsk4kYRZihmPrTXWYS6g.00.[ test system ] Authorised.14631546336115597.12345"
+    ```
+    </Code> <br/>
+2. Concatenate the hashed string with your Shared Secret
+    After step 1, you'll have a string like: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    f4c954b5196e73883edcf1d74e5722ced0914dea852c52a07fbe1b4b04c8ca6b
+    ```
+    </Code> <br/>
+    You'll need to concatenate this with your Shared Secret: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    "f4c954b5196e73883edcf1d74e5722ced0914dea852c52a07fbe1b4b04c8ca6b.Po8lRRT67a"
+    ```
+    </Code> <br/>
+3. SHA-256 hash the concatenated string and compare
+    Our final string that we add to the request should be a hash using the SHA-256 algorithm of your concatenated string. For example: <br/><br/>
+    <Code id="markup" title="" language="markup" active>
+    ```
+    f18178e6bf4d1bf17269fbd8a244fbd43be60c1d9b868bf00e06307b6d76d9be
+    ```
+    </Code> <br/><br/>
+    We create the hash in the same way on our side and send it back. To confirm that a response hasn't been tampered with, compare what you've generated with what was returned in the `sha256hash` element.

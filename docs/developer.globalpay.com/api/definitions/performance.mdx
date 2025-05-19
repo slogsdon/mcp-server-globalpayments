@@ -1,0 +1,55 @@
+---
+title: 'Performance'
+search_results: 'API Definitions - Performance'
+subtitle: 'Learn how to optimize the API experience'
+tag: 'rest'
+created: '16/09/2024'
+---
+This guide focuses on ways to enhance the operation of our API. The tips provided here help reduce network bandwidth and ensure the predictability of API messages over a distributed network.
+
+## Message encoding
+
+Accept-encoding allows you to specify the content encoding methods your software can handle. We currently support `gzip` and `identity`.
+
+| Header Name | Header Value |
+| --- | --- |
+| Accept-Encoding | gzip / identity |
+
+Bandwidth usage is reduced across networks as response messages are compressed. *Content-Encoding: gzip* is used for all API responses.
+| Header Name | Header Value |
+| --- | --- |
+| Content-Encoding | gzip |
+
+## Pagination
+Retrieve data efficiently by using the pagination query parameters to retrieve pages of records for a large data set (for more information, see [Lists](/api/definitions/lists).
+| Query Parameter | Description |
+| --- | --- |
+| page_size	| The total number of objects to return in a single page for that list. |
+| page | Indicates the page sequence to return in the response. The number of records presented on each page is determined by `page_size` field. |
+
+### Sample request
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X POST https://apis.globalpay.com/ucp/disputes?status=WITH_MERCHANT
+&order_by=time_to_respond_by&order-DESC&page_size=5&page=3 
+    -H "Content-type: application/json" 
+    -H "X-GP-Version: 2021-03-22" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw" 
+```
+</Code>
+## Idempotency
+Use `X-GP-Idempotency` in the message header to ensure an action is not executed more than once. This is a user-generated value that can be up to 50 characters in length. If the same value is used again within 24 hours (for the same merchant), a response is returned indicating that the action was previously executed.
+
+The scope of the key is applied at a Merchant ID level, regardless of the account or app being used to execute the action. In addition, it applies only to POST, PATCH, and DELETE operations; it does not apply to GET.
+
+<Code id="JSON" title="JSON" language="JSON" active>
+```json
+curl -v -X POST https://apis.globalpay.com/ucp/deposits 
+    -H "X-GP-Idempotency: 234quigdua7stduabkjwe"
+    -H "X-GP-Version: 2021-03-22" 
+    -H "Accept: application/json"
+    -H "Content-type: application/json" 
+    -H "Authorization: Bearer KnxbvhyY4GgBYq6mV64uEGLzotrw"
+```
+</Code>

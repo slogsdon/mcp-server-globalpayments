@@ -1,0 +1,116 @@
+---
+title: 'Pay by Bank app'
+tag: 'rest'
+---
+        
+<div className="flex justify-between items-baseline">
+    ## Payment Method Details
+    <img alt="Logo" style={{maxWidth: "150px"}} src="/sites/default/files/migrated_images/assets/images/apms/paybybank.png" />
+</div>
+
+| **Payment Type**           | Bank Transfers                                                    |
+| -------------------------- | ----------------------------------------------------------------- |
+| **Payment Method String**  | paybybankapp                                                      |
+| **Available Countries**    | GB                                                                |
+| **Available Currencies**   | GBP                                                               |
+| **Min Transaction Amount** | None                                                              |
+| **Max Transaction Amount** | Subject to Bank                                                   |
+| **Supports Refunds**       | Yes, with no time limit                                           |
+| **Chargebacks**            | Yes                                                               |
+| **Sandbox**                | Yes                                                               |
+| **Timeout**                | Retrieval timeout: 250 seconds; Confirmation timeout: 150 seconds |
+
+### Sample request
+<CodeGroup>
+	<Code id="html" title="HTTP POST (HPP)" language="markup" active>
+	```
+	<form method="POST" action="https://pay.sandbox.realexpayments.com/pay">
+	<input type="hidden" name="TIMESTAMP" value ="{{ timestamp }}">
+	<input type="hidden" name="MERCHANT_ID" value ="{{merchantId}}">
+	<input type="hidden" name="ACCOUNT" value ="internet">
+	<input type="hidden" name="ORDER_ID" value ="20230203170607-63dd3eff12b90">
+	<input type="hidden" name="AMOUNT" value ="5100">
+	<input type="hidden" name="CURRENCY" value ="GBP">
+	<input type="hidden" name="SHA1HASH" value ="7784c0d3db0bf8ba8f9c0667d50f47c6e47c54d2">
+	<input type="hidden" name="AUTO_SETTLE_FLAG" value ="1">
+	<input type="hidden" name="HPP_VERSION" value ="2">
+	<input type="hidden" name="HPP_CUSTOMER_COUNTRY" value ="GB">
+	<input type="hidden" name="HPP_CUSTOMER_FIRSTNAME" value ="James">
+	<input type="hidden" name="HPP_CUSTOMER_LASTNAME" value ="Mason">
+	<input type="hidden" name="MERCHANT_RESPONSE_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_TX_STATUS_URL" value =”https://www.example.com/statusUrl”>
+	<input type="hidden" name="HPP_ADDRESS_MATCH_INDICATOR" value ="false">
+	<input type="hidden" name="HPP_BILLING_STREET1" value ="Flat 123">
+	<input type="hidden" name="HPP_BILLING_CITY" value ="Halifax">
+	<input type="hidden" name="HPP_BILLING_POSTALCODE" value ="E77 4QJ">
+	<input type="hidden" name="HPP_BILLING_COUNTRY" value ="826">
+	<input type="hidden" name="HPP_LANG" value ="EN">
+	<input type="hidden" name="HPP_CHALLENGE_REQUEST_INDICATOR" value ="NO_PREFERENCE">
+	<input type="hidden" name="HPP_CUSTOMER_EMAIL" value ="james.mason@example.com">
+	<input type="hidden" name="COMMENT1" value="Mobile Channel">
+	<input type="hidden" name="COMMENT2" value="Down Payment">
+	<input type="hidden" name="CARD_PAYMENT_BUTTON" value="Pay Now">
+	<input type="submit" value="Click here to Purchase">
+	</form>
+	```
+	</Code>
+	<Code id="xml" title="XML" language="markup">
+	```
+	<?xml version='1.0' encoding='UTF-8'?>			
+	<request type='payment-set' timestamp='{{timestamp}}'>			
+		<merchantid>Merchant ID</merchantid>		
+		<account>internet</account>		
+		<amount currency='GBP'>5100</amount>		
+		<autosettle flag='1' />		
+		<orderid>N6qsk4kYRZihmPrTXWYS6g</orderid>		
+		<paymentmethod>paybybankapp</paymentmethod>		
+		<paymentmethoddetails>		
+			<returnurl>https://www.example.com/returnUrl</returnurl>	
+			<errorurl>https://www.example.com/errorUrl</errorurl>	
+			<statusupdateurl>https://www.example.com/statusUrl</statusupdateurl>	
+			<descriptor>Test Transaction</descriptor>	
+			<country>GB</country>	
+			<accountholdername>James Mason</accountholdername>	
+				
+		</paymentmethoddetails>		
+		<comments>		
+			<comment id='1'>Mobile Channel</comment>	
+			<comment id='2'>Down Payment</comment>	
+		</comments>		
+		<sha1hash>82f3d22c04292f8673bc1e0fb8ecf0c54e38065c</sha1hash>		
+	</request>			
+	```
+	</Code>
+	<Code id="json" title="JSON" language="json">
+	```
+	{                        
+		"account_name": "{{acc_name}}",                
+		"type": "SALE",                
+		"channel": "CNP",                
+		"amount": "5100",                
+		"currency": "GBP",                
+		"reference": "{{reference}}",                
+		"country": "GB",                
+		"payment_method": {                
+			"entry_mode": "ECOM",        
+			"apm": {        
+				"provider": "paybybankapp"
+			}        
+		},                
+		"notifications": {                
+		"return_url": "<Replace with your own endpoints>",                
+		"status_url": "<Replace with your own endpoints>"                
+		},                
+		"payer": {}                
+	} 
+	```
+	</Code>
+</CodeGroup>
+
+## Additional Fields Syntax
+
+**Type** indicates whether the element is Mandatory (**M**), Optional (**O**), or Conditional (**C**) - dependent on another field.
+
+| Name           | Type | Format     | Length | Description                                                                                                                             |
+| -------------- | ---- | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| App to App URL | O    | xsd:anyURI | 1-255  | Custom app URL for redirecting the customer back to the app that triggered the payment. Overrides MerchantRedirectURL for mobile flows. |
