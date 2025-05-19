@@ -1,0 +1,3 @@
+[submodule "docs/api-specs"]
+	path = docs/api-specs
+	url = https://github.com/globalpayments/ucp-yaml

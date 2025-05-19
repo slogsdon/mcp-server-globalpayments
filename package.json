@@ -1,0 +1,33 @@
+{
+  "name": "mcp-server-globalpayments",
+  "version": "1.0.0",
+  "description": "MCP server for Global Payments",
+  "type": "module",
+  "main": "build/index.js",
+  "files": [
+    "build",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "global-payments",
+    "documentation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "fast-xml-parser": "^5.2.3",
+    "globby": "^13.2.2",
+    "gray-matter": "^4.0.3",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6"
+  }
+}
